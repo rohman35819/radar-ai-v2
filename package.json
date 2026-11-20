@@ -1,0 +1,10 @@
+{
+  "name": "radar-ai-v2",
+  "version": "2.3.0",
+  "description": "RADAR AI V2 - AI token screener, fundamentals, news, alerts (zero dependencies)",
+  "main": "server.js",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node server.js", "test": "node --test test/radar.test.js","live-check": "node scripts/live-check.js" },
+  "license": "UNLICENSED",
+  "private": true
+}
