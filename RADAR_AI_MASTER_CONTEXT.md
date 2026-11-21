@@ -550,11 +550,12 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - `server.js` menyediakan:
   - `GET /api/exchanges/status`: boolean konfigurasi saja, tanpa nilai key/secret.
   - `GET /api/exchanges/binance/account` dan `GET /api/exchanges/bybit/account`: permintaan akun read-only saat pengguna menekan tombol di UI.
+  - `GET /api/exchanges/market?exchange=binance|bybit&symbol=BTCUSDT`: ticker publik 24 jam Spot dan Futures/Linear, tanpa API key.
   - Response privat memakai `Cache-Control: no-store`; route tunduk pada rate limit API yang sudah ada.
-- `public/trading.html`, `public/trading.js`, `public/trading.css`: panel status konfigurasi, tombol uji koneksi, ringkasan akun, tabel aset/saldo, posisi terbuka, state error, dan layout responsif. Data DOM dibuat dengan `textContent`/node, bukan memasukkan data exchange sebagai HTML.
+- `public/trading.html`, `public/trading.js`, `public/trading.css`: panel status konfigurasi, tombol uji koneksi, ringkasan akun, tabel aset/saldo, posisi terbuka, ticker publik 24 jam, tombol isi harga kalkulator dari ticker derivatif, state error, dan layout responsif. Data DOM dibuat dengan `textContent`/node, bukan memasukkan data exchange sebagai HTML.
 - `package.json`: `npm test` kini memeriksa sintaks `lib/exchanges.js` dan `public/trading.js`.
-- `test/exchanges.test.js`: 6 tes tambahan untuk status tanpa secret, signature Binance, signature Bybit, normalisasi saldo/posisi, kredensial tidak lengkap, error upstream, dan route server. Total test case repository menjadi 27 (21 core + 6 exchange).
-- `.env.example` mendokumentasikan nama environment yang diharapkan: `BINANCE_API_KEY`, `BINANCE_API_SECRET`, `BYBIT_API_KEY`, `BYBIT_API_SECRET`, serta base URL opsional. File hanya berisi placeholder kosong.
+- `test/exchanges.test.js`: 10 tes tambahan untuk status tanpa secret, signature Binance/Bybit, normalisasi saldo/posisi, kredensial tidak lengkap, error upstream, route server, ticker publik, konversi persentase, dan validasi simbol. Total test case repository menjadi 31 (21 core + 10 exchange).
+- `.env.example` mendokumentasikan nama environment yang diharapkan: `BINANCE_API_KEY`, `BINANCE_API_SECRET`, `BYBIT_API_KEY`, `BYBIT_API_SECRET`, serta base URL opsional. Backend juga menerima alias secret `*_SECRET_KEY` dan `*_SECRET`. File hanya berisi placeholder kosong.
 - `README.md` menjelaskan cara konfigurasi dan batas read-only.
 
 ### 21.3 Keamanan dan batas fitur
@@ -580,7 +581,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 2. Setelah Hostless deploy, periksa `GET /api/exchanges/status`. Jika Binance belum terkonfigurasi, selaraskan nama environment `BINANCE_API_KEY` dan `BINANCE_API_SECRET` di Hostless tanpa mengirim nilainya melalui chat.
 3. Jalankan tombol uji koneksi Binance read-only dan verifikasi Spot; uji Futures secara terpisah. Cocokkan hasil hanya dari response aplikasi yang sudah disaring.
 4. Tambahkan Bybit read-only setelah pasangan environment Bybit tersedia; verifikasi Unified Wallet dan Linear positions.
-5. Tambahkan market ticker publik, instrument metadata (tick size, step size, min notional), riwayat transaksi read-only, dan kalkulator posisi yang memakai aturan exchange aktual.
+5. Tambahkan instrument metadata (tick size, step size, min notional), riwayat transaksi read-only, dan kalkulator posisi yang memakai aturan exchange aktual.
 6. Bangun registry/adapter untuk exchange dan aplikasi tambahan, sambil mempertahankan kontrak data dan UI bersama.
 7. Jalankan QA visual/browser desktop/mobile, console/network, dan pengujian error/timeout/rate-limit. Jangan aktifkan live trading; tetap OFF sampai ada permintaan dan persetujuan eksplisit beserta seluruh pengaman order.
 
@@ -592,4 +593,4 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Environment menerima pasangan `*_API_KEY` dan secret `*_API_SECRET`, dengan alias umum `*_SECRET_KEY` / `*_SECRET`; nilai kredensial tidak dibaca ke dokumen.
 - Commit kode ticker: `2580c882b7c879b4940f94b388d5b709b93791a0`; route market: `ae64aa90884b49ee1f06962009e620bfdb935a8e`; UI ticker: `0b5a7c49d956a01171a33e959f0ad46f18e88bbb`; test ticker: `662abbc44d763f40c2d96cdf044e45388296205d`; perbaikan kalkulator: `87932f47a29fd456791986305b56d20aa5c7f2c5`.
 - Perbaikan tambahan untuk menandai kegagalan pembacaan posisi parsial dibuat pada commit `7f882b45f80f464d4b4b5e51097a02355b657efa`; dashboard refresh failure diperbaiki pada commit terpisah `70b8a6b41fcc38f6321295a6b8bee4f10a35ea74` oleh perubahan lain di branch dan bukan bagian scope Exchange Hub sesi ini.
-- HEAD dokumentasi sebelum catatan lanjutan ini: `a2f13860ebcde9162907cb2793fe97f9354ed555` untuk perubahan template environment. Status CI push dan Hostless deployment masih belum dapat diverifikasi dari koneksi yang tersedia.
+- HEAD dokumentasi sebelum catatan lanjutan ini: `a2f13860ebcde9162907cb2793fe97f9354ed555` untuk perubahan template environment; catatan lanjutan ticker disimpan pada `436be39bf6d01389af4807fc427f874ed8b511c6`. Status CI push dan Hostless deployment masih belum dapat diverifikasi dari koneksi yang tersedia.
