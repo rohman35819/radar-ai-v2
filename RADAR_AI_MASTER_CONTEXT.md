@@ -396,3 +396,43 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
   2. Verifikasi endpoint `/api/health` dan versi LIVE terhadap SHA main; lakukan QA browser dashboard/sidebar dan Exchange Hub pada desktop/mobile.
   3. Pastikan lokasi volume persisten writable sebelum mengubah `DATA_DIR`; uji restart/persistensi dan EROFS berdasarkan log aktual.
   4. Setelah storage dan UI stabil, lanjutkan Binance read-only server-side. Trading tetap OFF.
+
+
+---
+## 18. AUDIT LANJUTAN DASHBOARD, EXCHANGE HUB, DAN HEAD MAIN — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 18.1 Repository dan commit
+- Pemeriksaan branch mengembalikan branch `main`; pencarian commit terbaru pada repository menemukan `327ad19753cafdc523b18d61a65307128de7dab5` (`docs: record CI audit commit reference`, 21 November 2026 20:48:43 UTC).
+- Fetch commit mengonfirmasi perubahan commit tersebut hanya satu baris dokumentasi di `RADAR_AI_MASTER_CONTEXT.md`, dengan parent `724d4a6d930749f63516105ccb27032f5154d9e4`. Jadi tidak ada perubahan source aplikasi di antara dua SHA itu.
+- Combined commit status untuk `327ad197` mengembalikan daftar status kosong. Ini bukan bukti CI gagal maupun berhasil. Ketersediaan API GitHub yang terhubung tidak menyediakan listing workflow push-run terbaru; CI untuk `327ad197` tetap belum terverifikasi.
+
+### 18.2 Audit storage / EROFS
+- `lib/ingest.js` pada `main` tetap memakai `path.resolve(env('DATA_DIR', './data'))`, hanya memperlakukan `ENOENT` saat load sebagai state awal, dan meneruskan error lain. Save menggunakan `state.json.tmp`, atomic rename, dan cleanup best-effort.
+- Tes `test/radar.test.js` masih memuat skenario state awal, pemulihan state, JSON rusak, simulasi EROFS saat rename, preservasi state lama, dan cleanup file sementara.
+- Tidak ada bukti baru mengenai mount volume Hostless atau nilai runtime `DATA_DIR`; tidak dilakukan perubahan path atau fallback karena berisiko memindahkan state ke filesystem ephemeral.
+
+### 18.3 QA source-level Dashboard
+- `public/index.html` mempertahankan struktur shell dashboard dan navigasi; `public/app.js` menjadi pengendali render/interaksi; `public/style.css` berisi stylesheet dashboard lengkap serta aturan sidebar independen.
+- CSS pada `main` memuat `height:100vh/100dvh`, `overflow-y:auto`, `overscroll-behavior:contain`, momentum scrolling, dan drawer overlay pada breakpoint mobile. Ini mengonfirmasi implementasi CSS ada, bukan bukti visual atau perilaku runtime.
+- Tidak ditemukan perubahan source Dashboard pada commit terbaru yang diperiksa. QA browser desktop/mobile, console, network, dan verifikasi menu melalui runtime masih belum dilakukan.
+
+### 18.4 QA source-level Exchange Hub
+- `public/trading.html`, `public/trading.js`, dan `public/trading.css` membentuk Exchange Hub dengan tab Binance/Bybit, kalkulator posisi simulasi, status koneksi belum terhubung, dan daftar gerbang keamanan.
+- `public/trading.js` hanya menghitung estimasi notional, kuantitas, PnL pada SL/TP, dan risk/reward di browser. Tidak ditemukan pemanggilan endpoint akun/private API atau pengiriman order pada file ini; UI secara eksplisit menyatakan belum terhubung dan tidak mengirim order.
+- Kalkulator menyederhanakan kontrak sebagai notional linear dan telah menampilkan catatan bahwa fee, funding, slippage, aturan ukuran kontrak, dan estimasi likuidasi belum dihitung. Hasilnya tidak boleh diperlakukan sebagai kalkulasi exchange yang presisi.
+- Tidak ada implementasi koneksi Binance read-only yang dapat dinyatakan selesai berdasarkan source yang diperiksa. API key/secret tidak diperiksa atau ditampilkan; tidak ada perubahan kredensial.
+
+### 18.5 Catatan sesi dan NEXT TASK
+- Tujuan: melanjutkan audit repository terbaru dan memeriksa ulang jalur storage, Dashboard, serta Exchange Hub tanpa mengubah perilaku yang belum dapat diuji.
+- File yang diperiksa: `RADAR_AI_MASTER_CONTEXT.md`, `AGENTS.md`, `README.md`, `package.json`, `lib/ingest.js`, `server.js`, `public/index.html`, `public/app.js`, `public/style.css`, `public/trading.html`, `public/trading.js`, `public/trading.css`, `test/radar.test.js`, dan `.github/workflows/test.yml`.
+- File source aplikasi diubah: tidak ada. File dokumentasi yang diubah: `RADAR_AI_MASTER_CONTEXT.md`.
+- Tes lokal: tidak dijalankan; sesi tidak memiliki working copy/runtime Node repository. CI untuk `327ad197`: belum terverifikasi (combined status kosong, bukan status gagal).
+- GitHub HEAD terbaru yang ditemukan sebelum catatan ini: `327ad19753cafdc523b18d61a65307128de7dab5`; commit dokumentasi sesi ini dicatat setelah commit.
+- Hostless build: tidak diketahui. Hostless Live: tidak diketahui / belum terverifikasi. Akses halaman publik dan `/api/health` tidak tersedia dari lingkungan pemeriksaan ini; ini bukan bukti aplikasi down.
+- Risiko terbuka: Hostless deployment/logs dan volume writable belum dapat diperiksa; QA visual desktop/mobile belum dilakukan; koneksi Binance read-only belum diimplementasikan/diuji.
+- NEXT TASK:
+  1. Dapatkan akses Hostless read-only melalui koneksi akun/integrasi yang tersedia; periksa deployment SHA, build, runtime logs, mount volume, dan konfigurasi `DATA_DIR` tanpa membuka nilai secret.
+  2. Jalankan verifikasi browser desktop/mobile untuk Dashboard, sidebar, dan Exchange Hub; cek console/network serta `/api/health` terhadap deployment SHA yang benar.
+  3. Verifikasi CI `npm test` untuk HEAD `327ad197` atau HEAD terbaru pada saat pemeriksaan berikutnya melalui GitHub Actions push workflow.
+  4. Uji persistensi setelah restart dan perilaku EROFS hanya setelah lokasi volume Hostless terkonfirmasi; jangan mengubah storage path secara spekulatif.
+  5. Setelah storage dan UI stabil, lanjutkan Binance read-only server-side dengan secret tetap di Hostless environment. Trading tetap OFF.
