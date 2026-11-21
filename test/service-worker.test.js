@@ -73,3 +73,10 @@ test('Command Center menggunakan aset eksternal agar tidak diblokir strict CSP',
   assert.doesNotMatch(html, /<style[\s>]/i);
   assert.doesNotMatch(html, /<script>/i);
 });
+
+test('Dashboard analytics tidak bergantung pada inline style yang diblokir CSP', () => {
+  const app = fs.readFileSync(require.resolve('../public/app.js'), 'utf8');
+  assert.match(app, /class:'bar-fill'/);
+  assert.match(app, /class:'breadth-progress'/);
+  assert.doesNotMatch(app, /style\s*:/);
+});
