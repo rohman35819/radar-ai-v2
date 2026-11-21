@@ -328,7 +328,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 
 ### 16.1 Kondisi repository terkini
 - Repository terkonfirmasi `rohman35819/radar-ai-v2`, default branch `main`.
-- Pencarian commit terbaru pada repository mengembalikan HEAD `5ade61c8b693324716330eca1614f2d7b590cabe` (docs: finalize audit commit reference), setelah commit dokumentasi `421bca232444067c20398d0b176120e868b86047`.
+- HEAD kode/dokumentasi sebelum catatan sesi ini: `5ade61c8b693324716330eca1614f2d7b590cabe` (docs: finalize audit commit reference). Setelah audit didokumentasikan, commit baru dibuat pada main: `270c61ef834eab86762dfc18f3a8674021f60e71`.
 - `RADAR_AI_MASTER_CONTEXT.md`, `AGENTS.md`, `package.json`, dan `README.md` dibaca dari branch main. File kode `lib/ingest.js` dan `server.js` juga diperiksa ulang.
 - Repository tidak memiliki working copy lokal dalam sesi ini; tes lokal dan git diff lokal tidak dapat dijalankan.
 
@@ -355,8 +355,9 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - File yang ditinjau: `RADAR_AI_MASTER_CONTEXT.md`, `AGENTS.md`, `package.json`, `README.md`, `lib/ingest.js`, `server.js`.
 - File yang diubah: `RADAR_AI_MASTER_CONTEXT.md` (catatan audit sesi ini).
 - Tes: tidak dijalankan lokal karena working copy/runtime tidak tersedia. CI HEAD terbaru belum terverifikasi. Hasil PASS sebelumnya hanya untuk SHA yang disebut pada bagian 15.
-- Commit dokumentasi sesi: akan dicatat setelah update ini berhasil.
+- Commit dokumentasi sesi: `270c61ef834eab86762dfc18f3a8674021f60e71` (audit bagian 16).
 - Hostless build: tidak diketahui. Hostless Live: tidak diketahui / belum terverifikasi.
+- GitHub: catatan audit bagian 16 tersimpan pada branch `main` melalui commit `270c61ef834eab86762dfc18f3a8674021f60e71`; setelah commit dokumentasi ini, HEAD main berubah ke SHA tersebut.
 - Risiko terbuka: akses Hostless authenticated read-only belum tersedia; CI HEAD terbaru belum terverifikasi; volume writable dan nilai runtime `DATA_DIR` belum diketahui; QA browser desktop/mobile belum dilakukan.
 - NEXT TASK:
   1. Hubungkan akses Hostless read-only yang sesuai (MCP atau API) agar deployment, app config tanpa nilai secret, runtime logs, dan volume dapat diperiksa. Jangan kirim API key melalui chat.
