@@ -933,3 +933,44 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 4. Lanjutkan QA Dashboard, Exchange Hub, dan Command Center desktop/mobile, termasuk alur 401/403/409, timeout, polling, CSP, serta PWA cache.
 5. Audit News, Token Unlock, Alert Center, AI Council, AI Workspace, dan System Health untuk data freshness, loading/error/empty state, dan aksesibilitas.
 6. Hostless Build dan Live tetap harus diverifikasi terpisah. Exchange read-only saja; trading/withdrawal tetap OFF.
+
+---
+
+## 27. HARDENING RATE LIMIT DI BELAKANG REVERSE PROXY — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 27.1 Temuan
+- Audit lanjutan autentikasi menemukan server memilih elemen pertama X-Forwarded-For untuk kunci rate limit. Elemen tersebut dapat dipasok klien dan dapat dipalsukan, sehingga klien berpotensi mengganti nilai header untuk memperoleh bucket rate limit baru.
+- Tidak ada bukti konfigurasi rantai proxy Hostless yang dapat dibaca pada sesi ini. Karena itu jumlah proxy tepercaya tidak boleh ditebak atau diaktifkan otomatis.
+
+### 27.2 Perbaikan
+- server.js: menambahkan resolveClientIp(req, trustedProxyHops). Default menggunakan alamat socket langsung dan mengabaikan X-Forwarded-For. Header hanya dipakai bila jumlah proxy tepercaya dikonfigurasi; alamat klien dipilih dari kanan berdasarkan jumlah hop yang dipercaya.
+- lib/ingest.js: menambahkan konfigurasi TRUSTED_PROXY_HOPS, integer non-negatif, default 0.
+- .env.example: menjelaskan opsi dan peringatan untuk hanya mengaktifkannya bila reverse proxy menghapus header masuk dan menyusun ulang header forwarded.
+- test/radar.test.js: menambah tes untuk default socket, 1/2 proxy tepercaya, dan fallback bila header kosong.
+- README.md: dokumentasi rate limit dan trust boundary diperbarui. Tidak mengubah batas 60 permintaan/menit/IP atau kontrak API.
+
+### 27.3 File yang diubah
+- server.js
+- lib/ingest.js
+- test/radar.test.js
+- README.md
+- .env.example
+- RADAR_AI_MASTER_CONTEXT.md
+
+### 27.4 Verifikasi
+- Review source GitHub memastikan resolver baru digunakan pada key rate-limit dan konfigurasi default 0.
+- GitHub Actions run #247 untuk perubahan server.js berstatus completed/success. Runs #248–#250 sedang berjalan ketika catatan ini disusun; hasil akhir harus diverifikasi setelah dokumentasi terakhir.
+- Tes lokal tidak dijalankan karena sesi tidak memiliki working copy Node.js. Tes otomatis menunggu GitHub Actions.
+- Hostless build dan LIVE tetap tidak diketahui/tidak terverifikasi; akses konfigurasi proxy dan deployment Hostless tidak tersedia.
+
+### 27.5 Catatan konfigurasi operasional
+- TRUSTED_PROXY_HOPS=0 aman sebagai default: hanya alamat socket dipakai. Di lingkungan reverse proxy, beberapa pengguna dapat berbagi alamat socket proxy dan karena itu berbagi bucket rate limit.
+- Jangan mengubah nilainya pada Hostless sebelum rantai proxy aktual dipastikan. Jika Hostless menghapus header forwarded yang dikirim klien dan menambahkan satu hop yang benar, nilai yang sesuai adalah 1; hal ini belum diverifikasi.
+- Jika proxy tidak membersihkan header masuk, jangan mempercayai X-Forwarded-For walaupun jumlah hop diketahui.
+
+### 27.6 NEXT TASK
+1. Verifikasi seluruh GitHub Actions untuk commit perubahan rate-limit dan dokumentasi terakhir; perbaiki bila gagal.
+2. Periksa konfigurasi Hostless untuk memastikan jumlah proxy tepercaya sebelum mengatur TRUSTED_PROXY_HOPS; jangan mengasumsikan.
+3. Lanjutkan audit DATA_DIR/EROFS berbasis konfigurasi volume/log Hostless yang nyata.
+4. QA Dashboard, Exchange Hub, dan Command Center desktop/mobile; status Hostless tetap harus diverifikasi terpisah.
+5. Setelah infrastruktur stabil, lanjutkan QA News, Token Unlock, Alert Center, AI Council, AI Workspace, dan System Health.
