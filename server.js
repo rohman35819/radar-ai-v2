@@ -81,6 +81,22 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           });
           return;
         }
+        if (url.pathname === '/api/exchanges/market' && req.method === 'GET') {
+          exchangeApi.market(url.searchParams.get('exchange'), url.searchParams.get('symbol')).then((market) => {
+            send(res, 200, { status: 'success', ...market }, 'application/json', { 'cache-control': 'public, max-age=10' });
+          }).catch((error) => {
+            const known = error instanceof ExchangeError;
+            const code = known ? error.code : 'EXCHANGE_INTERNAL_ERROR';
+            const status = known ? error.status : 502;
+            const message = code === 'INVALID_MARKET_SYMBOL' ? 'Format pair tidak valid.' :
+              code === 'EXCHANGE_TIMEOUT' ? 'Exchange tidak merespons tepat waktu.' :
+              code === 'EXCHANGE_NETWORK_ERROR' ? 'Tidak dapat menjangkau exchange.' :
+              code.startsWith('EXCHANGE_UPSTREAM_HTTP_') ? 'Data market tidak tersedia dari exchange.' :
+              'Gagal mengambil data market.';
+            send(res, status, { status: 'error', code, message }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
         if (url.pathname === '/api/health') return send(res, 200, { status: 'ok' });
         if (url.pathname === '/api/snapshot' && req.method === 'GET') {
           const age = st.lastOk ? Date.now() - Date.parse(st.lastOk) : null;
