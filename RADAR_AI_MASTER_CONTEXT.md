@@ -735,3 +735,46 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Verifikasi implementasi: GitHub Actions run #204 pada commit `c4877491e806dc9086ec2cba4784c04d6537d55d` menjalankan `npm test`: **46 pass, 0 fail**, termasuk pemeriksaan sintaks `public/command.js` dan `public/sw.js`.
 - Branch `main` pada saat pencatatan sebelum commit dokumentasi penutup berada pada `8c41eb8b7c2c6f98dcc3d98e0fb3aeb34f29ed4c`. Perubahan dokumentasi penutup ini menjadi commit baru; verifikasi SHA final melalui branch HEAD setelah update.
 - Hostless build/live tetap **belum diketahui**; browser/device QA tetap terbuka. Jangan menyimpulkan deployment berhasil dari CI GitHub.
+
+
+---
+
+## 24. PERBAIKAN KONEKSI & REDESAIN EXCHANGE HUB — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 24.1 Temuan dan keputusan teknis
+- Audit ulang source main menemukan endpoint GET /api/exchanges/{binance|bybit}/account sebelumnya dapat dipanggil tanpa autentikasi. Karena respons berisi saldo dan posisi privat, endpoint tersebut tidak layak dibiarkan terbuka pada website publik.
+- UI lama menonaktifkan tombol uji koneksi jika status environment belum terbaca sebagai configured. Ini membuat pemilik tidak dapat melakukan retry setelah memperbarui environment atau deployment, dan pesan status tidak membedakan konfigurasi server dari hasil autentikasi akun exchange.
+- Keputusan: semua pembacaan akun privat sekarang memerlukan token akses pemilik melalui header x-exchange-access-token. Token server menggunakan EXCHANGE_ACCESS_TOKEN, dengan fallback ke ADMIN_TOKEN; perbandingan dilakukan dengan crypto.timingSafeEqual. Status publik hanya mengembalikan boolean access_configured, tidak pernah nilai token atau exchange credentials.
+- Market ticker publik tetap tanpa autentikasi karena tidak mengandung data akun privat. Tidak ada endpoint order, trading, transfer, atau withdrawal yang ditambahkan.
+
+### 24.2 Perubahan yang dikirim ke GitHub main
+- server.js: proteksi token untuk endpoint saldo/posisi; status konfigurasi menampilkan boolean akses privat; tanpa token konfigurasi menghasilkan 503 dan token salah menghasilkan 401.
+- test/exchanges.test.js: route akun diuji menolak request tanpa token dan menerima token yang valid; ditambah pengujian ketika token server belum dikonfigurasi.
+- public/trading.html: kolom token akses privat, tombol uji koneksi, dan tombol refresh status server. Token tidak dimasukkan ke markup statis.
+- public/trading.js: tombol koneksi tetap dapat ditekan untuk menampilkan diagnosis; status server dapat di-refresh; token hanya berada dalam memori halaman, tidak disimpan di localStorage/sessionStorage; kode error terstruktur ditampilkan bersama pesan yang sudah disanitasi; alur loading dan retry diperbaiki.
+- public/trading.css: layout Exchange Hub dirapikan menjadi workspace responsif, termasuk header, hero, panel, tombol, input, tabel, kalkulator, safety panel, roadmap, dan breakpoint mobile.
+- .env.example: menambahkan placeholder kosong EXCHANGE_ACCESS_TOKEN.
+- README.md: dokumentasi autentikasi endpoint privat, token akses, dan jumlah tes diperbarui menjadi 47 deklarasi test.
+
+### 24.3 Commit
+- Proteksi route akun: 4b9134c9dfdaec7c55b8310c7670709553e3c96b.
+- Tes autentikasi: 3213a468382aa89a935d7f0419fb8cc6023922d4.
+- UI akses privat: 18c1a6acfe2d2ffd8c231b534f74920d73015255.
+- Perbaikan status/retry frontend: 878c1b31d957d5bd86033cb2c47669cf3082abef.
+- Redesain responsif: 97b5d6a13ede58f469b3a02afaa82a94b6fc1e47.
+- Perbaikan injeksi token kosong eksplisit untuk test: 5f08a8d80c4711428f14ded2fe04bba28ca8b324.
+- Konfigurasi contoh: 00a53f7bc456090c2180ae13fff1c7c026614a6f.
+- README: 606c4520993c261e556a3be9166f2be9f53bd75d.
+
+### 24.4 Pengujian dan deployment
+- Pemeriksaan source/diff dilakukan melalui GitHub. Working copy lokal dan browser desktop/mobile tidak tersedia dalam sesi ini; npm test, node --check, console/network, dan visual QA belum dijalankan secara lokal.
+- CI GitHub untuk rangkaian commit ini harus diverifikasi sebelum menyatakan tes lulus. Perubahan tes menambahkan satu deklarasi test sehingga inventaris target menjadi 47.
+- Hostless build, deployment SHA, dan versi Live belum dapat diakses dari koneksi pemeriksaan. Status ketiganya: UNKNOWN / BELUM TERVERIFIKASI.
+- Koneksi Binance nyata belum dibuktikan. Setelah deploy, pemilik perlu memasukkan token akses yang disetel pada Hostless (atau ADMIN_TOKEN fallback) di kolom privat Exchange Hub, lalu menguji Spot dan Futures secara terpisah. Jangan pernah meminta token, API key, atau API secret dikirim melalui chat.
+
+### 24.5 NEXT TASK
+1. Verifikasi GitHub Actions untuk commit terbaru; perbaiki kegagalan sebelum menyatakan siap.
+2. Tambahkan EXCHANGE_ACCESS_TOKEN pada Hostless Production (atau pastikan ADMIN_TOKEN sudah terkonfigurasi), lalu redeploy/restart agar environment termuat.
+3. QA endpoint status, 401 tanpa token, 200 setelah token valid, serta pembacaan Binance Spot/Futures; pastikan izin API Binance hanya baca dan withdrawal/trading/transfer nonaktif.
+4. QA visual Exchange Hub pada desktop dan mobile, termasuk refresh status, input token, error/empty/loading state, tabel saldo, ticker, dan kalkulator.
+5. Verifikasi Hostless build dan SHA Live secara terpisah; lanjutkan audit DATA_DIR/EROFS setelah log dan volume Hostless tersedia.
