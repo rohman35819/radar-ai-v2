@@ -24,9 +24,19 @@ function tokenCard(t) {
     t.vol10m && t.vol10m.spike ? [h('span', { class: 'tag' }, 'LONJAKAN VOLUME 10M')] : [],
     t.flags.map((k) => h('span', { class: 'tag' }, FLAG[k] || k)));
 }
-function renderGroup() {\n  const v = $('#view'); v.replaceChildren();\n  if (!aiGroup?.last) return v.append(h('div', { class: 'card' }, 'Belum ada diskusi AI. Laporan harian berikutnya dijadwalkan pukul 09.00 WIB.'));\n  const g = aiGroup.last, f = g.final || {};\n  v.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('b', {}, 'Keputusan grup'), h('span', { class: f.decision === 'LONG' ? 'up' : f.decision === 'SHORT' ? 'dn' : 'tag' }, f.decision || 'WAIT')), h('div', { class: 'muted' }, new Date(g.created_at).toLocaleString() + ' · ' + (g.status || 'unknown')), h('p', {}, f.summary || 'Belum ada ringkasan'), h('div', { class: 'g' }, h('span', {}, 'Keyakinan: ' + (f.confidence_score ?? 0) + '/100'), h('span', {}, 'Anggota valid: ' + (g.analyses || []).filter(a => !a.error).length + '/3'))));\n  (g.analyses || []).forEach(a => v.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('b', {}, (a.provider || 'AI').toUpperCase()), h('span', { class: a.error ? 'dn' : 'tag' }, a.error ? 'Gagal' : a.decision)), a.error ? h('p', {}, a.error) : h('p', {}, a.summary || ''), ...(a.reasons || []).map(x => h('div', { class: 'muted' }, '• ' + x)), ...(a.risks || []).map(x => h('div', { class: 'tag' }, x)))));\n  v.append(h('div', { class: 'card' }, h('b', {}, 'Risiko keputusan akhir'), ...(f.risks || []).map(x => h('div', { class: 'tag' }, x)), h('div', { class: 'muted' }, 'Diskusi AI adalah analisis, bukan jaminan hasil trading. Tidak ada transaksi otomatis.')));\n}\nfunction render() {
+function renderGroup() {
   const v = $('#view'); v.replaceChildren();
-  $('#tools').hidden = !(tab === 'screener' || tab === 'watch');\n  if (tab === 'ai') return renderGroup();\n  if (!data) return v.append(h('div', { class: 'card' }, 'Belum ada data.'));
+  if (!aiGroup?.last) return v.append(h('div', { class: 'card' }, 'Belum ada diskusi AI. Laporan harian berikutnya dijadwalkan pukul 09.00 WIB.'));
+  const g = aiGroup.last, f = g.final || {};
+  v.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('b', {}, 'Keputusan grup'), h('span', { class: f.decision === 'LONG' ? 'up' : f.decision === 'SHORT' ? 'dn' : 'tag' }, f.decision || 'WAIT')), h('div', { class: 'muted' }, new Date(g.created_at).toLocaleString() + ' · ' + (g.status || 'unknown')), h('p', {}, f.summary || 'Belum ada ringkasan'), h('div', { class: 'g' }, h('span', {}, 'Keyakinan: ' + (f.confidence_score ?? 0) + '/100'), h('span', {}, 'Anggota valid: ' + (g.analyses || []).filter(a => !a.error).length + '/4'))));
+  (g.analyses || []).forEach(a => v.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('b', {}, (a.provider || 'AI').toUpperCase()), h('span', { class: a.error ? 'dn' : 'tag' }, a.error ? 'Gagal' : a.decision)), a.error ? h('p', {}, a.error) : h('p', {}, a.summary || ''), ...(a.reasons || []).map(x => h('div', { class: 'muted' }, '• ' + x)), ...(a.risks || []).map(x => h('div', { class: 'tag' }, x)))));
+  v.append(h('div', { class: 'card' }, h('b', {}, 'Risiko keputusan akhir'), ...(f.risks || []).map(x => h('div', { class: 'tag' }, x)), h('div', { class: 'muted' }, 'Diskusi AI adalah analisis, bukan jaminan hasil trading. Tidak ada transaksi otomatis.')));
+}
+function render() {
+  const v = $('#view'); v.replaceChildren();
+  $('#tools').hidden = !(tab === 'screener' || tab === 'watch');
+  if (tab === 'ai') return renderGroup();
+  if (!data) return v.append(h('div', { class: 'card' }, 'Belum ada data.'));
   const q = $('#q').value.trim().toLowerCase(), k = $('#sort').value;
   const list = (tab === 'watch' ? data.tokens.filter((t) => watch.includes(t.id)) : data.tokens)
     .filter((t) => !q || t.symbol.toLowerCase().includes(q) || t.name.toLowerCase().includes(q))
@@ -57,7 +67,8 @@ function status() {
   if (data.config_needed.telegram) msgs.push('Telegram belum dikonfigurasi (alert hanya di dashboard).');
   b.hidden = !msgs.length; b.textContent = msgs.join(' | ');
 }
-async function loadGroup() { try { const r = await fetch('/api/ai/group'); if (!r.ok) throw 0; const j = await r.json(); aiGroup = j.group; } catch {} }\nasync function load() {
+async function loadGroup() { try { const r = await fetch('/api/ai/group'); if (!r.ok) throw 0; const j = await r.json(); aiGroup = j.group; } catch {} }
+async function load() {
   try { const r = await fetch('/api/snapshot'); if (!r.ok) throw 0; data = await r.json(); } catch { $('#status').textContent = 'Offline/gagal memuat'; }
   await loadGroup(); status(); render();
 }
