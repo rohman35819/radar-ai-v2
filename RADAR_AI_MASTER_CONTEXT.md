@@ -281,7 +281,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 ### 14.3 Hasil pengujian dan deployment
 - Tes lokal belum dijalankan: sesi tidak memiliki working copy/runtime repository. Tes regresi storage ditambahkan agar GitHub Actions `npm test` dapat mengeksekusinya setelah push.
 - Pemeriksaan CI commit baru melalui status-check connector belum menampilkan status (daftar status kosong); workflow run untuk commit juga tidak dikembalikan oleh endpoint connector yang tersedia. Karena itu CI untuk perubahan ini belum terverifikasi.
-- GitHub: perubahan storage, tes, README, dan master context tersimpan pada branch `main`. Commit README: `b104dcaf3f576421220ceaf2e4afc84b356a1cd3`; commit master context final tercatat pada HEAD setelah pembaruan ini.
+- GitHub: perubahan storage, tes, README, dan master context tersimpan pada branch `main`. Commit README: `b104dcaf3f576421220ceaf2e4afc84b356a1cd3`; commit master context pertama sesi ini: `2a7c4ea40b30cb041b8e545f14a95b2041c8045e`; sinkronisasi lanjutan: `1cf7e1789bca49a332bcc08cb5c87cd24d033053`.
 - Hostless build: tidak diketahui. Pemilik mengonfirmasi mekanisme auto-deploy dari `main`; tidak ada akses status/log Hostless pada sesi ini.
 - Hostless Live: tidak diketahui / belum diverifikasi. Belum ada pemeriksaan sukses terhadap homepage atau `/api/health` yang dapat dikaitkan dengan SHA terbaru.
 
