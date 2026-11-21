@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const ingest = require('./lib/ingest');
 const sources = require('./lib/sources');
+const { analyzeMarket } = require('./lib/ai/gemini');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
@@ -42,6 +43,25 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
             tokens: st.tokens.map((t) => ({ ...t, fundamental: st.fundamentals[t.id] || null, vol10m: (st.vol10m || {})[t.id] || null })), exchange: st.exchStats || null, news: st.news, unlocks: st.unlocks, alerts: st.alerts.slice(0, 50),
             config_needed: { telegram: !(cfg.tgToken && cfg.tgChat), coingecko_key: !cfg.cgKey, unlock_source: !cfg.unlocksUrl && !st.unlocks.length } },
           'application/json', { 'cache-control': 'public, max-age=30' });
+        }
+        if (url.pathname === '/api/ai/gemini-test' && req.method === 'POST') {
+          if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'Dilarang' });
+          let size = 0;
+          const chunks = [];
+          req.on('data', (chunk) => { size += chunk.length; if (size <= 50000) chunks.push(chunk); });
+          req.on('end', async () => {
+            if (size > 50000) return send(res, 413, { status: 'error', message: 'Data terlalu besar' }, 'application/json', { 'cache-control': 'no-store' });
+            let marketData;
+            try { marketData = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); }
+            catch { return send(res, 400, { status: 'error', message: 'Format JSON tidak valid' }, 'application/json', { 'cache-control': 'no-store' }); }
+            try {
+              const analysis = await analyzeMarket(marketData);
+              return send(res, 200, { status: 'success', analysis }, 'application/json', { 'cache-control': 'no-store' });
+            } catch (e) {
+              return send(res, 502, { status: 'error', message: String(e.message || e).slice(0, 200) }, 'application/json', { 'cache-control': 'no-store' });
+            }
+          });
+          return;
         }
         if (url.pathname === '/api/refresh' && req.method === 'POST') {
           if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'Dilarang' });
