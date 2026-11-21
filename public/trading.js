@@ -7,8 +7,8 @@ const exchangeCopy={
 };
 function selectExchange(name){
  const selected=exchangeCopy[name]?name:'Binance';
+ activeExchange=selected;
  document.querySelectorAll('[data-exchange-tab]').forEach(button=>{
- button.addEventListener('click',()=>{activeExchange=button.dataset.exchangeTab;});
   const active=button.dataset.exchangeTab===selected;
   button.classList.toggle('active',active);
   button.setAttribute('aria-pressed',String(active));
