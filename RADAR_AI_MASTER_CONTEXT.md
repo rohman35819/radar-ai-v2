@@ -521,6 +521,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Tes lokal `npm test` dan `node --check public/app.js` tidak dapat dijalankan: working copy tidak tersedia dan `git clone` gagal karena DNS/runtime tidak dapat mengakses github.com.
 - Browser/device QA belum dapat dilakukan dalam sesi ini. Perubahan adalah perbaikan source-level; scroll behavior pada perangkat fisik dan Hostless Live belum boleh dinyatakan lulus.
 - Hostless build dan versi Live tetap tidak diketahui / belum diverifikasi. Commit masuk ke GitHub `main`; jangan menyamakan commit dengan deployment.
+- Catatan audit bagian 20 disimpan melalui commit dokumentasi `4c7d740e590cecb06c1d0b0ae2902de02a5377bf`; setelah commit dokumentasi ini, HEAD `main` berubah ke SHA dokumentasi tersebut.
 
 ### 20.4 NEXT TASK
 1. Verifikasi GitHub Actions `npm test` untuk SHA `cb75d088155282481b442b256775a9b65e3a2acb` melalui run/job push yang sesuai.
