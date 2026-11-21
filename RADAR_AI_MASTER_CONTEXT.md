@@ -1115,3 +1115,39 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
   4. Audit DATA_DIR/EROFS berdasarkan log serta mount writable yang benar dari Hostless.
   5. Lanjutkan Dashboard, Command Center, dan modul intelijen lainnya setelah stabilitas Exchange Hub terjaga.
 - Trading live, withdrawal, dan transfer tetap tidak tersedia/tidak diaktifkan.
+
+---
+
+## 29. HARDENING RATE LIMIT MEMORY BOUND — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 29.1 Temuan
+- Rate limiter sebelumnya membatasi jumlah key dengan menghapus seluruh Map saat jumlah alamat melewati 5.000. Perilaku ini membuang bucket aktif dan membuat klien yang sudah dibatasi dapat memperoleh jatah baru.
+
+### 29.2 Perbaikan
+- server.js: ekstrak createRateLimiter dengan jendela 60 detik, batas 60 request, tabel maksimum 5.000 identitas, dan sweep berkala untuk bucket kedaluwarsa.
+- Ketika tabel penuh, identitas baru ditolak dengan hasil rate-limited sampai sweep membebaskan ruang. Bucket aktif tidak pernah dihapus massal. Identitas yang sudah dikenal tetap dinilai dari riwayat request-nya.
+- test/radar.test.js: tambah satu test deterministik untuk batas identitas, fail-closed saat penuh, keberlanjutan bucket aktif, dan pemulihan setelah jendela kedaluwarsa.
+- README: dokumentasi batas memori dan perilaku fail-closed diperbarui; jumlah suite menjadi 58 test case pada 8 file.
+
+### 29.3 File
+- server.js
+- test/radar.test.js
+- README.md
+- RADAR_AI_MASTER_CONTEXT.md
+
+### 29.4 Keamanan dan kompatibilitas
+- Batas publik tetap 60 request per menit per identitas; tidak ada perubahan route atau kontrak API.
+- Maksimum memori untuk tabel identitas tetap 5.000 key. Dalam kondisi ekstrem saat tabel penuh, klien baru mungkin menerima HTTP 429 sementara; ini dipilih daripada menghapus seluruh perlindungan untuk klien yang sedang aktif.
+- Tidak ada kredensial, izin exchange, atau perilaku trading yang diubah.
+
+### 29.5 Verifikasi
+- Review source memastikan cabang hits.clear() sudah dihapus dan rate limiter memakai tabel bounded dengan sweep.
+- Test otomatis penuh harus dikonfirmasi oleh GitHub Actions untuk commit terbaru; tes lokal tidak dijalankan pada sesi ini karena tidak tersedia working copy Node.js.
+- Hostless Build dan LIVE tidak dapat diverifikasi dari akses yang tersedia.
+
+### 29.6 Commit dan NEXT TASK
+- Commit server.js: 2f2829d1af8e1c32622a1c4b979190411f8284f5.
+- Commit test/radar.test.js: 6da99582095fb47e1e13e382937bafd457209a9b.
+- README dan catatan penutupan akan dicatat setelah CI selesai.
+- NEXT TASK: audit dan verifikasi volume DATA_DIR/EROFS dengan konfigurasi Hostless aktual; lanjutkan QA dashboard dan Exchange Hub pada browser desktop/mobile; pastikan deployment Hostless dan SHA LIVE dibuktikan terpisah. Jangan mengubah TRUSTED_PROXY_HOPS tanpa bukti rantai proxy.
+
