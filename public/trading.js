@@ -42,6 +42,10 @@ function updateConnectionUi(){
  document.getElementById('exchange-status').textContent=ready?'KREDENSIAL TERSEDIA':'BELUM DIKONFIGURASI';
  document.getElementById('hub-status').textContent=ready?'READ-ONLY / SIAP DIUJI':'READ-ONLY / PERLU KONFIGURASI';
  connectButton.disabled=!ready;
+ document.querySelectorAll('[data-exchange-tab]').forEach(button=>{
+  const label=button.querySelector('.tab-state');
+  if(label)label.textContent=button.dataset.exchangeTab===activeExchange?'DIPILIH':(exchangeConfigs[button.dataset.exchangeTab.toLowerCase()]?.configured?'SIAP DIHUBUNGKAN':'BELUM DIKONFIGURASI');
+ });
  feedback.textContent=ready?'Konfigurasi tersedia. Ambil data akun untuk menguji izin read-only.':'Tambahkan API Key dan API Secret pada environment Hostless.';
 }
 function clearAccount(){
@@ -98,11 +102,12 @@ async function loadExchangeStatus(){
  }catch(error){feedback.textContent='Tidak dapat memeriksa konfigurasi backend. Pastikan versi aplikasi sudah ter-deploy.';document.getElementById('api-state').textContent='Backend exchange belum tersedia';}
 }
 connectButton.addEventListener('click',async()=>{
+ const requestedExchange=activeExchange;
  connectButton.disabled=true;connectButton.textContent='Mengambil data akun…';feedback.textContent='Menghubungi '+activeExchange+' melalui server RADAR AI…';
  try{
   const response=await fetch('/api/exchanges/'+activeExchange.toLowerCase()+'/account',{cache:'no-store'});const body=await response.json();
   if(!response.ok||body.status!=='success')throw new Error(body.message||'Koneksi exchange gagal.');
-  renderAccount(body);
+  if(activeExchange===requestedExchange)renderAccount(body);
  }catch(error){
   summary.replaceChildren();const empty=document.createElement('div');empty.className='account-empty';empty.textContent=error.message;summary.append(empty);
   document.getElementById('exchange-status').textContent='KONEKSI GAGAL';
