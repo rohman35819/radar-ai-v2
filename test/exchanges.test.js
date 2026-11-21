@@ -79,3 +79,25 @@ test('kegagalan HTTP upstream tidak meneruskan body sensitif', async () => {
   });
   await assert.rejects(service.account('binance'), (error) => error.code === 'EXCHANGE_UPSTREAM_HTTP_401' && !error.message.includes('secret should not leak'));
 });
+
+test('server menyediakan status dan data akun melalui route read-only tanpa secret', async () => {
+  const { createApp } = require('../server');
+  const state = { tokens: [], fundamentals: {}, vol10m: {}, health: {}, news: [], unlocks: [], alerts: [], lastOk: null, lastRefresh: null };
+  const service = {
+    status: () => ({ binance: { configured: true, mode: 'read-only' }, bybit: { configured: false, mode: 'read-only' } }),
+    account: async (name) => ({ exchange: name, connected: true, checked_at: '2026-11-22T00:00:00.000Z', account: { spot: { balances: [] } } }),
+  };
+  const app = createApp({ state, exchangeService: service });
+  await new Promise((resolve) => app.server.listen(0, resolve));
+  const base = 'http://127.0.0.1:' + app.server.address().port;
+  try {
+    const status = await (await fetch(base + '/api/exchanges/status')).json();
+    assert.equal(status.exchanges.binance.configured, true);
+    const accountResponse = await fetch(base + '/api/exchanges/binance/account');
+    const account = await accountResponse.json();
+    assert.equal(accountResponse.status, 200);
+    assert.equal(account.connected, true);
+    assert.equal(JSON.stringify(account).includes('secret'), false);
+    assert.equal((await fetch(base + '/api/exchanges/unknown/account')).status, 404);
+  } finally { app.stop(); }
+});
