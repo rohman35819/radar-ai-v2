@@ -4,7 +4,7 @@ Tanpa dependensi npm (V2.2) (butuh Node >= 20). Backend + dashboard PWA dalam sa
 
 ## Jalankan
     cp .env.example .env   # opsional; isi nilai lalu: export $(grep -v '^#' .env | xargs)
-    npm test               # 31 tes (21 core + 10 exchange)
+    npm test               # 33 tes (21 core + 12 exchange)
     npm start              # http://localhost:3000
 
 ## Pasang
@@ -13,10 +13,12 @@ Start command: `npm start`. Set env dari `.env.example`. Host gratis yang tidur 
 untuk alert 24 jam pakai instance yang selalu aktif. Pasang `DATA_DIR` pada disk persisten agar state/cooldown tidak hilang.
 Di Android: buka URL di Chrome, menu > "Instal aplikasi".
 
+PWA menyimpan shell halaman agar dapat dibuka kembali saat offline. Respons API tidak disimpan ke Cache Storage browser; data akun exchange harus selalu dimuat ulang dari server.
+
 ## Status fitur (hanya yang diuji = tercantum)
 | Fitur | Status |
 |---|---|
-| Logika screener, FDV, filter kategori, join gecko_id, parser RSS, validasi unlock, aturan alert + cooldown, server + rate limit + path traversal, kegagalan sumber, signature Binance/Bybit, normalisasi saldo/posisi, route Exchange Hub | **Diuji otomatis** (27 tes total; exchange memakai respons API mock, belum membuktikan koneksi akun Hostless/live) |
+| Logika screener, FDV, filter kategori, join gecko_id, parser RSS, validasi unlock, aturan alert + cooldown, server + rate limit + path traversal, kegagalan sumber, signature Binance/Bybit, normalisasi saldo/posisi, route Exchange Hub | **Diuji otomatis** (33 tes total; exchange memakai respons API mock, belum membuktikan koneksi akun Hostless/live) |
 | Panggilan nyata ke CoinGecko, DeFiLlama, RSS | Jalankan `npm run live-check` di mesin ber-internet (tes API nyata). Telegram: belum diuji |
 | Lonjakan volume | Estimasi dari selisih volume 24j bergulir antar refresh (~10 mnt) vs median selisih token itu sendiri; CoinGecko gratis tidak punya volume per-10-menit asli. Butuh ~1 jam riwayat sebelum aktif |
 | Dashboard/PWA di perangkat Android | **Belum diuji di perangkat**; sintaks dan file statis diperiksa |
