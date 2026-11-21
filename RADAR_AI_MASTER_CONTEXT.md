@@ -895,3 +895,39 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - GitHub Actions run #240 (run ID `44953098839`) untuk HEAD dokumentasi `bc2c4a18da95406066d0aa3d31afccd4f8eec29c`: job `test` dan langkah `Run npm test` `completed / success`. Ini menguji seluruh suite setelah semua perubahan Command Center, cache, fixture, tes baru, README, dan catatan master context.
 - Total suite yang didokumentasikan: 51 test case pada 7 file; CI #240 sukses.
 - QA browser visual/interaktif dan deployment Hostless tetap belum terverifikasi. Percobaan membuka halaman Command Center dan `/api/health` dari lingkungan ini tidak berhasil mengakses host, bukan bukti down.
+
+
+---
+
+## 26. HARDENING AUTENTIKASI ADMIN — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 26.1 Temuan
+- Audit backend menemukan endpoint privat Exchange Hub sudah memakai `crypto.timingSafeEqual`, tetapi lima route admin masih membandingkan header `x-admin-token` menggunakan operator string `!==` biasa.
+- Route terdampak: `POST /api/ai/command`, `POST /api/ai/workspace/run`, `POST /api/ai/group/run`, `POST /api/ai/gemini-test`, dan `POST /api/refresh`.
+
+### 26.2 Implementasi
+- `server.js`: menambahkan helper `matchesToken(expectedValue, provided)`. Helper menolak token kosong/non-string, memeriksa panjang byte lebih dahulu, lalu membandingkan dengan `crypto.timingSafeEqual`. Helper dipakai bersama oleh token admin dan token akses privat Exchange Hub agar perilaku konsisten.
+- Kelima route admin kini memakai `hasValidAdminToken`; kontrak HTTP dan header tidak berubah.
+- `test/radar.test.js`: integrasi server menguji token tidak ada (403), token dengan panjang berbeda (403), dan token valid (202).
+- `README.md`: menjelaskan bahwa endpoint admin melakukan pembandingan waktu-konstan dan token tidak boleh dibagikan.
+
+### 26.3 File dan commit
+- `server.js`: `e8e549edb951ad4da9f1044c65c4d9b90609e8a2`.
+- `test/radar.test.js`: `18fb1fcf52761d988c1f1ea4d7d8f6977df8b8d4`.
+- `README.md`: `ffd599e89172503e9d78a30025861b1ff07d8d5d`.
+- Entri master context ini menjadi commit berikutnya; SHA final diverifikasi setelah push.
+
+### 26.4 Verifikasi dan batasan
+- Review diff GitHub mengonfirmasi kelima perbandingan string lama sudah tidak ada dan seluruh lima route memakai helper baru.
+- Test integrasi diperluas; deklarasi test suite tetap 51 (assertion tambahan, bukan test case baru).
+- `npm test` dan `node --check` belum dapat dijalankan lokal: percobaan clone ke working container gagal karena DNS tidak dapat menyelesaikan `github.com`.
+- GitHub combined status untuk dua commit kode mengembalikan daftar status kosong; konektor Actions yang tersedia hanya menampilkan run terkait pull request, sehingga CI push belum bisa dipastikan. Jangan menyebut tes lulus sebelum ada bukti run.
+- Hostless build dan SHA Live tidak tersedia/terverifikasi. Tidak ada perubahan konfigurasi deployment atau kredensial.
+
+### 26.5 Risiko tersisa dan NEXT TASK
+1. Verifikasi GitHub Actions `npm test` pada HEAD final dan perbaiki kegagalan bila ada.
+2. Audit autentikasi admin lebih luas: rate-limit trust boundary di belakang proxy, no-store untuk respons sensitif, dan cakupan endpoint privat; perubahan hanya jika perilaku proxy dapat dipastikan.
+3. Audit `DATA_DIR`/EROFS berdasarkan volume dan log Hostless aktual; jangan mengubah lokasi penyimpanan berdasarkan tebakan.
+4. Lanjutkan QA Dashboard, Exchange Hub, dan Command Center desktop/mobile, termasuk alur 401/403/409, timeout, polling, CSP, serta PWA cache.
+5. Audit News, Token Unlock, Alert Center, AI Council, AI Workspace, dan System Health untuk data freshness, loading/error/empty state, dan aksesibilitas.
+6. Hostless Build dan Live tetap harus diverifikasi terpisah. Exchange read-only saja; trading/withdrawal tetap OFF.
