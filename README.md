@@ -25,6 +25,24 @@ Di Android: buka URL di Chrome, menu > "Instal aplikasi".
 | CoinGecko Demo key | Disarankan (`COINGECKO_DEMO_KEY`); cek ToS jika komersial |
 | Makro/ekonomi global | **Belum ada** modul khusus; hanya lewat `NEWS_FEEDS` |
 
+## Exchange Hub (read-only)
+
+Halaman `/trading.html` menyediakan satu antarmuka untuk Binance, Bybit, dan integrasi berikutnya. Koneksi akun berjalan di backend; API key dan secret tidak pernah dikirim ke browser.
+
+Environment server (Hostless):
+- Binance: `BINANCE_API_KEY`, `BINANCE_API_SECRET`.
+- Bybit: `BYBIT_API_KEY`, `BYBIT_API_SECRET`.
+- Opsional: `BINANCE_API_BASE`, `BINANCE_FUTURES_BASE`, `BYBIT_API_BASE`, `BYBIT_ACCOUNT_TYPE`.
+
+Gunakan kredensial dengan izin baca akun saja. Nonaktifkan withdrawal, spot trading, futures trading, dan transfer. Jangan memasukkan secret ke chat, frontend, repository, atau log.
+
+Endpoint:
+- `GET /api/exchanges/status`: hanya mengembalikan boolean konfigurasi (tidak mengembalikan nilai key/secret).
+- `GET /api/exchanges/binance/account`: membaca saldo Spot dan, bila diizinkan, wallet/posisi USDⓈ-M Futures.
+- `GET /api/exchanges/bybit/account`: membaca Unified Wallet dan posisi Linear melalui API V5.
+
+Koneksi privat dilakukan hanya setelah pengguna menekan tombol pemeriksaan pada Exchange Hub. Data akun hanya diteruskan ke browser untuk ditampilkan dan tidak disimpan ke state RADAR AI. Endpoint ini tidak membuat, mengubah, atau membatalkan order. Koneksi dinyatakan berhasil hanya setelah permintaan privat ke exchange berhasil; keberadaan environment saja bukan bukti koneksi.
+
 ## Catatan
 - Screener: ambil seluruh kategori AI CoinGecko (hingga `MAX_PAGES` x 250), lalu filter lokal. Token ditandai `stale`, `fdv_unknown`, dsb; data basi tidak memicu alert.
 - Fundamental hanya tampil untuk token yang `gecko_id`-nya ada di DeFiLlama; selain itu `n/a` (bukan 0). Kecocokan fees/revenue memakai slug/nama dan bisa meleset untuk sebagian protokol.
