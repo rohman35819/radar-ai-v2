@@ -669,3 +669,61 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - README test count diperbaiki dari 33 menjadi 42 berdasarkan deklarasi test pada lima file; commit README: `e88360bb3d5f906c8f09756ed3b2b99485693495`.
 - Bagian 23 pada dokumen master ditambahkan melalui commit: `41027d90dcecdb58466de7750924e7c5ebd96679`.
 - Keduanya adalah commit dokumentasi; kode aplikasi tidak berubah dan hasil CI `success` yang dirujuk tetap milik HEAD kode `c8250206ababae0ba5c0bb17a4f816f328b96234`.
+
+
+---
+
+## 23. PENINGKATAN PWA, CSP, DASHBOARD UX & QA — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 23.1 Temuan audit lanjutan
+- PWA service worker sebelumnya menyimpan seluruh GET /api/* ke Cache Storage dan memakai cache sebagai fallback offline. Ini berisiko menyimpan saldo/posisi Exchange Hub di penyimpanan persisten browser serta menampilkan respons akun lama seolah-olah aktual.
+- Command Center (/command.html) memiliki CSS dan JavaScript inline, sedangkan CSP server membatasi style-src dan script-src ke 'self'. Dengan kebijakan itu, browser dapat memblokir tampilan dan logika halaman Command Center.
+- Dashboard Analytics membuat lebar bar dan breadth melalui atribut style inline; CSP yang sama dapat memblokir visualisasi dinamis.
+- Market Screener tidak memiliki kontrol UI untuk fungsi exportCSV() yang sudah ada; filter juga hilang saat render ulang periodik karena state filter tidak disimpan.
+- Sort Screener memakai fallback -Infinity yang dapat menghasilkan hasil pembanding NaN untuk nilai yang tidak tersedia.
+- Dashboard System Health sebelumnya dapat tetap menunjukkan API ONLINE berdasarkan data lama setelah snapshot gagal dijangkau.
+- Data Watchlist lokal perlu dibatasi menjadi array string valid sebelum dipakai.
+
+### 23.2 Perbaikan yang dikirim ke main
+- public/sw.js:
+  - Versi shell cache dinaikkan ke radar-shell-v7.
+  - Cache Storage hanya menyimpan aset shell statis; semua request /api/* berjalan network-only dengan cache: no-store. Data privat akun tidak masuk Cache Storage dan tidak diberi fallback offline.
+  - Shell offline kini mencakup Dashboard, Exchange Hub, Command Center, Membership, CSS, dan JS halaman-halaman tersebut.
+  - Aktivasi hanya membersihkan cache dengan prefix radar- selain cache shell terbaru; cache milik aplikasi lain pada origin yang sama tidak disentuh.
+  - Commit utama: 0f7ff85dd78c0c34b835cc401e728e3e3fa528aa; update namespace cleanup: 24d0fbbd00d627baeea64c426a5af09f3c1519eb; precache Command Center: 8bb42eb83b0054722b3185d4183ed0ee9cc36af4.
+- public/app.js:
+  - Watchlist dari localStorage divalidasi menjadi array string unik.
+  - Filter Screener (kata kunci, tren, sort) dipertahankan saat dashboard melakukan render ulang/refresh.
+  - Sort menempatkan nilai yang tidak tersedia di bawah dan menghindari NaN comparator.
+  - Tombol Ekspor hasil CSV ditambahkan ke header Screener; ekspor mengikuti hasil filter yang sedang tampil, menggunakan UTF-8 BOM, escaping CSV, formula-injection guard pada teks, dan pelepasan object URL tertunda.
+  - Snapshot reachability dilacak terpisah dari data lama; Overview dan System Health tidak lagi menyebut API ONLINE hanya karena snapshot lama masih ada.
+  - Analytics memakai elemen progress semantik, bukan atribut style inline yang diblokir CSP.
+  - Commit: c8250206ababae0ba5c0bb17a4f816f328b96234; CSV hardening: 2059c5454384ef00273a9f5591d1145f9a8bb9df; status reachability: 469c02a6b8eba5acbc3d137d697cf35a2d5497e6; analytics CSP: 7ed757c87836074c6499567cd846aefffc68b401.
+- public/command.html, public/command.css, public/command.js:
+  - CSS dan JS inline dipindah ke file eksternal agar sesuai dengan CSP ketat tanpa menambah unsafe-inline.
+  - Escaped newline output dikembalikan menjadi newline yang benar agar notulen/hasil rapat mudah dibaca.
+  - Commits: CSS 272e55669abeec636f983ea789b9fd1f9c2385ca; JS 8085335a5feeacd9a91d66a356ef1f6b74249b8f; HTML c6a79314d4ffec8efa18906aa044ecc2ec80c64a.
+- public/style.css: styling progress bars untuk Analytics dan market breadth. Commit 26b19c6ace1fc359514bb994ccb03763f52f47ab.
+- package.json: npm test memeriksa sintaks public/sw.js dan public/command.js selain file yang sebelumnya diperiksa. Commits ed7756c8afb6fe319c3ca062f4a68bd5422c7ac6 dan d6c337d64742f63ef5195ec399e2edd78011d13a.
+- test/service-worker.test.js: menambah tes isolasi cache API, shell precache/cleanup, kompatibilitas Command Center dengan strict CSP, dan tidak adanya inline style pada visualisasi Analytics. Test assertion sempat gagal pada run #189 dan #190 karena ekspektasi cache lama salah; assertion diperbaiki dan run berikutnya lulus. Commit tes terakhir untuk perubahan ini: c4877491e806dc9086ec2cba4784c04d6537d55d.
+- README.md: test inventory diperbarui menjadi 46 test case pada 6 file; perilaku cache PWA dan ekspor Screener didokumentasikan. Commit README terakhir untuk scope ini: 6d323fa2dcc515069a0372f64ae78a1877392a2e, dilanjutkan sinkronisasi catatan Screener.
+
+### 23.3 Pengujian dan verifikasi
+- GitHub Actions run #204 pada commit c4877491e806dc9086ec2cba4784c04d6537d55d: npm test sukses, 46 test, 46 pass, 0 fail; termasuk node --check untuk server.js, lib/exchanges.js, public/trading.js, public/app.js, public/sw.js, public/command.js, dan lib/ai/openai.js.
+- GitHub Actions run #194 untuk test service-worker namespace cleanup: success.
+- GitHub Actions run #201–#203 untuk aset Command Center, package script, dan styling Analytics: success.
+- GitHub Actions run #205 untuk sinkronisasi README: success.
+- Commit terakhir yang diperiksa saat catatan ini disusun: branch main berada pada SHA 6d323fa2dcc515069a0372f64ae78a1877392a2e sebelum pembaruan master context ini.
+- Tidak ada secret dalam perubahan frontend atau dokumentasi; Exchange Hub tetap read-only dan tidak ada route order.
+- Tes lokal tidak dijalankan karena sesi tidak memiliki working copy Node; bukti tes berasal dari GitHub Actions.
+- Hostless build dan Live belum dapat diverifikasi. Pengambilan URL aplikasi dan /api/health dari alat web gagal diakses; ini bukan bukti aplikasi down maupun bukti aplikasi live.
+- QA browser/device desktop dan mobile, console/network, dan pemeriksaan aktual cache PWA pada perangkat belum dilakukan.
+
+### 23.4 NEXT TASK
+1. Selesaikan dokumentasi HEAD terbaru dan verifikasi GitHub Actions untuk commit dokumentasi.
+2. Verifikasi Hostless build dan deployment SHA Live melalui akses Hostless/log yang sah; jangan menyamakan GitHub Actions dengan deployment.
+3. QA browser desktop dan HP: dashboard, filter Screener, CSV export, Watchlist, Analytics, sidebar drawer, Command Center, Exchange Hub, dan PWA update/offline.
+4. Periksa Console/Network: pastikan tidak ada CSP violation untuk Command Center atau Analytics; pastikan request /api/* tidak tersimpan di Cache Storage.
+5. Lanjutkan audit fungsi News, Unlock, Alerts, AI Council, AI Workspace, System Health, dan Command Center; periksa UX loading/error/empty states.
+6. Audit DATA_DIR/EROFS dan persistensi lintas restart setelah konfigurasi volume serta log Hostless dapat diakses.
+7. Lakukan koneksi Binance read-only (Spot dan Futures terpisah) dan Bybit read-only hanya pada deployment terverifikasi; jangan aktifkan trading/withdrawal.
