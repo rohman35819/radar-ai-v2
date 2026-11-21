@@ -921,7 +921,9 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Review diff GitHub mengonfirmasi kelima perbandingan string lama sudah tidak ada dan seluruh lima route memakai helper baru.
 - Test integrasi diperluas; deklarasi test suite tetap 51 (assertion tambahan, bukan test case baru).
 - `npm test` dan `node --check` belum dapat dijalankan lokal: percobaan clone ke working container gagal karena DNS tidak dapat menyelesaikan `github.com`.
-- GitHub combined status untuk dua commit kode mengembalikan daftar status kosong; konektor Actions yang tersedia hanya menampilkan run terkait pull request, sehingga CI push belum bisa dipastikan. Jangan menyebut tes lulus sebelum ada bukti run.
+- GitHub Actions run #245 (ID `44953909090`) pada HEAD `222bbad229cb228694643851781cfba1728eb8e0`: `completed / success`; job `test` dan langkah `Run npm test` sukses. Log mengonfirmasi `node --check` seluruh file pada script dan **51 pass, 0 fail, 0 skipped**.
+- Run #244 pada commit README `ffd599e89172503e9d78a30025861b1ff07d8d5d` juga `completed / success`. Combined status endpoint tidak mengembalikan status legacy; verifikasi menggunakan daftar Actions runs dan job logs.
+- Keberhasilan CI membuktikan tes pada GitHub runner, bukan QA browser atau deployment Hostless.
 - Hostless build dan SHA Live tidak tersedia/terverifikasi. Tidak ada perubahan konfigurasi deployment atau kredensial.
 
 ### 26.5 Risiko tersisa dan NEXT TASK
