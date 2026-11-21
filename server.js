@@ -23,6 +23,28 @@ function resolveClientIp(req, trustedProxyHops = 0) {
   return clientIndex >= 0 ? forwarded[clientIndex] : socketIp;
 }
 
+function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweepIntervalMs = 10000, now = Date.now } = {}) {
+  const hits = new Map();
+  let lastSweep = 0;
+  return (key) => {
+    const current = now();
+    if (!hits.has(key) && hits.size >= maxKeys && current - lastSweep >= sweepIntervalMs) {
+      for (const [candidate, timestamps] of hits) {
+        const active = timestamps.filter((timestamp) => current - timestamp < windowMs);
+        if (active.length) hits.set(candidate, active);
+        else hits.delete(candidate);
+      }
+      lastSweep = current;
+    }
+    // Fail closed for new identities when the bounded table is full; never clear active limits.
+    if (!hits.has(key) && hits.size >= maxKeys) return true;
+    const timestamps = (hits.get(key) || []).filter((timestamp) => current - timestamp < windowMs);
+    timestamps.push(current);
+    hits.set(key, timestamps);
+    return timestamps.length > limit;
+  };
+}
+
 function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
   const matchesToken = (expectedValue, provided) => {
@@ -42,13 +64,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   let workspaceTimer = null;
   const workspaceHour = Math.max(0, Math.min(23, Number(process.env.AI_WORKSPACE_HOUR || 10)));
   const reportHour = Math.max(0, Math.min(23, Number(process.env.AI_REPORT_HOUR || 9)));
-  const hits = new Map();
-  const limited = (ip) => { // 60 req/menit/IP
-    const now = Date.now(), h = (hits.get(ip) || []).filter((t) => now - t < 60000);
-    h.push(now); hits.set(ip, h);
-    if (hits.size > 5000) hits.clear();
-    return h.length > 60;
-  };
+  const limited = createRateLimiter({ limit: 60, windowMs: 60000, maxKeys: 5000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src).catch((e) => console.error('refresh error', e.message)).finally(() => { busy = null; }));
 
   const workspaceContext = () => ({
@@ -248,4 +264,4 @@ if (require.main === module) {
   app.start().listen(cfg.port, () => console.log(`RADAR AI V2 di port ${cfg.port}`));
   process.on('SIGTERM', () => { app.stop(); process.exit(0); });
 }
-module.exports = { createApp, resolveClientIp };
+module.exports = { createApp, resolveClientIp, createRateLimiter };
