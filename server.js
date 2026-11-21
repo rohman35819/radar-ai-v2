@@ -73,6 +73,28 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
         if (url.pathname === '/api/ai/workspace' && req.method === 'GET') {
           return send(res, 200, { status: 'success', workspace: st.aiWorkspace || null }, 'application/json', { 'cache-control': 'no-store' });
         }
+        if (url.pathname === '/api/ai/command' && req.method === 'POST') {
+          if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'ADMIN_TOKEN tidak cocok' });
+          let size = 0; const chunks = [];
+          req.on('data', (chunk) => { size += chunk.length; if (size <= 10000) chunks.push(chunk); });
+          req.on('end', () => {
+            if (size > 10000) return send(res, 413, { status: 'error', message: 'Perintah terlalu panjang' });
+            let body; try { body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); } catch { return send(res, 400, { status: 'error', message: 'Format perintah tidak valid' }); }
+            const instruction = typeof body.instruction === 'string' ? body.instruction.trim().slice(0, 2000) : '';
+            if (!instruction) return send(res, 400, { status: 'error', message: 'Tulis perintah terlebih dahulu' });
+            const allowed = ['gemini', 'groq', 'openrouter', 'openai'];
+            const participants = Array.isArray(body.participants) ? [...new Set(body.participants.filter((p) => allowed.includes(p)))] : allowed;
+            if (!participants.length) return send(res, 400, { status: 'error', message: 'Pilih minimal satu peserta rapat' });
+            if (workspaceBusy) return send(res, 409, { status: 'running', message: 'Rapat sebelumnya masih berlangsung' });
+            const commandId = 'meeting-' + Date.now();
+            workspaceBusy = runWorkspaceReview({ ...workspaceContext(), instruction, participants })
+              .then((result) => { result.command_id = commandId; result.instruction = instruction; st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result }; ingest.save(cfg, st); return result; })
+              .catch((e) => { console.error('AI command error', String(e.message || e).slice(0, 160)); return null; })
+              .finally(() => { workspaceBusy = null; });
+            return send(res, 202, { status: 'started', command_id: commandId }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
         if (url.pathname === '/api/ai/workspace/run' && req.method === 'POST') {
           if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'Dilarang' });
           if (workspaceBusy) return send(res, 202, { status: 'running' });
