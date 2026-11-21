@@ -194,7 +194,15 @@ function render(){
  document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
  if(tab==='overview')renderOverview();else if(tab==='screener')renderScreener();else if(tab==='watch')renderWatch();else if(tab==='analytics')renderAnalytics();else if(tab==='news')renderNews();else if(tab==='unlock')renderUnlock();else if(tab==='alerts')renderAlerts();else if(tab==='ai')renderAI();else if(tab==='workspace')renderWorkspace();else renderSystem();
 }
-function navigate(next){tab=next;render();$('#sidebar').classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});}
+function setSidebarOpen(open){
+ const sidebar=$('#sidebar'),toggle=$('#menu-toggle');
+ sidebar.classList.toggle('open',open);
+ document.body.classList.toggle('sidebar-open',open);
+ toggle.setAttribute('aria-expanded',String(open));
+ toggle.setAttribute('aria-label',open?'Tutup menu':'Buka menu');
+}
+function closeSidebar(){setSidebarOpen(false);}
+function navigate(next){tab=next;render();closeSidebar();window.scrollTo({top:0,behavior:'smooth'});}
 function updateStatus(){
  if(!data)return;
  const age=data.last_ok?Date.now()-Date.parse(data.last_ok):Infinity,stale=Boolean(data.stale)||age>30*60000;
@@ -225,7 +233,10 @@ document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>
 $('.brand').addEventListener('click',e=>{e.preventDefault();navigate('overview');});
 $('#refresh').addEventListener('click',refreshNow);
 $('#theme').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;try{localStorage.setItem('radar-theme-v2',next);}catch{}});
-$('#menu-toggle').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
+$('#menu-toggle').addEventListener('click',()=>setSidebarOpen(!$('#sidebar').classList.contains('open')));
+$('#sidebar-backdrop').addEventListener('click',closeSidebar);
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('#sidebar').classList.contains('open'))closeSidebar();});
+window.addEventListener('resize',()=>{if(window.innerWidth>760)closeSidebar();});
 try{const saved=localStorage.getItem('radar-theme-v2');if(saved)document.documentElement.dataset.theme=saved;}catch{}
 load();setInterval(load,120000);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
