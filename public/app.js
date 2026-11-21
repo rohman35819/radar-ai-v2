@@ -5,7 +5,7 @@ const money = (v) => v == null ? 'N/A' : v >= 1e9 ? '$' + (v / 1e9).toFixed(2) +
 const pct = (v) => v == null ? h('span', {}, 'N/A') : h('span', { class: v >= 0 ? 'up' : 'dn' }, (v > 0 ? '+' : '') + v.toFixed(1) + '%');
 const x = (v) => v == null ? 'N/A' : v.toFixed(2) + 'x';
 const FLAG = { fdv_unknown: 'FDV tidak diketahui', fdv_gt_5x_mcap: 'FDV >5x MCap', volume_gt_mcap: 'Volume > MCap', stale: 'Data basi' };
-let data = null, aiGroup = null, tab = 'screener', watch = [];
+let data = null, aiGroup = null, aiWorkspace = null, tab = 'screener', watch = [];
 try { watch = JSON.parse(localStorage.getItem('watch') || '[]'); } catch {}
 const saveWatch = () => { try { localStorage.setItem('watch', JSON.stringify(watch)); } catch {} };
 
@@ -32,10 +32,43 @@ function renderGroup() {
   (g.analyses || []).forEach(a => v.append(h('div', { class: 'card' }, h('div', { class: 'row' }, h('b', {}, (a.provider || 'AI').toUpperCase()), h('span', { class: a.error ? 'dn' : 'tag' }, a.error ? 'Gagal' : a.decision)), a.error ? h('p', {}, a.error) : h('p', {}, a.summary || ''), ...(a.reasons || []).map(x => h('div', { class: 'muted' }, '• ' + x)), ...(a.risks || []).map(x => h('div', { class: 'tag' }, x)))));
   v.append(h('div', { class: 'card' }, h('b', {}, 'Risiko keputusan akhir'), ...(f.risks || []).map(x => h('div', { class: 'tag' }, x)), h('div', { class: 'muted' }, 'Diskusi AI adalah analisis, bukan jaminan hasil trading. Tidak ada transaksi otomatis.')));
 }
+async function loadWorkspace() { try { const r = await fetch('/api/ai/workspace'); if (!r.ok) throw 0; const j = await r.json(); aiWorkspace = j.workspace; } catch {} }
+function renderWorkspace() {
+  const v = $('#view'); v.replaceChildren();
+  const review = aiWorkspace?.last;
+  if (!review) return v.append(h('div', { class: 'card' }, h('b', {}, 'Ruang Kerja AI belum memiliki hasil'), h('p', {}, 'Empat anggota AI akan memeriksa RADAR secara mandiri setiap hari pukul 10.00 WIB. Hasil pertama muncul setelah jadwal berjalan dan API tersedia.'), h('div', { class: 'muted' }, 'Jalankan manual melalui endpoint admin jika diperlukan. Tidak ada kode yang diubah otomatis.')));
+  v.append(h('div', { class: 'card' },
+    h('div', { class: 'row' }, h('b', {}, 'Rapat kerja mandiri'), h('span', { class: review.status === 'completed' ? 'up' : 'tag' }, review.status === 'completed' ? 'Selesai' : 'Belum lengkap')),
+    h('div', { class: 'muted' }, new Date(review.created_at).toLocaleString() + ' · ' + (review.agent_count || 0) + '/4 AI aktif'),
+    h('p', {}, 'Setiap anggota mencari masalah dan peluang dari sudut pandang berbeda. Usulan belum menjadi keputusan atau perubahan kode.')));
+  (review.agents || []).forEach(a => {
+    const card = h('div', { class: 'card' },
+      h('div', { class: 'row' }, h('b', {}, (a.provider || 'AI').toUpperCase()), h('span', { class: a.error ? 'dn' : 'tag' }, a.error ? 'Gagal' : (a.proposals || []).length + ' usulan')),
+      a.error ? h('p', { class: 'dn' }, a.error) : h('p', {}, a.observation || 'Belum ada catatan'));
+    (a.proposals || []).forEach((p, i) => {
+      card.append(h('div', { class: 'proposal' },
+        h('div', { class: 'row' }, h('b', {}, (i + 1) + '. ' + p.title), h('span', { class: 'tag' }, (p.priority || 'medium').toUpperCase())),
+        h('p', {}, p.problem),
+        h('div', { class: 'muted' }, 'Manfaat: ' + p.benefit),
+        h('div', { class: 'muted' }, 'Usaha: ' + (p.effort || 'medium') + ' · Risiko: ' + (p.risk || 'belum dijelaskan')),
+        ...(p.files || []).map(file => h('span', { class: 'file-chip' }, file)),
+        ...(p.acceptance_criteria || []).map(item => h('div', { class: 'muted' }, '✓ ' + item))
+      ));
+    });
+    if (a.challenge) card.append(h('div', { class: 'muted' }, 'Tantangan: ' + a.challenge));
+    if (a.self_critique) card.append(h('div', { class: 'muted' }, 'Evaluasi diri: ' + a.self_critique));
+    v.append(card);
+  });
+  v.append(h('div', { class: 'card' },
+    h('b', {}, 'Keputusan Direktur Utama'),
+    h('p', {}, review.director_status || 'Menunggu penilaian Direktur Utama'),
+    h('div', { class: 'muted' }, review.safety || 'Usulan saja. Tidak ada perubahan kode otomatis.')));
+}
 function render() {
   const v = $('#view'); v.replaceChildren();
   $('#tools').hidden = !(tab === 'screener' || tab === 'watch');
   if (tab === 'ai') return renderGroup();
+  if (tab === 'workspace') return renderWorkspace();
   if (!data) return v.append(h('div', { class: 'card' }, 'Belum ada data.'));
   const q = $('#q').value.trim().toLowerCase(), k = $('#sort').value;
   const list = (tab === 'watch' ? data.tokens.filter((t) => watch.includes(t.id)) : data.tokens)
@@ -70,7 +103,7 @@ function status() {
 async function loadGroup() { try { const r = await fetch('/api/ai/group'); if (!r.ok) throw 0; const j = await r.json(); aiGroup = j.group; } catch {} }
 async function load() {
   try { const r = await fetch('/api/snapshot'); if (!r.ok) throw 0; data = await r.json(); } catch { $('#status').textContent = 'Offline/gagal memuat'; }
-  await loadGroup(); status(); render();
+  await loadGroup(); await loadWorkspace(); status(); render();
 }
 document.querySelectorAll('#tabs button').forEach((b) => b.onclick = () => { tab = b.dataset.t; document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b)); render(); });
 $('#q').oninput = render; $('#sort').onchange = render;
