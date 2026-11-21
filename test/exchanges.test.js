@@ -122,13 +122,16 @@ test('server menyediakan status dan data akun melalui route read-only tanpa secr
     account: async (name) => ({ exchange: name, connected: true, checked_at: '2026-11-22T00:00:00.000Z', account: { spot: { balances: [] } } }),
     market: async (name, symbol) => ({ exchange: name, symbol, spot: { last_price: 1 }, futures: null }),
   };
-  const app = createApp({ state, exchangeService: service });
+  const app = createApp({ state, exchangeService: service, exchangeAccessToken: 'owner-session-test-token' });
   await new Promise((resolve) => app.server.listen(0, resolve));
   const base = 'http://127.0.0.1:' + app.server.address().port;
   try {
     const status = await (await fetch(base + '/api/exchanges/status')).json();
     assert.equal(status.exchanges.binance.configured, true);
-    const accountResponse = await fetch(base + '/api/exchanges/binance/account');
+    assert.equal(status.access_configured, true);
+    const denied = await fetch(base + '/api/exchanges/binance/account');
+    assert.equal(denied.status, 401);
+    const accountResponse = await fetch(base + '/api/exchanges/binance/account', { headers: { 'x-exchange-access-token': 'owner-session-test-token' } });
     const account = await accountResponse.json();
     assert.equal(accountResponse.status, 200);
     assert.equal(account.connected, true);
@@ -136,6 +139,22 @@ test('server menyediakan status dan data akun melalui route read-only tanpa secr
     const market = await (await fetch(base + '/api/exchanges/market?exchange=binance&symbol=BTCUSDT')).json();
     assert.equal(market.symbol, 'BTCUSDT');
     assert.equal((await fetch(base + '/api/exchanges/unknown/account')).status, 404);
+  } finally { app.stop(); }
+});
+
+
+test('private exchange account routes require a configured owner token', async () => {
+  const { createApp } = require('../server');
+  const state = { tokens: [], fundamentals: {}, vol10m: {}, health: {}, news: [], unlocks: [], alerts: [], lastOk: null, lastRefresh: null };
+  const service = { status: () => ({ binance: { configured: true, mode: 'read-only' } }), account: async () => { throw new Error('must not be called'); }, market: async () => ({}) };
+  const app = createApp({ state, exchangeService: service, exchangeAccessToken: '' });
+  await new Promise((resolve) => app.server.listen(0, resolve));
+  try {
+    const base = 'http://127.0.0.1:' + app.server.address().port;
+    const response = await fetch(base + '/api/exchanges/binance/account');
+    const body = await response.json();
+    assert.equal(response.status, 503);
+    assert.equal(body.code, 'EXCHANGE_ACCESS_NOT_CONFIGURED');
   } finally { app.stop(); }
 });
 
