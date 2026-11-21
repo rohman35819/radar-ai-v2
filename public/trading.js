@@ -21,6 +21,7 @@ function selectExchange(name){
  document.getElementById('exchange-note').textContent=exchangeCopy[selected].note;
  updateConnectionUi();
  clearAccount();
+ clearMarket();
 }
 document.querySelectorAll('[data-exchange-tab]').forEach(button=>{
  button.addEventListener('click',()=>selectExchange(button.dataset.exchangeTab));
@@ -103,6 +104,40 @@ async function loadExchangeStatus(){
   Object.assign(exchangeConfigs,body.exchanges||{});updateConnectionUi();
  }catch(error){feedback.textContent='Tidak dapat memeriksa konfigurasi backend. Pastikan versi aplikasi sudah ter-deploy.';document.getElementById('api-state').textContent='Backend exchange belum tersedia';}
 }
+const marketButton=document.getElementById('load-market');
+const marketOutput=document.getElementById('market-data');
+const marketFeedback=document.getElementById('market-feedback');
+function clearMarket(){
+ marketOutput.replaceChildren();const p=document.createElement('p');p.className='muted';p.textContent='Belum ada harga market.';marketOutput.append(p);
+ marketFeedback.textContent='Harga publik, tanpa API key.';
+}
+function renderMarket(data){
+ marketOutput.replaceChildren();
+ const rows=[];
+ for(const [label,item] of [['Spot',data.spot],['Futures / Linear',data.futures]]){
+  if(item)rows.push([label,money(item.last_price),Number(item.change_pct).toFixed(2)+'%',money(item.high_24h),money(item.low_24h),money(item.quote_volume_24h)]);
+ }
+ if(rows.length)marketOutput.append(table(['Pasar','Last price','24h','High 24h','Low 24h','Quote volume'],rows));
+ else{const p=document.createElement('p');p.className='muted';p.textContent='Pair tidak tersedia pada pasar ini.';marketOutput.append(p);}
+ const spot=data.spot;
+ const entry=document.getElementById('entry');
+ if(spot&&spot.last_price>0&&!entry.value)entry.value=String(spot.last_price);
+ marketFeedback.textContent='Harga '+data.symbol+' diperbarui · '+new Date(data.checked_at).toLocaleTimeString()+' · data publik.';
+}
+marketButton.addEventListener('click',async()=>{
+ const requestedExchange=activeExchange;
+ const symbol=document.getElementById('pair').value.trim().toUpperCase();
+ marketButton.disabled=true;marketFeedback.textContent='Mengambil ticker '+symbol+'…';
+ try{
+  const query=new URLSearchParams({exchange:requestedExchange.toLowerCase(),symbol});
+  const response=await fetch('/api/exchanges/market?'+query.toString(),{cache:'no-store'});
+  const body=await response.json();
+  if(!response.ok||body.status!=='success')throw new Error(body.message||'Data market gagal diambil.');
+  if(activeExchange===requestedExchange)renderMarket(body);
+ }catch(error){
+  if(activeExchange===requestedExchange)marketFeedback.textContent=error.message;
+ }finally{marketButton.disabled=false;}
+});
 connectButton.addEventListener('click',async()=>{
  const requestedExchange=activeExchange;
  connectButton.disabled=true;connectButton.textContent='Mengambil data akun…';feedback.textContent='Menghubungi '+requestedExchange+' melalui server RADAR AI…';
