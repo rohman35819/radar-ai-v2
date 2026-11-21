@@ -101,3 +101,9 @@ test('server menyediakan status dan data akun melalui route read-only tanpa secr
     assert.equal((await fetch(base + '/api/exchanges/unknown/account')).status, 404);
   } finally { app.stop(); }
 });
+
+test('menerima nama environment secret key yang umum tanpa mengekspos nilainya', () => {
+  const service = createExchangeService({ env: { BINANCE_API_KEY: 'key', BINANCE_SECRET_KEY: 'secret' }, fetchImpl: async () => response({}) });
+  assert.equal(service.status().binance.configured, true);
+  assert.equal(JSON.stringify(service.status()).includes('secret'), false);
+});
