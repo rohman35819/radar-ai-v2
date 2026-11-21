@@ -68,6 +68,7 @@ function clearAccount(){
  const a=document.createElement('p');a.className='muted';a.textContent='Belum ada data akun.';assetList.append(a);
  const p=document.createElement('p');p.className='muted';p.textContent='Belum ada posisi.';positionList.append(p);
  document.getElementById('account-checked-at').textContent='Data privat tidak disimpan ke database RADAR AI dan tidak digunakan untuk mengirim order.';
+ document.getElementById('account-checked-at').classList.remove('account-warning');
  accountConnected=false;
  refreshAccountButton.disabled=true;
 }
@@ -186,8 +187,8 @@ async function connectExchange(){
   if(activeExchange===requestedExchange&&requestId===accountRequestId)renderAccount(body);
  }catch(error){
   if(activeExchange===requestedExchange&&requestId===accountRequestId){
-   accountConnected=false;refreshAccountButton.disabled=true;
-   summary.replaceChildren();const empty=document.createElement('div');empty.className='account-empty account-error';empty.textContent=error.name==='TimeoutError'?'Server terlalu lama merespons. Coba lagi beberapa saat.':error.message;summary.append(empty);
+   clearAccount();
+   const empty=document.createElement('div');empty.className='account-empty account-error';empty.textContent=error.name==='TimeoutError'?'Server terlalu lama merespons. Coba lagi beberapa saat.':error.message;summary.append(empty);
    document.getElementById('exchange-status').textContent='KONEKSI GAGAL';
    document.getElementById('hub-status').textContent='READ-ONLY / PERLU PEMERIKSAAN';
    document.getElementById('api-state').textContent='Koneksi belum berhasil';
