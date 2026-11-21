@@ -57,6 +57,12 @@ Koneksi privat dilindungi token pemilik pada header `x-exchange-access-token`; t
 - Watchlist tersimpan di browser perangkat, bukan server.
 - Bukan saran keuangan.
 
+## Command Center
+- Halaman `/command.html` menjalankan rapat multi-agent melalui `POST /api/ai/command`; pilih Gemini, Groq, OpenRouter, dan/atau OpenAI.
+- Masukkan `ADMIN_TOKEN` pada kolom akses halaman. Token hanya dipakai di header permintaan, tidak disimpan di localStorage/sessionStorage, dan dikosongkan setelah proses. Jangan kirim token melalui chat.
+- Hasil dipantau melalui `GET /api/ai/workspace` berdasarkan `command_id`; halaman menampilkan putaran diskusi, usulan, error provider, dan notulen.
+- Command Center hanya menghasilkan analisis/usulan. Tidak mengubah kode, merge, atau mengirim order trading otomatis.
+
 ## AI Group (uji coba)
 - Env: `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `OPENAI_API_KEY` (jangan commit key).
 - Model OpenAI default: `gpt-6-luna`; dapat diganti dengan `OPENAI_MODEL`. OpenAI API berbayar sesuai token yang digunakan; pantau biaya/budget project.\n- Model Groq default: `openai/gpt-oss-20b`; dapat diganti dengan `GROQ_MODEL`.
