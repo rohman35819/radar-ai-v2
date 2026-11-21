@@ -21,7 +21,7 @@ const dateTime = (v) => v ? new Date(v).toLocaleString('id-ID',{dateStyle:'mediu
 const esc = (v) => String(v ?? '—');
 const FLAG = {fdv_unknown:'FDV tidak diketahui',fdv_gt_5x_mcap:'FDV > 5x MCap',volume_gt_mcap:'Volume > MCap',stale:'Data basi'};
 const TITLES = {overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
-let data=null, aiGroup=null, aiWorkspace=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer;
+let data=null, aiGroup=null, aiWorkspace=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false;
 let screenerFilters={q:'',trend:'all',sort:'market_cap'},screenerVisible=[];
 try {
  const stored=JSON.parse(localStorage.getItem('radar-watch')||'[]');
@@ -72,7 +72,7 @@ function tokenTable(list,limit=100){
 function renderOverview(){
  const v=$('#view');v.replaceChildren();
  const s=totals(),ts=getTokens(),health=Object.values(data?.health||{}),healthy=health.filter(x=>x.ok).length;
- v.append(el('div',{class:'welcome-row'},el('div',{},el('div',{class:'eyebrow'},'MARKET PULSE / LIVE DATA'),el('h2',{},'Selamat datang di RADAR.'),el('p',{class:'muted'},'Satu ruang untuk memantau pasar, menemukan peluang, dan membaca analisis AI.')),el('div',{class:'updated-box'},el('small',{},'PEMBARUAN TERAKHIR'),el('b',{},dateTime(data?.last_ok)),el('span',{class:'live-chip'},data?.stale?'DATA PERLU DICEK':'● DATA TERHUBUNG'))));
+ v.append(el('div',{class:'welcome-row'},el('div',{},el('div',{class:'eyebrow'},'MARKET PULSE / LIVE DATA'),el('h2',{},'Selamat datang di RADAR.'),el('p',{class:'muted'},'Satu ruang untuk memantau pasar, menemukan peluang, dan membaca analisis AI.')),el('div',{class:'updated-box'},el('small',{},'PEMBARUAN TERAKHIR'),el('b',{},dateTime(data?.last_ok)),el('span',{class:'live-chip'},(data?.stale||!snapshotReachable)?'DATA PERLU DICEK':'● DATA TERHUBUNG'))));
  v.append(el('div',{class:'stats-grid'},
   statCard('ASET TERPANTAU',s.count.toLocaleString('id-ID'),'Token lolos filter screener','◈'),
   statCard('TOTAL MARKET CAP',money(s.cap),'Agregat aset dalam radar','◫'),
@@ -199,10 +199,10 @@ async function runWorkspaceNow(){
 function renderSystem(){
  const v=$('#view');v.replaceChildren();const health=data?.health||{};
  v.append(sectionHead('System Health','Transparansi status sumber data dan runtime.'));
- v.append(el('div',{class:'stats-grid'},statCard('API STATUS',data?'ONLINE':'OFFLINE','Dashboard dapat membaca snapshot','◉',data?'positive':'negative'),statCard('LAST SUCCESS',dateTime(data?.last_ok),'Refresh terakhir yang berhasil','↻'),statCard('TOKEN FEED',getTokens().length,'Token tersedia','◈'),statCard('ALERT LOG',(data?.alerts||[]).length,'Riwayat tersimpan','⌁')));
+ v.append(el('div',{class:'stats-grid'},statCard('API STATUS',data&&snapshotReachable?'ONLINE':'OFFLINE',snapshotReachable?'Snapshot berhasil dijangkau':'Server tidak dapat dijangkau; data lama mungkin tampil','◉',snapshotReachable?'positive':'negative'),statCard('LAST SUCCESS',dateTime(data?.last_ok),'Refresh terakhir yang berhasil','↻'),statCard('TOKEN FEED',getTokens().length,'Token tersedia','◈'),statCard('ALERT LOG',(data?.alerts||[]).length,'Riwayat tersimpan','⌁')));
  const rows=Object.entries(health);
  v.append(card(sectionHead('Data Source Monitor','Status setiap sumber yang dipakai server.'),...rows.map(([name,s])=>el('div',{class:'source-row'},el('div',{},el('b',{},name.toUpperCase()),el('small',{},dateTime(s.at)),s.error?el('small',{class:'negative'},s.error):null),el('span',{class:s.ok?'source-ok':'source-error'},s.ok?'HEALTHY':'ERROR')))));
- v.append(card(sectionHead('Konfigurasi & batas sistem','Informasi yang dapat dibaca dari API snapshot.'),el('div',{class:'detail-grid'},el('div',{},el('small',{},'Status data'),el('b',{},data?.stale?'Stale / perlu refresh':'Aktif')),el('div',{},el('small',{},'Telegram'),el('b',{},data?.config_needed?.telegram?'Belum dikonfigurasi':'Terkonfigurasi')),el('div',{},el('small',{},'CoinGecko key'),el('b',{},data?.config_needed?.coingecko_key?'Tidak tersedia':'Terkonfigurasi')),el('div',{},el('small',{},'Unlock source'),el('b',{},data?.config_needed?.unlock_source?'Belum tersedia':'Terkonfigurasi'))),el('p',{class:'muted'},'API key dan token tidak pernah ditampilkan di dashboard.')));
+ v.append(card(sectionHead('Konfigurasi & batas sistem','Informasi yang dapat dibaca dari API snapshot.'),el('div',{class:'detail-grid'},el('div',{},el('small',{},'Status data'),el('b',{},(data?.stale||!snapshotReachable)?'Stale / koneksi perlu dicek':'Aktif')),el('div',{},el('small',{},'Telegram'),el('b',{},data?.config_needed?.telegram?'Belum dikonfigurasi':'Terkonfigurasi')),el('div',{},el('small',{},'CoinGecko key'),el('b',{},data?.config_needed?.coingecko_key?'Tidak tersedia':'Terkonfigurasi')),el('div',{},el('small',{},'Unlock source'),el('b',{},data?.config_needed?.unlock_source?'Belum tersedia':'Terkonfigurasi'))),el('p',{class:'muted'},'API key dan token tidak pernah ditampilkan di dashboard.')));
 }
 function render(){
  $('#page-title').textContent=TITLES[tab]||'RADAR AI';$('#crumb').textContent=(tab||'overview').toUpperCase();
@@ -229,8 +229,9 @@ function updateStatus(){
 async function load(){
  let snapshotOk=false;
  try{
-  const r=await fetch('/api/snapshot',{cache:'no-store'});if(!r.ok)throw new Error('snapshot '+r.status);data=await r.json();snapshotOk=true;
+  const r=await fetch('/api/snapshot',{cache:'no-store'});if(!r.ok)throw new Error('snapshot '+r.status);data=await r.json();snapshotOk=true;snapshotReachable=true;
  }catch(e){
+  snapshotReachable=false;
   $('#status').textContent='Gagal menghubungkan';
   $('#side-status').textContent='Koneksi bermasalah';
   $('#banner').hidden=false;
