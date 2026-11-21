@@ -91,7 +91,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
               .then((result) => { result.command_id = commandId; result.instruction = instruction; st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result }; ingest.save(cfg, st); return result; })
               .catch((e) => { console.error('AI command error', String(e.message || e).slice(0, 160)); return null; })
               .finally(() => { workspaceBusy = null; });
-            return send(res, 202, { status: 'started' }, 'application/json', { 'cache-control': 'no-store' });
+            return send(res, 202, { status: 'started', command_id: commandId }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
