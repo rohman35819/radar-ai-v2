@@ -6,6 +6,7 @@ const ingest = require('./lib/ingest');
 const sources = require('./lib/sources');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
+const { runWorkspaceReview } = require('./lib/ai/workspace');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
@@ -16,6 +17,9 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
   let busy = null;
   let aiBusy = null;
   let aiTimer = null;
+  let workspaceBusy = null;
+  let workspaceTimer = null;
+  const workspaceHour = Math.max(0, Math.min(23, Number(process.env.AI_WORKSPACE_HOUR || 10)));
   const reportHour = Math.max(0, Math.min(23, Number(process.env.AI_REPORT_HOUR || 9)));
   const hits = new Map();
   const limited = (ip) => { // 60 req/menit/IP
@@ -25,6 +29,21 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
     return h.length > 60;
   };
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src).catch((e) => console.error('refresh error', e.message)).finally(() => { busy = null; }));
+
+  const workspaceContext = () => ({
+    market: { token_count: st.tokens.length, symbols: st.tokens.slice(0, 12).map((t) => t.symbol), stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 },
+    sources: Object.fromEntries(Object.entries(st.health || {}).map(([k, v]) => [k, { ok: Boolean(v.ok), error: v.ok ? null : String(v.error || '').slice(0, 100) }])),
+    dashboard_sections: ['Screener', 'Watchlist', 'Berita', 'Unlock', 'Alert', 'Grup AI'],
+    recent_group_summary: st.aiGroup?.last?.final?.summary || null
+  });
+  const runWorkspace = () => {
+    if (workspaceBusy) return workspaceBusy;
+    workspaceBusy = runWorkspaceReview(workspaceContext())
+      .then((result) => { st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result }; ingest.save(cfg, st); return result; })
+      .catch((e) => { console.error('AI workspace error', String(e.message || e).slice(0, 160)); return null; })
+      .finally(() => { workspaceBusy = null; });
+    return workspaceBusy;
+  };
 
   const send = (res, code, body, type = 'application/json', extra = {}) => {
     res.writeHead(code, { 'content-type': type, 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer',
@@ -50,6 +69,15 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
         }
         if (url.pathname === '/api/ai/group' && req.method === 'GET') {
           return send(res, 200, { status: 'success', group: st.aiGroup || null }, 'application/json', { 'cache-control': 'no-store' });
+        }
+        if (url.pathname === '/api/ai/workspace' && req.method === 'GET') {
+          return send(res, 200, { status: 'success', workspace: st.aiWorkspace || null }, 'application/json', { 'cache-control': 'no-store' });
+        }
+        if (url.pathname === '/api/ai/workspace/run' && req.method === 'POST') {
+          if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'Dilarang' });
+          if (workspaceBusy) return send(res, 202, { status: 'running' });
+          runWorkspace();
+          return send(res, 202, { status: 'started' }, 'application/json', { 'cache-control': 'no-store' });
         }
         if (url.pathname === '/api/ai/group/run' && req.method === 'POST') {
           if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'Dilarang' });
@@ -107,14 +135,28 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
       .finally(() => { aiBusy = null; });
     await aiBusy;
   };
+  const runDailyWorkspace = async () => {
+    if (process.env.AI_WORKSPACE_ENABLED === '0') return;
+    const now = new Date();
+    const jakarta = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+    const day = [jakarta.getFullYear(), String(jakarta.getMonth() + 1).padStart(2, '0'), String(jakarta.getDate()).padStart(2, '0')].join('-');
+    if (jakarta.getHours() < workspaceHour || st.aiWorkspace?.dailyReviewDate === day || workspaceBusy) return;
+    workspaceBusy = runWorkspaceReview(workspaceContext())
+      .then((result) => { st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result, dailyReviewDate: day }; ingest.save(cfg, st); })
+      .catch((e) => console.error('AI daily workspace error', String(e.message || e).slice(0, 160)))
+      .finally(() => { workspaceBusy = null; });
+    await workspaceBusy;
+  };
   const start = () => {
     doRefresh();
     timer = setInterval(doRefresh, cfg.refreshMs);
     aiTimer = setInterval(runDailyReport, 60000);
+    workspaceTimer = setInterval(runDailyWorkspace, 60000);
     runDailyReport();
+    runDailyWorkspace();
     return server;
   };
-  const stop = () => { clearInterval(timer); clearInterval(aiTimer); server.close(); };
+  const stop = () => { clearInterval(timer); clearInterval(aiTimer); clearInterval(workspaceTimer); server.close(); };
   return { server, start, stop, state: st, refresh: doRefresh };
 }
 

@@ -39,3 +39,10 @@ Di Android: buka URL di Chrome, menu > "Instal aplikasi".
 - Laporan grup otomatis sekali sehari pukul 09.00 WIB (dapat diubah dengan `AI_REPORT_HOUR`, angka 0-23). Endpoint manual: `POST /api/ai/group/run` dengan header `x-admin-token`; hasil terakhir: `GET /api/ai/group`.
 - Diskusi memakai satu snapshot ringkas, tiga analisis independen, lalu satu review moderator Groq. Jika kurang dari dua analisis valid atau snapshot basi, hasil akhir WAIT.
 - Fitur ini hanya analisis dan laporan. Tidak mengirim order trading. Pastikan `DATA_DIR` persisten agar laporan terakhir tidak hilang setelah restart.
+
+## Ruang Kerja AI (review mandiri)
+- Tab **Ruang Kerja** menampilkan temuan dan proposal mandiri dari Gemini, Groq, OpenRouter, dan OpenAI.
+- Setiap agen memakai sudut pandang berbeda: UX/produk, reliability/QA, arsitektur/riset, dan engineering/keamanan. Mereka mengusulkan maksimal tiga perbaikan dan menyertakan manfaat, risiko, file terkait, serta kriteria penerimaan.
+- Review otomatis sekali sehari pukul 10.00 WIB (ubah dengan `AI_WORKSPACE_HOUR`, angka 0-23). Set `AI_WORKSPACE_ENABLED=0` untuk menonaktifkan. Endpoint manual: `POST /api/ai/workspace/run` dengan header `x-admin-token`; hasil: `GET /api/ai/workspace`.
+- Review memerlukan API key provider. Satu siklus dapat memanggil maksimal empat provider; OpenAI API dapat menimbulkan biaya token. Pantau anggaran provider.
+- Review hanya menghasilkan usulan. Belum ada agen yang mengubah kode otomatis; setiap implementasi harus melewati Direktur Utama, pengujian, draft PR, dan persetujuan pemilik.
