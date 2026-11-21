@@ -9,6 +9,35 @@ const { createApp } = require('../server');
 const ingest = require('../lib/ingest');
 
 const NOW = Date.parse('2026-11-20T12:00:00Z');
+
+test('storage: file state yang belum ada menghasilkan state awal', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'radar-state-'));
+  assert.deepStrictEqual(ingest.load({ dataDir: dir }), ingest.emptyState());
+});
+
+test('storage: state tersimpan dipulihkan dan JSON rusak tidak di-reset diam-diam', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'radar-state-'));
+  const stateFile = path.join(dir, 'state.json');
+  fs.writeFileSync(stateFile, JSON.stringify({ tokens: [{ id: 'persisted' }] }));
+  assert.strictEqual(ingest.load({ dataDir: dir }).tokens[0].id, 'persisted');
+  fs.writeFileSync(stateFile, '{broken');
+  assert.throws(() => ingest.load({ dataDir: dir }), SyntaxError);
+});
+
+test('storage: EROFS saat atomic rename dipropagasi dan state lama tetap utuh', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'radar-state-'));
+  const stateFile = path.join(dir, 'state.json');
+  fs.writeFileSync(stateFile, JSON.stringify({ marker: 'old' }));
+  const originalRename = fs.renameSync;
+  fs.renameSync = () => { const error = new Error('read-only filesystem'); error.code = 'EROFS'; throw error; };
+  try {
+    assert.throws(() => ingest.save({ dataDir: dir }, { marker: 'new' }), (error) => error.code === 'EROFS');
+  } finally {
+    fs.renameSync = originalRename;
+  }
+  assert.deepStrictEqual(JSON.parse(fs.readFileSync(stateFile, 'utf8')), { marker: 'old' });
+  assert.ok(!fs.existsSync(stateFile + '.tmp'));
+});
 const coin = (o) => ({ id: 'a', symbol: 'aa', name: 'A', current_price: 1, market_cap: 5e6, total_volume: 1e6, fully_diluted_valuation: 1e7,
   max_supply: null, last_updated: '2026-11-20T11:55:00Z', price_change_percentage_24h: 2, ...o });
 
