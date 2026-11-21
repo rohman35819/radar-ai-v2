@@ -97,6 +97,7 @@ test('integrasi server (sumber dimock)', async () => {
   const base = `http://127.0.0.1:${app.server.address().port}`;
   try {
     assert.strictEqual((await fetch(base + '/api/refresh', { method: 'POST' })).status, 403);
+    assert.strictEqual((await fetch(base + '/api/refresh', { method: 'POST', headers: { 'x-admin-token': 'wrong-length' } })).status, 403);
     assert.strictEqual((await fetch(base + '/api/refresh', { method: 'POST', headers: { 'x-admin-token': 'sekret' } })).status, 202);
     await app.refresh();
     const s = await (await fetch(base + '/api/snapshot')).json();
