@@ -86,6 +86,7 @@ test('server menyediakan status dan data akun melalui route read-only tanpa secr
   const service = {
     status: () => ({ binance: { configured: true, mode: 'read-only' }, bybit: { configured: false, mode: 'read-only' } }),
     account: async (name) => ({ exchange: name, connected: true, checked_at: '2026-11-22T00:00:00.000Z', account: { spot: { balances: [] } } }),
+    market: async (name, symbol) => ({ exchange: name, symbol, spot: { last_price: 1 }, futures: null }),
   };
   const app = createApp({ state, exchangeService: service });
   await new Promise((resolve) => app.server.listen(0, resolve));
@@ -98,6 +99,8 @@ test('server menyediakan status dan data akun melalui route read-only tanpa secr
     assert.equal(accountResponse.status, 200);
     assert.equal(account.connected, true);
     assert.equal(JSON.stringify(account).includes('secret'), false);
+    const market = await (await fetch(base + '/api/exchanges/market?exchange=binance&symbol=BTCUSDT')).json();
+    assert.equal(market.symbol, 'BTCUSDT');
     assert.equal((await fetch(base + '/api/exchanges/unknown/account')).status, 404);
   } finally { app.stop(); }
 });
@@ -106,4 +109,43 @@ test('menerima nama environment secret key yang umum tanpa mengekspos nilainya',
   const service = createExchangeService({ env: { BINANCE_API_KEY: 'key', BINANCE_SECRET_KEY: 'secret' }, fetchImpl: async () => response({}) });
   assert.equal(service.status().binance.configured, true);
   assert.equal(JSON.stringify(service.status()).includes('secret'), false);
+});
+
+test('Binance public ticker dinormalisasi tanpa mengirim API key', async () => {
+  const service = createExchangeService({
+    env: {},
+    now: () => 1700000000000,
+    fetchImpl: async (url, options) => {
+      const parsed = new URL(url);
+      assert.equal(options.headers['X-MBX-APIKEY'], undefined);
+      if (parsed.pathname === '/api/v3/ticker/24hr') return response({ lastPrice: '60000', priceChangePercent: '2.5', highPrice: '61000', lowPrice: '59000', quoteVolume: '123456' });
+      if (parsed.pathname === '/fapi/v1/ticker/24hr') return response({ lastPrice: '60010', priceChangePercent: '2.7', highPrice: '61100', lowPrice: '59100', quoteVolume: '234567' });
+      throw new Error('unexpected endpoint');
+    },
+  });
+  const result = await service.market('binance', 'btcusdt');
+  assert.equal(result.symbol, 'BTCUSDT');
+  assert.equal(result.spot.last_price, 60000);
+  assert.equal(result.futures.change_pct, 2.7);
+});
+
+test('Bybit public ticker mengubah price24hPcnt menjadi persen', async () => {
+  const service = createExchangeService({
+    env: {},
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.searchParams.get('category') === 'spot') return response({ retCode: 0, result: { list: [{ lastPrice: '100', price24hPcnt: '0.015', highPrice24h: '105', lowPrice24h: '95', turnover24h: '9000' }] } });
+      return response({ retCode: 0, result: { list: [{ lastPrice: '101', price24hPcnt: '-0.01', highPrice24h: '106', lowPrice24h: '94', turnover24h: '12000' }] } });
+    },
+  });
+  const result = await service.market('bybit', 'ETHUSDT');
+  assert.equal(result.spot.change_pct, 1.5);
+  assert.equal(result.futures.change_pct, -1);
+});
+
+test('simbol market invalid ditolak sebelum request keluar', async () => {
+  let called = false;
+  const service = createExchangeService({ env: {}, fetchImpl: async () => { called = true; return response({}); } });
+  await assert.rejects(service.market('binance', 'BTC/USDT'), (error) => error.code === 'INVALID_MARKET_SYMBOL');
+  assert.equal(called, false);
 });
