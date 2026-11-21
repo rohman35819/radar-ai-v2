@@ -827,3 +827,55 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 5. Lanjutkan audit fungsi News, Token Unlock, Alert Center, AI Council, AI Workspace, dan System Health.
 6. Audit DATA_DIR/EROFS pada konfigurasi volume/log Hostless yang aktual; jangan mengubah path produksi berdasarkan tebakan.
 7. Binance/Bybit tetap read-only; tidak ada live order atau withdrawal.
+
+
+---
+
+## 25. REDESAIN COMMAND CENTER — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 25.1 Tujuan dan temuan awal
+- Pemilik meminta halaman Command Center dibuat jauh lebih rapi, profesional, dan fungsi interaksinya diperbaiki.
+- Audit source awal: halaman `public/command.html` hanya berisi hero sederhana, pilihan peserta, empat prompt statis, chat log, dan composer fixed bawah.
+- `public/command.js` sebelumnya meminta `ADMIN_TOKEN` lewat `window.prompt`, menunggu hasil hanya 30 x 3 detik (90 detik), mengganti isi hasil tanpa struktur visual yang memadai, dan tidak memberi diagnosis terarah untuk status 403/409.
+- Backend `POST /api/ai/command` sudah memvalidasi token admin, membatasi instruksi 2.000 karakter, menerima daftar provider, menolak rapat yang sedang berjalan (409), lalu mengembalikan `command_id`. Hasil akhir tersedia melalui `GET /api/ai/workspace`. Kontrak backend dipertahankan.
+
+### 25.2 Perubahan yang dikirim ke main
+- `public/command.html`: struktur ulang menjadi header navigasi, hero multi-agent, pemilih empat provider, template prompt, area hasil, dan composer dengan input token serta instruksi yang jelas.
+- `public/command.css`: desain ulang navy/blue dengan hierarki section, kartu peserta, prompt cards, hasil diskusi, proposal, notulen, loading/error state, footer, breakpoint tablet/mobile, safe-area inset, dan reduced-motion support.
+- `public/command.js`: token admin sekarang dimasukkan di password field, hanya dikirim melalui header `x-admin-token`, tidak disimpan ke localStorage/sessionStorage, dan dibersihkan setelah proses. Ditambahkan toggle tampil/sembunyikan token, counter 2.000 karakter, auto-resize textarea, Ctrl/Cmd+Enter, pilih semua/kosongkan peserta, template prompt, clear hasil (hanya tampilan, tidak menghapus state server), diagnosis HTTP 403/409, indikator proses, polling sampai 90 x 3 detik (4,5 menit) dan pencocokan hasil berdasarkan `command_id`. Instruksi tetap berada di textarea jika request gagal sebelum diterima server.
+- Hasil tiap putaran sekarang dipisah dengan judul, kartu provider, usulan, prioritas/upaya, kriteria penerimaan, tanggapan silang, notulen, kesepakatan, perbedaan, risiko, dan tindak lanjut. Rendering tetap memakai `textContent`/DOM node, bukan HTML mentah dari model.
+- `public/sw.js`: cache shell dinaikkan dari `radar-shell-v8` menjadi `radar-shell-v9` agar PWA mengambil HTML/CSS/JS Command Center terbaru.
+- `test/service-worker.test.js`: fixture dan ekspektasi versi cache disinkronkan ke v9.
+- `test/command-ui.test.js`: empat tes statis baru untuk struktur UI, penyimpanan token, alur polling/error, dan responsivitas/aksesibilitas.
+- `README.md`: menambahkan panduan Command Center dan memperbarui inventaris dari 47 tes/6 file menjadi 51 tes/7 file.
+
+### 25.3 Keamanan dan kompatibilitas
+- Tidak ada perubahan endpoint/backend, autentikasi server, API provider, trading, exchange, atau penyimpanan state.
+- Token tidak dipersistenkan oleh halaman. Token dihapus setelah proses; jangan memasukkannya ke chat.
+- Perintah hanya meminta analisis multi-agent; tidak menulis kode, melakukan merge, atau mengirim order trading.
+- Clear hasil hanya mengosongkan DOM pada halaman, bukan menghapus hasil tersimpan pada backend.
+- PWA shell cache diperbarui untuk menghindari tampilan aset lama pada instalasi PWA.
+
+### 25.4 File yang diubah
+- `public/command.html`
+- `public/command.css`
+- `public/command.js`
+- `public/sw.js`
+- `test/service-worker.test.js`
+- `test/command-ui.test.js` (baru)
+- `README.md`
+- `RADAR_AI_MASTER_CONTEXT.md`
+
+### 25.5 Pengujian dan status deployment
+- Tes lokal belum dijalankan karena sesi tidak memiliki working copy/runtime Node repository.
+- Empat tes statis baru ditambahkan ke `node --test test/*.test.js`; `npm test` juga menjalankan `node --check public/command.js`. Hasil GitHub Actions untuk HEAD setelah rangkaian commit harus diverifikasi sebelum menyatakan suite PASS.
+- Review source/diff dilakukan melalui GitHub file fetch; browser visual QA, console/network, dan uji interaksi live desktop/mobile belum dapat dilakukan dalam sesi ini.
+- GitHub: perubahan source, cache, tes, dan README tersimpan pada branch `main`; lihat commit terbaru setelah catatan ini untuk SHA final.
+- Hostless build: belum diketahui. Hostless LIVE: belum diverifikasi. Jangan menyamakan commit GitHub atau CI dengan deployment live.
+
+### 25.6 Risiko tersisa dan NEXT TASK
+1. Verifikasi GitHub Actions `npm test` untuk HEAD terbaru; perbaiki kegagalan jika ada.
+2. QA Command Center pada desktop dan mobile: pilihan provider, template prompt, token field, Ctrl/Cmd+Enter, 403/409, polling rapat panjang, hasil tiga putaran, proposal, notulen, dan clear hasil.
+3. Pastikan deployment Hostless memuat `radar-shell-v9` dan SHA terbaru; lakukan hard refresh/reinstall PWA bila aset lama masih tampil.
+4. Verifikasi Hostless build dan versi LIVE secara terpisah; jangan klaim live tanpa bukti.
+5. Lanjutkan prioritas proyek yang belum selesai: verifikasi volume `DATA_DIR`/EROFS dan QA Dashboard/Exchange Hub. Trading tetap OFF.
