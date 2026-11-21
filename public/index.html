@@ -1,11 +1,51 @@
 <!doctype html>
-<html lang="id"><head><meta charset="utf-8">
+<html lang="id">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b1220"><title>RADAR AI</title>
-<link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg"><link rel="apple-touch-icon" href="/icon-192.png">
-<link rel="stylesheet" href="/style.css"></head>
-<body><header><h1>RADAR AI</h1><div id="status" class="muted">memuat…</div></header>
-<div id="banner" hidden></div>
-<nav id="tabs"><button data-t="screener" class="on">Screener</button><button data-t="watch">Watchlist</button><button data-t="news">Berita</button><button data-t="unlock">Unlock</button><button data-t="alerts">Alert</button><button data-t="ai">Grup AI</button><button data-t="workspace">Ruang Kerja</button></nav>
-<div id="tools"><input id="q" placeholder="Cari token…" type="search"><select id="sort"><option value="market_cap">Market cap</option><option value="volume_24h">Volume</option><option value="vol_mcap">Vol/MCap</option><option value="change_24h">24j</option><option value="change_7d">7h</option></select></div>
-<main id="view"></main><script src="/app.js"></script></body></html>
+<meta name="theme-color" content="#080d19">
+<meta name="description" content="RADAR AI — crypto intelligence workspace">
+<title>RADAR AI · Intelligence Terminal</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar" id="sidebar">
+  <a class="brand" href="#" data-nav="overview"><span class="brand-mark">R</span><span><b>RADAR<span>AI</span></b><small>INTELLIGENCE TERMINAL</small></span></a>
+  <div class="side-label">WORKSPACE</div>
+  <nav class="side-nav" id="side-nav">
+    <button data-t="overview" class="on"><i>◫</i> Ringkasan <kbd>01</kbd></button>
+    <button data-t="screener"><i>⌕</i> Market Screener <kbd>02</kbd></button>
+    <button data-t="watch"><i>☆</i> Watchlist <kbd>03</kbd></button>
+    <button data-t="analytics"><i>▥</i> Analitik Pasar <kbd>04</kbd></button>
+    <div class="side-label">INTELLIGENCE</div>
+    <button data-t="news"><i>▤</i> News Feed <kbd>05</kbd></button>
+    <button data-t="unlock"><i>◷</i> Token Unlock <kbd>06</kbd></button>
+    <button data-t="alerts"><i>⌁</i> Alert Center <kbd>07</kbd></button>
+    <button data-t="ai"><i>✳</i> AI Council <kbd>08</kbd></button>
+    <button data-t="workspace"><i>⌘</i> AI Workspace <kbd>09</kbd></button>
+    <div class="side-label">SYSTEM</div>
+    <button data-t="system"><i>◉</i> System Health <kbd>10</kbd></button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="live-indicator"><span></span><div><b>RADAR ENGINE</b><small id="side-status">Menghubungkan…</small></div></div>
+    <div class="side-foot">RADAR AI V2 <span>·</span> PRIVATE WORKSPACE</div>
+  </div>
+</aside>
+<div class="main-shell">
+<header class="topbar">
+  <div class="top-left"><button class="mobile-menu" id="menu-toggle" aria-label="Buka menu">☰</button><div><div class="eyebrow">CRYPTO INTELLIGENCE / <span id="crumb">OVERVIEW</span></div><h1 id="page-title">Ringkasan Pasar</h1></div></div>
+  <div class="top-actions"><div class="market-status"><span class="pulse"></span><span id="status">Menghubungkan data…</span></div><button class="icon-btn" id="refresh" title="Muat ulang data">↻</button><button class="icon-btn" id="theme" title="Ganti tema">◐</button><div class="avatar">RA</div></div>
+</header>
+<div id="banner" class="banner" hidden></div>
+<main id="view" class="content"><div class="loading-card">Menyiapkan RADAR Intelligence Terminal…</div></main>
+<footer class="footer"><span>RADAR AI V2 · MARKET INTELLIGENCE</span><span>Data bukan nasihat keuangan · Tidak ada transaksi otomatis</span></footer>
+</div>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/app.js"></script>
+</body>
+</html>
