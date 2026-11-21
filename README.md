@@ -4,7 +4,7 @@ Tanpa dependensi npm (V2.2) (butuh Node >= 20). Backend + dashboard PWA dalam sa
 
 ## Jalankan
     cp .env.example .env   # opsional; isi nilai lalu: export $(grep -v '^#' .env | xargs)
-    npm test               # 28 tes (21 core + 7 exchange)
+    npm test               # 31 tes (21 core + 10 exchange)
     npm start              # http://localhost:3000
 
 ## Pasang
@@ -20,7 +20,7 @@ Di Android: buka URL di Chrome, menu > "Instal aplikasi".
 | Panggilan nyata ke CoinGecko, DeFiLlama, RSS | Jalankan `npm run live-check` di mesin ber-internet (tes API nyata). Telegram: belum diuji |
 | Lonjakan volume | Estimasi dari selisih volume 24j bergulir antar refresh (~10 mnt) vs median selisih token itu sendiri; CoinGecko gratis tidak punya volume per-10-menit asli. Butuh ~1 jam riwayat sebelum aktif |
 | Dashboard/PWA di perangkat Android | **Belum diuji di perangkat**; sintaks dan file statis diperiksa |
-| Exchange Hub Binance/Bybit | Backend read-only dan UI account panel tersedia; koneksi nyata menunggu verifikasi environment Hostless dan izin API |
+| Exchange Hub Binance/Bybit | Backend akun read-only dan ticker market publik tersedia; koneksi akun nyata menunggu verifikasi environment Hostless dan izin API |
 | Token unlock | **Butuh konfigurasi**: tidak ada sumber gratis terverifikasi. Isi `data/unlocks.json` atau `UNLOCKS_URL` (array `[{id (gecko id), symbol, date, amount_usd, pct_supply, source}]`) |
 | Telegram | **Butuh konfigurasi**: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 | CoinGecko Demo key | Disarankan (`COINGECKO_DEMO_KEY`); cek ToS jika komersial |
@@ -41,6 +41,7 @@ Endpoint:
 - `GET /api/exchanges/status`: hanya mengembalikan boolean konfigurasi (tidak mengembalikan nilai key/secret).
 - `GET /api/exchanges/binance/account`: membaca saldo Spot dan, bila diizinkan, wallet/posisi USDⓈ-M Futures.
 - `GET /api/exchanges/bybit/account`: membaca Unified Wallet dan posisi Linear melalui API V5.
+- `GET /api/exchanges/market?exchange=binance|bybit&symbol=BTCUSDT`: membaca ticker publik 24 jam Spot dan Futures/Linear; tidak memerlukan API key.
 
 Koneksi privat dilakukan hanya setelah pengguna menekan tombol pemeriksaan pada Exchange Hub. Data akun hanya diteruskan ke browser untuk ditampilkan dan tidak disimpan ke state RADAR AI. Endpoint ini tidak membuat, mengubah, atau membatalkan order. Koneksi dinyatakan berhasil hanya setelah permintaan privat ke exchange berhasil; keberadaan environment saja bukan bukti koneksi.
 
