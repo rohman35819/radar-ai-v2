@@ -1142,13 +1142,13 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 
 ### 29.5 Verifikasi
 - Review source memastikan cabang hits.clear() sudah dihapus dan rate limiter memakai tabel bounded dengan sweep.
-- Test otomatis penuh harus dikonfirmasi oleh GitHub Actions untuk commit terbaru; tes lokal tidak dijalankan pada sesi ini karena tidak tersedia working copy Node.js.
+- GitHub Actions run #274 pada SHA server.js, #275 pada SHA test, #277 pada SHA README, dan #278 pada HEAD master context saat ini semuanya completed/success. Run #274/#275 menguji source/test; #278 menguji HEAD dokumentasi. Tes lokal tidak dijalankan karena tidak tersedia working copy Node.js.
 - Hostless Build dan LIVE tidak dapat diverifikasi dari akses yang tersedia.
 
 ### 29.6 Commit dan NEXT TASK
 - Commit server.js: 2f2829d1af8e1c32622a1c4b979190411f8284f5.
 - Commit test/radar.test.js: 6da99582095fb47e1e13e382937bafd457209a9b.
-- README dan catatan penutupan akan dicatat setelah CI selesai.
+- Commit README: edb1a1ab43edb78d1926b5e2d7bd2a58fc052195. Commit master context saat verifikasi CI: 9e79b97da3736eea8d58c1c6cf20220497d98ab6.
 - NEXT TASK: audit dan verifikasi volume DATA_DIR/EROFS dengan konfigurasi Hostless aktual; lanjutkan QA dashboard dan Exchange Hub pada browser desktop/mobile; pastikan deployment Hostless dan SHA LIVE dibuktikan terpisah. Jangan mengubah TRUSTED_PROXY_HOPS tanpa bukti rantai proxy.
 
 ## 31. RATE LIMITER BOUNDED-MEMORY HARDENING — 22 NOVEMBER 2026 (ASIA/JAKARTA)
@@ -1168,3 +1168,9 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Run #272 juga membuktikan tes regresi penghapusan data akun privat lulus: 58/58 pada snapshot sebelum tambahan tes rate limiter.
 - Hostless Build dan SHA Live belum terverifikasi. Tidak ada bukti browser QA atau koneksi akun nyata.
 - NEXT TASK: verifikasi CI untuk HEAD setelah dokumentasi ini; lanjutkan QA browser Exchange Hub dan Dashboard; audit DATA_DIR/EROFS berdasarkan konfigurasi volume/log Hostless; kemudian audit modul intelijen lainnya.
+
+### 29.7 Penutupan dan bukti CI
+- GitHub Actions #274 (SHA 2f2829d), #275 (SHA 6da9958), #277 (SHA edb1a1a), dan #278 (SHA 9e79b97) seluruhnya completed/success. Ini memverifikasi tes source, tes baru, dokumentasi README, dan master context; #278 adalah CI sukses untuk HEAD master context sebelum catatan penutupan ini.
+- HEAD branch main yang diperiksa: 9e79b97da3736eea8d58c1c6cf20220497d98ab6. Perubahan dokumentasi penutupan ini akan menghasilkan commit berikutnya.
+- Hostless Build/Live tetap belum diverifikasi. CI GitHub tidak membuktikan deployment Hostless.
+
