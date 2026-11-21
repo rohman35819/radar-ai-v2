@@ -1037,3 +1037,20 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 3. QA interaksi Exchange Hub pada desktop/mobile: switch Binance/Bybit, token tampil/hapus, 401/503, timeout, refresh akun, ticker, tabel saldo/posisi, dan kalkulator.
 4. Setelah deploy terverifikasi, uji koneksi akun read-only tanpa membagikan token di chat.
 5. Pastikan API Binance dan Bybit tetap tanpa izin trading/withdrawal/transfer.
+
+
+### 28.7 Penutupan implementasi dan commit
+- Commit HTML/control token + refresh akun: `577b74a1a0a2ce10efb7d4939bd8aa641291df8e`.
+- Commit penyegaran CSS Exchange Hub: `c800daf8a3dbe2858a891e2785911216adc4e379`.
+- Commit JS timeout, race guard, dan validasi pair: `d51f29bb69718da709c76f50d2312a85f2089c98`.
+- Commit cache PWA v10: `b6b4e95a9c005964fc5a547f8483b3d26a3bde3d`.
+- Commit fixture service worker: `577b74a1a0a2ce10efb7d4939bd8aa641291df8e` (file fixture ikut rangkaian perubahan; lihat riwayat file untuk perubahan terpisah).
+- Commit tes UI Exchange Hub: `599ea9dfd8fe77056b8aa68a428b1a50daf3b477`; penguatan tes hapus token/request stale: `881ee91a81f12e2c8454bde16e44ece42cecc552`.
+- Commit penguatan JS hapus token: `9970d34496d7d4e1db0c892dd70097ab9d49bd88`.
+- README: `02313d5ac06693f0e7b990b9b669f5cded43a32f`; master context awal: `4b1de3b86df17e7b441582df1b7db1f8def2e8d0`.
+- HEAD setelah rangkaian implementasi: `881ee91a81f12e2c8454bde16e44ece42cecc552` sebelum commit catatan penutupan ini.
+- Review statis pada source HEAD: JavaScript `public/trading.js` lolos parse V8; file tes baru lolos parse; delapan assertion source-level untuk kontrol token, refresh akun, timeout, stale-request guard, validasi pair, responsive/focus semuanya PASS.
+- GitHub combined commit status untuk HEAD saat pengecekan mengembalikan daftar kosong; konektor workflow hanya menyediakan pencarian run yang dipicu PR dan tidak menemukan run terkait. Karena itu `npm test`/CI penuh belum dapat dinyatakan lulus.
+- Tidak ada browser automation/device screenshot yang tersedia. Hostless Build dan LIVE SHA tetap belum terverifikasi.
+- Scope tetap Exchange Hub saja. Tidak ada perubahan backend, permission API, trading, withdrawal, Dashboard, atau Command Center.
+- NEXT TASK: verifikasi CI penuh; QA browser desktop/mobile dan Hostless deployment; uji koneksi akun read-only setelah deployment.
