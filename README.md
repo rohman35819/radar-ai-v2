@@ -33,8 +33,8 @@ Di Android: buka URL di Chrome, menu > "Instal aplikasi".
 - Bukan saran keuangan.
 
 ## AI Group (uji coba)
-- Env: `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY` (jangan commit key).
-- Model Groq default: `openai/gpt-oss-20b`; dapat diganti dengan `GROQ_MODEL`.
+- Env: `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `OPENAI_API_KEY` (jangan commit key).
+- Model OpenAI default: `gpt-6-luna`; dapat diganti dengan `OPENAI_MODEL`. OpenAI API berbayar sesuai token yang digunakan; pantau biaya/budget project.\n- Model Groq default: `openai/gpt-oss-20b`; dapat diganti dengan `GROQ_MODEL`.
 - Model OpenRouter default: `openrouter/free`; dapat diganti dengan `OPENROUTER_MODEL`. Pastikan model yang dipilih memang gratis; free routing memiliki batas provider.
 - Laporan grup otomatis sekali sehari pukul 09.00 WIB (dapat diubah dengan `AI_REPORT_HOUR`, angka 0-23). Endpoint manual: `POST /api/ai/group/run` dengan header `x-admin-token`; hasil terakhir: `GET /api/ai/group`.
 - Diskusi memakai satu snapshot ringkas, tiga analisis independen, lalu satu review moderator Groq. Jika kurang dari dua analisis valid atau snapshot basi, hasil akhir WAIT.
