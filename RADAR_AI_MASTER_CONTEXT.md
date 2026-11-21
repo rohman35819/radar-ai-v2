@@ -1151,3 +1151,20 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - README dan catatan penutupan akan dicatat setelah CI selesai.
 - NEXT TASK: audit dan verifikasi volume DATA_DIR/EROFS dengan konfigurasi Hostless aktual; lanjutkan QA dashboard dan Exchange Hub pada browser desktop/mobile; pastikan deployment Hostless dan SHA LIVE dibuktikan terpisah. Jangan mengubah TRUSTED_PROXY_HOPS tanpa bukti rantai proxy.
 
+## 31. RATE LIMITER BOUNDED-MEMORY HARDENING — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 31.1 Temuan dan perubahan
+- Audit keamanan lanjutan menemukan limiter lama dapat mengosongkan seluruh tabel identitas saat jumlah IP melewati ambang, sehingga bucket aktif ikut ter-reset. Perilaku ini dapat melemahkan pembatasan untuk klien yang sudah terkena limit.
+- `server.js` kini menggunakan `createRateLimiter()` dengan tabel maksimum, sweep berkala yang hanya membuang timestamp kedaluwarsa, dan fail-closed untuk identitas baru ketika tabel masih penuh. Bucket aktif tidak dihapus hanya karena ada identitas baru.
+- Opsi `now`, `limit`, `windowMs`, `maxKeys`, dan `sweepIntervalMs` memudahkan tes deterministik. Default API tetap 60 request/menit dan maksimum 5000 identitas.
+
+### 31.2 File dan commit
+- `server.js`: implementasi bounded rate limiter. Commit `2f2829d1af8e1c32622a1c4b979190411f8284f5`.
+- `test/radar.test.js`: coverage tabel identitas terbatas tanpa reset bucket aktif. Commit `6da99582095fb47e1e13e382937bafd457209a9b`.
+- `README.md`: jumlah suite disinkronkan menjadi 59 test case. Commit `b41623009810d2a38e33b180d43ba55b5aee271f`.
+
+### 31.3 Verifikasi dan status
+- GitHub Actions run #274 untuk implementasi dan #275 untuk tes selesai success. Run #275 menjalankan seluruh pemeriksaan sintaks dan `npm test`: 59 tests, 59 pass, 0 fail.
+- Run #272 juga membuktikan tes regresi penghapusan data akun privat lulus: 58/58 pada snapshot sebelum tambahan tes rate limiter.
+- Hostless Build dan SHA Live belum terverifikasi. Tidak ada bukti browser QA atau koneksi akun nyata.
+- NEXT TASK: verifikasi CI untuk HEAD setelah dokumentasi ini; lanjutkan QA browser Exchange Hub dan Dashboard; audit DATA_DIR/EROFS berdasarkan konfigurasi volume/log Hostless; kemudian audit modul intelijen lainnya.
