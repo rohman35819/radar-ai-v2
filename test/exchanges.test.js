@@ -42,6 +42,24 @@ test('Binance menandatangani request di server dan menormalkan saldo serta posis
   assert.equal(JSON.stringify(result).includes(secret), false);
 });
 
+test('Binance reports unavailable positions separately from a successful wallet read', async () => {
+  const service = createExchangeService({
+    env: { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' },
+    fetchImpl: async (url) => {
+      const pathname = new URL(url).pathname;
+      if (pathname === '/api/v3/account') return response({ canTrade: false, balances: [] });
+      if (pathname === '/fapi/v2/account') return response({ totalWalletBalance: '10', availableBalance: '8', totalUnrealizedProfit: '0' });
+      if (pathname === '/fapi/v2/positionRisk') throw new Error('positions unavailable');
+      throw new Error('unexpected endpoint');
+    },
+  });
+  const result = await service.account('binance');
+  assert.equal(result.account.futures.available, true);
+  assert.equal(result.account.futures.positions_available, false);
+  assert.equal(result.account.futures.positions_error, 'FUTURES_POSITIONS_READ_UNAVAILABLE');
+  assert.deepEqual(result.account.futures.positions, []);
+});
+
 test('Bybit signs V5 requests and returns wallet and open positions', async () => {
   const key = 'test-bybit-key', secret = 'test-bybit-secret';
   const service = createExchangeService({
@@ -63,6 +81,22 @@ test('Bybit signs V5 requests and returns wallet and open positions', async () =
   assert.equal(result.account.wallet.coins[0].asset, 'USDT');
   assert.equal(result.account.positions[0].side, 'BUY');
   assert.equal(JSON.stringify(result).includes(secret), false);
+});
+
+test('Bybit reports position API failures instead of returning an empty valid position list', async () => {
+  const service = createExchangeService({
+    env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' },
+    fetchImpl: async (url) => {
+      const pathname = new URL(url).pathname;
+      if (pathname === '/v5/account/wallet-balance') return response({ retCode: 0, result: { list: [{ accountType: 'UNIFIED', coin: [] }] } });
+      if (pathname === '/v5/position/list') return response({ retCode: 10001, retMsg: 'position read failed' });
+      throw new Error('unexpected endpoint');
+    },
+  });
+  const result = await service.account('bybit');
+  assert.equal(result.account.positions_available, false);
+  assert.equal(result.account.positions_error, 'BYBIT_POSITIONS_READ_UNAVAILABLE');
+  assert.deepEqual(result.account.positions, []);
 });
 
 test('kredensial yang tidak lengkap ditolak tanpa request ke exchange', async () => {
