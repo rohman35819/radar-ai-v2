@@ -1,0 +1,88 @@
+name: RADAR live deploy and visual verification
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: radar-live-visual-check
+  cancel-in-progress: true
+
+jobs:
+  verify-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Wait for Hostless release and verify health
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://radar-ai-v2.hostless.app"
+          OK=0
+          for attempt in $(seq 1 48); do
+            CODE=$(curl -sS -o /tmp/health.json -w '%{http_code}' --max-time 10 "$BASE/api/health" || true)
+            if [ "$CODE" = "200" ] && grep -q '"status":"ok"' /tmp/health.json; then
+              echo "Health check passed on attempt $attempt"
+              cat /tmp/health.json
+              OK=1
+              break
+            fi
+            echo "Waiting for Hostless deployment ($attempt/48), HTTP $CODE"
+            sleep 10
+          done
+          test "$OK" = "1"
+          SNAP_CODE=$(curl -sS -o /tmp/snapshot.json -w '%{http_code}' --max-time 20 "$BASE/api/snapshot")
+          test "$SNAP_CODE" = "200"
+          node -e "const s=require('/tmp/snapshot.json'); if(s.status!=='success'||!Array.isArray(s.tokens)||!s.health) process.exit(1); console.log('Snapshot OK; tokens='+s.tokens.length)"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install browser test
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Visual and interaction smoke test
+        run: |
+          mkdir -p artifacts
+          node <<'NODE'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
+            const errors = [];
+            page.on('pageerror', e => errors.push(e.message));
+            page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+            const response = await page.goto('https://radar-ai-v2.hostless.app/', { waitUntil: 'networkidle', timeout: 60000 });
+            if (!response || response.status() !== 200) throw new Error('Homepage did not return HTTP 200');
+            await page.waitForTimeout(5000);
+            await page.screenshot({ path: 'artifacts/radar-desktop.png', fullPage: true });
+            const title = await page.title();
+            const navCount = await page.locator('#side-nav button[data-t]').count();
+            const viewText = await page.locator('#view').innerText();
+            if (!title.includes('RADAR AI')) throw new Error('Unexpected page title: ' + title);
+            if (navCount < 8) throw new Error('Navigation missing: found ' + navCount + ' items');
+            if (/Menyiapkan RADAR Intelligence Terminal/.test(viewText)) throw new Error('Dashboard remained in loading state');
+            await page.setViewportSize({ width: 390, height: 844 });
+            await page.reload({ waitUntil: 'networkidle', timeout: 60000 });
+            await page.waitForTimeout(3000);
+            await page.screenshot({ path: 'artifacts/radar-mobile.png', fullPage: true });
+            if (await page.locator('body').evaluate(el => el.scrollWidth > window.innerWidth + 2)) {
+              throw new Error('Horizontal overflow on 390px mobile viewport');
+            }
+            if (errors.length) throw new Error('Browser errors: ' + errors.slice(0, 8).join(' | '));
+            console.log(JSON.stringify({ title, navCount, desktopText: viewText.slice(0, 300), browserErrors: errors.length }, null, 2));
+            await browser.close();
+          })().catch(e => { console.error(e); process.exit(1); });
+          NODE
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: radar-live-visual-evidence
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
