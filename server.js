@@ -14,6 +14,15 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 const PUB = path.join(__dirname, 'public');
 
+function resolveClientIp(req, trustedProxyHops = 0) {
+  const socketIp = String(req.socket?.remoteAddress || 'unknown');
+  const hops = Number.isInteger(trustedProxyHops) ? Math.max(0, trustedProxyHops) : 0;
+  if (!hops) return socketIp;
+  const forwarded = String(req.headers?.['x-forwarded-for'] || '').split(',').map((value) => value.trim()).filter(Boolean);
+  const clientIndex = forwarded.length - hops;
+  return clientIndex >= 0 ? forwarded[clientIndex] : socketIp;
+}
+
 function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
   const matchesToken = (expectedValue, provided) => {
@@ -66,7 +75,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
 
   const server = http.createServer((req, res) => {
     try {
-      const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+      const ip = resolveClientIp(req, cfg.trustedProxyHops);
       const url = new URL(req.url, 'http://x');
       if (url.pathname.startsWith('/api/')) {
         if (limited(ip)) return send(res, 429, { status: 'error', message: 'Terlalu banyak permintaan' }, 'application/json', { 'retry-after': '60' });
@@ -239,4 +248,4 @@ if (require.main === module) {
   app.start().listen(cfg.port, () => console.log(`RADAR AI V2 di port ${cfg.port}`));
   process.on('SIGTERM', () => { app.stop(); process.exit(0); });
 }
-module.exports = { createApp };
+module.exports = { createApp, resolveClientIp };
