@@ -946,7 +946,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - server.js: menambahkan resolveClientIp(req, trustedProxyHops). Default menggunakan alamat socket langsung dan mengabaikan X-Forwarded-For. Header hanya dipakai bila jumlah proxy tepercaya dikonfigurasi; alamat klien dipilih dari kanan berdasarkan jumlah hop yang dipercaya.
 - lib/ingest.js: menambahkan konfigurasi TRUSTED_PROXY_HOPS, integer non-negatif, default 0.
 - .env.example: menjelaskan opsi dan peringatan untuk hanya mengaktifkannya bila reverse proxy menghapus header masuk dan menyusun ulang header forwarded.
-- test/radar.test.js: menambah tes untuk default socket, 1/2 proxy tepercaya, dan fallback bila header kosong.
+- test/radar.test.js: menambah satu test case (total suite menjadi 52 test case pada 7 file) untuk default socket, 1/2 proxy tepercaya, dan fallback bila header kosong.
 - README.md: dokumentasi rate limit dan trust boundary diperbarui. Tidak mengubah batas 60 permintaan/menit/IP atau kontrak API.
 
 ### 27.3 File yang diubah
@@ -959,8 +959,8 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 
 ### 27.4 Verifikasi
 - Review source GitHub memastikan resolver baru digunakan pada key rate-limit dan konfigurasi default 0.
-- GitHub Actions run #247 untuk perubahan server.js berstatus completed/success. Runs #248–#250 sedang berjalan ketika catatan ini disusun; hasil akhir harus diverifikasi setelah dokumentasi terakhir.
-- Tes lokal tidak dijalankan karena sesi tidak memiliki working copy Node.js. Tes otomatis menunggu GitHub Actions.
+- GitHub Actions runs #247–#252 untuk perubahan server/config/test/README berstatus completed/success. Run #250 menguji source pada HEAD d08f2fa; run #251/#252 juga sukses pada perubahan env example dan master context sebelumnya. Perubahan dokumentasi README terbaru masih memerlukan CI run berikutnya.
+- Tes lokal tidak dijalankan karena sesi tidak memiliki working copy Node.js. GitHub Actions pada source SHA d08f2fa menyelesaikan npm test dengan sukses; run #251 dan #252 juga sukses.
 - Hostless build dan LIVE tetap tidak diketahui/tidak terverifikasi; akses konfigurasi proxy dan deployment Hostless tidak tersedia.
 
 ### 27.5 Catatan konfigurasi operasional
