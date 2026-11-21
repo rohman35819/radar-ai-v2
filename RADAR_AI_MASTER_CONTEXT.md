@@ -292,3 +292,32 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
   2. Verifikasi Hostless build dan versi LIVE terhadap SHA `main` terbaru; kemudian lakukan QA visual dashboard/sidebar dan Exchange Hub di desktop/mobile.
   3. Audit konfigurasi Hostless untuk memastikan `DATA_DIR` menunjuk ke mount persisten writable; jangan ubah path tanpa bukti konfigurasi volume.
   4. Setelah storage dan UI stabil, lanjutkan implementasi Binance read-only server-side dan uji tanpa mengaktifkan trading.
+
+
+---
+## 15. VERIFIKASI LANJUTAN CI & AKSES LIVE — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 15.1 Repository dan CI
+- Branch `main` diperiksa langsung melalui GitHub API; HEAD terkonfirmasi `6278e19708017c488bf780648e29b5098b702c9b` (docs: record exact audit documentation commits).
+- GitHub Actions run #123 untuk SHA tersebut: status `completed`, conclusion `success`; job `test` dan langkah `Run npm test` juga `completed / success` (run ID `44944757638`, 21 November 2026 20:09 UTC).
+- Ini membuktikan workflow menjalankan `npm test` dan lulus pada commit HEAD. Tes lokal tetap tidak dijalankan karena sesi tidak memiliki working copy/runtime repository.
+- Pemeriksaan ulang source menunjukkan perbaikan storage pada `lib/ingest.js` masih berlaku: hanya ENOENT yang menjadi state kosong; error baca lain diteruskan; penyimpanan memakai temporary file + rename atomik dan cleanup best-effort. Tes storage tercakup dalam `test/radar.test.js`.
+- Dashboard dan Exchange Hub source masih memuat menu/tab serta kalkulator simulasi; tidak ditemukan implementasi private account endpoint/order live di `public/trading.js`. Ini source review, bukan QA browser.
+
+### 15.2 Hostless / LIVE
+- Upaya membuka `https://radar-ai-v2.hostless.app/` dari sesi ini gagal karena akses web ke host dinonaktifkan oleh lingkungan (DisabledError). Endpoint `/api/health` juga belum dapat diverifikasi.
+- Endpoint deployment Hostless tidak tersedia melalui koneksi GitHub yang digunakan. Status Hostless build dan SHA yang sedang LIVE tetap **tidak diketahui / belum terverifikasi**. CI GitHub sukses tidak membuktikan deploy Hostless.
+- Tidak ada perubahan kode aplikasi pada sesi verifikasi ini; tidak ada klaim QA visual desktop/mobile, console, network, atau runtime storage.
+
+### 15.3 Catatan sesi dan NEXT TASK
+- Tujuan: lanjutkan NEXT TASK dengan verifikasi CI terbaru dan pemeriksaan ulang jalur storage, Dashboard, serta Exchange Hub.
+- File source ditinjau: `lib/ingest.js`, `test/radar.test.js`, `server.js`, `public/index.html`, `public/app.js`, `public/style.css`, `public/trading.html`, `public/trading.js`, `public/trading.css`, `package.json`, `README.md`, `AGENTS.md`.
+- File yang diubah: `RADAR_AI_MASTER_CONTEXT.md` (catatan verifikasi ini saja).
+- Tes: GitHub Actions `npm test` PASS pada HEAD; tes lokal tidak dijalankan.
+- Commit dokumentasi sesi: akan dicatat setelah update ini berhasil.
+- Hostless build: tidak diketahui. Hostless Live: tidak diketahui / belum terverifikasi.
+- Risiko terbuka: bukti konfigurasi volume writable dan nilai `DATA_DIR` runtime Hostless belum tersedia; QA visual/browser belum dapat dilakukan; koneksi Binance read-only belum diimplementasikan/teruji.
+- NEXT TASK:
+  1. Dapatkan akses/status Hostless untuk memastikan build dan SHA Live; lakukan QA browser dashboard/sidebar dan Exchange Hub desktop/mobile.
+  2. Verifikasi mount volume persisten writable dan nilai `DATA_DIR` runtime sebelum perubahan konfigurasi storage.
+  3. Setelah storage dan UI terverifikasi, implementasikan Binance read-only server-side dengan secret tetap di environment dan uji tanpa mengaktifkan trading.
