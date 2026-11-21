@@ -34,7 +34,7 @@
 <div class="panel-heading"><div><h2>Kalkulator posisi</h2><p>Simulasi perhitungan, bukan order sungguhan.</p></div><span class="demo-tag">SIMULASI</span></div>
 <form id="position-form">
 <label>Exchange<select id="exchange"><option>Binance</option><option>Bybit</option></select></label>
-<label>Pair<input id="pair" value="BTCUSDT" maxlength="24" autocomplete="off"></label>
+<label>Pair<input id="pair" value="BTCUSDT" maxlength="24" autocomplete="off"></label><div class="market-actions"><button type="button" class="market-btn" id="load-market">Ambil harga market</button><span id="market-feedback" role="status">Harga publik, tanpa API key.</span></div><div id="market-data" class="market-data"><p class="muted">Belum ada harga market.</p></div>
 <div class="form-two"><label>Arah<select id="side"><option value="LONG">Long</option><option value="SHORT">Short</option></select></label><label>Leverage<select id="leverage"><option>1</option><option>2</option><option>3</option><option>5</option><option>10</option><option>20</option><option>25</option><option>50</option><option>75</option><option>100</option></select></label></div>
 <div class="form-two"><label>Margin (USDT)<input id="margin" type="number" min="0.1" step="0.1" value="10"></label><label>Harga masuk (USDT)<input id="entry" type="number" min="0.00000001" step="any" placeholder="Isi harga"></label></div>
 <div class="form-two"><label>Stop Loss (USDT)<input id="sl" type="number" min="0.00000001" step="any" placeholder="Opsional"></label><label>Take Profit (USDT)<input id="tp" type="number" min="0.00000001" step="any" placeholder="Opsional"></label></div>
