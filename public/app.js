@@ -145,7 +145,7 @@ function renderAI(){
 }
 function renderWorkspace(){
  const v=$('#view');v.replaceChildren();const r=aiWorkspace?.last;
- v.append(sectionHead('AI Workspace','Ruang kolaborasi untuk menemukan kekurangan dan mengusulkan peningkatan RADAR.'));
+ v.append(sectionHead('AI Workspace','Ruang kolaborasi untuk menemukan kekurangan dan mengusulkan peningkatan RADAR.',el('button',{class:'secondary-btn',onclick:runWorkspaceNow},'✳ Jalankan 4 AI sekarang')));
  if(!r)return v.append(empty('Belum ada hasil review workspace','Empat model akan memberi usulan pada jadwal 10.00 WIB setelah fitur ini aktif di server.'));
  v.append(card(el('div',{class:'row-between'},el('div',{},el('div',{class:'eyebrow'},'INDEPENDENT REVIEW'),el('h2',{},'Rapat perbaikan RADAR')),el('span',{class:r.status==='completed'?'positive':'warning'},r.status==='completed'?'● SELESAI':'◌ BELUM LENGKAP')),el('p',{class:'muted'},dateTime(r.created_at)+' · '+(r.agent_count||0)+'/4 AI aktif'),el('p',{},'Setiap model menilai dari sudut pandang berbeda. Usulan belum menjadi perubahan kode.')));
  (r.agents||[]).forEach(a=>{
@@ -164,6 +164,22 @@ function renderWorkspace(){
   if(a.challenge)p.append(el('p',{class:'muted'},'Tantangan: '+a.challenge));if(a.self_critique)p.append(el('p',{class:'muted'},'Evaluasi diri: '+a.self_critique));v.append(p);
  });
  v.append(card(el('b',{},'Keputusan Direktur Utama'),el('p',{},r.director_status||'Menunggu penilaian.'),el('p',{class:'muted'},'Perubahan kode hanya melalui branch terpisah, tes, Draft PR, dan persetujuan pemilik. Tidak ada auto-merge atau auto-trading.')));
+}
+async function runWorkspaceNow(){
+ const token=window.prompt('Masukkan ADMIN_TOKEN RADAR untuk menjalankan rapat 4 AI. Token hanya dipakai untuk permintaan ini dan tidak disimpan.');
+ if(!token)return;
+ try{
+  const response=await fetch('/api/ai/workspace/run',{method:'POST',headers:{'x-admin-token':token}});
+  if(response.status===403)throw new Error('ADMIN_TOKEN tidak cocok.');
+  if(!response.ok)throw new Error('Endpoint belum aktif di server ('+response.status+').');
+  toast('Rapat 4 AI dimulai. Hasil akan dimuat otomatis.');
+  for(let i=0;i<12;i++){
+   await new Promise(resolve=>setTimeout(resolve,5000));
+   const r=await fetch('/api/ai/workspace',{cache:'no-store'});
+   if(r.ok){aiWorkspace=(await r.json()).workspace;if(aiWorkspace?.last){render();if(aiWorkspace.last.status==='completed')toast('Review 4 AI selesai');return;}}
+  }
+  render();toast('AI masih memproses. Buka kembali Ruang Kerja sebentar lagi.');
+ }catch(e){toast(e.message||'Gagal menjalankan review AI');}
 }
 function renderSystem(){
  const v=$('#view');v.replaceChildren();const health=data?.health||{};
