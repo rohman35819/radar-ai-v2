@@ -268,7 +268,8 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Pemeriksaan ulang branch main menemukan implementasi `DATA_DIR` tetap menggunakan `path.resolve(env('DATA_DIR', './data'))`; belum ada bukti mount volume Hostless atau nilai runtime `DATA_DIR`.
 - `lib/ingest.js`: `load()` sekarang hanya memperlakukan `ENOENT` pada `state.json` sebagai instalasi baru. Error lain (termasuk EACCES, EIO, EROFS) dan JSON tidak valid diteruskan agar tidak disamarkan menjadi state kosong.
 - `save()` tetap menggunakan pola tulis file sementara lalu atomic rename di direktori DATA_DIR yang sama. Bila tulis/rename gagal, error diteruskan dan file sementara dibersihkan best-effort; tidak ada fallback ke filesystem ephemeral dan file state lama tidak ditimpa sebelum rename berhasil.
-- Tes baru di `test/radar.test.js`: state belum ada, state valid dipulihkan, JSON rusak ditolak, simulasi EROFS saat rename diteruskan, state lama tetap utuh, dan file sementara dibersihkan.
+- Tes baru di `test/radar.test.js`: state belum ada, state valid dipulihkan, JSON rusak ditolak, simulasi EROFS saat rename diteruskan, state lama tetap utuh, dan file sementara dibersihkan. Jumlah kasus pada file tes menjadi 21.
+- `README.md` diperbarui dari 18 menjadi 21 tes dan menyebut cakupan storage.
 - Perubahan kode: commit `1a0041dc8cb7c2b295bc0f5d3754583b75a4f215`; tes: `c64bc60dc3330b81a603e92474be6a35e083b520`.
 
 ### 14.2 QA Dashboard dan Exchange Hub (review source)
@@ -280,7 +281,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 ### 14.3 Hasil pengujian dan deployment
 - Tes lokal belum dijalankan: sesi tidak memiliki working copy/runtime repository. Tes regresi storage ditambahkan agar GitHub Actions `npm test` dapat mengeksekusinya setelah push.
 - Pemeriksaan CI commit baru melalui status-check connector belum menampilkan status (daftar status kosong); workflow run untuk commit juga tidak dikembalikan oleh endpoint connector yang tersedia. Karena itu CI untuk perubahan ini belum terverifikasi.
-- GitHub: perubahan storage dan tes sudah masuk branch `main`; commit dokumentasi sesi ini akan menjadi referensi akhir bagian ini.
+- GitHub: perubahan storage, tes, README, dan master context tersimpan pada branch `main`. Commit README: `b104dcaf3f576421220ceaf2e4afc84b356a1cd3`; commit master context final tercatat pada HEAD setelah pembaruan ini.
 - Hostless build: tidak diketahui. Pemilik mengonfirmasi mekanisme auto-deploy dari `main`; tidak ada akses status/log Hostless pada sesi ini.
 - Hostless Live: tidak diketahui / belum diverifikasi. Belum ada pemeriksaan sukses terhadap homepage atau `/api/health` yang dapat dikaitkan dengan SHA terbaru.
 
