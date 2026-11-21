@@ -321,3 +321,46 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
   1. Dapatkan akses/status Hostless untuk memastikan build dan SHA Live; lakukan QA browser dashboard/sidebar dan Exchange Hub desktop/mobile.
   2. Verifikasi mount volume persisten writable dan nilai `DATA_DIR` runtime sebelum perubahan konfigurasi storage.
   3. Setelah storage dan UI terverifikasi, implementasikan Binance read-only server-side dengan secret tetap di environment dan uji tanpa mengaktifkan trading.
+
+
+---
+## 16. AUDIT KELANJUTAN REPOSITORY & AKSES HOSTLESS — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 16.1 Kondisi repository terkini
+- Repository terkonfirmasi `rohman35819/radar-ai-v2`, default branch `main`.
+- Pencarian commit terbaru pada repository mengembalikan HEAD `5ade61c8b693324716330eca1614f2d7b590cabe` (docs: finalize audit commit reference), setelah commit dokumentasi `421bca232444067c20398d0b176120e868b86047`.
+- `RADAR_AI_MASTER_CONTEXT.md`, `AGENTS.md`, `package.json`, dan `README.md` dibaca dari branch main. File kode `lib/ingest.js` dan `server.js` juga diperiksa ulang.
+- Repository tidak memiliki working copy lokal dalam sesi ini; tes lokal dan git diff lokal tidak dapat dijalankan.
+
+### 16.2 Status CI untuk HEAD terbaru
+- Pemeriksaan combined commit status pada SHA `5ade61c8b693324716330eca1614f2d7b590cabe` mengembalikan daftar status kosong.
+- Endpoint konektor workflow-run yang tersedia mengembalikan daftar kosong; keterbatasan endpoint ini tercatat hanya mencakup run yang dipicu pull request. Karena itu hasil tersebut TIDAK membuktikan bahwa workflow push tidak berjalan atau gagal.
+- Hasil GitHub Actions `npm test` PASS yang tercatat sebelumnya berlaku untuk SHA `6278e19708017c488bf780648e29b5098b702c9b`, bukan otomatis untuk HEAD terbaru `5ade61c`.
+- Kesimpulan: CI untuk HEAD terbaru belum terverifikasi. Jangan membawa status PASS commit sebelumnya ke HEAD baru tanpa bukti.
+
+### 16.3 Hostless: jalur akses dan batas verifikasi
+- Homepage `https://radar-ai-v2.hostless.app/` dan `/api/health` dicoba melalui akses web; keduanya tidak berhasil diambil oleh lingkungan ini. Ini bukan bukti bahwa aplikasi down.
+- Dokumentasi Hostless resmi yang ditemukan menjelaskan MCP remote di `https://mcp.hostless.app`: endpoint dokumentasi publik `/mcp/docs`, sedangkan pengelolaan resource memakai `/mcp` yang memerlukan autentikasi dan scope akun.
+- Dokumentasi API Hostless menjelaskan API key dengan scope terpisah. Pembacaan app/deployment/log memerlukan izin read yang sesuai; token harus tetap privat dan tidak boleh ditempelkan di chat atau repository.
+- Tidak ada konektor Hostless terpasang/tersedia di sesi ini dan tidak ada kredensial Hostless yang dapat digunakan. Tidak ada upaya menebak, meminta, atau mengubah konfigurasi rahasia.
+- Status Hostless build, deployment SHA, runtime logs, mount volume, nilai `DATA_DIR`, serta versi LIVE tetap tidak diketahui / belum terverifikasi. Tidak ada klaim QA visual desktop/mobile.
+
+### 16.4 Audit kode berkelanjutan
+- `lib/ingest.js` dikonfirmasi masih menggunakan `DATA_DIR` (default `./data`), memperlakukan hanya `ENOENT` sebagai state baru, meneruskan error baca lain, dan menyimpan melalui temporary file + atomic rename.
+- `server.js` memanggil `ingest.load(cfg)` saat membuat aplikasi; refresh dan job AI menyimpan state melalui `ingest.save(cfg, st)`. Dengan demikian kesalahan mount/path akan muncul pada jalur startup atau operasi simpan dan harus ditangani berdasarkan runtime logs serta konfigurasi volume Hostless.
+- Tidak ada perubahan kode aplikasi pada sesi audit ini. Tidak ada alasan aman untuk mengganti path DATA_DIR tanpa bukti mount volume Hostless.
+
+### 16.5 Catatan sesi dan NEXT TASK
+- Tujuan: melanjutkan verifikasi CI dan deployment Hostless sesuai NEXT TASK sebelumnya.
+- File yang ditinjau: `RADAR_AI_MASTER_CONTEXT.md`, `AGENTS.md`, `package.json`, `README.md`, `lib/ingest.js`, `server.js`.
+- File yang diubah: `RADAR_AI_MASTER_CONTEXT.md` (catatan audit sesi ini).
+- Tes: tidak dijalankan lokal karena working copy/runtime tidak tersedia. CI HEAD terbaru belum terverifikasi. Hasil PASS sebelumnya hanya untuk SHA yang disebut pada bagian 15.
+- Commit dokumentasi sesi: akan dicatat setelah update ini berhasil.
+- Hostless build: tidak diketahui. Hostless Live: tidak diketahui / belum terverifikasi.
+- Risiko terbuka: akses Hostless authenticated read-only belum tersedia; CI HEAD terbaru belum terverifikasi; volume writable dan nilai runtime `DATA_DIR` belum diketahui; QA browser desktop/mobile belum dilakukan.
+- NEXT TASK:
+  1. Hubungkan akses Hostless read-only yang sesuai (MCP atau API) agar deployment, app config tanpa nilai secret, runtime logs, dan volume dapat diperiksa. Jangan kirim API key melalui chat.
+  2. Verifikasi GitHub Actions `npm test` secara spesifik untuk SHA HEAD `5ade61c8b693324716330eca1614f2d7b590cabe` atau HEAD terbaru saat pemeriksaan berikutnya.
+  3. Setelah ada akses Hostless, cocokkan SHA deployment, status build, dan versi LIVE; cek `/api/health`, dashboard, sidebar, serta Exchange Hub pada desktop dan mobile.
+  4. Periksa mount volume dan nilai `DATA_DIR` runtime tanpa mengekspos nilai rahasia; baru lakukan perubahan storage bila ada bukti teknis.
+  5. Setelah storage dan UI terverifikasi stabil, lanjutkan implementasi Binance read-only server-side. Trading tetap OFF.
