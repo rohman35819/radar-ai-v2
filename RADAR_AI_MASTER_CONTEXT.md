@@ -572,7 +572,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Tes adapter memakai mocked fetch/response; ini membuktikan pembentukan signature dan normalisasi data pada unit test, bukan validasi kredensial nyata ke Binance/Bybit.
 - Hostless build, deployment SHA, runtime env presence, IP whitelist, dan versi LIVE belum dapat diakses/dikonfirmasi. Jangan klaim akun sudah tersambung sebelum tombol uji koneksi berhasil pada versi Hostless yang ter-deploy.
 - File yang berubah: `lib/exchanges.js`, `server.js`, `public/trading.html`, `public/trading.js`, `public/trading.css`, `test/exchanges.test.js`, `package.json`, `.env.example`, `README.md`, dan dokumen master ini.
-- Commit implementasi berurutan mencakup `dc6411a` (adapter), `9a32870` (API route), `a83a3f5` (account UI), `faa4e06` (frontend binding), `a0eebed` (route tests), `4d32a06` (syntax checks), `68039cb` (env template), `1ade6d2` (README), serta perbaikan lanjutan sampai HEAD implementasi `6b773f8385c0b050635b420c53851e11cc0067a1`. README/test-count sync berlanjut pada `e689a153a98d05db83caf2f552fde6f90c3d6600`.
+- Commit implementasi berurutan mencakup `dc6411a` (adapter), `9a32870` (API route), `a83a3f5` (account UI), `faa4e06` (frontend binding), `a0eebed` (route tests), `4d32a06` (syntax checks), `68039cb` (env template), `1ade6d2` (README), serta perbaikan lanjutan sampai HEAD implementasi `6b773f8385c0b050635b420c53851e11cc0067a1`. README/test-count sync berlanjut pada `e689a153a98d05db83caf2f552fde6f90c3d6600`. Commit dokumentasi bagian 21: `47cafafcaf3ec702a9cba1eb7a723adb658a8446`.
 - Hostless build: tidak diketahui. Hostless Live: tidak diketahui / belum diverifikasi.
 
 ### 21.5 NEXT TASK — TANGGUNG JAWAB EXCHANGE HUB
