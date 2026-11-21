@@ -224,8 +224,8 @@ function exportCSV(){
 document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.t)));
 $('.brand').addEventListener('click',e=>{e.preventDefault();navigate('overview');});
 $('#refresh').addEventListener('click',refreshNow);
-$('#theme').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;try{localStorage.setItem('radar-theme',next);}catch{}});
+$('#theme').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;try{localStorage.setItem('radar-theme-v2',next);}catch{}});
 $('#menu-toggle').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
-try{const saved=localStorage.getItem('radar-theme');if(saved)document.documentElement.dataset.theme=saved;}catch{}
+try{const saved=localStorage.getItem('radar-theme-v2');if(saved)document.documentElement.dataset.theme=saved;}catch{}
 load();setInterval(load,120000);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
