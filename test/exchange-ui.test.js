@@ -22,6 +22,11 @@ test('Exchange Hub memiliki tombol refresh akun yang memakai koneksi privat yang
   assert.match(js, /headers:\{'x-exchange-access-token':exchangeAccessToken\}/);
 });
 
+test('Exchange Hub menghapus saldo dan posisi lama ketika refresh akun gagal', () => {
+  assert.match(js, /clearAccount\(\);\s*const empty=document\.createElement\('div'\);empty\.className='account-empty account-error'/);
+  assert.match(js, /classList\.remove\('account-warning'\)/);
+});
+
 test('Exchange Hub membatasi waktu request akun dan ticker serta menjaga request antar-exchange', () => {
   assert.match(js, /AbortSignal\.timeout\(20000\)/);
   assert.match(js, /AbortSignal\.timeout\(15000\)/);
