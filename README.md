@@ -4,7 +4,7 @@ Tanpa dependensi npm (V2.2) (butuh Node >= 20). Backend + dashboard PWA dalam sa
 
 ## Jalankan
     cp .env.example .env   # opsional; isi nilai lalu: export $(grep -v '^#' .env | xargs)
-    npm test               # 46 test case di 6 file
+    npm test               # 47 test case di 6 file
     npm start              # http://localhost:3000
 
 ## Pasang
@@ -18,7 +18,7 @@ PWA menyimpan shell halaman agar dapat dibuka kembali saat offline. Respons API 
 ## Status fitur (hanya yang diuji = tercantum)
 | Fitur | Status |
 |---|---|
-| Logika screener, FDV, filter kategori, join gecko_id, parser RSS, validasi unlock, aturan alert + cooldown, server + rate limit + path traversal, kegagalan sumber, signature Binance/Bybit, normalisasi saldo/posisi, route Exchange Hub | **Diuji otomatis** (46 test case di enam file; exchange memakai respons API mock, belum membuktikan koneksi akun Hostless/live) |
+| Logika screener, FDV, filter kategori, join gecko_id, parser RSS, validasi unlock, aturan alert + cooldown, server + rate limit + path traversal, kegagalan sumber, signature Binance/Bybit, normalisasi saldo/posisi, route Exchange Hub | **Diuji otomatis** (47 test case di enam file; exchange memakai respons API mock, belum membuktikan koneksi akun Hostless/live) |
 | Panggilan nyata ke CoinGecko, DeFiLlama, RSS | Jalankan `npm run live-check` di mesin ber-internet (tes API nyata). Telegram: belum diuji |
 | Lonjakan volume | Estimasi dari selisih volume 24j bergulir antar refresh (~10 mnt) vs median selisih token itu sendiri; CoinGecko gratis tidak punya volume per-10-menit asli. Butuh ~1 jam riwayat sebelum aktif |
 | Dashboard/PWA di perangkat Android | **Belum diuji di perangkat**; sintaks dan file statis diperiksa |
@@ -35,6 +35,7 @@ Halaman `/trading.html` menyediakan satu antarmuka untuk Binance, Bybit, dan int
 Environment server (Hostless):
 - Binance: `BINANCE_API_KEY`, `BINANCE_API_SECRET`.
 - Bybit: `BYBIT_API_KEY`, `BYBIT_API_SECRET`.
+- Akses privat halaman: `EXCHANGE_ACCESS_TOKEN` (jika kosong, backend memakai `ADMIN_TOKEN` sebagai fallback). Masukkan token tersebut pada kolom kunci akses di Exchange Hub; token hanya berada di memori halaman selama tab terbuka.
 - Opsional: `BINANCE_API_BASE`, `BINANCE_FUTURES_BASE`, `BYBIT_API_BASE`, `BYBIT_ACCOUNT_TYPE`.
 
 Gunakan kredensial dengan izin baca akun saja. Nonaktifkan withdrawal, spot trading, futures trading, dan transfer. Jangan memasukkan secret ke chat, frontend, repository, atau log.
@@ -45,7 +46,7 @@ Endpoint:
 - `GET /api/exchanges/bybit/account`: membaca Unified Wallet dan posisi Linear melalui API V5.
 - `GET /api/exchanges/market?exchange=binance|bybit&symbol=BTCUSDT`: membaca ticker publik 24 jam Spot dan Futures/Linear; tidak memerlukan API key.
 
-Koneksi privat dilakukan hanya setelah pengguna menekan tombol pemeriksaan pada Exchange Hub. Data akun hanya diteruskan ke browser untuk ditampilkan dan tidak disimpan ke state RADAR AI. Endpoint ini tidak membuat, mengubah, atau membatalkan order. Koneksi dinyatakan berhasil hanya setelah permintaan privat ke exchange berhasil; keberadaan environment saja bukan bukti koneksi.
+Koneksi privat dilindungi token pemilik pada header `x-exchange-access-token`; tanpa token server yang dikonfigurasi endpoint akun menolak akses. Status konfigurasi hanya mengungkap boolean dan tidak mengembalikan nilai token atau kredensial exchange. Masukkan `EXCHANGE_ACCESS_TOKEN` (atau `ADMIN_TOKEN` fallback) pada kolom akses privat, lalu tekan tombol uji koneksi. Token tidak disimpan ke localStorage/sessionStorage dan hanya digunakan selama halaman terbuka. Data akun hanya diteruskan ke browser untuk ditampilkan dan tidak disimpan ke state RADAR AI. Endpoint ini tidak membuat, mengubah, atau membatalkan order. Koneksi dinyatakan berhasil hanya setelah permintaan privat ke exchange berhasil; keberadaan environment saja bukan bukti koneksi.
 
 ## Catatan
 
