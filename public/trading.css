@@ -145,3 +145,121 @@
 }
 @media(max-width:360px){.account-stats,.form-two,.result-grid,.roadmap{grid-template-columns:1fr}.trade-header .status-pill{max-width:42%}}
 @media(prefers-reduced-motion:reduce){.calculate-btn,.secondary-action{transition:none}.calculate-btn:hover:not(:disabled){transform:none}}
+
+
+/* Exchange Hub visual system refresh */
+.trading-page{background:radial-gradient(ellipse at 52% -12%,rgba(45,116,183,.19),transparent 42%),#07111f}
+.trade-header{min-height:72px;padding-inline:clamp(16px,4vw,52px);border-color:rgba(119,160,202,.16);background:rgba(6,16,29,.92)}
+.trade-header>div b{font-size:11px;letter-spacing:.18em}
+.trade-header>div small{letter-spacing:.02em}
+.trade-wrap{width:min(1320px,100%);gap:20px;padding-top:30px}
+.trade-intro{padding:clamp(26px,4vw,44px);border-color:rgba(105,165,220,.28);background:linear-gradient(118deg,rgba(17,47,78,.98),rgba(9,25,43,.98) 72%,rgba(12,39,61,.98));box-shadow:0 22px 55px rgba(0,0,0,.23)}
+.trade-intro h1{max-width:760px;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.045em}
+.trade-intro p{max-width:790px;font-size:13px}
+.exchange-switcher{gap:14px;margin-bottom:0}
+.exchange-tab{min-height:82px;padding:16px 18px;border-color:rgba(110,151,194,.22);border-radius:15px;background:linear-gradient(145deg,rgba(15,35,57,.96),rgba(9,24,41,.98))}
+.exchange-tab.active{border-color:#5ca8ec;background:linear-gradient(145deg,rgba(37,91,139,.42),rgba(10,29,49,.98));box-shadow:inset 0 0 0 1px rgba(92,168,236,.2),0 10px 24px rgba(0,0,0,.12)}
+.exchange-tab b{font-size:14px}.exchange-tab small{font-size:10px}
+.exchange-mark{width:40px;height:40px;border-radius:12px;font-size:18px}
+.tab-state{font-size:8px;letter-spacing:.08em}
+.trade-panel{border-color:rgba(111,154,197,.2);border-radius:17px;background:linear-gradient(145deg,rgba(17,37,60,.98),rgba(9,24,41,.99));box-shadow:0 14px 36px rgba(0,0,0,.15)}
+.exchange-overview{padding:clamp(18px,2.4vw,28px)}
+.exchange-overview h2{font-size:clamp(23px,3vw,30px);letter-spacing:-.035em}
+.exchange-overview-top p{max-width:680px;font-size:12px;line-height:1.65}
+.exchange-overview .pending{padding:8px 12px;font-size:9px}
+.exchange-facts{gap:12px;margin-top:22px}
+.exchange-facts>div{padding:15px;border-color:rgba(111,154,197,.17);border-radius:12px;background:rgba(5,18,32,.55)}
+.exchange-facts small,.account-stat small{font-size:9px;letter-spacing:.1em}
+.exchange-facts b{font-size:13px}
+.access-controls{max-width:720px;margin-top:20px}
+.access-controls label{font-size:11px}
+.access-controls input{min-height:46px;font-size:13px}
+.access-controls p{font-size:10px}
+.token-actions{display:flex;gap:14px;align-items:center;margin-top:-2px}
+.text-action{padding:2px 0;border:0;background:transparent;color:#80b9ec;font-size:10px;font-weight:750;text-decoration:underline;text-underline-offset:3px}
+.text-action:hover{color:#c2e2ff}
+.connection-actions{gap:10px;margin-top:17px}
+.connection-actions .calculate-btn{min-height:46px;min-width:220px}
+.secondary-action{min-height:42px}
+.panel-tools{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+.panel-tools .secondary-action{padding-inline:12px}
+.account-panel{padding:clamp(17px,2.4vw,26px)}
+.account-panel h3{margin-top:22px;font-size:12px;letter-spacing:.02em}
+.account-stats{gap:12px}
+.account-stat{min-height:82px;padding:15px;border-color:rgba(111,154,197,.19);border-radius:12px;background:rgba(5,18,32,.52)}
+.account-stat b{font-size:clamp(13px,1.5vw,17px)}
+.account-empty{padding:20px;border-color:rgba(111,154,197,.3);background:rgba(5,18,32,.3);line-height:1.65}
+.account-error{border-color:rgba(255,115,135,.42);color:#ffb0bd}
+.data-table-wrap{border-color:rgba(111,154,197,.2);border-radius:12px;background:rgba(5,18,32,.28)}
+.account-table{font-size:11px}
+.account-table th,.account-table td{padding:11px 12px}
+.account-table th{background:#10243a}
+.account-table td{font-variant-numeric:tabular-nums}
+.trade-layout{gap:18px}
+.trade-layout>.trade-panel{padding:clamp(17px,2.3vw,25px)}
+.trade-panel form{gap:15px}
+.trade-panel label{font-size:11px}
+.trade-panel input,.trade-panel select{min-height:44px;border-color:rgba(116,157,199,.32);background:#08192b}
+.calculate-btn{min-height:46px}
+.calc-result{border-color:rgba(111,154,197,.22);background:rgba(5,18,32,.48)}
+.result-grid>div{border-color:rgba(111,154,197,.18);background:rgba(15,35,57,.72)}
+.result-grid b{font-variant-numeric:tabular-nums}
+.safety-panel{position:relative}
+.safety-list{gap:13px}
+.safety-list li{font-size:11px}
+.notice{border-color:rgba(243,195,109,.26);background:rgba(111,78,28,.12)}
+.roadmap-panel{padding:clamp(17px,2.4vw,25px)}
+.roadmap>div{border-color:rgba(111,154,197,.18);background:rgba(5,18,32,.4)}
+.back-link{transition:border-color .16s,background .16s}
+.back-link:hover{background:#173754}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid #91cbff;outline-offset:3px}
+#connection-feedback[role="status"],#market-feedback[role="status"]{min-height:1.5em}
+@media(max-width:900px){.trade-wrap{padding-top:20px}.exchange-tab{padding:14px}.trade-layout{grid-template-columns:1fr}}
+@media(max-width:760px){
+ .exchange-switcher{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .exchange-tab{min-height:76px;gap:9px;padding:12px}
+ .exchange-tab.future-tab{grid-column:1/-1;min-height:58px}
+ .exchange-tab small{white-space:normal}
+ .tab-state{font-size:7px}
+ .exchange-facts{grid-template-columns:1fr}
+ .exchange-facts>div{grid-template-columns:minmax(95px,.7fr) 1.3fr;align-items:center}
+ .exchange-overview-top{align-items:flex-start}
+ .account-columns{gap:8px}
+}
+@media(max-width:520px){
+ .trade-header{gap:8px}
+ .trade-header .status-pill{max-width:43%;font-size:7px}
+ .trade-header>div small{display:none}
+ .trade-wrap{padding:13px 11px 28px;gap:12px}
+ .trade-intro{padding:21px 17px}
+ .trade-intro h1{font-size:27px}
+ .exchange-switcher{gap:8px}
+ .exchange-tab{align-items:flex-start;min-height:86px}
+ .exchange-mark{width:34px;height:34px}
+ .tab-state{white-space:normal;text-align:right;max-width:66px}
+ .exchange-overview-top{display:grid;gap:12px}
+ .exchange-overview .pending{justify-self:start}
+ .exchange-facts>div{grid-template-columns:1fr;gap:4px}
+ .connection-actions{display:grid;grid-template-columns:1fr}
+ .connection-actions .calculate-btn,.connection-actions .secondary-action{width:100%}
+ .panel-tools{justify-content:flex-start}
+ .panel-heading{align-items:flex-start}
+ .account-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .account-stat{padding:12px;min-height:76px}
+ .account-stat b{font-size:13px}
+ .form-two{gap:9px}
+ .result-grid{grid-template-columns:1fr 1fr}
+ .roadmap{grid-template-columns:1fr 1fr}
+ .roadmap>div{padding:11px}
+ .roadmap small{min-height:0}
+}
+@media(max-width:360px){
+ .exchange-tab{gap:7px;padding:10px}
+ .exchange-tab b{font-size:12px}
+ .exchange-tab small{font-size:9px}
+ .exchange-mark{width:30px;height:30px}
+ .account-stats{grid-template-columns:1fr}
+ .form-two{grid-template-columns:1fr}
+ .roadmap{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){.back-link{transition:none}}
