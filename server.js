@@ -97,7 +97,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
     const now = new Date();
     const jakarta = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
     const day = [jakarta.getFullYear(), String(jakarta.getMonth() + 1).padStart(2, '0'), String(jakarta.getDate()).padStart(2, '0')].join('-');
-    if (jakarta.getHours() < reportHour || st.aiGroup?.dailyReportDate === day || aiBusy) return;
+    if (jakarta.getHours() < reportHour || st.aiGroup?.dailyReportDate === day || aiBusy || !st.lastOk) return;
     aiBusy = runGroup({ tokens: st.tokens, stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 })
       .then((result) => {
         st.aiGroup = { ...(st.aiGroup || {}), last: result, dailyReportDate: day };
