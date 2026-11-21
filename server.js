@@ -5,6 +5,7 @@ const path = require('path');
 const ingest = require('./lib/ingest');
 const sources = require('./lib/sources');
 const { analyzeMarket } = require('./lib/ai/gemini');
+const { runGroup } = require('./lib/ai/group');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
@@ -13,6 +14,9 @@ const PUB = path.join(__dirname, 'public');
 function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
   const st = state || ingest.load(cfg);
   let busy = null;
+  let aiBusy = null;
+  let aiTimer = null;
+  const reportHour = Math.max(0, Math.min(23, Number(process.env.AI_REPORT_HOUR || 9)));
   const hits = new Map();
   const limited = (ip) => { // 60 req/menit/IP
     const now = Date.now(), h = (hits.get(ip) || []).filter((t) => now - t < 60000);
@@ -43,6 +47,18 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
             tokens: st.tokens.map((t) => ({ ...t, fundamental: st.fundamentals[t.id] || null, vol10m: (st.vol10m || {})[t.id] || null })), exchange: st.exchStats || null, news: st.news, unlocks: st.unlocks, alerts: st.alerts.slice(0, 50),
             config_needed: { telegram: !(cfg.tgToken && cfg.tgChat), coingecko_key: !cfg.cgKey, unlock_source: !cfg.unlocksUrl && !st.unlocks.length } },
           'application/json', { 'cache-control': 'public, max-age=30' });
+        }
+        if (url.pathname === '/api/ai/group' && req.method === 'GET') {
+          return send(res, 200, { status: 'success', group: st.aiGroup || null }, 'application/json', { 'cache-control': 'no-store' });
+        }
+        if (url.pathname === '/api/ai/group/run' && req.method === 'POST') {
+          if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'Dilarang' });
+          if (aiBusy) return send(res, 202, { status: 'running' });
+          aiBusy = runGroup({ tokens: st.tokens, stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 })
+            .then((result) => { st.aiGroup = { ...(st.aiGroup || {}), last: result }; ingest.save(cfg, st); return result; })
+            .catch((e) => { console.error('AI group error', e.message); return null; })
+            .finally(() => { aiBusy = null; });
+          return send(res, 202, { status: 'started' }, 'application/json', { 'cache-control': 'no-store' });
         }
         if (url.pathname === '/api/ai/gemini-test' && req.method === 'POST') {
           if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'Dilarang' });
@@ -77,8 +93,28 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
     } catch { send(res, 500, { status: 'error', message: 'Kesalahan server' }); }
   });
   let timer;
-  const start = () => { doRefresh(); timer = setInterval(doRefresh, cfg.refreshMs); return server; };
-  const stop = () => { clearInterval(timer); server.close(); };
+  const runDailyReport = async () => {
+    const now = new Date();
+    const jakarta = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+    const day = [jakarta.getFullYear(), String(jakarta.getMonth() + 1).padStart(2, '0'), String(jakarta.getDate()).padStart(2, '0')].join('-');
+    if (jakarta.getHours() < reportHour || st.aiGroup?.dailyReportDate === day || aiBusy || !st.lastOk) return;
+    aiBusy = runGroup({ tokens: st.tokens, stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 })
+      .then((result) => {
+        st.aiGroup = { ...(st.aiGroup || {}), last: result, dailyReportDate: day };
+        ingest.save(cfg, st);
+      })
+      .catch((e) => console.error('AI daily report error', e.message))
+      .finally(() => { aiBusy = null; });
+    await aiBusy;
+  };
+  const start = () => {
+    doRefresh();
+    timer = setInterval(doRefresh, cfg.refreshMs);
+    aiTimer = setInterval(runDailyReport, 60000);
+    runDailyReport();
+    return server;
+  };
+  const stop = () => { clearInterval(timer); clearInterval(aiTimer); server.close(); };
   return { server, start, stop, state: st, refresh: doRefresh };
 }
 
