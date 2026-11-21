@@ -212,16 +212,25 @@ function updateStatus(){
  $('#banner').textContent=stale?'Sebagian data mungkin sudah lama atau belum tersedia. Periksa System Health sebelum mengambil keputusan.':'';
 }
 async function load(){
+ let snapshotOk=false;
  try{
-  const r=await fetch('/api/snapshot',{cache:'no-store'});if(!r.ok)throw new Error('snapshot '+r.status);data=await r.json();
- }catch(e){$('#status').textContent='Gagal menghubungkan';$('#side-status').textContent='Koneksi bermasalah';}
+  const r=await fetch('/api/snapshot',{cache:'no-store'});if(!r.ok)throw new Error('snapshot '+r.status);data=await r.json();snapshotOk=true;
+ }catch(e){
+  $('#status').textContent='Gagal menghubungkan';
+  $('#side-status').textContent='Koneksi bermasalah';
+  $('#banner').hidden=false;
+  $('#banner').textContent='Tidak dapat mengambil snapshot terbaru. Data yang terlihat mungkin merupakan data sebelumnya; coba muat ulang kembali.';
+ }
  try{const r=await fetch('/api/ai/group',{cache:'no-store'});if(r.ok)aiGroup=(await r.json()).group;}catch{}
  try{const r=await fetch('/api/ai/workspace',{cache:'no-store'});if(r.ok)aiWorkspace=(await r.json()).workspace;}catch{}
- updateStatus();render();
+ if(snapshotOk)updateStatus();
+ render();
+ return snapshotOk;
 }
 async function refreshNow(){
  if(refreshBusy)return;refreshBusy=true;$('#refresh').classList.add('spinning');toast('Memuat data terbaru…');
- try{await load();toast('Dashboard diperbarui');}finally{refreshBusy=false;$('#refresh').classList.remove('spinning');}
+ try{const ok=await load();toast(ok?'Dashboard berhasil diperbarui':'Gagal memperbarui dashboard. Data sebelumnya dipertahankan.');}
+ finally{refreshBusy=false;$('#refresh').classList.remove('spinning');}
 }
 function exportCSV(){
  const rows=getTokens();if(!rows.length)return toast('Tidak ada data untuk diekspor');
