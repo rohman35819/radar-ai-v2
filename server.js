@@ -16,13 +16,15 @@ const PUB = path.join(__dirname, 'public');
 
 function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
-  const privateExchangeToken = String(exchangeAccessToken !== undefined ? exchangeAccessToken : (process.env.EXCHANGE_ACCESS_TOKEN || cfg.adminToken || ''));
-  const hasValidExchangeToken = (provided) => {
-    if (!privateExchangeToken || typeof provided !== 'string') return false;
-    const expected = Buffer.from(privateExchangeToken);
+  const matchesToken = (expectedValue, provided) => {
+    if (!expectedValue || typeof provided !== 'string') return false;
+    const expected = Buffer.from(String(expectedValue));
     const actual = Buffer.from(provided);
     return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
   };
+  const privateExchangeToken = String(exchangeAccessToken !== undefined ? exchangeAccessToken : (process.env.EXCHANGE_ACCESS_TOKEN || cfg.adminToken || ''));
+  const hasValidExchangeToken = (provided) => matchesToken(privateExchangeToken, provided);
+  const hasValidAdminToken = (provided) => matchesToken(cfg.adminToken, provided);
   const st = state || ingest.load(cfg);
   let busy = null;
   let aiBusy = null;
@@ -123,7 +125,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           return send(res, 200, { status: 'success', workspace: st.aiWorkspace || null }, 'application/json', { 'cache-control': 'no-store' });
         }
         if (url.pathname === '/api/ai/command' && req.method === 'POST') {
-          if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'ADMIN_TOKEN tidak cocok' });
+          if (!hasValidAdminToken(req.headers['x-admin-token'])) return send(res, 403, { status: 'error', message: 'ADMIN_TOKEN tidak cocok' });
           let size = 0; const chunks = [];
           req.on('data', (chunk) => { size += chunk.length; if (size <= 10000) chunks.push(chunk); });
           req.on('end', () => {
@@ -145,13 +147,13 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           return;
         }
         if (url.pathname === '/api/ai/workspace/run' && req.method === 'POST') {
-          if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'Dilarang' });
+          if (!hasValidAdminToken(req.headers['x-admin-token'])) return send(res, 403, { status: 'error', message: 'Dilarang' });
           if (workspaceBusy) return send(res, 202, { status: 'running' });
           runWorkspace();
           return send(res, 202, { status: 'started' }, 'application/json', { 'cache-control': 'no-store' });
         }
         if (url.pathname === '/api/ai/group/run' && req.method === 'POST') {
-          if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'Dilarang' });
+          if (!hasValidAdminToken(req.headers['x-admin-token'])) return send(res, 403, { status: 'error', message: 'Dilarang' });
           if (aiBusy) return send(res, 202, { status: 'running' });
           aiBusy = runGroup({ tokens: st.tokens, stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 })
             .then((result) => { st.aiGroup = { ...(st.aiGroup || {}), last: result }; ingest.save(cfg, st); return result; })
@@ -160,7 +162,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           return send(res, 202, { status: 'started' }, 'application/json', { 'cache-control': 'no-store' });
         }
         if (url.pathname === '/api/ai/gemini-test' && req.method === 'POST') {
-          if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'Dilarang' });
+          if (!hasValidAdminToken(req.headers['x-admin-token'])) return send(res, 403, { status: 'error', message: 'Dilarang' });
           let size = 0;
           const chunks = [];
           req.on('data', (chunk) => { size += chunk.length; if (size <= 50000) chunks.push(chunk); });
@@ -179,7 +181,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           return;
         }
         if (url.pathname === '/api/refresh' && req.method === 'POST') {
-          if (!cfg.adminToken || req.headers['x-admin-token'] !== cfg.adminToken) return send(res, 403, { status: 'error', message: 'Dilarang' });
+          if (!hasValidAdminToken(req.headers['x-admin-token'])) return send(res, 403, { status: 'error', message: 'Dilarang' });
           doRefresh(); return send(res, 202, { status: 'started' });
         }
         return send(res, 404, { status: 'error', message: 'Tidak ditemukan' });
