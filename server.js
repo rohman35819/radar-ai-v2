@@ -3,6 +3,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const ingest = require('./lib/ingest');
+const { createExchangeService, ExchangeError } = require('./lib/exchanges');
 const sources = require('./lib/sources');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
@@ -12,7 +13,8 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 const PUB = path.join(__dirname, 'public');
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService } = {}) {
+  const exchangeApi = exchangeService || createExchangeService();
   const st = state || ingest.load(cfg);
   let busy = null;
   let aiBusy = null;
@@ -58,6 +60,27 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
       const url = new URL(req.url, 'http://x');
       if (url.pathname.startsWith('/api/')) {
         if (limited(ip)) return send(res, 429, { status: 'error', message: 'Terlalu banyak permintaan' }, 'application/json', { 'retry-after': '60' });
+        if (url.pathname === '/api/exchanges/status' && req.method === 'GET') {
+          return send(res, 200, { status: 'success', exchanges: exchangeApi.status() }, 'application/json', { 'cache-control': 'no-store' });
+        }
+        const exchangeAccount = url.pathname.match(/^\/api\/exchanges\/(binance|bybit)\/account$/);
+        if (exchangeAccount && req.method === 'GET') {
+          exchangeApi.account(exchangeAccount[1]).then((account) => {
+            send(res, 200, { status: 'success', ...account }, 'application/json', { 'cache-control': 'no-store' });
+          }).catch((error) => {
+            const known = error instanceof ExchangeError;
+            const code = known ? error.code : 'EXCHANGE_INTERNAL_ERROR';
+            const status = known ? error.status : 502;
+            const message = code.endsWith('_CREDENTIALS_NOT_CONFIGURED') ? 'API Key dan API Secret belum lengkap di server.' :
+              code === 'EXCHANGE_TIMEOUT' ? 'Exchange tidak merespons tepat waktu.' :
+              code === 'EXCHANGE_NETWORK_ERROR' ? 'Tidak dapat menjangkau exchange.' :
+              code.startsWith('EXCHANGE_UPSTREAM_HTTP_') ? 'Exchange menolak permintaan. Periksa izin API dan konfigurasi IP.' :
+              code.includes('API_ERROR_') ? 'Exchange menolak permintaan. Periksa izin read-only dan jenis akun.' :
+              'Koneksi exchange gagal. Periksa konfigurasi server.';
+            send(res, status, { status: 'error', exchange: exchangeAccount[1], code, message }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
         if (url.pathname === '/api/health') return send(res, 200, { status: 'ok' });
         if (url.pathname === '/api/snapshot' && req.method === 'GET') {
           const age = st.lastOk ? Date.now() - Date.parse(st.lastOk) : null;
