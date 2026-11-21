@@ -1044,7 +1044,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Commit penyegaran CSS Exchange Hub: `c800daf8a3dbe2858a891e2785911216adc4e379`.
 - Commit JS timeout, race guard, dan validasi pair: `d51f29bb69718da709c76f50d2312a85f2089c98`.
 - Commit cache PWA v10: `b6b4e95a9c005964fc5a547f8483b3d26a3bde3d`.
-- Commit fixture service worker: `577b74a1a0a2ce10efb7d4939bd8aa641291df8e` (file fixture ikut rangkaian perubahan; lihat riwayat file untuk perubahan terpisah).
+- Commit fixture service worker v10: `6f6f884e975dadb06ea37250207713bb6331409a`.
 - Commit tes UI Exchange Hub: `599ea9dfd8fe77056b8aa68a428b1a50daf3b477`; penguatan tes hapus token/request stale: `881ee91a81f12e2c8454bde16e44ece42cecc552`.
 - Commit penguatan JS hapus token: `9970d34496d7d4e1db0c892dd70097ab9d49bd88`.
 - README: `02313d5ac06693f0e7b990b9b669f5cded43a32f`; master context awal: `4b1de3b86df17e7b441582df1b7db1f8def2e8d0`.
