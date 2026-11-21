@@ -632,3 +632,35 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 5. Lanjutkan instrument metadata dan kalkulator berbasis tick size, step size, min notional, fee/funding serta risiko likuidasi setelah hasil read-only tervalidasi.
 6. Lanjutkan audit Dashboard lain: Watchlist/localStorage, Screener/filter/export CSV, News/Unlock/Alerts, AI Council/Workspace, System Health dan Command Center. Pastikan semua menu lama tetap berfungsi.
 7. Verifikasi deployment Hostless, DATA_DIR/EROFS dan persistensi lintas restart hanya setelah akses deployment/log/mount tersedia.
+
+
+---
+
+## 23. STATUS TERKINI, CI, DAN KONFIGURASI BINANCE — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 23.1 Kondisi repository dan perubahan terbaru
+- Branch `main` diverifikasi pada HEAD `c8250206ababae0ba5c0bb17a4f816f328b96234` (`feat: improve screener persistence and filtered CSV export`, 21 November 2026 21:19:23 UTC).
+- Commit sebelumnya `0f7ff85dd78c0c34b835cc401e728e3e3fa528aa` memperbarui service worker ke cache shell v7, memasukkan aset Exchange Hub ke precache, dan secara eksplisit melewatkan seluruh request `/api/*` melalui `fetch(..., { cache: 'no-store' })`. Respons privat saldo/posisi exchange tidak lagi disimpan dalam Cache Storage.
+- Commit HEAD `c8250206` memperbaiki pengelolaan filter Screener agar nilai filter tidak hilang saat render ulang/refresh, memperbaiki sorting untuk data numerik yang tidak tersedia, menambahkan ekspor CSV sesuai hasil filter aktif, menambahkan UTF-8 BOM, dan mitigasi formula injection pada field CSV.
+- Audit lima file test menunjukkan 42 deklarasi test case: `ai-group.test.js` (3), `ai-workspace.test.js` (3), `exchanges.test.js` (12), `github-app.test.js` (3), dan `radar.test.js` (21). README sebelumnya memuat hitungan lama; dokumentasi diselaraskan menjadi 42.
+
+### 23.2 Verifikasi GitHub Actions
+- Workflow `RADAR AI tests`, run ID `44950926632`, dipicu oleh push dan terkait langsung dengan HEAD `c8250206ababae0ba5c0bb17a4f816f328b96234`.
+- Job `test` berstatus `completed / success`; step `Run npm test` juga `success`. Ini merupakan bukti CI terbaru untuk SHA tersebut, termasuk syntax checks dan `node --test test/*.test.js`.
+- Ini tidak menggantikan tes browser/device atau koneksi API exchange nyata. Tes adapter exchange menggunakan mock response.
+- Working copy lokal tidak tersedia; tes lokal tidak dijalankan.
+
+### 23.3 Konfigurasi environment Binance dari pemilik
+- Pemilik mengonfirmasi dashboard Hostless menampilkan dua variable Production: `BINANCE_API_KEY` dan `BINANCE_API_SECRET`, keduanya bertanda Write-only.
+- Nama tersebut cocok persis dengan nama yang dibaca adapter backend `lib/exchanges.js`. Label Write-only adalah proteksi tampilan secret di Hostless dan bukan indikasi bahwa API exchange hanya memiliki izin write.
+- Nilai variable tidak dapat dibaca dari koneksi ini dan tidak diminta melalui chat. Konfirmasi keberadaan nama variable belum membuktikan nilai benar, pasangan key/secret valid, runtime deployment sudah memuat nilai, IP whitelist sesuai, atau izin Binance aman.
+- Status izin Binance tetap harus dipastikan pada dashboard API Binance: aktifkan read/account saja; nonaktifkan Spot Trading, Futures Trading, transfer, dan withdrawal. Endpoint RADAR AI sendiri hanya melakukan GET read-only dan tidak menyediakan order/withdraw.
+- Endpoint Hostless `/api/exchanges/status` dan `/api/health` tidak dapat diakses dari lingkungan pemeriksaan ini. Karena itu konfigurasi runtime, koneksi akun, Hostless build, deployment SHA, dan versi LIVE masih belum terverifikasi.
+
+### 23.4 NEXT TASK
+1. Setelah deployment Hostless terbaru tersedia, buka Exchange Hub dan periksa status backend; pastikan `BINANCE_API_KEY` dan `BINANCE_API_SECRET` terbaca sebagai configured tanpa pernah menampilkan nilainya.
+2. Jalankan tombol pemeriksaan akun Binance. Verifikasi Spot terlebih dahulu; verifikasi Futures terpisah dan terima status parsial jika izin Futures read belum tersedia.
+3. Pastikan halaman Binance API hanya memberi izin baca/account; nonaktifkan izin trading dan withdrawal. Label Write-only di Hostless tidak menjelaskan permission exchange.
+4. Catat hasil endpoint, pesan error yang sudah disanitasi, deployment SHA, dan status Live. Jangan menyatakan koneksi berhasil sebelum response akun nyata berhasil diterima di UI.
+5. QA desktop/mobile Exchange Hub dan Screener (filter, sort, export CSV), lalu lanjutkan instrument metadata dan kalkulator kontrak setelah koneksi read-only tervalidasi.
+6. Lanjutkan audit DATA_DIR/EROFS dan dashboard runtime hanya dengan bukti Hostless logs/mount. Hostless build dan Live tetap UNKNOWN sampai ada bukti dari dashboard/endpoint.
