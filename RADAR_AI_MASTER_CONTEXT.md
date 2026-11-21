@@ -785,3 +785,9 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - public/sw.js dinaikkan dari radar-shell-v7 ke radar-shell-v8 agar aset Exchange Hub terbaru diprecache dan cache shell lama dibersihkan saat aktivasi.
 - test/service-worker.test.js diperbarui untuk memeriksa v8 dan pembersihan cache API lama. Commit service worker: 28411b3e3ef2b38a18b895059d09ca62d757aa21; commit penyesuaian fixture: 82fc5d8ca4177e27592f1608f261d35f799cbb88; commit perbaikan assertion cache lama: 1a23bdc9e0f84fddb327c66a98a5321628fad419.
 - Jumlah deklarasi tes saat ini: 47 (13 Exchange Hub + 4 service worker + 30 dari empat file lainnya). Hasil eksekusi belum dikonfirmasi pada sesi ini.
+
+
+### 24.7 Pemeriksaan sintaks dan batas verifikasi
+- Source terbaru diambil ulang dari branch main setelah perubahan. Pemeriksaan parse JavaScript melalui V8 berhasil untuk server.js, public/trading.js, public/sw.js, test/exchanges.test.js, dan test/service-worker.test.js.
+- npm test belum dijalankan: clone repository ke working container gagal karena DNS/network GitHub tidak tersedia. GitHub combined commit status tidak mengembalikan status checks pada saat pemeriksaan; status GitHub Actions untuk rangkaian push terbaru belum dapat dikonfirmasi melalui konektor yang tersedia.
+- Tidak ada klaim bahwa seluruh test suite lulus. Verifikasi deployment Hostless dan QA browser/device juga masih terbuka.
