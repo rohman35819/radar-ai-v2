@@ -529,3 +529,57 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 3. Uji di ponsel: buka Menu, swipe di daftar menu sampai item terbawah, pastikan hanya daftar sidebar yang bergerak; swipe halaman utama setelah drawer tertutup; pastikan backdrop dan tombol Menu menutup/membuka dengan benar.
 4. QA desktop: sidebar tetap stabil, daftar menu dapat discroll dengan mouse wheel/trackpad, konten utama tidak ikut bergerak.
 5. Jika perangkat masih meneruskan gesture, ganti ke layout menu alternatif berbasis kategori/accordion atau rail navigasi dengan tombol yang tetap mudah dijangkau; jangan menghapus menu/fitur.
+
+
+---
+
+## 21. EXCHANGE HUB — BACKEND READ-ONLY BINANCE / BYBIT — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 21.1 Tujuan dan diagnosis
+- Pemilik menetapkan Exchange Hub sebagai tanggung jawab pengembangan khusus: satu halaman untuk Binance, Bybit, dan integrasi exchange/aplikasi berikutnya.
+- Pemeriksaan HEAD sebelum perubahan menunjukkan `public/trading.js` hanya mengganti tab dan menghitung simulasi posisi; belum ada request akun privat. `server.js` belum menyediakan route exchange dan belum ada adapter signature.
+- Pemilik menyampaikan API key sudah dipasang di Hostless. Nilai environment Hostless tidak dapat dibaca pada sesi ini; keberadaan key/secret, nama variabel, izin API, IP whitelist, serta koneksi aktual belum diverifikasi. Tidak ada nilai kredensial yang diminta atau disimpan dalam dokumentasi.
+
+### 21.2 Implementasi
+- Menambahkan `lib/exchanges.js` sebagai lapisan adapter read-only tanpa dependency tambahan:
+  - Binance Spot signed account request dengan HMAC-SHA256 dan header API key.
+  - Binance USDⓈ-M Futures account serta open positions; kegagalan izin Futures dipisahkan agar saldo Spot tetap dapat dibaca.
+  - Bybit V5 Unified Wallet dan Linear positions dengan signature HMAC-SHA256.
+  - Normalisasi dan pembatasan jumlah saldo/posisi yang dikirim ke browser.
+  - Timeout 10 detik, penanganan error generik, validasi bentuk response, dan tidak meneruskan response error upstream/secret.
+- `server.js` menyediakan:
+  - `GET /api/exchanges/status`: boolean konfigurasi saja, tanpa nilai key/secret.
+  - `GET /api/exchanges/binance/account` dan `GET /api/exchanges/bybit/account`: permintaan akun read-only saat pengguna menekan tombol di UI.
+  - Response privat memakai `Cache-Control: no-store`; route tunduk pada rate limit API yang sudah ada.
+- `public/trading.html`, `public/trading.js`, `public/trading.css`: panel status konfigurasi, tombol uji koneksi, ringkasan akun, tabel aset/saldo, posisi terbuka, state error, dan layout responsif. Data DOM dibuat dengan `textContent`/node, bukan memasukkan data exchange sebagai HTML.
+- `package.json`: `npm test` kini memeriksa sintaks `lib/exchanges.js` dan `public/trading.js`.
+- `test/exchanges.test.js`: 6 tes tambahan untuk status tanpa secret, signature Binance, signature Bybit, normalisasi saldo/posisi, kredensial tidak lengkap, error upstream, dan route server. Total test case repository menjadi 27 (21 core + 6 exchange).
+- `.env.example` mendokumentasikan nama environment yang diharapkan: `BINANCE_API_KEY`, `BINANCE_API_SECRET`, `BYBIT_API_KEY`, `BYBIT_API_SECRET`, serta base URL opsional. File hanya berisi placeholder kosong.
+- `README.md` menjelaskan cara konfigurasi dan batas read-only.
+
+### 21.3 Keamanan dan batas fitur
+- Secret tetap server-side; tidak dikirim ke frontend, tidak dikembalikan route status, tidak dicatat ke log, dan tidak disimpan ke state RADAR AI.
+- Tidak ada endpoint create/cancel order, transfer, withdrawal, atau live trading. Tidak ada izin trading/withdrawal yang dibutuhkan.
+- Tombol UI hanya memicu pembacaan akun saat diminta pengguna; keberadaan environment saja tidak dianggap sebagai koneksi berhasil.
+- Gunakan izin read/account saja dan nonaktifkan withdrawal, spot trading, futures trading, serta transfer. Jika Hostless menggunakan nama variabel berbeda, status UI akan menunjukkan konfigurasi belum lengkap sampai nama environment diselaraskan.
+- Binance Futures mungkin memerlukan izin baca terpisah; bila gagal, data Spot tetap bisa ditampilkan dengan status Futures tidak tersedia.
+- Bybit dapat diaktifkan dengan pasangan environment tersendiri. Integrasi exchange/aplikasi lain belum dibuat; adapter module menjadi titik perluasan berikutnya.
+- Market quotes, exchange instrument metadata (tick/step/min-notional), histori transaksi, dan kalkulator posisi berbasis aturan kontrak exchange belum diimplementasikan pada tahap ini. Kalkulator lama tetap simulasi generik dan tidak boleh dianggap presisi exchange.
+
+### 21.4 Pengujian dan deployment
+- Source serta diff diperiksa melalui GitHub setelah setiap perubahan; tidak ada perubahan pada Dashboard utama atau route lama yang dimaksudkan.
+- Tes lokal tidak dijalankan karena sesi tidak memiliki working copy Node repository. Tes otomatis baru ditambahkan; belum ada bukti hasil GitHub Actions untuk push HEAD terbaru pada sesi ini (combined status kosong dan konektor workflow run yang tersedia tidak menampilkan push runs).
+- Tes adapter memakai mocked fetch/response; ini membuktikan pembentukan signature dan normalisasi data pada unit test, bukan validasi kredensial nyata ke Binance/Bybit.
+- Hostless build, deployment SHA, runtime env presence, IP whitelist, dan versi LIVE belum dapat diakses/dikonfirmasi. Jangan klaim akun sudah tersambung sebelum tombol uji koneksi berhasil pada versi Hostless yang ter-deploy.
+- File yang berubah: `lib/exchanges.js`, `server.js`, `public/trading.html`, `public/trading.js`, `public/trading.css`, `test/exchanges.test.js`, `package.json`, `.env.example`, `README.md`, dan dokumen master ini.
+- Commit implementasi berurutan mencakup `dc6411a` (adapter), `9a32870` (API route), `a83a3f5` (account UI), `faa4e06` (frontend binding), `a0eebed` (route tests), `4d32a06` (syntax checks), `68039cb` (env template), `1ade6d2` (README), serta perbaikan lanjutan sampai HEAD implementasi `6b773f8385c0b050635b420c53851e11cc0067a1`. README/test-count sync berlanjut pada `e689a153a98d05db83caf2f552fde6f90c3d6600`.
+- Hostless build: tidak diketahui. Hostless Live: tidak diketahui / belum diverifikasi.
+
+### 21.5 NEXT TASK — TANGGUNG JAWAB EXCHANGE HUB
+1. Verifikasi push CI `npm test` untuk HEAD dokumentasi terbaru; jika gagal, perbaiki sebelum aktivasi akun.
+2. Setelah Hostless deploy, periksa `GET /api/exchanges/status`. Jika Binance belum terkonfigurasi, selaraskan nama environment `BINANCE_API_KEY` dan `BINANCE_API_SECRET` di Hostless tanpa mengirim nilainya melalui chat.
+3. Jalankan tombol uji koneksi Binance read-only dan verifikasi Spot; uji Futures secara terpisah. Cocokkan hasil hanya dari response aplikasi yang sudah disaring.
+4. Tambahkan Bybit read-only setelah pasangan environment Bybit tersedia; verifikasi Unified Wallet dan Linear positions.
+5. Tambahkan market ticker publik, instrument metadata (tick size, step size, min notional), riwayat transaksi read-only, dan kalkulator posisi yang memakai aturan exchange aktual.
+6. Bangun registry/adapter untuk exchange dan aplikasi tambahan, sambil mempertahankan kontrak data dan UI bersama.
+7. Jalankan QA visual/browser desktop/mobile, console/network, dan pengujian error/timeout/rate-limit. Jangan aktifkan live trading; tetap OFF sampai ada permintaan dan persetujuan eksplisit beserta seluruh pengaman order.
