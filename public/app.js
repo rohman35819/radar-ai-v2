@@ -254,11 +254,11 @@ function exportCSV(){
  const cell=value=>{
   let raw=String(value??'');
   if(!raw)return '""';
-  if(!Number.isFinite(Number(raw))&&/^[\\s]*[=+@\\-\\t\\r]/.test(raw))raw="'"+raw;
+  if(!Number.isFinite(Number(raw))&&/^[\s]*[=+@\-]/.test(raw))raw="'"+raw;
   return '"'+raw.replaceAll('"','""')+'"';
  };
  const csv=[cols.join(','),...rows.map(t=>cols.map(k=>cell(t[k])).join(','))].join('\n');
- const blob=new Blob(['\\uFEFF',csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=el('a',{href:url,download:'radar-ai-market-'+new Date().toISOString().slice(0,10)+'.csv'});
+ const blob=new Blob([String.fromCharCode(0xFEFF),csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=el('a',{href:url,download:'radar-ai-market-'+new Date().toISOString().slice(0,10)+'.csv'});
  a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('CSV '+rows.length+' aset berhasil disiapkan');
 }
 document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.t)));
