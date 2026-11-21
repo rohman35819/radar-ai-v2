@@ -103,17 +103,19 @@ async function loadExchangeStatus(){
 }
 connectButton.addEventListener('click',async()=>{
  const requestedExchange=activeExchange;
- connectButton.disabled=true;connectButton.textContent='Mengambil data akun…';feedback.textContent='Menghubungi '+activeExchange+' melalui server RADAR AI…';
+ connectButton.disabled=true;connectButton.textContent='Mengambil data akun…';feedback.textContent='Menghubungi '+requestedExchange+' melalui server RADAR AI…';
  try{
-  const response=await fetch('/api/exchanges/'+activeExchange.toLowerCase()+'/account',{cache:'no-store'});const body=await response.json();
+  const response=await fetch('/api/exchanges/'+requestedExchange.toLowerCase()+'/account',{cache:'no-store'});const body=await response.json();
   if(!response.ok||body.status!=='success')throw new Error(body.message||'Koneksi exchange gagal.');
   if(activeExchange===requestedExchange)renderAccount(body);
  }catch(error){
-  summary.replaceChildren();const empty=document.createElement('div');empty.className='account-empty';empty.textContent=error.message;summary.append(empty);
-  document.getElementById('exchange-status').textContent='KONEKSI GAGAL';
-  document.getElementById('hub-status').textContent='READ-ONLY / PERLU PEMERIKSAAN';
-  document.getElementById('api-state').textContent='Koneksi belum berhasil';
-  feedback.textContent=error.message+' Periksa izin read-only, whitelist IP, dan nama environment.';
+  if(activeExchange===requestedExchange){
+   summary.replaceChildren();const empty=document.createElement('div');empty.className='account-empty';empty.textContent=error.message;summary.append(empty);
+   document.getElementById('exchange-status').textContent='KONEKSI GAGAL';
+   document.getElementById('hub-status').textContent='READ-ONLY / PERLU PEMERIKSAAN';
+   document.getElementById('api-state').textContent='Koneksi belum berhasil';
+   feedback.textContent=error.message+' Periksa izin read-only, whitelist IP, dan nama environment.';
+  }
  }finally{connectButton.textContent='Periksa koneksi & ambil data akun';updateConnectionUiAfterResult();}
 });
 function updateConnectionUiAfterResult(){
