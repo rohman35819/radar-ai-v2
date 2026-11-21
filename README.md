@@ -53,7 +53,7 @@ Koneksi privat dilindungi token pemilik pada header `x-exchange-access-token`; t
 - Market Screener mempertahankan kata kunci/filter/sort saat data otomatis diperbarui dan menyediakan ekspor CSV untuk hasil yang sedang difilter. CSV menggunakan UTF-8 BOM dan perlindungan formula pada sel teks.
 - Screener: ambil seluruh kategori AI CoinGecko (hingga `MAX_PAGES` x 250), lalu filter lokal. Token ditandai `stale`, `fdv_unknown`, dsb; data basi tidak memicu alert.
 - Fundamental hanya tampil untuk token yang `gecko_id`-nya ada di DeFiLlama; selain itu `n/a` (bukan 0). Kecocokan fees/revenue memakai slug/nama dan bisa meleset untuk sebagian protokol.
-- `POST /api/refresh` butuh `ADMIN_TOKEN` (header `x-admin-token`). Rate limit 60 req/menit/IP (di belakang proxy, IP dibaca dari `x-forwarded-for`). Semua endpoint admin menggunakan pembandingan token waktu-konstan di server; jangan bagikan token melalui chat atau menyimpannya di frontend.
+- `POST /api/refresh` butuh `ADMIN_TOKEN` (header `x-admin-token`). Rate limit 60 req/menit/IP. Secara default identitas IP memakai koneksi socket dan tidak mempercayai `x-forwarded-for`; bila aplikasi berada di belakang reverse proxy yang menghapus header masuk lalu menambahkan rantai `X-Forwarded-For` yang benar, set `TRUSTED_PROXY_HOPS` sesuai jumlah proxy tepercaya (default `0`). Jangan menaikkan nilainya tanpa memastikan rantai proxy Hostless. Semua endpoint admin menggunakan pembandingan token waktu-konstan di server; jangan bagikan token melalui chat atau menyimpannya di frontend.
 - Watchlist tersimpan di browser perangkat, bukan server.
 - Bukan saran keuangan.
 
