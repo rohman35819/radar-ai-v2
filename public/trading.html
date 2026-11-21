@@ -2,16 +2,23 @@
 <html lang="id">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#071323"><title>Trading Terminal · RADAR AI</title>
+<meta name="theme-color" content="#071323"><meta name="description" content="RADAR AI Exchange Hub">
+<title>Exchange Hub · RADAR AI</title>
 <link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/trading.css">
 </head>
 <body class="trading-page">
-<header class="trade-header"><a class="back-link" href="/">← RADAR AI</a><div><b>TRADING TERMINAL</b><small>Exchange-connected workspace</small></div><span class="status-pill">API BELUM TERHUBUNG</span></header>
+<header class="trade-header"><a class="back-link" href="/">← RADAR AI</a><div><b>EXCHANGE HUB</b><small>Multi-exchange trading workspace</small></div><span class="status-pill">READ-ONLY / BELUM TERHUBUNG</span></header>
 <main class="trade-wrap">
-<section class="trade-intro"><div class="eyebrow">EXECUTION WORKSPACE</div><h1>Trading dari satu tempat.</h1><p>Siapkan posisi, hitung risiko, dan pantau kesiapan koneksi exchange. Eksekusi live belum aktif sampai API resmi dan demo trading selesai diuji.</p></section>
-<section class="connection-grid">
-<article class="connection-card"><div class="connection-top"><b>BINANCE</b><span class="pending">BELUM DIHUBUNGKAN</span></div><p>Spot & USDⓈ-M Futures</p><small>Market data · saldo · posisi · order</small></article>
-<article class="connection-card"><div class="connection-top"><b>BYBIT</b><span class="pending">BELUM DIHUBUNGKAN</span></div><p>Spot & Derivatives</p><small>Market data · saldo · posisi · order</small></article>
+<section class="trade-intro"><div class="eyebrow">RADAR EXCHANGE WORKSPACE</div><h1>Satu halaman untuk semua exchange.</h1><p>Pusat Binance, Bybit, dan exchange berikutnya. Pantau koneksi dan siapkan analisis dari satu tempat. Saat ini halaman masih read-only/simulasi; belum ada order live.</p></section>
+<section class="exchange-switcher" aria-label="Pilih exchange">
+  <button type="button" class="exchange-tab active" data-exchange-tab="Binance" aria-pressed="true"><span class="exchange-mark binance-mark">B</span><span><b>Binance</b><small>USDⓈ-M Futures · Spot</small></span><i class="tab-state">DIPILIH</i></button>
+  <button type="button" class="exchange-tab" data-exchange-tab="Bybit" aria-pressed="false"><span class="exchange-mark bybit-mark">B</span><span><b>Bybit</b><small>Derivatives · Spot</small></span><i class="tab-state">SIAP DISIAPKAN</i></button>
+  <button type="button" class="exchange-tab future-tab" disabled><span class="exchange-mark">＋</span><span><b>Exchange lain</b><small>Ditambahkan berikutnya</small></span><i class="tab-state">SEGERA</i></button>
+</section>
+<section class="exchange-overview trade-panel" aria-live="polite">
+  <div class="exchange-overview-top"><div><div class="eyebrow" id="exchange-kicker">EXCHANGE AKTIF</div><h2 id="exchange-title">Binance</h2><p id="exchange-description">Spot dan USDⓈ-M Futures. Koneksi akun belum diaktifkan.</p></div><span class="pending" id="exchange-status">BELUM TERHUBUNG</span></div>
+  <div class="exchange-facts"><div><small>STATUS API</small><b id="api-state">Menunggu konfigurasi server</b></div><div><small>DATA MARKET</small><b>Publik · tanpa API key</b></div><div><small>AKSES AKUN</small><b>Read-only · menunggu koneksi</b></div></div>
+  <p class="exchange-note" id="exchange-note">API Key Binance tetap disimpan di server. Jangan masukkan API Secret ke halaman ini atau ke browser.</p>
 </section>
 <section class="trade-layout">
 <article class="trade-panel">
@@ -28,9 +35,9 @@
 </article>
 <article class="trade-panel safety-panel">
 <div class="panel-heading"><div><h2>Gerbang keamanan</h2><p>Persiapan sebelum transaksi live dibuka.</p></div></div>
-<ul class="safety-list"><li><span>✓</span> Tidak ada API secret di browser</li><li><span>✓</span> Izin penarikan dana tidak diperlukan</li><li><span>✓</span> Order live dinonaktifkan saat ini</li><li><span>◷</span> API read-only dan koneksi akun</li><li><span>◷</span> Demo/Testnet dan validasi order</li><li><span>◷</span> Konfirmasi order, SL/TP, dan kill switch</li></ul>
-<div class="notice"><b>Belum terhubung ke exchange</b><p>Saldo, posisi, harga eksekusi, dan PnL akun belum ditampilkan. Kami tidak akan mengarang data akun atau mengirim order sebelum integrasi terverifikasi.</p></div>
+<ul class="safety-list"><li><span>✓</span> API Secret tidak pernah dikirim ke browser</li><li><span>✓</span> Izin penarikan dana tidak diperlukan</li><li><span>✓</span> Order live tetap dinonaktifkan</li><li><span>◷</span> Koneksi API read-only</li><li><span>◷</span> Demo/Testnet dan validasi order</li><li><span>◷</span> Konfirmasi order, SL/TP, dan kill switch</li></ul>
+<div class="notice"><b>Koneksi akun belum aktif</b><p>Saldo, posisi, dan PnL akun baru akan ditampilkan setelah koneksi server-side berhasil diverifikasi. Halaman ini tidak mengarang data akun atau mengirim order.</p></div>
 </article>
 </section>
-<section class="trade-panel roadmap-panel"><h2>Rencana aktivasi</h2><div class="roadmap"><div><b>01 · Fondasi</b><small>Terminal dan kalkulator posisi</small><strong class="done">Dibuat sekarang</strong></div><div><b>02 · Koneksi API</b><small>API resmi, server-side secret</small><strong>Persiapan berikutnya</strong></div><div><b>03 · Demo trading</b><small>Testnet, order dan proteksi</small><strong>Wajib diuji</strong></div><div><b>04 · Live trading</b><small>Manual dahulu, auto setelah evaluasi</small><strong>Butuh persetujuan</strong></div></div></section>
+<section class="trade-panel roadmap-panel"><h2>Rencana aktivasi</h2><div class="roadmap"><div><b>01 · Exchange Hub</b><small>Binance dan Bybit dalam satu halaman</small><strong class="done">Fondasi UI</strong></div><div><b>02 · Koneksi API</b><small>API resmi, secret hanya di server</small><strong>Berikutnya</strong></div><div><b>03 · Demo trading</b><small>Testnet, order dan proteksi</small><strong>Wajib diuji</strong></div><div><b>04 · Live trading</b><small>Manual dahulu, auto setelah evaluasi</small><strong>Butuh persetujuan</strong></div></div></section>
 </main><script src="/trading.js"></script></body></html>
