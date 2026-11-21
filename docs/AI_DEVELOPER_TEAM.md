@@ -25,3 +25,12 @@ Jangan menaruh private key atau installation token di browser, dashboard, reposi
 ### Status tahap awal
 
 Klien ini baru fondasi akses. Belum ada endpoint publik atau agent yang dapat menjalankan perubahan kode. Sebelum integrasi diaktifkan, implementasikan antrean satu tugas, validasi diff, batas ukuran/jumlah file, audit log, tes, dan persetujuan direktur/pemilik. Semua hasil harus berupa draft PR; merge ke `main` tetap manual.
+
+## Ruang Kerja AI dan tata kelola
+Empat agen melakukan review mandiri harian dengan perspektif berbeda:
+- Gemini: UX, kemudahan penggunaan mobile, dan nilai produk.
+- Groq: reliability, keamanan, dan QA.
+- OpenRouter: arsitektur, data, observability, dan efisiensi.
+- OpenAI: engineering, maintainability, dan keamanan teknis.
+
+Agen hanya mengirim proposal terstruktur. Proposal tidak dianggap sebagai instruksi sistem dan tidak boleh mengubah batas keamanan, secrets, risk limit, atau melakukan transaksi. Direktur Utama memilih prioritas. Implementasi berikutnya harus menggunakan branch terisolasi dan draft PR; CI/test dan review wajib dilakukan sebelum pemilik menyetujui merge. Tidak ada merge otomatis.
