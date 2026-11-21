@@ -103,12 +103,15 @@ function renderAccount(data){
  if(positions.length)positionList.append(table(['Pair','Arah','Size','Entry','Mark','Unrealized PnL'],positions.map(x=>[x.symbol,x.side,money(x.size),money(x.entry_price),money(x.mark_price),money(x.unrealized_pnl)])));
  else{const p=document.createElement('p');p.className='muted';p.textContent=positionsAvailable?'Tidak ada posisi terbuka.':'Data posisi gagal dibaca ('+positionsError+'). Saldo berhasil diambil, tetapi hasil posisi belum dapat dipastikan.';positionList.append(p);}
  const spotTradingEnabled=data.exchange==='binance'&&Boolean(account.spot?.can_trade);
- document.getElementById('account-checked-at').textContent=(spotTradingEnabled?'PERINGATAN: API Key Binance memiliki izin Spot Trading aktif. Nonaktifkan izin trading pada pengaturan API exchange. ':'')+'Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · Data hanya dibaca dan tidak disimpan.';
- document.getElementById('account-checked-at').classList.toggle('account-warning',spotTradingEnabled||!positionsAvailable);
- document.getElementById('exchange-status').textContent=spotTradingEnabled?'TERHUBUNG · PERIKSA IZIN API':positionsAvailable?'TERHUBUNG · READ-ONLY':'TERHUBUNG · DATA PARSIAL';
- document.getElementById('hub-status').textContent=spotTradingEnabled?'PERINGATAN / IZIN TRADING AKTIF':positionsAvailable?'READ-ONLY / TERHUBUNG':'READ-ONLY / DATA PARSIAL';
- document.getElementById('api-state').textContent=spotTradingEnabled?'Izin Spot Trading aktif':positionsAvailable?'Permintaan akun berhasil':'Sebagian data akun tidak tersedia';
- feedback.textContent=spotTradingEnabled?'Saldo terbaca, tetapi API Key memiliki izin Spot Trading. Nonaktifkan izin tersebut untuk keamanan.':positionsAvailable?'Data akun berhasil dibaca dari '+activeExchange+'. Tidak ada order yang dikirim.':'Saldo terbaca; data posisi belum lengkap.';
+ const futuresTradingEnabled=data.exchange==='binance'&&Boolean(account.futures?.can_trade);
+ const tradingPermissionEnabled=spotTradingEnabled||futuresTradingEnabled;
+ const permissionWarning=spotTradingEnabled&&futuresTradingEnabled?'izin Spot dan Futures Trading':spotTradingEnabled?'izin Spot Trading':'izin Futures Trading';
+ document.getElementById('account-checked-at').textContent=(tradingPermissionEnabled?'PERINGATAN: API Key Binance memiliki '+permissionWarning+' aktif. Nonaktifkan izin trading pada pengaturan API exchange. ':'')+'Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · Data hanya dibaca dan tidak disimpan.';
+ document.getElementById('account-checked-at').classList.toggle('account-warning',tradingPermissionEnabled||!positionsAvailable);
+ document.getElementById('exchange-status').textContent=tradingPermissionEnabled?'TERHUBUNG · PERIKSA IZIN API':positionsAvailable?'TERHUBUNG · READ-ONLY':'TERHUBUNG · DATA PARSIAL';
+ document.getElementById('hub-status').textContent=tradingPermissionEnabled?'PERINGATAN / IZIN TRADING AKTIF':positionsAvailable?'READ-ONLY / TERHUBUNG':'READ-ONLY / DATA PARSIAL';
+ document.getElementById('api-state').textContent=tradingPermissionEnabled?'Izin trading aktif':positionsAvailable?'Permintaan akun berhasil':'Sebagian data akun tidak tersedia';
+ feedback.textContent=tradingPermissionEnabled?'Saldo terbaca, tetapi API Key memiliki '+permissionWarning+'. Nonaktifkan izin tersebut untuk keamanan.':positionsAvailable?'Data akun berhasil dibaca dari '+activeExchange+'. Tidak ada order yang dikirim.':'Saldo terbaca; data posisi belum lengkap.';
 }
 async function loadExchangeStatus(){
  try{
