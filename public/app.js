@@ -150,7 +150,17 @@ function renderWorkspace(){
  v.append(card(el('div',{class:'row-between'},el('div',{},el('div',{class:'eyebrow'},'INDEPENDENT REVIEW'),el('h2',{},'Rapat perbaikan RADAR')),el('span',{class:r.status==='completed'?'positive':'warning'},r.status==='completed'?'● SELESAI':'◌ BELUM LENGKAP')),el('p',{class:'muted'},dateTime(r.created_at)+' · '+(r.agent_count||0)+'/4 AI aktif'),el('p',{},'Setiap model menilai dari sudut pandang berbeda. Usulan belum menjadi perubahan kode.')));
  (r.agents||[]).forEach(a=>{
   const p=card(el('div',{class:'row-between'},el('b',{},esc(a.provider).toUpperCase()),el('span',{class:a.error?'negative':'positive'},a.error?'GAGAL':(a.proposals||[]).length+' USULAN')),a.error?el('p',{class:'negative'},a.error):el('p',{},esc(a.observation)));
-  (a.proposals||[]).forEach((q,i)=>p.append(el('div',{class:'proposal-card'},el('div',{class:'row-between'},el('b',{},(i+1)+'. '+esc(q.title)),el('span',{class:'flag'},esc(q.priority).toUpperCase())),el('p',{},esc(q.problem)),el('p',{class:'muted'},'Manfaat: '+esc(q.benefit)),el('p',{class:'muted'},'Usaha: '+esc(q.effort)+' · Risiko: '+esc(q.risk)),...(q.files||[]).map(f=>el('span',{class:'file-chip'},f)),...(q.acceptance_criteria||[]).map(c=>el('p',{class:'muted'},'✓ '+c))));
+  (a.proposals||[]).forEach((q,i)=>{
+   const proposal=el('div',{class:'proposal-card'},
+    el('div',{class:'row-between'},el('b',{},(i+1)+'. '+esc(q.title)),el('span',{class:'flag'},esc(q.priority).toUpperCase())),
+    el('p',{},esc(q.problem)),
+    el('p',{class:'muted'},'Manfaat: '+esc(q.benefit)),
+    el('p',{class:'muted'},'Usaha: '+esc(q.effort)+' · Risiko: '+esc(q.risk)),
+    ...(q.files||[]).map(f=>el('span',{class:'file-chip'},f)),
+    ...(q.acceptance_criteria||[]).map(c=>el('p',{class:'muted'},'✓ '+c))
+   );
+   p.append(proposal);
+  });
   if(a.challenge)p.append(el('p',{class:'muted'},'Tantangan: '+a.challenge));if(a.self_critique)p.append(el('p',{class:'muted'},'Evaluasi diri: '+a.self_critique));v.append(p);
  });
  v.append(card(el('b',{},'Keputusan Direktur Utama'),el('p',{},r.director_status||'Menunggu penilaian.'),el('p',{class:'muted'},'Perubahan kode hanya melalui branch terpisah, tes, Draft PR, dan persetujuan pemilik. Tidak ada auto-merge atau auto-trading.')));
