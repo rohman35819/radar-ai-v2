@@ -485,3 +485,46 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
   3. Jalankan QA browser dashboard/sidebar dan Exchange Hub pada desktop serta mobile; periksa console, network, dan `/api/health` terhadap deployment SHA yang sama.
   4. Uji volume writable dan persistensi lintas restart setelah mount Hostless teridentifikasi; jangan mengganti storage path secara spekulatif.
   5. Setelah storage dan UI stabil, implementasikan Binance read-only server-side dengan secret tetap di Hostless environment; trading tetap OFF.
+
+
+---
+## 20. PERBAIKAN SIDEBAR SCROLL & DRAWER MOBILE — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 20.1 Masalah dan diagnosis source
+- Pemilik melaporkan saat menggeser menu sidebar ke atas, halaman dashboard ikut bergeser dan sidebar tidak terasa menjadi area scroll yang mandiri.
+- Pemeriksaan source menunjukkan aturan lama memberi `overflow-y:auto` pada seluruh `.sidebar`, sedangkan `.side-nav` masih menjadi flex child/grid tanpa batas tinggi dan tanpa scroll container internal yang eksplisit. Pada perangkat sentuh, scroll chaining/gesture dapat membuat halaman utama menerima gerakan.
+- Perubahan ini memperjelas kepemilikan scroll: sidebar menjadi viewport dengan overflow tersembunyi; hanya daftar menu `.side-nav` yang menjadi area scroll vertikal dengan `min-height:0`, `flex:1 1 0`, `overscroll-behavior-y:contain`, momentum scrolling iOS, dan `touch-action:pan-y`. Header brand dan status engine tetap di luar area scroll.
+
+### 20.2 Perubahan implementasi
+- `public/style.css`:
+  - Memindahkan scroll internal ke `.side-nav`, bukan seluruh panel sidebar.
+  - Menahan overscroll chaining dan memberi area sentuh menu minimal 44px.
+  - Drawer mobile tetap fixed dengan tinggi dynamic viewport, animasi halus, safe-area padding, dan backdrop.
+  - Ketika drawer terbuka, body dikunci dari scroll; daftar menu tetap dapat discroll secara internal.
+  - Menambahkan focus-visible untuk aksesibilitas keyboard.
+- `public/index.html`:
+  - Tombol hamburger diperjelas menjadi tombol "Menu" dengan ikon, label, `aria-controls`, dan `aria-expanded`.
+  - Menambahkan backdrop tombol untuk menutup drawer saat area luar disentuh.
+  - Seluruh 12 entri navigasi lama tetap dipertahankan.
+- `public/app.js`:
+  - Menambahkan satu pengendali buka/tutup sidebar yang menyelaraskan class drawer, body scroll lock, dan atribut ARIA.
+  - Backdrop, tombol menu, Escape, resize ke desktop, dan navigasi halaman menutup drawer dengan konsisten.
+  - Tidak mengubah route, data, atau fitur dashboard.
+
+### 20.3 Tes dan verifikasi
+- Pemeriksaan ulang GitHub memastikan aturan CSS baru, backdrop HTML, dan pengendali JS sudah berada di branch `main`.
+- Commit implementasi berurutan:
+  - CSS: `2de0f930e0d8d63282aed47ee4d4169ef2d3be41`
+  - HTML: `d5f1eea36929e846be3447fb6bfbdbbaba07c7b2`
+  - JS / HEAD kode: `cb75d088155282481b442b256775a9b65e3a2acb`
+- Combined commit status untuk HEAD `cb75d08` kosong. Konektor workflow-run yang tersedia hanya mengembalikan workflow pull-request, sehingga hasil CI push belum terverifikasi.
+- Tes lokal `npm test` dan `node --check public/app.js` tidak dapat dijalankan: working copy tidak tersedia dan `git clone` gagal karena DNS/runtime tidak dapat mengakses github.com.
+- Browser/device QA belum dapat dilakukan dalam sesi ini. Perubahan adalah perbaikan source-level; scroll behavior pada perangkat fisik dan Hostless Live belum boleh dinyatakan lulus.
+- Hostless build dan versi Live tetap tidak diketahui / belum diverifikasi. Commit masuk ke GitHub `main`; jangan menyamakan commit dengan deployment.
+
+### 20.4 NEXT TASK
+1. Verifikasi GitHub Actions `npm test` untuk SHA `cb75d088155282481b442b256775a9b65e3a2acb` melalui run/job push yang sesuai.
+2. Verifikasi Hostless build dan deployment SHA Live setelah auto-deploy.
+3. Uji di ponsel: buka Menu, swipe di daftar menu sampai item terbawah, pastikan hanya daftar sidebar yang bergerak; swipe halaman utama setelah drawer tertutup; pastikan backdrop dan tombol Menu menutup/membuka dengan benar.
+4. QA desktop: sidebar tetap stabil, daftar menu dapat discroll dengan mouse wheel/trackpad, konten utama tidak ikut bergerak.
+5. Jika perangkat masih meneruskan gesture, ganti ke layout menu alternatif berbasis kategori/accordion atau rail navigasi dengan tombol yang tetap mudah dijangkau; jangan menghapus menu/fitur.
