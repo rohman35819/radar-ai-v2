@@ -1084,3 +1084,34 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
   4. Lanjutkan audit DATA_DIR/EROFS berdasarkan log dan konfigurasi volume aktual, bukan asumsi.
   5. Kembali ke QA Dashboard, Command Center, serta halaman News, Unlock, Alert, AI Council, AI Workspace, dan System Health.
 - Trading live, withdrawal, dan transfer tetap di luar scope dan nonaktif.
+
+## 30. PENGHAPUSAN DATA AKUN PRIVAT KEDALUWARSA — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 30.1 Temuan dan keputusan
+- Audit alur Exchange Hub menemukan bahwa bila refresh akun gagal setelah koneksi sebelumnya berhasil, panel ringkasan menampilkan error tetapi tabel saldo/aset dan posisi dari respons sukses sebelumnya masih tertinggal di DOM. Ini berisiko menampilkan data privat yang sudah tidak tervalidasi seolah-olah masih aktual.
+- Perbaikan dilakukan dengan memanggil `clearAccount()` pada kegagalan request akun yang masih aktif sebelum menampilkan pesan error. Fungsi tersebut mengosongkan ringkasan, saldo, posisi, timestamp pemeriksaan, status koneksi, dan kini juga menghapus kelas visual peringatan lama.
+- Perilaku token-clear yang sudah ada tetap dipertahankan: menaikkan request ID sehingga respons request lama tidak dapat mengisi ulang tampilan setelah token dihapus.
+
+### 30.2 File dan commit
+- `public/trading.js`: hapus data akun lama saat refresh gagal; bersihkan state warning saat data akun dibersihkan. Commit `df22584d2d41c86c1043a6771e07441b1103a539`.
+- `test/exchange-ui.test.js`: tambah regresi test bahwa jalur gagal membersihkan data privat dan status warning. Commit `fb5c1bcc01284318d27efe76732aad22e1e2b532`.
+- `README.md`: jumlah suite diperbarui menjadi 58 test case. Commit `135807b59cab2f9cdba1ff2cb0c8193d65ec5696`.
+- Tidak ada perubahan endpoint, kredensial, permission exchange, kalkulator, atau kemampuan trading. Tidak ada dependency baru.
+
+### 30.3 Pengujian
+- GitHub Actions run #272 untuk commit test `fb5c1bcc01284318d27efe76732aad22e1e2b532`: job `test` dan langkah `npm test` completed / success.
+- Hasil: 58 tests, 58 pass, 0 fail. Pipeline menjalankan seluruh pemeriksaan `node --check` pada server, modul exchange, frontend Exchange Hub, Dashboard, service worker, Command Center, dan modul AI OpenAI.
+- Run #271 untuk perubahan frontend juga success. Run #270 untuk dokumentasi regresi CI sebelumnya success.
+- Tes ini adalah regression/static + Node test suite; bukan QA browser/device dan bukan bukti koneksi akun nyata.
+
+### 30.4 Status dan NEXT TASK
+- GitHub: perubahan kode dan tes telah masuk branch `main`; README telah disinkronkan. Catatan ini menjadi commit dokumentasi berikutnya.
+- Hostless Build: belum terverifikasi. Hostless Live/SHA: belum terverifikasi; URL publik tidak dapat diakses dari pemeriksaan sesi ini.
+- EROFS/DATA_DIR masih menunggu log runtime dan konfigurasi volume Hostless. QA visual desktop/mobile, Console/Network, dan koneksi Binance/Bybit read-only nyata masih terbuka.
+- NEXT TASK:
+  1. Verifikasi Actions pada HEAD final setelah commit dokumentasi ini.
+  2. Lakukan QA browser Exchange Hub: gagal refresh setelah sukses harus mengosongkan tabel akun; hapus token saat request pending tidak boleh memunculkan saldo; uji switch exchange, timeout, 401/503, dan mobile.
+  3. Verifikasi Hostless Build dan SHA Live secara terpisah; jangan klaim deploy dari CI.
+  4. Audit DATA_DIR/EROFS berdasarkan log serta mount writable yang benar dari Hostless.
+  5. Lanjutkan Dashboard, Command Center, dan modul intelijen lainnya setelah stabilitas Exchange Hub terjaga.
+- Trading live, withdrawal, dan transfer tetap tidak tersedia/tidak diaktifkan.
