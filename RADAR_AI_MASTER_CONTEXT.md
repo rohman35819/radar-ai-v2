@@ -249,8 +249,8 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - File dokumentasi: RADAR_AI_MASTER_CONTEXT.md, AGENTS.md, README.md.
 - Perubahan kode: tidak ada. Perubahan sesi ini hanya catatan audit dalam dokumen master.
 - Tes lokal: tidak dijalankan karena sesi ini tidak memiliki working copy/runtime repository. CI GitHub untuk commit 8e5c3cab lulus.
-- Commit audit ini: akan diisi setelah perubahan dokumentasi disimpan.
-- GitHub: status commit audit akan diverifikasi setelah update.
+- Commit dokumentasi audit utama: 20aa7a95c20d51625f44759f01b6df8df3c04549.
+- GitHub: perubahan dokumentasi audit tersimpan pada branch main; pembaruan metadata audit ini menyusul dalam commit berikutnya.
 - Hostless build: tidak diketahui.
 - Hostless Live: tidak diketahui / belum diverifikasi.
 - Risiko terbuka: volume writable Hostless dan penyebab EROFS belum diketahui; halaman live dan UI belum dapat diuji.
