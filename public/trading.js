@@ -77,11 +77,13 @@ function renderAccount(data){
   assets=(spot.balances||[]).map(x=>[x.asset,money(x.free),money(x.locked),money(x.total)]);
   positions=futures.positions||[];
   stats=[['Aset Spot',String(assets.length)],['Wallet Futures',futures.available?money(futures.wallet_balance)+' USDT':'Tidak tersedia'],['Available Futures',futures.available?money(futures.available_balance)+' USDT':'—'],['Unrealized PnL',futures.available?money(futures.unrealized_pnl)+' USDT':'—'],['Posisi terbuka',String(positions.length)]];
+  if(futures.available&&!futures.positions_available)stats.push(['Data posisi','Izin baca belum tersedia']);
  }else{
   const wallet=account.wallet||{};
   assets=(wallet.coins||[]).map(x=>[x.asset,money(x.wallet_balance),money(x.equity),money(x.available_balance)]);
   positions=account.positions||[];
   stats=[['Total Equity',money(wallet.total_equity)+' USDT'],['Wallet Balance',money(wallet.wallet_balance)+' USDT'],['Available Balance',money(wallet.available_balance)+' USDT'],['Aset aktif',String(assets.length)],['Posisi terbuka',String(positions.length)]];
+  if(account.positions_available===false)stats.push(['Data posisi','Izin baca belum tersedia']);
  }
  stats.forEach(([label,value])=>summary.append(stat(label,value)));
  if(assets.length)assetList.append(table(data.exchange==='binance'?['Aset','Free','Locked','Total']:['Aset','Wallet','Equity','Available'],assets));
