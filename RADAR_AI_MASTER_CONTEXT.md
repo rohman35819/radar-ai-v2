@@ -664,3 +664,8 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 4. Catat hasil endpoint, pesan error yang sudah disanitasi, deployment SHA, dan status Live. Jangan menyatakan koneksi berhasil sebelum response akun nyata berhasil diterima di UI.
 5. QA desktop/mobile Exchange Hub dan Screener (filter, sort, export CSV), lalu lanjutkan instrument metadata dan kalkulator kontrak setelah koneksi read-only tervalidasi.
 6. Lanjutkan audit DATA_DIR/EROFS dan dashboard runtime hanya dengan bukti Hostless logs/mount. Hostless build dan Live tetap UNKNOWN sampai ada bukti dari dashboard/endpoint.
+
+### 23.5 Pembaruan dokumentasi sesi ini
+- README test count diperbaiki dari 33 menjadi 42 berdasarkan deklarasi test pada lima file; commit README: `e88360bb3d5f906c8f09756ed3b2b99485693495`.
+- Bagian 23 pada dokumen master ditambahkan melalui commit: `41027d90dcecdb58466de7750924e7c5ebd96679`.
+- Keduanya adalah commit dokumentasi; kode aplikasi tidak berubah dan hasil CI `success` yang dirujuk tetap milik HEAD kode `c8250206ababae0ba5c0bb17a4f816f328b96234`.
