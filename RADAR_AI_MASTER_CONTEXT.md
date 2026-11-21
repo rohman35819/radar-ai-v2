@@ -791,3 +791,39 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Source terbaru diambil ulang dari branch main setelah perubahan. Pemeriksaan parse JavaScript melalui V8 berhasil untuk server.js, public/trading.js, public/sw.js, test/exchanges.test.js, dan test/service-worker.test.js.
 - npm test belum dijalankan: clone repository ke working container gagal karena DNS/network GitHub tidak tersedia. GitHub combined commit status tidak mengembalikan status checks pada saat pemeriksaan; status GitHub Actions untuk rangkaian push terbaru belum dapat dikonfirmasi melalui konektor yang tersedia.
 - Tidak ada klaim bahwa seluruh test suite lulus. Verifikasi deployment Hostless dan QA browser/device juga masih terbuka.
+
+
+---
+
+## 25. AUDIT IZIN BINANCE FUTURES & STATUS EXCHANGE HUB — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 25.1 Temuan
+- Audit terhadap implementasi terbaru menemukan pemeriksaan izin Binance hanya membaca `spot.canTrade`. Izin Futures dapat aktif secara terpisah; jika hanya memeriksa Spot, Exchange Hub berpotensi memberi label READ-ONLY walau API key masih memiliki izin trading USDⓈ-M Futures.
+- Pembacaan akun Futures `/fapi/v2/account` menyediakan flag `canTrade`, sehingga pemeriksaan tambahan dapat dilakukan tanpa menambah endpoint atau memperluas permission scope.
+
+### 25.2 Perbaikan
+- `lib/exchanges.js`: hasil akun Binance Futures kini menyertakan boolean `futures.can_trade` dari respons exchange.
+- `public/trading.js`: Exchange Hub menggabungkan pemeriksaan izin Spot dan Futures; jika salah satu aktif, tampil peringatan spesifik dan status tidak lagi mengklaim READ-ONLY.
+- `test/exchanges.test.js`: fixture akun Futures mengaktifkan `canTrade` dan menguji bahwa flag diteruskan dengan benar.
+- `README.md`: dokumentasi menegaskan pemeriksaan izin Spot/Futures dan bahwa ini bukan pengganti konfigurasi read-only di dashboard exchange.
+
+### 25.3 Commit
+- Backend flag Futures: `ee40e637cfa67771d82359dcbb0cc384eb7d4ae9`.
+- Test: `28991c4feda04b8aa6aea0f58be83d0d6eb4968a`.
+- UI warning: `4172cb7b4d17091ee144787a74c217f314cb3a5d`.
+- README: `5cfeced0cb46c195a2726db65a85adf054e5c8db`.
+- GitHub Actions untuk perubahan ini belum diverifikasi pada saat entri dibuat. Tes lokal belum dijalankan.
+
+### 25.4 Risiko dan batas verifikasi
+- Flag `canTrade` merupakan indikator permission yang diberikan endpoint akun; pemilik tetap wajib memastikan permission di Binance API Management hanya read-only dan withdrawal/transfer/trading dimatikan.
+- Koneksi akun Binance/Bybit nyata, build Hostless, dan SHA versi Live belum terverifikasi. Tidak ada order yang dikirim.
+- DATA_DIR memakai `path.resolve(DATA_DIR || './data')`; load hanya menganggap ENOENT sebagai instalasi baru, sedangkan EROFS/EACCES/EIO diteruskan. Save memakai temporary file lalu rename atomik. Penyebab EROFS tidak dapat dipastikan tanpa konfigurasi volume dan log Hostless.
+
+### 25.5 NEXT TASK
+1. Verifikasi CI untuk rangkaian commit ini; perbaiki kegagalan jika ada.
+2. Periksa status Build/Live Hostless dan deployment SHA dengan akses resmi; jangan menganggap commit main otomatis Live.
+3. Setelah deploy terverifikasi, uji endpoint Exchange Hub dengan token akses melalui UI; pastikan status 401 tanpa token dan data akun berhasil hanya dengan token yang benar.
+4. QA browser desktop/mobile pada Dashboard, Exchange Hub, Command Center, PWA, serta error/loading/empty states.
+5. Lanjutkan audit fungsi News, Token Unlock, Alert Center, AI Council, AI Workspace, dan System Health.
+6. Audit DATA_DIR/EROFS pada konfigurasi volume/log Hostless yang aktual; jangan mengubah path produksi berdasarkan tebakan.
+7. Binance/Bybit tetap read-only; tidak ada live order atau withdrawal.
