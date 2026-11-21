@@ -27,7 +27,7 @@ test('Binance menandatangani request di server dan menormalkan saldo serta posis
       const expected = crypto.createHmac('sha256', secret).update(parsed.searchParams.toString()).digest('hex');
       assert.equal(signature, expected);
       if (parsed.pathname === '/api/v3/account') return response({ canTrade: false, balances: [{ asset: 'USDT', free: '12.5', locked: '1' }, { asset: 'BTC', free: '0', locked: '0' }] });
-      if (parsed.pathname === '/fapi/v2/account') return response({ totalWalletBalance: '25', availableBalance: '20', totalUnrealizedProfit: '2' });
+      if (parsed.pathname === '/fapi/v2/account') return response({ canTrade: true, totalWalletBalance: '25', availableBalance: '20', totalUnrealizedProfit: '2' });
       if (parsed.pathname === '/fapi/v2/positionRisk') return response([{ symbol: 'BTCUSDT', positionAmt: '0.01', entryPrice: '50000', markPrice: '51000', unRealizedProfit: '10', leverage: '5', marginType: 'isolated' }, { symbol: 'ETHUSDT', positionAmt: '0' }]);
       throw new Error('unexpected endpoint');
     },
@@ -38,6 +38,7 @@ test('Binance menandatangani request di server dan menormalkan saldo serta posis
   assert.equal(result.account.spot.balances.length, 1);
   assert.equal(result.account.spot.balances[0].total, 13.5);
   assert.equal(result.account.futures.wallet_balance, 25);
+  assert.equal(result.account.futures.can_trade, true);
   assert.equal(result.account.futures.positions[0].side, 'LONG');
   assert.equal(JSON.stringify(result).includes(secret), false);
 });
