@@ -985,3 +985,55 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Branch main telah diverifikasi pada HEAD ef09399c7faa9abbb5e03716de9e4a823442d9e1 sebelum penambahan catatan penutupan ini.
 - Hostless Build/Live: belum diverifikasi. Tidak ada bukti deployment SHA ini sudah aktif.
 
+
+
+---
+
+## 28. REDESAIN & HARDENING UX EXCHANGE HUB — 22 NOVEMBER 2026
+
+### 28.1 Fokus dan temuan
+- Pemilik meminta perbaikan tampilan/fungsi dan kemudian membatasi ruang lingkup hanya ke Exchange Hub.
+- Audit source menemukan UI memiliki dasar read-only yang benar, tetapi hierarki visual, kepadatan kartu, tata letak mobile, serta affordance status/kontrol token masih perlu dipoles.
+- Tombol koneksi setelah request selesai memakai label berbeda dari label awal; tombol refresh akun tidak tersedia. Token dapat berada di variabel memori, tetapi tidak tersedia kontrol eksplisit untuk menghapusnya dari sesi halaman.
+- Request akun/ticker belum memiliki batas waktu eksplisit di browser. Pergantian exchange ketika request akun masih berjalan berpotensi membuat hasil lama mengubah status UI exchange yang baru dipilih.
+- Pair ticker belum divalidasi di browser sebelum request (backend tetap melakukan validasi).
+
+### 28.2 Perubahan implementasi
+- `public/trading.html`: kontrol tampil/sembunyikan token, hapus token dan tampilan saldo dari halaman, tombol refresh akun yang baru aktif setelah koneksi berhasil, serta status akses yang lebih jelas.
+- `public/trading.css`: penyegaran visual khusus Exchange Hub; memperjelas hierarki header/hero, kartu exchange, panel koneksi, statistik akun, tabel, kalkulator, safety panel, dan roadmap. Breakpoint tablet/mobile diperbaiki, termasuk layout switcher dua kolom, kontrol sentuh penuh, safe spacing, dan fokus keyboard.
+- `public/trading.js`: refresh akun memakai alur autentikasi yang sama; token dapat ditampilkan dan dihapus tanpa persistensi. Request akun dibatasi 20 detik dan ticker 15 detik; request ID mencegah hasil exchange lama menimpa exchange yang baru dipilih. Validasi simbol dilakukan sebelum request. Pesan 401/503 dan timeout dibuat lebih mudah dipahami. Tombol koneksi kembali ke label konsisten setelah proses.
+- `public/sw.js`: cache shell dinaikkan ke `radar-shell-v10` agar PWA mengambil aset Exchange Hub terbaru.
+- `test/service-worker.test.js`: fixture versi shell diperbarui ke v10.
+- `test/exchange-ui.test.js`: lima tes statis baru untuk kontrol token, refresh akun, timeout/race, validasi simbol, dan responsivitas/fokus keyboard.
+- `README.md`: instruksi Exchange Hub dan jumlah suite disinkronkan menjadi 57 test case pada 8 file.
+
+### 28.3 Keamanan dan batas perubahan
+- Tidak mengubah endpoint backend, kontrak API, permission exchange, atau penyimpanan server.
+- Token tetap hanya di memori tab; tidak menggunakan localStorage/sessionStorage. Kontrol hapus juga membersihkan tampilan saldo/posisi.
+- Tidak menambah endpoint order, transfer, withdrawal, atau live trading. Read-only tetap menjadi satu-satunya mode akun.
+- Tidak mengubah Dashboard, Command Center, atau halaman lain selain cache PWA yang diperlukan untuk aset Exchange Hub.
+
+### 28.4 File yang diubah
+- `public/trading.html`
+- `public/trading.css`
+- `public/trading.js`
+- `public/sw.js`
+- `test/service-worker.test.js`
+- `test/exchange-ui.test.js` (baru)
+- `README.md`
+- `RADAR_AI_MASTER_CONTEXT.md`
+
+### 28.5 Verifikasi dan deployment
+- Source diambil dari branch `main` pada HEAD sebelum perubahan: `d0803cd3c52f7bc854cc64a9bef8b14f9f24e7f5`.
+- Parse JavaScript frontend Exchange Hub melalui V8 `new Function` berhasil setelah perubahan. File test baru juga lolos pemeriksaan parse.
+- Pemeriksaan tes otomatis penuh perlu diverifikasi oleh GitHub Actions setelah seluruh commit tersedia.
+- QA browser desktop/mobile dan koneksi akun nyata belum dilakukan dalam sesi ini.
+- Hostless Build dan versi LIVE belum terverifikasi; peningkatan cache tidak membuktikan deployment sudah aktif.
+- Tidak ada kredensial yang dibaca, diubah, atau dicatat. Tidak ada order/withdrawal dilakukan.
+
+### 28.6 NEXT TASK
+1. Verifikasi GitHub Actions untuk HEAD setelah perubahan Exchange Hub; perbaiki kegagalan sebelum menyatakan tes lulus.
+2. Verifikasi Hostless Build dan SHA LIVE secara terpisah.
+3. QA interaksi Exchange Hub pada desktop/mobile: switch Binance/Bybit, token tampil/hapus, 401/503, timeout, refresh akun, ticker, tabel saldo/posisi, dan kalkulator.
+4. Setelah deploy terverifikasi, uji koneksi akun read-only tanpa membagikan token di chat.
+5. Pastikan API Binance dan Bybit tetap tanpa izin trading/withdrawal/transfer.
