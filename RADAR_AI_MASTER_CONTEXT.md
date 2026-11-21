@@ -888,3 +888,10 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Percobaan akses publik ke `https://radar-ai-v2.hostless.app/command.html` dan `/api/health` tidak dapat diambil dari lingkungan ini. Ini bukan bukti situs down. Hostless build dan versi LIVE tetap belum terverifikasi.
 - Ringkasan commit perubahan kode/UI: HTML `7373729`, CSS awal `1265364`, JS `26453e4`, PWA cache `4ace8b4`, fixture SW `b1bf266`, tes Command Center `f3b4ba1`, README `6dd0d65`, polish CSS `8df68ba`; sinkronisasi README `0ec76cf`; master context `38a747b`.
 - NEXT TASK tetap: verifikasi CI pada HEAD final setelah CSS status dot; QA visual dan interaksi browser desktop/mobile; verifikasi Hostless deploy/SHA Live; lanjutkan storage DATA_DIR/EROFS dan QA Dashboard/Exchange Hub.
+
+
+### 25.8 Verifikasi final rangkaian perubahan
+- GitHub Actions run #239 (run ID `44953094153`) untuk commit CSS status indicator `d8ef479cfeb0e19f9c9177915d5b288d4545bac7`: `completed / success`.
+- GitHub Actions run #240 (run ID `44953098839`) untuk HEAD dokumentasi `bc2c4a18da95406066d0aa3d31afccd4f8eec29c`: job `test` dan langkah `Run npm test` `completed / success`. Ini menguji seluruh suite setelah semua perubahan Command Center, cache, fixture, tes baru, README, dan catatan master context.
+- Total suite yang didokumentasikan: 51 test case pada 7 file; CI #240 sukses.
+- QA browser visual/interaktif dan deployment Hostless tetap belum terverifikasi. Percobaan membuka halaman Command Center dan `/api/health` dari lingkungan ini tidak berhasil mengakses host, bukan bukti down.
