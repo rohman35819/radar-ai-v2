@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071323"><title>Trading Terminal · RADAR AI</title>
+<link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/trading.css">
+</head>
+<body class="trading-page">
+<header class="trade-header"><a class="back-link" href="/">← RADAR AI</a><div><b>TRADING TERMINAL</b><small>Exchange-connected workspace</small></div><span class="status-pill">API BELUM TERHUBUNG</span></header>
+<main class="trade-wrap">
+<section class="trade-intro"><div class="eyebrow">EXECUTION WORKSPACE</div><h1>Trading dari satu tempat.</h1><p>Siapkan posisi, hitung risiko, dan pantau kesiapan koneksi exchange. Eksekusi live belum aktif sampai API resmi dan demo trading selesai diuji.</p></section>
+<section class="connection-grid">
+<article class="connection-card"><div class="connection-top"><b>BINANCE</b><span class="pending">BELUM DIHUBUNGKAN</span></div><p>Spot & USDⓈ-M Futures</p><small>Market data · saldo · posisi · order</small></article>
+<article class="connection-card"><div class="connection-top"><b>BYBIT</b><span class="pending">BELUM DIHUBUNGKAN</span></div><p>Spot & Derivatives</p><small>Market data · saldo · posisi · order</small></article>
+</section>
+<section class="trade-layout">
+<article class="trade-panel">
+<div class="panel-heading"><div><h2>Kalkulator posisi</h2><p>Simulasi perhitungan, bukan order sungguhan.</p></div><span class="demo-tag">SIMULASI</span></div>
+<form id="position-form">
+<label>Exchange<select id="exchange"><option>Binance</option><option>Bybit</option></select></label>
+<label>Pair<input id="pair" value="BTCUSDT" maxlength="24" autocomplete="off"></label>
+<div class="form-two"><label>Arah<select id="side"><option value="LONG">Long</option><option value="SHORT">Short</option></select></label><label>Leverage<select id="leverage"><option>1</option><option>2</option><option>3</option><option>5</option><option>10</option><option>20</option><option>25</option><option>50</option><option>75</option><option>100</option></select></label></div>
+<div class="form-two"><label>Margin (USDT)<input id="margin" type="number" min="0.1" step="0.1" value="10"></label><label>Harga masuk (USDT)<input id="entry" type="number" min="0.00000001" step="any" placeholder="Isi harga"></label></div>
+<div class="form-two"><label>Stop Loss (USDT)<input id="sl" type="number" min="0.00000001" step="any" placeholder="Opsional"></label><label>Take Profit (USDT)<input id="tp" type="number" min="0.00000001" step="any" placeholder="Opsional"></label></div>
+<button class="calculate-btn" type="submit">Hitung simulasi</button>
+</form>
+<div id="calc-result" class="calc-result" aria-live="polite"><b>Hasil simulasi akan muncul di sini</b><p>Isi margin dan harga masuk untuk menghitung nilai posisi.</p></div>
+</article>
+<article class="trade-panel safety-panel">
+<div class="panel-heading"><div><h2>Gerbang keamanan</h2><p>Persiapan sebelum transaksi live dibuka.</p></div></div>
+<ul class="safety-list"><li><span>✓</span> Tidak ada API secret di browser</li><li><span>✓</span> Izin penarikan dana tidak diperlukan</li><li><span>✓</span> Order live dinonaktifkan saat ini</li><li><span>◷</span> API read-only dan koneksi akun</li><li><span>◷</span> Demo/Testnet dan validasi order</li><li><span>◷</span> Konfirmasi order, SL/TP, dan kill switch</li></ul>
+<div class="notice"><b>Belum terhubung ke exchange</b><p>Saldo, posisi, harga eksekusi, dan PnL akun belum ditampilkan. Kami tidak akan mengarang data akun atau mengirim order sebelum integrasi terverifikasi.</p></div>
+</article>
+</section>
+<section class="trade-panel roadmap-panel"><h2>Rencana aktivasi</h2><div class="roadmap"><div><b>01 · Fondasi</b><small>Terminal dan kalkulator posisi</small><strong class="done">Dibuat sekarang</strong></div><div><b>02 · Koneksi API</b><small>API resmi, server-side secret</small><strong>Persiapan berikutnya</strong></div><div><b>03 · Demo trading</b><small>Testnet, order dan proteksi</small><strong>Wajib diuji</strong></div><div><b>04 · Live trading</b><small>Manual dahulu, auto setelah evaluasi</small><strong>Butuh persetujuan</strong></div></div></section>
+</main><script src="/trading.js"></script></body></html>
