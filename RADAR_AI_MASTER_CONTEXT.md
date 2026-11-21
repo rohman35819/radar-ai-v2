@@ -583,3 +583,13 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 5. Tambahkan market ticker publik, instrument metadata (tick size, step size, min notional), riwayat transaksi read-only, dan kalkulator posisi yang memakai aturan exchange aktual.
 6. Bangun registry/adapter untuk exchange dan aplikasi tambahan, sambil mempertahankan kontrak data dan UI bersama.
 7. Jalankan QA visual/browser desktop/mobile, console/network, dan pengujian error/timeout/rate-limit. Jangan aktifkan live trading; tetap OFF sampai ada permintaan dan persetujuan eksplisit beserta seluruh pengaman order.
+
+
+### 21.6 Pembaruan lanjutan ticker publik dan partial-read — 22 November 2026
+- Exchange adapter kini menyediakan `market(exchange, symbol)` untuk ticker publik 24 jam Binance Spot/USDⓈ-M Futures dan Bybit Spot/Linear. Validasi simbol dilakukan sebelum request; ticker publik tidak mengirim API key.
+- Route tambahan: `GET /api/exchanges/market?exchange=binance|bybit&symbol=BTCUSDT`. UI menyediakan tombol ambil harga market; harga Futures/Linear digunakan untuk mengisi harga masuk kalkulator jika field masih kosong. Kalkulator tetap simulasi, bukan order.
+- Tes exchange bertambah menjadi 10 (total repository 31): Binance/Bybit ticker, konversi perubahan harga Bybit ke persen, simbol tidak valid, serta route market.
+- Environment menerima pasangan `*_API_KEY` dan secret `*_API_SECRET`, dengan alias umum `*_SECRET_KEY` / `*_SECRET`; nilai kredensial tidak dibaca ke dokumen.
+- Commit kode ticker: `2580c882b7c879b4940f94b388d5b709b93791a0`; route market: `ae64aa90884b49ee1f06962009e620bfdb935a8e`; UI ticker: `0b5a7c49d956a01171a33e959f0ad46f18e88bbb`; test ticker: `662abbc44d763f40c2d96cdf044e45388296205d`; perbaikan kalkulator: `87932f47a29fd456791986305b56d20aa5c7f2c5`.
+- Perbaikan tambahan untuk menandai kegagalan pembacaan posisi parsial dibuat pada commit `7f882b45f80f464d4b4b5e51097a02355b657efa`; dashboard refresh failure diperbaiki pada commit terpisah `70b8a6b41fcc38f6321295a6b8bee4f10a35ea74` oleh perubahan lain di branch dan bukan bagian scope Exchange Hub sesi ini.
+- HEAD dokumentasi sebelum catatan lanjutan ini: `a2f13860ebcde9162907cb2793fe97f9354ed555` untuk perubahan template environment. Status CI push dan Hostless deployment masih belum dapat diverifikasi dari koneksi yang tersedia.
