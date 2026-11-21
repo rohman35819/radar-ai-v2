@@ -64,3 +64,84 @@
 .market-data:empty{display:none}
 
 .account-warning{color:#ffd38a!important;border:1px solid rgba(243,195,109,.5);background:rgba(115,73,18,.2);border-radius:10px;padding:10px 12px}
+
+
+/* Exchange Hub layout and interaction polish */
+.trading-page{min-height:100vh;background:radial-gradient(ellipse at 50% -8%,rgba(50,116,181,.22),transparent 48%),#071323;color:#edf4ff}
+.trade-header{position:sticky;top:0;z-index:15;display:flex;align-items:center;gap:16px;min-height:68px;padding:12px clamp(14px,3vw,34px);border-bottom:1px solid #294464;background:rgba(7,19,35,.94);backdrop-filter:blur(16px)}
+.trade-header>div{display:grid;gap:2px}.trade-header>div b{font-size:12px;letter-spacing:.13em}.trade-header>div small{font-size:10px;color:#91a6c2}
+.trade-header .status-pill{margin-left:auto;max-width:48%;white-space:normal;text-align:center}
+.back-link{display:inline-flex;align-items:center;min-height:38px;padding:0 12px;border:1px solid #294464;border-radius:10px;color:#cfe3ff;text-decoration:none;font-size:11px;font-weight:700;background:#10243b}
+.back-link:hover{border-color:#65a9e8;color:#fff}
+.trade-wrap{width:min(1240px,100%);margin:0 auto;padding:28px clamp(13px,3vw,32px) 52px;display:grid;gap:18px}
+.trade-intro{position:relative;overflow:hidden;padding:clamp(20px,4vw,34px);border:1px solid #315477;border-radius:20px;background:linear-gradient(120deg,rgba(22,57,91,.96),rgba(12,29,49,.97) 65%,rgba(17,45,67,.96));box-shadow:0 18px 44px rgba(0,0,0,.2)}
+.trade-intro:after{content:"";position:absolute;width:240px;height:240px;right:-75px;top:-115px;border:1px solid rgba(117,185,245,.18);border-radius:50%;box-shadow:0 0 0 24px rgba(117,185,245,.035),0 0 0 52px rgba(117,185,245,.025);pointer-events:none}
+.trade-intro .eyebrow{color:#8ec6fa}.trade-intro h1{max-width:700px;margin:8px 0 10px;font-size:clamp(24px,4vw,38px);line-height:1.12;letter-spacing:-.04em}
+.trade-intro p{max-width:760px;margin:0;color:#b3c7df;font-size:13px;line-height:1.7}
+.trade-panel{min-width:0;padding:clamp(15px,2vw,22px);border:1px solid #294464;border-radius:17px;background:linear-gradient(145deg,rgba(20,42,68,.97),rgba(12,28,47,.98));box-shadow:0 12px 32px rgba(0,0,0,.16)}
+.trade-panel h2{color:#f0f6ff}.trade-panel p{color:#9fb4cf}
+.trade-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:16px;align-items:start}
+.panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.panel-heading h2{margin:0 0 4px;font-size:16px;letter-spacing:-.02em}.panel-heading p{margin:0;font-size:11px;line-height:1.55}
+.demo-tag{flex:none;padding:5px 9px;border:1px solid #3b6285;border-radius:999px;background:#102b45;color:#9ed0ff;font-size:8px;font-weight:800;letter-spacing:.1em}
+.pending,.status-pill{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border:1px solid #45617e;border-radius:999px;background:#122b45;color:#b6d5f5;font-size:9px;font-weight:800;letter-spacing:.06em}
+.trade-panel label{display:grid;gap:7px;min-width:0;color:#b9cbe0;font-size:10px;font-weight:700}
+.trade-panel input,.trade-panel select{width:100%;min-width:0;min-height:42px;padding:10px 12px;border:1px solid #35516f;border-radius:10px;background:#091a2d;color:#edf4ff;outline:none}
+.trade-panel input:focus,.trade-panel select:focus{border-color:#65a9e8;box-shadow:0 0 0 3px rgba(101,169,232,.13)}
+.trade-panel input::placeholder{color:#7188a5}
+.trade-panel form{display:grid;gap:13px}
+.form-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.calculate-btn{min-height:44px;padding:11px 17px;border:1px solid #67b5f5;border-radius:11px;background:linear-gradient(135deg,#367fbd,#24639c);color:#fff;font-size:11px;font-weight:800;letter-spacing:.01em;box-shadow:0 8px 18px rgba(23,100,164,.2);transition:transform .16s,filter .16s,border-color .16s}
+.calculate-btn:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.1)}
+.calculate-btn:disabled{opacity:.55;cursor:wait}
+.secondary-action{min-height:42px;padding:9px 13px;border:1px solid #3b5d7d;border-radius:10px;background:#102942;color:#d8eaff;font-size:10px;font-weight:750}
+.secondary-action:hover:not(:disabled){border-color:#75b9f5;background:#173754}
+.secondary-action:disabled{opacity:.55;cursor:wait}
+.access-controls{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin-top:14px}
+.access-controls label{max-width:620px}
+.access-controls p{margin:0;color:#819bb8;font-size:9px;line-height:1.5}
+.connection-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px}
+.connection-actions .calculate-btn{width:auto;min-width:205px;margin:0}
+#connection-feedback{flex:1 1 220px;min-width:0;color:#9bb1ca;font-size:10px;line-height:1.5}
+.exchange-facts>div{background:rgba(7,22,38,.65)}
+.exchange-note{color:#9bb1ca}
+.account-panel .panel-heading{margin-bottom:10px}
+.account-stat{background:#0b1e32;border-color:#2b4868}
+.account-stat b{font-variant-numeric:tabular-nums}
+.account-table th{position:sticky;top:0;background:#10243a}
+.data-table-wrap{border:1px solid rgba(54,83,114,.45);border-radius:10px}
+.account-columns>div{min-width:0}
+.account-columns h3{color:#d9e8fa}
+.account-checked-at{font-size:10px;line-height:1.6}
+.market-btn{min-height:38px}
+.market-btn:focus-visible,.exchange-tab:focus-visible,.calculate-btn:focus-visible,.secondary-action:focus-visible{outline:2px solid #8cc8ff;outline-offset:3px}
+.calc-result{margin-top:16px;padding:14px;border:1px solid #294968;border-radius:12px;background:rgba(8,24,41,.68)}
+.calc-result>p{font-size:10px;line-height:1.6}
+.result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+.result-grid>div{min-width:0;padding:10px;border:1px solid #294464;border-radius:9px;background:#10243a}
+.result-grid small,.result-grid b{display:block}.result-grid small{color:#91a6c2;font-size:9px}.result-grid b{margin-top:4px;color:#f0f6ff;font-size:12px;overflow-wrap:anywhere}
+.safety-list{display:grid;gap:11px;padding:0;margin:14px 0;list-style:none}
+.safety-list li{display:flex;gap:10px;align-items:flex-start;color:#c4d5e8;font-size:11px;line-height:1.5}
+.safety-list li span{flex:none;color:#71d4ad;font-weight:900}
+.notice{padding:13px;border:1px solid rgba(243,195,109,.3);border-radius:12px;background:rgba(111,78,28,.15)}
+.notice b{font-size:11px;color:#f3d28e}.notice p{margin:5px 0 0;font-size:10px;line-height:1.6}
+.roadmap-panel h2{margin:0 0 14px;font-size:15px}.roadmap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.roadmap>div{display:grid;gap:7px;min-width:0;padding:13px;border:1px solid #294464;border-radius:12px;background:#0d1e31}
+.roadmap b{font-size:10px;color:#e6f1ff}.roadmap small{min-height:30px;color:#91a6c2;font-size:9px;line-height:1.5}.roadmap strong{font-size:9px;color:#b6cce5}.roadmap strong.done{color:#7bd0b3}
+.account-warning{line-height:1.6}
+@media(max-width:900px){.trade-layout{grid-template-columns:1fr}.roadmap{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){
+ .trade-wrap{padding:15px 12px 34px;gap:13px}
+ .trade-header{min-height:60px;gap:9px;padding:10px 12px}.trade-header>div b{font-size:10px}.trade-header>div small{font-size:9px}.trade-header .status-pill{font-size:7px;padding:5px 7px}
+ .trade-intro{padding:20px 17px;border-radius:16px}.trade-intro h1{font-size:26px}.trade-intro p{font-size:11px}
+ .exchange-overview-top{display:grid;grid-template-columns:1fr;gap:8px}.exchange-overview .pending{justify-self:start}
+ .exchange-facts{grid-template-columns:1fr;gap:8px}
+ .connection-actions{display:grid;grid-template-columns:1fr}.connection-actions .calculate-btn,.connection-actions .secondary-action{width:100%;min-width:0}
+ #connection-feedback{min-width:0}
+ .form-two{gap:9px}.trade-panel{border-radius:14px}
+ .account-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .account-columns{gap:2px}
+ .roadmap{gap:8px}.roadmap>div{padding:10px}.roadmap small{min-height:0}
+}
+@media(max-width:360px){.account-stats,.form-two,.result-grid,.roadmap{grid-template-columns:1fr}.trade-header .status-pill{max-width:42%}}
+@media(prefers-reduced-motion:reduce){.calculate-btn,.secondary-action{transition:none}.calculate-btn:hover:not(:disabled){transform:none}}
