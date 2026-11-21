@@ -388,6 +388,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - File kode aplikasi diubah: tidak ada. Dokumentasi yang diubah: `RADAR_AI_MASTER_CONTEXT.md`.
 - Tes lokal: tidak dijalankan karena sesi tidak memiliki working copy/runtime repository. GitHub Actions `npm test`: PASS pada SHA `724d4a6d930749f63516105ccb27032f5154d9e4` (run #127).
 - GitHub HEAD sebelum catatan sesi ini: `724d4a6d930749f63516105ccb27032f5154d9e4`; commit dokumentasi sesi dicatat setelah commit.
+- Commit dokumentasi hasil verifikasi CI bagian 17: `8e166a6697ffe2d920fe31b9f3af06ab945b3861`; commit sinkronisasi catatan SHA ini menyusul.
 - Hostless build: tidak diketahui. Hostless Live: tidak diketahui / belum diverifikasi.
 - Risiko terbuka: belum ada akses Hostless authenticated read-only; mount volume writable/persisten dan runtime `DATA_DIR` belum terbukti; QA visual/browser desktop/mobile belum dilakukan; koneksi Binance read-only belum diimplementasikan/teruji.
 - NEXT TASK:
