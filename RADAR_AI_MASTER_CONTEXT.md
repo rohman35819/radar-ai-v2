@@ -365,3 +365,33 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
   3. Setelah ada akses Hostless, cocokkan SHA deployment, status build, dan versi LIVE; cek `/api/health`, dashboard, sidebar, serta Exchange Hub pada desktop dan mobile.
   4. Periksa mount volume dan nilai `DATA_DIR` runtime tanpa mengekspos nilai rahasia; baru lakukan perubahan storage bila ada bukti teknis.
   5. Setelah storage dan UI terverifikasi stabil, lanjutkan implementasi Binance read-only server-side. Trading tetap OFF.
+
+
+---
+## 17. VERIFIKASI CI HEAD TERBARU — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 17.1 Repository dan CI
+- Branch `main` diperiksa melalui GitHub API; HEAD terkonfirmasi `724d4a6d930749f63516105ccb27032f5154d9e4` (docs: finalize Hostless audit commit record), parent `270c61ef834eab86762dfc18f3a8674021f60e71`.
+- GitHub Actions run #127 (run ID `44948166299`) untuk SHA HEAD tersebut berstatus `completed / success`; job `test` dan langkah `Run npm test` juga `completed / success` pada 21 November 2026 20:48 UTC.
+- Dengan demikian CI `npm test` untuk HEAD aktual `724d4a6` terverifikasi PASS. Ini menggantikan status CI-belum-terverifikasi yang dicatat pada bagian 16 untuk HEAD sebelumnya `5ade61c`; catatan historis bagian 16 tetap dipertahankan.
+- Workflow `.github/workflows/test.yml` menjalankan Node.js 24 dan `npm test` pada push ke `main` serta pull request. `package.json` mengonfirmasi tes mencakup pemeriksaan sintaks server/frontend/AI dan Node test runner.
+
+### 17.2 Audit storage dan batas QA
+- Source `lib/ingest.js` diperiksa ulang pada HEAD: `DATA_DIR` tetap dibaca melalui `path.resolve(env('DATA_DIR', './data'))`; hanya `ENOENT` saat load yang diperlakukan sebagai state baru; error lain diteruskan; save memakai temporary file dan atomic rename serta cleanup best-effort.
+- Tes `test/radar.test.js` mencakup pemulihan state, JSON rusak, simulasi EROFS saat rename, preservasi state lama, dan penghapusan temporary file. Tes ini berjalan dalam CI pada HEAD tersebut; ia tidak membuktikan mount volume Hostless writable/persisten.
+- Source review Dashboard dan Exchange Hub sebelumnya tetap menjadi bukti pemeriksaan struktur kode saja. Tidak ada browser QA desktop/mobile, console/network inspection, atau validasi visual pada sesi ini.
+- Homepage Hostless dan `/api/health` kembali tidak dapat diambil dari lingkungan ini (cache miss / URL tidak accessible). Ini bukan bukti aplikasi down. Status build Hostless, deployment SHA, runtime logs, mount volume, nilai runtime `DATA_DIR`, dan versi LIVE tetap tidak diketahui / belum terverifikasi.
+
+### 17.3 Catatan sesi dan NEXT TASK
+- Tujuan: menuntaskan verifikasi CI untuk HEAD aktual dan melanjutkan audit storage/QA tanpa mengulang pekerjaan sebelumnya.
+- File source ditinjau ulang: `package.json`, `lib/ingest.js`, `test/radar.test.js`, `.github/workflows/test.yml`, serta metadata branch dan Actions run.
+- File kode aplikasi diubah: tidak ada. Dokumentasi yang diubah: `RADAR_AI_MASTER_CONTEXT.md`.
+- Tes lokal: tidak dijalankan karena sesi tidak memiliki working copy/runtime repository. GitHub Actions `npm test`: PASS pada SHA `724d4a6d930749f63516105ccb27032f5154d9e4` (run #127).
+- GitHub HEAD sebelum catatan sesi ini: `724d4a6d930749f63516105ccb27032f5154d9e4`; commit dokumentasi sesi dicatat setelah commit.
+- Hostless build: tidak diketahui. Hostless Live: tidak diketahui / belum diverifikasi.
+- Risiko terbuka: belum ada akses Hostless authenticated read-only; mount volume writable/persisten dan runtime `DATA_DIR` belum terbukti; QA visual/browser desktop/mobile belum dilakukan; koneksi Binance read-only belum diimplementasikan/teruji.
+- NEXT TASK:
+  1. Hubungkan Hostless MCP/API read-only melalui mekanisme koneksi akun yang aman; jangan mengirim API key/token melalui chat. Periksa deployment SHA, build, logs, konfigurasi `DATA_DIR` (tanpa nilai rahasia), dan volume.
+  2. Verifikasi endpoint `/api/health` dan versi LIVE terhadap SHA main; lakukan QA browser dashboard/sidebar dan Exchange Hub pada desktop/mobile.
+  3. Pastikan lokasi volume persisten writable sebelum mengubah `DATA_DIR`; uji restart/persistensi dan EROFS berdasarkan log aktual.
+  4. Setelah storage dan UI stabil, lanjutkan Binance read-only server-side. Trading tetap OFF.
