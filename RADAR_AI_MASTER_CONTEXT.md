@@ -259,3 +259,35 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
   2. Jalankan QA visual dashboard/sidebar desktop dan mobile setelah deployment terkonfirmasi.
   3. Konfirmasi mount volume Hostless dan nilai DATA_DIR (tanpa membagikan secret); lalu perbaiki storage secara terukur dan tambahkan tes untuk kondisi filesystem gagal.
   4. Lanjutkan audit Exchange Hub dan Binance read-only setelah prioritas di atas selesai.
+
+
+---
+## 14. PERBAIKAN STORAGE & QA SOURCE — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 14.1 Perbaikan DATA_DIR / EROFS
+- Pemeriksaan ulang branch main menemukan implementasi `DATA_DIR` tetap menggunakan `path.resolve(env('DATA_DIR', './data'))`; belum ada bukti mount volume Hostless atau nilai runtime `DATA_DIR`.
+- `lib/ingest.js`: `load()` sekarang hanya memperlakukan `ENOENT` pada `state.json` sebagai instalasi baru. Error lain (termasuk EACCES, EIO, EROFS) dan JSON tidak valid diteruskan agar tidak disamarkan menjadi state kosong.
+- `save()` tetap menggunakan pola tulis file sementara lalu atomic rename di direktori DATA_DIR yang sama. Bila tulis/rename gagal, error diteruskan dan file sementara dibersihkan best-effort; tidak ada fallback ke filesystem ephemeral dan file state lama tidak ditimpa sebelum rename berhasil.
+- Tes baru di `test/radar.test.js`: state belum ada, state valid dipulihkan, JSON rusak ditolak, simulasi EROFS saat rename diteruskan, state lama tetap utuh, dan file sementara dibersihkan.
+- Perubahan kode: commit `1a0041dc8cb7c2b295bc0f5d3754583b75a4f215`; tes: `c64bc60dc3330b81a603e92474be6a35e083b520`.
+
+### 14.2 QA Dashboard dan Exchange Hub (review source)
+- Dashboard: semua menu yang didokumentasikan masih ada di `public/index.html` (Ringkasan, Market Screener, Watchlist, Analitik Pasar, Exchange Hub, Command Center, News Feed, Token Unlock, Alert Center, AI Council, AI Workspace, System Health). `public/app.js` masih memasang navigasi, refresh, theme, dan mobile menu; CSS memuat breakpoint tablet/mobile serta sidebar fixed dengan scroll vertikal independen dan overscroll containment.
+- `public/style.css` terambil utuh (17,563 karakter dari konten UTF-8 yang di-fetch); tidak kembali menjadi stylesheet terpotong. Review source tidak dapat membuktikan tampilan aktual, overflow di perangkat, console, atau network.
+- Exchange Hub: tab Binance/Bybit, kalkulator simulasi, penanganan input tidak valid, dan disclosure bahwa belum ada koneksi akun/order live ditemukan pada `public/trading.html/js/css`. Tidak ditemukan panggilan API akun/private endpoint atau order pada file UI yang ditinjau. Koneksi Binance read-only belum boleh dinyatakan selesai.
+- QA visual/browser desktop dan mobile belum dijalankan karena akses browser/Hostless tidak tersedia dalam sesi ini. Ini dicatat sebagai batas verifikasi, bukan lulus QA visual.
+
+### 14.3 Hasil pengujian dan deployment
+- Tes lokal belum dijalankan: sesi tidak memiliki working copy/runtime repository. Tes regresi storage ditambahkan agar GitHub Actions `npm test` dapat mengeksekusinya setelah push.
+- Pemeriksaan CI commit baru melalui status-check connector belum menampilkan status (daftar status kosong); workflow run untuk commit juga tidak dikembalikan oleh endpoint connector yang tersedia. Karena itu CI untuk perubahan ini belum terverifikasi.
+- GitHub: perubahan storage dan tes sudah masuk branch `main`; commit dokumentasi sesi ini akan menjadi referensi akhir bagian ini.
+- Hostless build: tidak diketahui. Pemilik mengonfirmasi mekanisme auto-deploy dari `main`; tidak ada akses status/log Hostless pada sesi ini.
+- Hostless Live: tidak diketahui / belum diverifikasi. Belum ada pemeriksaan sukses terhadap homepage atau `/api/health` yang dapat dikaitkan dengan SHA terbaru.
+
+### 14.4 Risiko dan NEXT TASK
+- Risiko tersisa: lokasi volume writable dan nilai `DATA_DIR` runtime Hostless belum terbukti; bila tidak dipasang ke volume persisten yang writable, EROFS tetap akan muncul dengan pesan error yang kini tidak lagi disamarkan.
+- NEXT TASK:
+  1. Verifikasi CI `npm test` untuk commit terbaru di GitHub Actions.
+  2. Verifikasi Hostless build dan versi LIVE terhadap SHA `main` terbaru; kemudian lakukan QA visual dashboard/sidebar dan Exchange Hub di desktop/mobile.
+  3. Audit konfigurasi Hostless untuk memastikan `DATA_DIR` menunjuk ke mount persisten writable; jangan ubah path tanpa bukti konfigurasi volume.
+  4. Setelah storage dan UI stabil, lanjutkan implementasi Binance read-only server-side dan uji tanpa mengaktifkan trading.
