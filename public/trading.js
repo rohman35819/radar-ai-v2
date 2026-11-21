@@ -32,6 +32,10 @@ const exchangeConfigs={};
 let activeExchange='Binance';
 const connectButton=document.getElementById('connect-exchange');
 const feedback=document.getElementById('connection-feedback');
+const accessInput=document.getElementById('exchange-access-token');
+const refreshStatusButton=document.getElementById('refresh-exchange-status');
+let exchangeAccessToken='';
+let exchangeAccessConfigured=false;
 const summary=document.getElementById('account-summary');
 const assetList=document.getElementById('asset-list');
 const positionList=document.getElementById('position-list');
@@ -39,15 +43,18 @@ const money=value=>Number(value||0).toLocaleString('en-US',{maximumFractionDigit
 function updateConnectionUi(){
  const cfg=exchangeConfigs[activeExchange.toLowerCase()];
  const ready=Boolean(cfg&&cfg.configured);
- document.getElementById('api-state').textContent=ready?'API Key & Secret terdeteksi · belum diuji':'API Key / API Secret belum lengkap';
- document.getElementById('exchange-status').textContent=ready?'KREDENSIAL TERSEDIA':'BELUM DIKONFIGURASI';
+ document.getElementById('api-state').textContent=ready?'API Key + Secret terdeteksi di server':'API Key / Secret belum lengkap di server';
+ document.getElementById('exchange-status').textContent=ready?'SIAP DIUJI':'BELUM DIKONFIGURASI';
  document.getElementById('hub-status').textContent=ready?'READ-ONLY / SIAP DIUJI':'READ-ONLY / PERLU KONFIGURASI';
- connectButton.disabled=!ready;
+ connectButton.disabled=false;
  document.querySelectorAll('[data-exchange-tab]').forEach(button=>{
   const label=button.querySelector('.tab-state');
   if(label)label.textContent=button.dataset.exchangeTab===activeExchange?'DIPILIH':(exchangeConfigs[button.dataset.exchangeTab.toLowerCase()]?.configured?'SIAP DIHUBUNGKAN':'BELUM DIKONFIGURASI');
  });
- feedback.textContent=ready?'Konfigurasi tersedia. Ambil data akun untuk menguji izin read-only.':'Tambahkan API Key dan API Secret pada environment Hostless.';
+ if(!exchangeAccessConfigured)feedback.textContent='Akses privat belum dikonfigurasi di server. Tambahkan EXCHANGE_ACCESS_TOKEN atau gunakan ADMIN_TOKEN.';
+ else if(!ready)feedback.textContent='Pasangan API Key dan API Secret '+activeExchange+' belum terbaca oleh proses server. Periksa environment Production lalu restart/redeploy.';
+ else if(!exchangeAccessToken&&!accessInput.value.trim())feedback.textContent='Kredensial tersedia. Masukkan kunci akses privat untuk menguji koneksi akun.';
+ else feedback.textContent='Server siap. Tekan “Uji koneksi & muat akun” untuk memeriksa izin baca.';
 }
 function clearAccount(){
  summary.replaceChildren();assetList.replaceChildren();positionList.replaceChildren();
@@ -107,9 +114,10 @@ async function loadExchangeStatus(){
  try{
   const response=await fetch('/api/exchanges/status',{cache:'no-store'});const body=await response.json();
   if(!response.ok||body.status!=='success')throw new Error('Status API tidak tersedia.');
-  Object.assign(exchangeConfigs,body.exchanges||{});updateConnectionUi();
- }catch(error){feedback.textContent='Tidak dapat memeriksa konfigurasi backend. Pastikan versi aplikasi sudah ter-deploy.';document.getElementById('api-state').textContent='Backend exchange belum tersedia';}
+  Object.assign(exchangeConfigs,body.exchanges||{});exchangeAccessConfigured=Boolean(body.access_configured);updateConnectionUi();
+ }catch(error){exchangeAccessConfigured=false;feedback.textContent='Tidak dapat memeriksa backend. Perbarui halaman setelah deployment selesai.';document.getElementById('api-state').textContent='Backend exchange belum tersedia';}
 }
+refreshStatusButton.addEventListener('click',async()=>{refreshStatusButton.disabled=true;refreshStatusButton.textContent='Memeriksa…';await loadExchangeStatus();refreshStatusButton.disabled=false;refreshStatusButton.textContent='Perbarui status server';});
 const marketButton=document.getElementById('load-market');
 const marketOutput=document.getElementById('market-data');
 const marketFeedback=document.getElementById('market-feedback');
@@ -146,10 +154,13 @@ marketButton.addEventListener('click',async()=>{
 });
 connectButton.addEventListener('click',async()=>{
  const requestedExchange=activeExchange;
+ if(accessInput.value.trim())exchangeAccessToken=accessInput.value.trim();
+ if(!exchangeAccessConfigured){feedback.textContent='Akses privat belum diaktifkan di server. Tambahkan EXCHANGE_ACCESS_TOKEN atau ADMIN_TOKEN di Hostless.';return;}
+ if(!exchangeAccessToken){feedback.textContent='Masukkan kunci akses privat Exchange Hub terlebih dahulu.';accessInput.focus();return;}
  connectButton.disabled=true;connectButton.textContent='Mengambil data akun…';feedback.textContent='Menghubungi '+requestedExchange+' melalui server RADAR AI…';
  try{
-  const response=await fetch('/api/exchanges/'+requestedExchange.toLowerCase()+'/account',{cache:'no-store'});const body=await response.json();
-  if(!response.ok||body.status!=='success')throw new Error(body.message||'Koneksi exchange gagal.');
+  const response=await fetch('/api/exchanges/'+requestedExchange.toLowerCase()+'/account',{cache:'no-store',headers:{'x-exchange-access-token':exchangeAccessToken}});const body=await response.json();
+  if(!response.ok||body.status!=='success')throw new Error((body.message||'Koneksi exchange gagal.')+(body.code?' ['+body.code+']':''));
   if(activeExchange===requestedExchange)renderAccount(body);
  }catch(error){
   if(activeExchange===requestedExchange){
@@ -157,14 +168,11 @@ connectButton.addEventListener('click',async()=>{
    document.getElementById('exchange-status').textContent='KONEKSI GAGAL';
    document.getElementById('hub-status').textContent='READ-ONLY / PERLU PEMERIKSAAN';
    document.getElementById('api-state').textContent='Koneksi belum berhasil';
-   feedback.textContent=error.message+' Periksa izin read-only, whitelist IP, dan nama environment.';
+   feedback.textContent=error.message+' Periksa izin read-only, whitelist IP, dan environment server.';
   }
  }finally{connectButton.textContent='Periksa koneksi & ambil data akun';updateConnectionUiAfterResult();}
 });
-function updateConnectionUiAfterResult(){
- const cfg=exchangeConfigs[activeExchange.toLowerCase()];
- connectButton.disabled=!(cfg&&cfg.configured);
-}
+function updateConnectionUiAfterResult(){connectButton.disabled=false;}
 
 selectExchange('Binance');
 activeExchange='Binance';
