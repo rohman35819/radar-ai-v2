@@ -55,6 +55,8 @@ test('PWA shell menyediakan halaman Exchange Hub dan membersihkan cache API lama
   assert.ok(calls.staticFiles.includes('/trading.html'));
   assert.ok(calls.staticFiles.includes('/trading.js'));
   assert.ok(calls.staticFiles.includes('/command.html'));
+  assert.ok(calls.staticFiles.includes('/command.css'));
+  assert.ok(calls.staticFiles.includes('/command.js'));
   assert.ok(calls.staticFiles.includes('/membership.html'));
   let activatePromise;
   handlers.activate({ waitUntil: (promise) => { activatePromise = promise; } });
@@ -62,4 +64,12 @@ test('PWA shell menyediakan halaman Exchange Hub dan membersihkan cache API lama
   assert.ok(calls.cacheDeletes.includes('radar-api-v6'));
   assert.equal(calls.cacheDeletes.includes('radar-shell-v7'), false);
   assert.equal(calls.cacheDeletes.includes('other-app-cache'), false);
+});
+
+test('Command Center menggunakan aset eksternal agar tidak diblokir strict CSP', () => {
+  const html = fs.readFileSync(require.resolve('../public/command.html'), 'utf8');
+  assert.match(html, /href="\/command\.css"/);
+  assert.match(html, /src="\/command\.js"/);
+  assert.doesNotMatch(html, /<style[\s>]/i);
+  assert.doesNotMatch(html, /<script>/i);
 });
