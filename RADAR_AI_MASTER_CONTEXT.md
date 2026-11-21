@@ -565,7 +565,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Gunakan izin read/account saja dan nonaktifkan withdrawal, spot trading, futures trading, serta transfer. Jika Hostless menggunakan nama variabel berbeda, status UI akan menunjukkan konfigurasi belum lengkap sampai nama environment diselaraskan.
 - Binance Futures mungkin memerlukan izin baca terpisah; bila gagal, data Spot tetap bisa ditampilkan dengan status Futures tidak tersedia.
 - Bybit dapat diaktifkan dengan pasangan environment tersendiri. Integrasi exchange/aplikasi lain belum dibuat; adapter module menjadi titik perluasan berikutnya.
-- Market quotes, exchange instrument metadata (tick/step/min-notional), histori transaksi, dan kalkulator posisi berbasis aturan kontrak exchange belum diimplementasikan pada tahap ini. Kalkulator lama tetap simulasi generik dan tidak boleh dianggap presisi exchange.
+- Market quotes publik Spot dan Futures/Linear sudah tersedia. Exchange instrument metadata (tick/step/min-notional), histori transaksi, dan kalkulator posisi berbasis aturan kontrak exchange belum diimplementasikan pada tahap ini. Kalkulator lama tetap simulasi generik dan tidak boleh dianggap presisi exchange.
 
 ### 21.4 Pengujian dan deployment
 - Source serta diff diperiksa melalui GitHub setelah setiap perubahan; tidak ada perubahan pada Dashboard utama atau route lama yang dimaksudkan.
@@ -580,7 +580,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 1. Verifikasi push CI `npm test` untuk HEAD dokumentasi terbaru; jika gagal, perbaiki sebelum aktivasi akun.
 2. Setelah Hostless deploy, periksa `GET /api/exchanges/status`. Jika Binance belum terkonfigurasi, selaraskan nama environment `BINANCE_API_KEY` dan `BINANCE_API_SECRET` di Hostless tanpa mengirim nilainya melalui chat.
 3. Jalankan tombol uji koneksi Binance read-only dan verifikasi Spot; uji Futures secara terpisah. Cocokkan hasil hanya dari response aplikasi yang sudah disaring.
-4. Tambahkan Bybit read-only setelah pasangan environment Bybit tersedia; verifikasi Unified Wallet dan Linear positions.
+4. Verifikasi Bybit read-only setelah pasangan environment Bybit tersedia; uji Unified Wallet dan Linear positions melalui UI.
 5. Tambahkan instrument metadata (tick size, step size, min notional), riwayat transaksi read-only, dan kalkulator posisi yang memakai aturan exchange aktual.
 6. Bangun registry/adapter untuk exchange dan aplikasi tambahan, sambil mempertahankan kontrak data dan UI bersama.
 7. Jalankan QA visual/browser desktop/mobile, console/network, dan pengujian error/timeout/rate-limit. Jangan aktifkan live trading; tetap OFF sampai ada permintaan dan persetujuan eksplisit beserta seluruh pengaman order.
