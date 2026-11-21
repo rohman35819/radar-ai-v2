@@ -22,7 +22,11 @@ const esc = (v) => String(v ?? '—');
 const FLAG = {fdv_unknown:'FDV tidak diketahui',fdv_gt_5x_mcap:'FDV > 5x MCap',volume_gt_mcap:'Volume > MCap',stale:'Data basi'};
 const TITLES = {overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
 let data=null, aiGroup=null, aiWorkspace=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer;
-try { watch=JSON.parse(localStorage.getItem('radar-watch')||'[]'); } catch {}
+let screenerFilters={q:'',trend:'all',sort:'market_cap'},screenerVisible=[];
+try {
+ const stored=JSON.parse(localStorage.getItem('radar-watch')||'[]');
+ if(Array.isArray(stored))watch=[...new Set(stored.filter(x=>typeof x==='string'&&x.length>0&&x.length<=128))];
+} catch {}
 const saveWatch=()=>{try{localStorage.setItem('radar-watch',JSON.stringify(watch));}catch{}};
 const toast=(msg)=>{const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600);};
 const statCard=(label,value,sub,icon,trend)=>el('article',{class:'stat-card'},el('div',{class:'stat-top'},el('span',{class:'stat-label'},label),el('span',{class:'stat-icon'},icon)),el('div',{class:'stat-value'},value),el('div',{class:'stat-bottom'},el('span',{class:trend||'muted'},sub)));
@@ -87,19 +91,30 @@ function renderOverview(){
 function renderScreener(){
  const v=$('#view');v.replaceChildren();
  const controls=el('div',{class:'filter-panel'},
-  el('input',{id:'filter-q',type:'search',placeholder:'Cari nama atau simbol…',value:$('#q-cache')?.value||''}),
+  el('input',{id:'filter-q',type:'search',placeholder:'Cari nama atau simbol…',value:screenerFilters.q}),
   el('select',{id:'filter-trend'},el('option',{value:'all'},'Semua tren'),el('option',{value:'up'},'Sedang naik'),el('option',{value:'down'},'Sedang turun')),
   el('select',{id:'filter-sort'},el('option',{value:'market_cap'},'Market cap'),el('option',{value:'volume_24h'},'Volume 24 jam'),el('option',{value:'vol_mcap'},'Vol / MCap'),el('option',{value:'change_24h'},'Perubahan 24 jam'),el('option',{value:'change_7d'},'Perubahan 7 hari')),
-  el('button',{class:'secondary-btn',onclick:()=>{ $('#filter-q').value='';$('#filter-trend').value='all';$('#filter-sort').value='market_cap';renderScreener();}},'Reset')
+  el('button',{class:'secondary-btn',onclick:()=>{screenerFilters={q:'',trend:'all',sort:'market_cap'};renderScreener();}},'Reset')
  );
+ $('#filter-trend').value=screenerFilters.trend;
+ $('#filter-sort').value=screenerFilters.sort;
  const results=el('div',{id:'screener-results'});
  const update=()=>{
-  const q=$('#filter-q').value.trim().toLowerCase(),trend=$('#filter-trend').value,key=$('#filter-sort').value;
-  const list=getTokens().filter(t=>(!q||String(t.symbol).toLowerCase().includes(q)||String(t.name).toLowerCase().includes(q))&&(trend==='all'||(trend==='up'?Number(t.change_24h)>0:Number(t.change_24h)<0))).sort((a,b)=>(Number(b[key])||-Infinity)-(Number(a[key])||-Infinity));
-  $('#result-count').textContent=list.length+' aset ditemukan';results.replaceChildren(tokenTable(list));
+  screenerFilters={q:$('#filter-q').value,trend:$('#filter-trend').value,sort:$('#filter-sort').value};
+  const q=screenerFilters.q.trim().toLowerCase(),trend=screenerFilters.trend,key=screenerFilters.sort;
+  const list=getTokens().filter(t=>(!q||String(t.symbol).toLowerCase().includes(q)||String(t.name).toLowerCase().includes(q))&&(trend==='all'||(trend==='up'?Number(t.change_24h)>0:Number(t.change_24h)<0)));
+  list.sort((a,b)=>{
+   const av=Number(a[key]),bv=Number(b[key]),aOk=Number.isFinite(av),bOk=Number.isFinite(bv);
+   if(aOk!==bOk)return aOk?-1:1;
+   return aOk?bv-av:0;
+  });
+  screenerVisible=list;
+  $('#result-count').textContent=list.length+' aset ditemukan';
+  results.replaceChildren(tokenTable(list));
  };
- v.append(sectionHead('Temukan aset','Cari dan saring token berdasarkan aktivitas pasar.'),controls,el('div',{class:'result-meta'},el('b',{id:'result-count'},'Memuat…'),el('span',{class:'muted'},'Data mengikuti refresh server')),results);
- ['filter-q','filter-trend','filter-sort'].forEach(id=>$('#'+id).addEventListener(id==='filter-q'?'input':'change',update));update();
+ v.append(sectionHead('Temukan aset','Cari dan saring token berdasarkan aktivitas pasar.',el('button',{class:'secondary-btn',onclick:exportCSV},'↓ Ekspor hasil CSV')),controls,el('div',{class:'result-meta'},el('b',{id:'result-count'},'Memuat…'),el('span',{class:'muted'},'Filter tetap tersimpan saat data diperbarui')),results);
+ ['filter-q','filter-trend','filter-sort'].forEach(id=>$('#'+id).addEventListener(id==='filter-q'?'input':'change',update));
+ update();
 }
 function renderWatch(){
  const v=$('#view');v.replaceChildren();
@@ -233,10 +248,18 @@ async function refreshNow(){
  finally{refreshBusy=false;$('#refresh').classList.remove('spinning');}
 }
 function exportCSV(){
- const rows=getTokens();if(!rows.length)return toast('Tidak ada data untuk diekspor');
+ const rows=tab==='screener'?screenerVisible:getTokens();
+ if(!rows.length)return toast('Tidak ada data untuk diekspor');
  const cols=['symbol','name','price','change_24h','change_7d','market_cap','volume_24h','fdv','vol_mcap'];
- const csv=[cols.join(','),...rows.map(t=>cols.map(k=>'"'+String(t[k]??'').replaceAll('"','""')+'"').join(','))].join('\n');
- const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=el('a',{href:url,download:'radar-ai-market-'+new Date().toISOString().slice(0,10)+'.csv'});a.click();URL.revokeObjectURL(url);toast('CSV berhasil disiapkan');
+ const cell=value=>{
+  let raw=String(value??'');
+  if(!raw)return '""';
+  if(!Number.isFinite(Number(raw))&&/^[\\s]*[=+@\\-\\t\\r]/.test(raw))raw="'"+raw;
+  return '"'+raw.replaceAll('"','""')+'"';
+ };
+ const csv=[cols.join(','),...rows.map(t=>cols.map(k=>cell(t[k])).join(','))].join('\n');
+ const blob=new Blob(['\\uFEFF',csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=el('a',{href:url,download:'radar-ai-market-'+new Date().toISOString().slice(0,10)+'.csv'});
+ a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('CSV '+rows.length+' aset berhasil disiapkan');
 }
 document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.t)));
 $('.brand').addEventListener('click',e=>{e.preventDefault();navigate('overview');});
