@@ -119,9 +119,9 @@ function renderMarket(data){
  }
  if(rows.length)marketOutput.append(table(['Pasar','Last price','24h','High 24h','Low 24h','Quote volume'],rows));
  else{const p=document.createElement('p');p.className='muted';p.textContent='Pair tidak tersedia pada pasar ini.';marketOutput.append(p);}
- const spot=data.spot;
+ const quote=data.futures||data.spot;
  const entry=document.getElementById('entry');
- if(spot&&spot.last_price>0&&!entry.value)entry.value=String(spot.last_price);
+ if(quote&&quote.last_price>0&&!entry.value)entry.value=String(quote.last_price);
  marketFeedback.textContent='Harga '+data.symbol+' diperbarui · '+new Date(data.checked_at).toLocaleTimeString()+' · data publik.';
 }
 marketButton.addEventListener('click',async()=>{
