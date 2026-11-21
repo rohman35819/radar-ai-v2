@@ -2,6 +2,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const ingest = require('./lib/ingest');
 const { createExchangeService, ExchangeError } = require('./lib/exchanges');
 const sources = require('./lib/sources');
@@ -13,8 +14,15 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 const PUB = path.join(__dirname, 'public');
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
+  const privateExchangeToken = String(exchangeAccessToken || process.env.EXCHANGE_ACCESS_TOKEN || cfg.adminToken || '');
+  const hasValidExchangeToken = (provided) => {
+    if (!privateExchangeToken || typeof provided !== 'string') return false;
+    const expected = Buffer.from(privateExchangeToken);
+    const actual = Buffer.from(provided);
+    return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+  };
   const st = state || ingest.load(cfg);
   let busy = null;
   let aiBusy = null;
@@ -61,10 +69,12 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
       if (url.pathname.startsWith('/api/')) {
         if (limited(ip)) return send(res, 429, { status: 'error', message: 'Terlalu banyak permintaan' }, 'application/json', { 'retry-after': '60' });
         if (url.pathname === '/api/exchanges/status' && req.method === 'GET') {
-          return send(res, 200, { status: 'success', exchanges: exchangeApi.status() }, 'application/json', { 'cache-control': 'no-store' });
+          return send(res, 200, { status: 'success', exchanges: exchangeApi.status(), access_configured: Boolean(privateExchangeToken) }, 'application/json', { 'cache-control': 'no-store' });
         }
         const exchangeAccount = url.pathname.match(/^\/api\/exchanges\/(binance|bybit)\/account$/);
         if (exchangeAccount && req.method === 'GET') {
+          if (!privateExchangeToken) return send(res, 503, { status: 'error', code: 'EXCHANGE_ACCESS_NOT_CONFIGURED', message: 'Akses privat Exchange Hub belum dikonfigurasi di server.' }, 'application/json', { 'cache-control': 'no-store' });
+          if (!hasValidExchangeToken(req.headers['x-exchange-access-token'])) return send(res, 401, { status: 'error', code: 'EXCHANGE_ACCESS_DENIED', message: 'Token akses Exchange Hub tidak valid.' }, 'application/json', { 'cache-control': 'no-store' });
           exchangeApi.account(exchangeAccount[1]).then((account) => {
             send(res, 200, { status: 'success', ...account }, 'application/json', { 'cache-control': 'no-store' });
           }).catch((error) => {
