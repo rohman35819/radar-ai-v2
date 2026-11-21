@@ -16,7 +16,7 @@ const PUB = path.join(__dirname, 'public');
 
 function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
-  const privateExchangeToken = String(exchangeAccessToken || process.env.EXCHANGE_ACCESS_TOKEN || cfg.adminToken || '');
+  const privateExchangeToken = String(exchangeAccessToken !== undefined ? exchangeAccessToken : (process.env.EXCHANGE_ACCESS_TOKEN || cfg.adminToken || ''));
   const hasValidExchangeToken = (provided) => {
     if (!privateExchangeToken || typeof provided !== 'string') return false;
     const expected = Buffer.from(privateExchangeToken);
