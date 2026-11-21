@@ -219,3 +219,43 @@ Task belum dianggap selesai hanya karena kode telah ditulis. Selesai berarti per
 
 ### 12.9 Catatan penerapan aturan
 Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untuk pengembangan berikutnya sampai RADAR AI V3 keluar dan tetap menjadi pedoman kesinambungan setelah rilis V3.
+
+---
+## 13. AUDIT LANJUTAN — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 13.1 Verifikasi repository dan CI
+- Branch default repository terkonfirmasi main; commit terbaru saat audit: 8e5c3cab154c547176c71c11de48a319cf431e0c (docs: define RADAR AI V2 to V3 continuity policy).
+- GitHub Actions workflow RADAR AI tests untuk commit tersebut berstatus completed / success (run #114, 21 November 2026 19:51:21 UTC). Ini bukti CI untuk commit tersebut; bukan hasil menjalankan tes lokal pada sesi ini.
+- package.json menyediakan npm test (syntax check server/app/AI + Node test runner) dan npm run live-check.
+- Ukuran stylesheet public/style.css pada main terverifikasi 17,565 byte; file tidak lagi berada pada kondisi terpotong 702 byte yang tercatat pada insiden sebelumnya.
+
+### 13.2 Hasil audit penyimpanan / EROFS
+- lib/ingest.js membaca DATA_DIR melalui path.resolve(env('DATA_DIR', './data')).
+- load() membaca state.json; semua error baca/parse ditangkap dan menghasilkan emptyState(). Dampak: kegagalan baca atau JSON rusak tidak dibedakan dari state baru pada log/status.
+- save() menjalankan fs.mkdirSync(dataDir, { recursive: true }), menulis state.json.tmp, lalu fs.renameSync(tmp, state.json). Tidak ada pengecekan writable pada startup dan tidak ada fallback jika filesystem read-only.
+- Tes integrasi yang ada menulis ke direktori sementara OS (fs.mkdtempSync); tes tersebut membuktikan alur save pada filesystem lokal yang writable, bukan mount Hostless.
+- Kesimpulan: implementasi mendukung konfigurasi DATA_DIR, tetapi error EROFS tetap mungkin bila Hostless tidak memasang direktori tersebut sebagai volume writable. Belum ada bukti yang menentukan path atau konfigurasi volume Hostless yang salah. Jangan melakukan fallback ke direktori ephemeral atau menghapus state sebagai solusi.
+- Perbaikan berikutnya perlu didasarkan pada lokasi volume Hostless yang benar dan log runtime. Setelah itu tambahkan tes untuk kegagalan tulis/rename dan observabilitas error storage tanpa membocorkan data sensitif.
+
+### 13.3 Status deployment dan QA visual
+- Akses Hostless dashboard/log/deployment tidak tersedia melalui koneksi yang ada pada sesi audit.
+- Pemeriksaan halaman publik dan /api/health melalui sumber web juga tidak berhasil diakses. Karena itu status Hostless build dan versi Live tetap tidak diketahui / belum terverifikasi.
+- Tidak ada klaim bahwa commit f47b487 atau commit terbaru telah LIVE. QA visual desktop/mobile, console, dan network masih menunggu akses browser/deployment Hostless yang dapat diverifikasi.
+- GitHub Actions CI hijau tidak membuktikan deployment Hostless.
+
+### 13.4 Catatan sesi
+- Tujuan: melanjutkan NEXT TASK dengan memverifikasi repository, CI, dan meninjau jalur storage aktual.
+- File kode ditinjau: package.json, server.js, lib/ingest.js, scripts/live-check.js, test/radar.test.js, .env.example, public/style.css.
+- File dokumentasi: RADAR_AI_MASTER_CONTEXT.md, AGENTS.md, README.md.
+- Perubahan kode: tidak ada. Perubahan sesi ini hanya catatan audit dalam dokumen master.
+- Tes lokal: tidak dijalankan karena sesi ini tidak memiliki working copy/runtime repository. CI GitHub untuk commit 8e5c3cab lulus.
+- Commit audit ini: akan diisi setelah perubahan dokumentasi disimpan.
+- GitHub: status commit audit akan diverifikasi setelah update.
+- Hostless build: tidak diketahui.
+- Hostless Live: tidak diketahui / belum diverifikasi.
+- Risiko terbuka: volume writable Hostless dan penyebab EROFS belum diketahui; halaman live dan UI belum dapat diuji.
+- NEXT TASK:
+  1. Dapatkan bukti status deployment Hostless untuk commit f47b487 dan commit terbaru; periksa build log serta URL live.
+  2. Jalankan QA visual dashboard/sidebar desktop dan mobile setelah deployment terkonfirmasi.
+  3. Konfirmasi mount volume Hostless dan nilai DATA_DIR (tanpa membagikan secret); lalu perbaiki storage secara terukur dan tambahkan tes untuk kondisi filesystem gagal.
+  4. Lanjutkan audit Exchange Hub dan Binance read-only setelah prioritas di atas selesai.
