@@ -778,3 +778,10 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 3. QA endpoint status, 401 tanpa token, 200 setelah token valid, serta pembacaan Binance Spot/Futures; pastikan izin API Binance hanya baca dan withdrawal/trading/transfer nonaktif.
 4. QA visual Exchange Hub pada desktop dan mobile, termasuk refresh status, input token, error/empty/loading state, tabel saldo, ticker, dan kalkulator.
 5. Verifikasi Hostless build dan SHA Live secara terpisah; lanjutkan audit DATA_DIR/EROFS setelah log dan volume Hostless tersedia.
+
+
+### 24.6 Penyegaran cache PWA setelah redesain
+- Karena service worker memakai cache-first untuk aset shell Exchange Hub, perubahan HTML/CSS/JS saja tidak menjamin browser/PWA yang sudah terpasang mengambil desain baru.
+- public/sw.js dinaikkan dari radar-shell-v7 ke radar-shell-v8 agar aset Exchange Hub terbaru diprecache dan cache shell lama dibersihkan saat aktivasi.
+- test/service-worker.test.js diperbarui untuk memeriksa v8 dan pembersihan cache API lama. Commit service worker: 28411b3e3ef2b38a18b895059d09ca62d757aa21; commit penyesuaian fixture: 82fc5d8ca4177e27592f1608f261d35f799cbb88; commit perbaikan assertion cache lama: 1a23bdc9e0f84fddb327c66a98a5321628fad419.
+- Jumlah deklarasi tes saat ini: 47 (13 Exchange Hub + 4 service worker + 30 dari empat file lainnya). Hasil eksekusi belum dikonfirmasi pada sesi ini.
