@@ -5,10 +5,18 @@ const fs = require('fs'), os = require('os'), path = require('path');
 const { screen, fdv, categoryMatcher, joinFundamentals } = require('../lib/screener');
 const { parseFeed, validUnlocks } = require('../lib/sources');
 const { evaluate } = require('../lib/alerts');
-const { createApp } = require('../server');
+const { createApp, resolveClientIp } = require('../server');
 const ingest = require('../lib/ingest');
 
 const NOW = Date.parse('2026-11-20T12:00:00Z');
+
+test('rate limit: X-Forwarded-For hanya dipercaya sesuai jumlah proxy tepercaya', () => {
+  const req = { socket: { remoteAddress: '::ffff:10.0.0.8' }, headers: { 'x-forwarded-for': '198.51.100.77, 203.0.113.9' } };
+  assert.strictEqual(resolveClientIp(req), '::ffff:10.0.0.8');
+  assert.strictEqual(resolveClientIp(req, 1), '203.0.113.9');
+  assert.strictEqual(resolveClientIp(req, 2), '198.51.100.77');
+  assert.strictEqual(resolveClientIp({ socket: req.socket, headers: {} }, 1), '::ffff:10.0.0.8');
+});
 
 test('storage: file state yang belum ada menghasilkan state awal', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'radar-state-'));
