@@ -6,6 +6,8 @@ const exchangeCopy={
  Bybit:{description:'Unified Wallet dan Linear Derivatives. Baca saldo dan posisi melalui API read-only server-side.',note:'Bybit menggunakan signature V5 di server. Kredensial tidak pernah dikirim atau disimpan di browser.'}
 };
 function selectExchange(name){
+ accountRequestId++;
+ accountConnected=false;
  const selected=exchangeCopy[name]?name:'Binance';
  activeExchange=selected;
  document.querySelectorAll('[data-exchange-tab]').forEach(button=>{
@@ -35,10 +37,13 @@ const feedback=document.getElementById('connection-feedback');
 const accessInput=document.getElementById('exchange-access-token');
 const refreshStatusButton=document.getElementById('refresh-exchange-status');
 let exchangeAccessToken='';
+let accountRequestId=0;
+let accountConnected=false;
 let exchangeAccessConfigured=false;
 const summary=document.getElementById('account-summary');
 const assetList=document.getElementById('asset-list');
 const positionList=document.getElementById('position-list');
+const refreshAccountButton=document.getElementById('refresh-account');
 const money=value=>Number(value||0).toLocaleString('en-US',{maximumFractionDigits:8});
 function updateConnectionUi(){
  const cfg=exchangeConfigs[activeExchange.toLowerCase()];
@@ -47,6 +52,7 @@ function updateConnectionUi(){
  document.getElementById('exchange-status').textContent=ready?'SIAP DIUJI':'BELUM DIKONFIGURASI';
  document.getElementById('hub-status').textContent=ready?'READ-ONLY / SIAP DIUJI':'READ-ONLY / PERLU KONFIGURASI';
  connectButton.disabled=false;
+ refreshAccountButton.disabled=!accountConnected;
  document.querySelectorAll('[data-exchange-tab]').forEach(button=>{
   const label=button.querySelector('.tab-state');
   if(label)label.textContent=button.dataset.exchangeTab===activeExchange?'DIPILIH':(exchangeConfigs[button.dataset.exchangeTab.toLowerCase()]?.configured?'SIAP DIHUBUNGKAN':'BELUM DIKONFIGURASI');
@@ -62,6 +68,8 @@ function clearAccount(){
  const a=document.createElement('p');a.className='muted';a.textContent='Belum ada data akun.';assetList.append(a);
  const p=document.createElement('p');p.className='muted';p.textContent='Belum ada posisi.';positionList.append(p);
  document.getElementById('account-checked-at').textContent='Data privat tidak disimpan ke database RADAR AI dan tidak digunakan untuk mengirim order.';
+ accountConnected=false;
+ refreshAccountButton.disabled=true;
 }
 function stat(label,value){
  const cell=document.createElement('div');cell.className='account-stat';
@@ -108,6 +116,8 @@ function renderAccount(data){
  const permissionWarning=spotTradingEnabled&&futuresTradingEnabled?'izin Spot dan Futures Trading':spotTradingEnabled?'izin Spot Trading':'izin Futures Trading';
  document.getElementById('account-checked-at').textContent=(tradingPermissionEnabled?'PERINGATAN: API Key Binance memiliki '+permissionWarning+' aktif. Nonaktifkan izin trading pada pengaturan API exchange. ':'')+'Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · Data hanya dibaca dan tidak disimpan.';
  document.getElementById('account-checked-at').classList.toggle('account-warning',tradingPermissionEnabled||!positionsAvailable);
+ accountConnected=true;
+ refreshAccountButton.disabled=false;
  document.getElementById('exchange-status').textContent=tradingPermissionEnabled?'TERHUBUNG · PERIKSA IZIN API':positionsAvailable?'TERHUBUNG · READ-ONLY':'TERHUBUNG · DATA PARSIAL';
  document.getElementById('hub-status').textContent=tradingPermissionEnabled?'PERINGATAN / IZIN TRADING AKTIF':positionsAvailable?'READ-ONLY / TERHUBUNG':'READ-ONLY / DATA PARSIAL';
  document.getElementById('api-state').textContent=tradingPermissionEnabled?'Izin trading aktif':positionsAvailable?'Permintaan akun berhasil':'Sebagian data akun tidak tersedia';
@@ -120,7 +130,7 @@ async function loadExchangeStatus(){
   Object.assign(exchangeConfigs,body.exchanges||{});exchangeAccessConfigured=Boolean(body.access_configured);updateConnectionUi();
  }catch(error){exchangeAccessConfigured=false;feedback.textContent='Tidak dapat memeriksa backend. Perbarui halaman setelah deployment selesai.';document.getElementById('api-state').textContent='Backend exchange belum tersedia';}
 }
-refreshStatusButton.addEventListener('click',async()=>{refreshStatusButton.disabled=true;refreshStatusButton.textContent='Memeriksa…';await loadExchangeStatus();refreshStatusButton.disabled=false;refreshStatusButton.textContent='Perbarui status server';});
+refreshStatusButton.addEventListener('click',async()=>{refreshStatusButton.disabled=true;refreshStatusButton.textContent='Memeriksa…';try{await loadExchangeStatus();}finally{refreshStatusButton.disabled=false;refreshStatusButton.textContent='Perbarui status server';}});
 const marketButton=document.getElementById('load-market');
 const marketOutput=document.getElementById('market-data');
 const marketFeedback=document.getElementById('market-feedback');
@@ -144,10 +154,11 @@ function renderMarket(data){
 marketButton.addEventListener('click',async()=>{
  const requestedExchange=activeExchange;
  const symbol=document.getElementById('pair').value.trim().toUpperCase();
+ if(!/^[A-Z0-9]{3,24}$/.test(symbol)){marketFeedback.textContent='Pair tidak valid. Gunakan huruf/angka, contoh BTCUSDT.';return;}
  marketButton.disabled=true;marketFeedback.textContent='Mengambil ticker '+symbol+'…';
  try{
   const query=new URLSearchParams({exchange:requestedExchange.toLowerCase(),symbol});
-  const response=await fetch('/api/exchanges/market?'+query.toString(),{cache:'no-store'});
+  const response=await fetch('/api/exchanges/market?'+query.toString(),{cache:'no-store',signal:AbortSignal.timeout(15000)});
   const body=await response.json();
   if(!response.ok||body.status!=='success')throw new Error(body.message||'Data market gagal diambil.');
   if(activeExchange===requestedExchange)renderMarket(body);
@@ -155,27 +166,56 @@ marketButton.addEventListener('click',async()=>{
   if(activeExchange===requestedExchange)marketFeedback.textContent=error.message;
  }finally{marketButton.disabled=false;}
 });
-connectButton.addEventListener('click',async()=>{
+async function connectExchange(){
  const requestedExchange=activeExchange;
+ const requestId=++accountRequestId;
  if(accessInput.value.trim())exchangeAccessToken=accessInput.value.trim();
- if(!exchangeAccessConfigured){feedback.textContent='Akses privat belum diaktifkan di server. Tambahkan EXCHANGE_ACCESS_TOKEN atau ADMIN_TOKEN di Hostless.';return;}
+ if(!exchangeAccessConfigured){feedback.textContent='Akses privat belum diaktifkan di server. Tambahkan EXCHANGE_ACCESS_TOKEN di Hostless.';return;}
  if(!exchangeAccessToken){feedback.textContent='Masukkan kunci akses privat Exchange Hub terlebih dahulu.';accessInput.focus();return;}
- connectButton.disabled=true;connectButton.textContent='Mengambil data akun…';feedback.textContent='Menghubungi '+requestedExchange+' melalui server RADAR AI…';
+ connectButton.disabled=true;refreshAccountButton.disabled=true;
+ connectButton.textContent='Mengambil data akun…';
+ feedback.textContent='Menghubungi '+requestedExchange+' melalui server RADAR AI…';
  try{
-  const response=await fetch('/api/exchanges/'+requestedExchange.toLowerCase()+'/account',{cache:'no-store',headers:{'x-exchange-access-token':exchangeAccessToken}});const body=await response.json();
-  if(!response.ok||body.status!=='success')throw new Error((body.message||'Koneksi exchange gagal.')+(body.code?' ['+body.code+']':''));
-  if(activeExchange===requestedExchange)renderAccount(body);
+  const response=await fetch('/api/exchanges/'+requestedExchange.toLowerCase()+'/account',{cache:'no-store',signal:AbortSignal.timeout(20000),headers:{'x-exchange-access-token':exchangeAccessToken}});
+  const body=await response.json();
+  if(!response.ok||body.status!=='success'){
+   if(response.status===401)throw new Error('Token akses ditolak. Periksa token privat lalu coba lagi.');
+   if(response.status===503)throw new Error('Akses privat belum dikonfigurasi di server.');
+   throw new Error((body.message||'Koneksi exchange gagal.')+(body.code?' ['+body.code+']':''));
+  }
+  if(activeExchange===requestedExchange&&requestId===accountRequestId)renderAccount(body);
  }catch(error){
-  if(activeExchange===requestedExchange){
-   summary.replaceChildren();const empty=document.createElement('div');empty.className='account-empty';empty.textContent=error.message;summary.append(empty);
+  if(activeExchange===requestedExchange&&requestId===accountRequestId){
+   accountConnected=false;refreshAccountButton.disabled=true;
+   summary.replaceChildren();const empty=document.createElement('div');empty.className='account-empty account-error';empty.textContent=error.name==='TimeoutError'?'Server terlalu lama merespons. Coba lagi beberapa saat.':error.message;summary.append(empty);
    document.getElementById('exchange-status').textContent='KONEKSI GAGAL';
    document.getElementById('hub-status').textContent='READ-ONLY / PERLU PEMERIKSAAN';
    document.getElementById('api-state').textContent='Koneksi belum berhasil';
-   feedback.textContent=error.message+' Periksa izin read-only, whitelist IP, dan environment server.';
+   feedback.textContent=empty.textContent+' Periksa izin read-only, whitelist IP, dan environment server.';
   }
- }finally{connectButton.textContent='Periksa koneksi & ambil data akun';updateConnectionUiAfterResult();}
+ }finally{
+  if(requestId===accountRequestId){
+   connectButton.disabled=false;
+   connectButton.textContent='Uji koneksi & muat akun';
+   refreshAccountButton.disabled=!accountConnected;
+  }
+ }
+}
+connectButton.addEventListener('click',connectExchange);
+refreshAccountButton.addEventListener('click',connectExchange);
+accessInput.addEventListener('input',()=>{exchangeAccessToken=accessInput.value.trim();});
+document.getElementById('toggle-access-token').addEventListener('click',event=>{
+ const visible=accessInput.type==='password';
+ accessInput.type=visible?'text':'password';
+ event.currentTarget.textContent=visible?'Sembunyikan token':'Tampilkan token';
+ event.currentTarget.setAttribute('aria-pressed',String(visible));
 });
-function updateConnectionUiAfterResult(){connectButton.disabled=false;}
+document.getElementById('clear-access-token').addEventListener('click',()=>{
+ accessInput.value='';exchangeAccessToken='';accessInput.type='password';
+ document.getElementById('toggle-access-token').textContent='Tampilkan token';
+ document.getElementById('toggle-access-token').setAttribute('aria-pressed','false');
+ feedback.textContent='Token dihapus dari memori halaman.';
+});
 
 selectExchange('Binance');
 activeExchange='Binance';
