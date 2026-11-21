@@ -436,3 +436,52 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
   3. Verifikasi CI `npm test` untuk HEAD `327ad197` atau HEAD terbaru pada saat pemeriksaan berikutnya melalui GitHub Actions push workflow.
   4. Uji persistensi setelah restart dan perilaku EROFS hanya setelah lokasi volume Hostless terkonfirmasi; jangan mengubah storage path secara spekulatif.
   5. Setelah storage dan UI stabil, lanjutkan Binance read-only server-side dengan secret tetap di Hostless environment. Trading tetap OFF.
+
+
+---
+
+## 19. PEMERIKSAAN LANJUTAN DAN BATAS VERIFIKASI — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 19.1 HEAD dan integritas repository
+- Branch aktif dikonfirmasi `main`; commit terbaru sebelum catatan ini adalah `e5fbb62ddb1ce742d94c6858f0014540fb47315d` (`docs: record dashboard and exchange hub audit`).
+- Fetch commit menunjukkan `e5fbb62` hanya menambahkan bagian 18 ke dokumen master; tidak ada perubahan kode aplikasi pada commit tersebut.
+- `AGENTS.md` dibaca ulang dan tetap konsisten dengan kebijakan kesinambungan V2→V3, dokumentasi otomatis, dan larangan klaim deployment tanpa bukti.
+- Repository publik dapat diakses melalui konektor GitHub; working copy lokal tidak tersedia. Percobaan `git ls-remote` dari runtime lokal gagal karena DNS/network tidak dapat menyelesaikan `github.com`. Karena itu tes lokal tidak dapat dijalankan pada sesi ini.
+
+### 19.2 Audit ulang DATA_DIR / EROFS
+- `lib/ingest.js` pada HEAD tetap membentuk `dataDir` dari `path.resolve(env('DATA_DIR', './data'))`.
+- `load()` hanya menganggap `ENOENT` sebagai state baru; error lain termasuk `EACCES`, `EIO`, `EROFS`, dan JSON rusak diteruskan.
+- `save()` membuat direktori, menulis `state.json.tmp`, lalu atomic rename ke `state.json`; file sementara dibersihkan best-effort jika gagal.
+- Tes storage pada `test/radar.test.js` mencakup state awal, pemulihan state/JSON rusak, dan simulasi EROFS saat rename dengan preservasi state lama.
+- Kesimpulan tetap: source dan tes lokal/CI tidak dapat membuktikan mount Hostless writable/persisten. Tidak ada perubahan path/fallback yang dibuat tanpa bukti mount/runtime karena dapat memindahkan state ke disk ephemeral.
+
+### 19.3 QA source-level Dashboard
+- File aktual diperiksa: `public/index.html` (3,136 byte), `public/app.js` (24,732 byte), dan `public/style.css` (17,563 byte).
+- Struktur shell dashboard dan script frontend tetap ada. CSS memuat sidebar fixed dengan `height:100dvh`, `overflow-y:auto`, `overscroll-behavior:contain`, serta drawer transform pada breakpoint mobile. Aturan responsive untuk konten, tabel, grid, dan sidebar tetap ada.
+- Pemeriksaan ini hanya source-level. Belum ada browser render, interaksi scroll, console/network inspection, atau QA visual pada desktop/mobile; jangan menandai UI lulus runtime.
+
+### 19.4 QA source-level Exchange Hub
+- File aktual diperiksa: `public/trading.html` (5,519 byte), `public/trading.js` (3,769 byte), dan `public/trading.css` (2,383 byte).
+- UI tetap menyatakan koneksi akun belum aktif; kalkulator posisi hanya estimasi simulasi. Pemeriksaan `trading.js` tidak menemukan pemanggilan `fetch`, route `/api/`, penanganan API key/secret, signature, atau pengiriman order.
+- Peringatan kalkulator tetap menyebut fee, funding, slippage, ukuran kontrak, dan likuidasi belum dihitung. Tidak ada perubahan integrasi atau kredensial.
+
+### 19.5 CI dan Hostless
+- Combined commit status untuk HEAD `e5fbb62` mengembalikan array status kosong. Endpoint workflow-run yang tersedia untuk commit ini juga mengembalikan daftar kosong karena wrapper tersebut hanya menampilkan run pull-request. Dengan demikian CI push `npm test` untuk `e5fbb62` belum terverifikasi; hasil PASS pada SHA lama tidak boleh dipindahkan ke HEAD ini.
+- Homepage Hostless dan `/api/health` tidak dapat diambil dari lingkungan pemeriksaan (cache miss / URL tidak accessible). Ini bukan bukti aplikasi down.
+- Tidak ditemukan integrasi Hostless pada daftar konektor yang tersedia. Deployment SHA, status build, versi LIVE, runtime logs, mount volume, dan nilai runtime `DATA_DIR` tetap tidak diketahui.
+- Pencarian plugin hosting tidak menemukan integrasi Hostless yang cocok; plugin penyedia hosting lain bukan pengganti yang aman untuk akun Hostless proyek ini.
+
+### 19.6 Catatan sesi dan NEXT TASK
+- Tujuan: meneruskan audit dari bagian 18, memeriksa ulang source storage, Dashboard, Exchange Hub, status CI, dan jalur akses deployment.
+- File source aplikasi diubah: tidak ada. File dokumentasi yang diperbarui: `RADAR_AI_MASTER_CONTEXT.md`.
+- Tes lokal: tidak dijalankan karena working copy tidak tersedia dan koneksi GitHub dari runtime lokal gagal.
+- CI HEAD `e5fbb62`: belum terverifikasi (status kosong dan workflow-run pull-request-only tidak menyediakan bukti push run).
+- Commit GitHub sebelum pembaruan catatan ini: `e5fbb62ddb1ce742d94c6858f0014540fb47315d`. SHA commit pembaruan bagian 19 akan dicatat sebagai hasil operasi GitHub pada laporan sesi.
+- Hostless build: tidak diketahui. Hostless Live: tidak diketahui / belum terverifikasi.
+- Risiko terbuka: akses Hostless read-only tidak tersedia; mount volume writable/persisten dan runtime `DATA_DIR` belum terbukti; QA visual/browser desktop/mobile belum dilakukan; CI push untuk HEAD ini belum terverifikasi; koneksi Binance read-only belum diimplementasikan/diuji.
+- NEXT TASK:
+  1. Sediakan koneksi Hostless read-only yang resmi/terotorisasi agar deployment SHA, build, runtime logs, volume, dan konfigurasi `DATA_DIR` dapat diperiksa tanpa membuka secret.
+  2. Verifikasi CI push `npm test` untuk HEAD terbaru melalui GitHub Actions run/job, lalu catat SHA dan hasil job.
+  3. Jalankan QA browser dashboard/sidebar dan Exchange Hub pada desktop serta mobile; periksa console, network, dan `/api/health` terhadap deployment SHA yang sama.
+  4. Uji volume writable dan persistensi lintas restart setelah mount Hostless teridentifikasi; jangan mengganti storage path secara spekulatif.
+  5. Setelah storage dan UI stabil, implementasikan Binance read-only server-side dengan secret tetap di Hostless environment; trading tetap OFF.
