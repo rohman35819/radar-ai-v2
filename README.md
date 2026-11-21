@@ -48,6 +48,8 @@ Endpoint:
 Koneksi privat dilakukan hanya setelah pengguna menekan tombol pemeriksaan pada Exchange Hub. Data akun hanya diteruskan ke browser untuk ditampilkan dan tidak disimpan ke state RADAR AI. Endpoint ini tidak membuat, mengubah, atau membatalkan order. Koneksi dinyatakan berhasil hanya setelah permintaan privat ke exchange berhasil; keberadaan environment saja bukan bukti koneksi.
 
 ## Catatan
+
+- Market Screener mempertahankan kata kunci/filter/sort saat data otomatis diperbarui dan menyediakan ekspor CSV untuk hasil yang sedang difilter. CSV menggunakan UTF-8 BOM dan perlindungan formula pada sel teks.
 - Screener: ambil seluruh kategori AI CoinGecko (hingga `MAX_PAGES` x 250), lalu filter lokal. Token ditandai `stale`, `fdv_unknown`, dsb; data basi tidak memicu alert.
 - Fundamental hanya tampil untuk token yang `gecko_id`-nya ada di DeFiLlama; selain itu `n/a` (bukan 0). Kecocokan fees/revenue memakai slug/nama dan bisa meleset untuk sebagian protokol.
 - `POST /api/refresh` butuh `ADMIN_TOKEN` (header `x-admin-token`). Rate limit 60 req/menit/IP (di belakang proxy, IP dibaca dari `x-forwarded-for`).
