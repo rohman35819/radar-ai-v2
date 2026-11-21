@@ -72,30 +72,36 @@ function table(headers,rows){
 }
 function renderAccount(data){
  summary.replaceChildren();assetList.replaceChildren();positionList.replaceChildren();
- const account=data.account||{};let assets=[],positions=[],stats=[];
+ const account=data.account||{};let assets=[],positions=[],stats=[],positionsAvailable=true,positionsError='';
  if(data.exchange==='binance'){
   const spot=account.spot||{},futures=account.futures||{};
   assets=(spot.balances||[]).map(x=>[x.asset,money(x.free),money(x.locked),money(x.total)]);
   positions=futures.positions||[];
-  stats=[['Aset Spot',String(assets.length)],['Wallet Futures',futures.available?money(futures.wallet_balance)+' USDT':'Tidak tersedia'],['Available Futures',futures.available?money(futures.available_balance)+' USDT':'—'],['Unrealized PnL',futures.available?money(futures.unrealized_pnl)+' USDT':'—'],['Posisi terbuka',String(positions.length)]];
-  if(futures.available&&!futures.positions_available)stats.push(['Data posisi','Izin baca belum tersedia']);
+  positionsAvailable=Boolean(futures.available&&futures.positions_available!==false);
+  positionsError=futures.positions_error||futures.error||'FUTURES_READ_UNAVAILABLE';
+  stats=[['Aset Spot',String(assets.length)],['Wallet Futures',futures.available?money(futures.wallet_balance)+' USDT':'Tidak tersedia'],['Available Futures',futures.available?money(futures.available_balance)+' USDT':'—'],['Unrealized PnL',futures.available?money(futures.unrealized_pnl)+' USDT':'—'],['Posisi terbuka',positionsAvailable?String(positions.length):'Tidak tersedia']];
+  if(!positionsAvailable)stats.push(['Status posisi',positionsError]);
  }else{
   const wallet=account.wallet||{};
   assets=(wallet.coins||[]).map(x=>[x.asset,money(x.wallet_balance),money(x.equity),money(x.available_balance)]);
   positions=account.positions||[];
-  stats=[['Total Equity',money(wallet.total_equity)+' USDT'],['Wallet Balance',money(wallet.wallet_balance)+' USDT'],['Available Balance',money(wallet.available_balance)+' USDT'],['Aset aktif',String(assets.length)],['Posisi terbuka',String(positions.length)]];
-  if(account.positions_available===false)stats.push(['Data posisi','Izin baca belum tersedia']);
+  positionsAvailable=account.positions_available!==false;
+  positionsError=account.positions_error||'BYBIT_POSITIONS_READ_UNAVAILABLE';
+  stats=[['Total Equity',money(wallet.total_equity)+' USDT'],['Wallet Balance',money(wallet.wallet_balance)+' USDT'],['Available Balance',money(wallet.available_balance)+' USDT'],['Aset aktif',String(assets.length)],['Posisi terbuka',positionsAvailable?String(positions.length):'Tidak tersedia']];
+  if(!positionsAvailable)stats.push(['Status posisi',positionsError]);
  }
  stats.forEach(([label,value])=>summary.append(stat(label,value)));
  if(assets.length)assetList.append(table(data.exchange==='binance'?['Aset','Free','Locked','Total']:['Aset','Wallet','Equity','Available'],assets));
  else{const p=document.createElement('p');p.className='muted';p.textContent='Tidak ada saldo aset non-zero yang dikembalikan.';assetList.append(p);}
  if(positions.length)positionList.append(table(['Pair','Arah','Size','Entry','Mark','Unrealized PnL'],positions.map(x=>[x.symbol,x.side,money(x.size),money(x.entry_price),money(x.mark_price),money(x.unrealized_pnl)])));
- else{const p=document.createElement('p');p.className='muted';p.textContent='Tidak ada posisi terbuka.';positionList.append(p);}
- document.getElementById('account-checked-at').textContent='Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · Data hanya dibaca dan tidak disimpan.';
- document.getElementById('exchange-status').textContent='TERHUBUNG · READ-ONLY';
- document.getElementById('hub-status').textContent='READ-ONLY / TERHUBUNG';
- document.getElementById('api-state').textContent='Permintaan akun berhasil';
- feedback.textContent='Data akun berhasil dibaca dari '+activeExchange+'. Tidak ada order yang dikirim.';
+ else{const p=document.createElement('p');p.className='muted';p.textContent=positionsAvailable?'Tidak ada posisi terbuka.':'Data posisi gagal dibaca ('+positionsError+'). Saldo berhasil diambil, tetapi hasil posisi belum dapat dipastikan.';positionList.append(p);}
+ const spotTradingEnabled=data.exchange==='binance'&&Boolean(account.spot?.can_trade);
+ document.getElementById('account-checked-at').textContent=(spotTradingEnabled?'PERINGATAN: API Key Binance memiliki izin Spot Trading aktif. Nonaktifkan izin trading pada pengaturan API exchange. ':'')+'Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · Data hanya dibaca dan tidak disimpan.';
+ document.getElementById('account-checked-at').classList.toggle('account-warning',spotTradingEnabled||!positionsAvailable);
+ document.getElementById('exchange-status').textContent=spotTradingEnabled?'TERHUBUNG · PERIKSA IZIN API':positionsAvailable?'TERHUBUNG · READ-ONLY':'TERHUBUNG · DATA PARSIAL';
+ document.getElementById('hub-status').textContent=spotTradingEnabled?'PERINGATAN / IZIN TRADING AKTIF':positionsAvailable?'READ-ONLY / TERHUBUNG':'READ-ONLY / DATA PARSIAL';
+ document.getElementById('api-state').textContent=spotTradingEnabled?'Izin Spot Trading aktif':positionsAvailable?'Permintaan akun berhasil':'Sebagian data akun tidak tersedia';
+ feedback.textContent=spotTradingEnabled?'Saldo terbaca, tetapi API Key memiliki izin Spot Trading. Nonaktifkan izin tersebut untuk keamanan.':positionsAvailable?'Data akun berhasil dibaca dari '+activeExchange+'. Tidak ada order yang dikirim.':'Saldo terbaca; data posisi belum lengkap.';
 }
 async function loadExchangeStatus(){
  try{
@@ -165,14 +171,19 @@ activeExchange='Binance';
 loadExchangeStatus();
 form.addEventListener('submit',e=>{
  e.preventDefault();
- const margin=Number(document.getElementById('margin').value),lev=Number(document.getElementById('leverage').value),entry=Number(document.getElementById('entry').value),sl=Number(document.getElementById('sl').value),tp=Number(document.getElementById('tp').value),side=document.getElementById('side').value;
+ const margin=Number(document.getElementById('margin').value),lev=Number(document.getElementById('leverage').value),entry=Number(document.getElementById('entry').value),slRaw=document.getElementById('sl').value.trim(),tpRaw=document.getElementById('tp').value.trim(),sl=Number(slRaw),tp=Number(tpRaw),side=document.getElementById('side').value,pair=document.getElementById('pair').value.trim().toUpperCase();
  const out=document.getElementById('calc-result');
- if(!(margin>0&&lev>0&&entry>0)){out.replaceChildren();const b=document.createElement('b');b.textContent='Data belum lengkap';const p=document.createElement('p');p.textContent='Masukkan margin dan harga masuk yang valid.';out.append(b,p);return;}
+ const fail=message=>{out.replaceChildren();const b=document.createElement('b');b.textContent='Periksa input simulasi';const p=document.createElement('p');p.textContent=message;out.append(b,p);};
+ if(!(margin>0&&lev>0&&entry>0)){fail('Masukkan margin, leverage, dan harga masuk yang valid.');return;}
+ if(!/^[A-Z0-9]{3,24}$/.test(pair)){fail('Pair harus berisi 3–24 karakter huruf/angka, contoh BTCUSDT.');return;}
+ if((slRaw&&!(sl>0))||(tpRaw&&!(tp>0))){fail('Stop Loss dan Take Profit harus berupa harga positif.');return;}
+ if(slRaw&&((side==='LONG'&&sl>=entry)||(side==='SHORT'&&sl<=entry))){fail(side==='LONG'?'Stop Loss posisi Long harus di bawah harga masuk.':'Stop Loss posisi Short harus di atas harga masuk.');return;}
+ if(tpRaw&&((side==='LONG'&&tp<=entry)||(side==='SHORT'&&tp>=entry))){fail(side==='LONG'?'Take Profit posisi Long harus di atas harga masuk.':'Take Profit posisi Short harus di bawah harga masuk.');return;}
  const notional=margin*lev,qty=notional/entry,dir=side==='LONG'?1:-1;
  const pnlAt=price=>Number.isFinite(price)&&price>0?(price-entry)*qty*dir:null;
  const risk=pnlAt(sl),reward=pnlAt(tp),rr=risk!==null&&risk<0&&reward!==null&&reward>0?reward/Math.abs(risk):null;
  out.replaceChildren();
- const heading=document.createElement('b');heading.textContent='Hasil simulasi '+side+' · '+document.getElementById('pair').value.toUpperCase()+' · '+document.getElementById('exchange').value;out.append(heading);
+ const heading=document.createElement('b');heading.textContent='Hasil simulasi '+side+' · '+pair+' · '+document.getElementById('exchange').value;out.append(heading);
  const grid=document.createElement('div');grid.className='result-grid';
  const rows=[['Nilai posisi',fmt(notional)+' USDT'],['Kuantitas estimasi',fmt(qty)],['Margin',fmt(margin)+' USDT'],['Leverage',lev+'x'],['Estimasi PnL di SL',risk===null?'Belum diisi':fmt(risk)+' USDT'],['Estimasi PnL di TP',reward===null?'Belum diisi':fmt(reward)+' USDT'],['Risk / Reward',rr===null?'Belum bisa dihitung':'1 : '+fmt(rr)]];
  rows.forEach(([k,v])=>{const cell=document.createElement('div'),small=document.createElement('small'),bold=document.createElement('b');small.textContent=k;bold.textContent=v;cell.append(small,bold);grid.append(cell);});
