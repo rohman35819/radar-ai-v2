@@ -1054,3 +1054,33 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Tidak ada browser automation/device screenshot yang tersedia. Hostless Build dan LIVE SHA tetap belum terverifikasi.
 - Scope tetap Exchange Hub saja. Tidak ada perubahan backend, permission API, trading, withdrawal, Dashboard, atau Command Center.
 - NEXT TASK: verifikasi CI penuh; QA browser desktop/mobile dan Hostless deployment; uji koneksi akun read-only setelah deployment.
+
+## 29. PERBAIKAN REGRESI TES EXCHANGE HUB — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 29.1 Temuan CI setelah redesign
+- Pemeriksaan Actions menunjukkan run #265, #266, #267, dan #268 gagal pada langkah `npm test`. Kegagalan berasal dari assertion statis lama di `test/exchange-ui.test.js`, bukan kegagalan sintaks atau perilaku aplikasi: tes mengharapkan teks `exchangeAccessToken='';accessInput.type='password'` berdampingan, sementara implementasi yang lebih baru sengaja menambahkan `accountRequestId++` di antaranya untuk membatalkan respons akun yang masih tertunda ketika token dihapus.
+- Perilaku implementasi dipertahankan. Tes diperbaiki agar memverifikasi invalidasi request ID dan pengembalian input ke tipe password sebagai dua kondisi terpisah.
+
+### 29.2 Perubahan dan file
+- File diperbarui: `test/exchange-ui.test.js`.
+- Assertion sekarang memastikan penghapusan token mengosongkan token, menaikkan request ID agar respons privat yang terlambat tidak dapat merender ulang saldo/posisi, dan mengembalikan kolom token ke mode password.
+- Tidak ada perubahan pada API backend, kontrak exchange, kredensial, permission, kalkulator, atau kemampuan trading. Tidak ada dependency baru.
+- Commit perbaikan: `b2816cefae09192d2e581d597c8dd504698bf192`.
+
+### 29.3 Verifikasi
+- GitHub Actions run #269 untuk commit `b2816cefae09192d2e581d597c8dd504698bf192`: completed / success.
+- Langkah `npm test` berhasil; seluruh 57 test lulus, 0 gagal. Pipeline juga menjalankan `node --check` untuk server, modul exchange, frontend Exchange Hub, dashboard, service worker, Command Center, dan modul AI OpenAI.
+- Kegagalan run #265–#268 telah ditelusuri ke assertion yang usang; run #269 membuktikan perbaikannya.
+- Tes browser/device desktop dan mobile belum tersedia pada sesi ini. Koneksi akun Binance/Bybit nyata belum diuji. Hostless Build dan SHA versi LIVE tetap tidak diketahui karena akses Hostless belum tersedia.
+
+### 29.4 Status dan NEXT TASK
+- GitHub main berisi commit perbaikan tes di atas; dokumentasi ini akan dicatat pada commit berikutnya.
+- Hostless Build: belum terverifikasi. Hostless Live: belum terverifikasi. Jangan menyimpulkan deployment dari status CI.
+- Risiko terbuka: EROFS/DATA_DIR masih memerlukan konfigurasi volume/log runtime Hostless; QA visual Exchange Hub dan Dashboard belum dilakukan; koneksi privat read-only belum diuji pada akun nyata.
+- NEXT TASK:
+  1. Selesaikan audit UI Exchange Hub desktop/mobile dan validasi perilaku saat token dihapus ketika request masih berjalan.
+  2. Verifikasi Hostless Build dan SHA Live secara terpisah; gunakan browser QA setelah versi terbaru tersedia.
+  3. Uji endpoint market publik dan koneksi akun read-only hanya setelah kredensial/izin Hostless dipastikan aman; jangan pernah meminta secret di chat.
+  4. Lanjutkan audit DATA_DIR/EROFS berdasarkan log dan konfigurasi volume aktual, bukan asumsi.
+  5. Kembali ke QA Dashboard, Command Center, serta halaman News, Unlock, Alert, AI Council, AI Workspace, dan System Health.
+- Trading live, withdrawal, dan transfer tetap di luar scope dan nonaktif.
