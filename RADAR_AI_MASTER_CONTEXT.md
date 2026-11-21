@@ -314,7 +314,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - File source ditinjau: `lib/ingest.js`, `test/radar.test.js`, `server.js`, `public/index.html`, `public/app.js`, `public/style.css`, `public/trading.html`, `public/trading.js`, `public/trading.css`, `package.json`, `README.md`, `AGENTS.md`.
 - File yang diubah: `RADAR_AI_MASTER_CONTEXT.md` (catatan verifikasi ini saja).
 - Tes: GitHub Actions `npm test` PASS pada HEAD; tes lokal tidak dijalankan.
-- Commit dokumentasi sesi: akan dicatat setelah update ini berhasil.
+- Commit dokumentasi sesi: `421bca232444067c20398d0b176120e868b86047` (catatan audit bagian ini).
 - Hostless build: tidak diketahui. Hostless Live: tidak diketahui / belum terverifikasi.
 - Risiko terbuka: bukti konfigurasi volume writable dan nilai `DATA_DIR` runtime Hostless belum tersedia; QA visual/browser belum dapat dilakukan; koneksi Binance read-only belum diimplementasikan/teruji.
 - NEXT TASK:
