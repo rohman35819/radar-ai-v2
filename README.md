@@ -4,7 +4,7 @@ Tanpa dependensi npm (V2.2) (butuh Node >= 20). Backend + dashboard PWA dalam sa
 
 ## Jalankan
     cp .env.example .env   # opsional; isi nilai lalu: export $(grep -v '^#' .env | xargs)
-    npm test               # 51 test case di 7 file
+    npm test               # 52 test case di 7 file
     npm start              # http://localhost:3000
 
 ## Pasang
