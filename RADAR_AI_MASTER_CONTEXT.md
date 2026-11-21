@@ -974,3 +974,14 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 3. Lanjutkan audit DATA_DIR/EROFS berbasis konfigurasi volume/log Hostless yang nyata.
 4. QA Dashboard, Exchange Hub, dan Command Center desktop/mobile; status Hostless tetap harus diverifikasi terpisah.
 5. Setelah infrastruktur stabil, lanjutkan QA News, Token Unlock, Alert Center, AI Council, AI Workspace, dan System Health.
+### 27.7 Penutupan perubahan dan SHA
+- Commit implementasi server.js: c35353983ca1ae60366b8bff24d1db2a9a0e6f86.
+- Commit konfigurasi lib/ingest.js: 237c236f990ae6480c215636cec2b31478b793f3.
+- Commit tes: 9a51f4963f72c8d7ad00aa25c9a80830f586f386.
+- Commit README penjelasan proxy: d08f2fa668f9c9f757be5414d058d5c26eac9298; sinkronisasi hitungan tes 52: 7dde606ba2776cf5e5480214c19c648d84fcb65a.
+- Commit .env.example: 02576b5ef05b77bb874d0067efb3f5dae81a7f54.
+- Commit master context: ef09399c7faa9abbb5e03716de9e4a823442d9e1 (catatan penutupan ini menjadi commit dokumentasi berikutnya).
+- GitHub Actions runs #247–#254 seluruhnya completed/success. Run #250 menguji source dan test pada SHA d08f2fa; run #253 menguji pembaruan README; run #254 menguji HEAD dokumentasi ef09399. npm test lulus pada rangkaian tersebut.
+- Branch main telah diverifikasi pada HEAD ef09399c7faa9abbb5e03716de9e4a823442d9e1 sebelum penambahan catatan penutupan ini.
+- Hostless Build/Live: belum diverifikasi. Tidak ada bukti deployment SHA ini sudah aktif.
+
