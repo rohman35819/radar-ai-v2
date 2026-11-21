@@ -594,3 +594,41 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Commit kode ticker: `2580c882b7c879b4940f94b388d5b709b93791a0`; route market: `ae64aa90884b49ee1f06962009e620bfdb935a8e`; UI ticker: `0b5a7c49d956a01171a33e959f0ad46f18e88bbb`; test ticker: `662abbc44d763f40c2d96cdf044e45388296205d`; perbaikan kalkulator: `87932f47a29fd456791986305b56d20aa5c7f2c5`.
 - Perbaikan tambahan untuk menandai kegagalan pembacaan posisi parsial dibuat pada commit `7f882b45f80f464d4b4b5e51097a02355b657efa`; dashboard refresh failure diperbaiki pada commit terpisah `70b8a6b41fcc38f6321295a6b8bee4f10a35ea74` oleh perubahan lain di branch dan bukan bagian scope Exchange Hub sesi ini.
 - HEAD dokumentasi sebelum catatan lanjutan ini: `a2f13860ebcde9162907cb2793fe97f9354ed555` untuk perubahan template environment; catatan lanjutan ticker disimpan pada `436be39bf6d01389af4807fc427f874ed8b511c6`. Sinkronisasi status Exchange Hub dan NEXT TASK dicatat pada commit `d134691b7709bd23bbab93e39134e771e9f5651d`. Status CI push dan Hostless deployment masih belum dapat diverifikasi dari koneksi yang tersedia.
+
+
+---
+
+## 22. AUDIT UI & FUNGSI DASHBOARD / EXCHANGE HUB — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 22.1 Temuan source-level
+- Dashboard: load() sebelumnya tidak mengembalikan status kegagalan snapshot; refreshNow() selalu menampilkan notifikasi berhasil setelah load() selesai, sekalipun /api/snapshot gagal. Ini menyesatkan ketika data lama masih tampil.
+- Exchange Hub: adapter sudah membedakan positions_available, tetapi tampilan tabel posisi masih menulis “Tidak ada posisi terbuka” ketika endpoint posisi gagal. Pengguna tidak dapat membedakan posisi kosong dari pembacaan yang gagal.
+- Binance: respons akun Spot menyediakan can_trade, tetapi UI belum memberi peringatan eksplisit jika API key memiliki izin Spot Trading. Prinsip least-privilege mengharuskan izin trading tetap dinonaktifkan.
+- Kalkulator: validasi awal hanya memastikan margin/leverage/harga masuk positif; SL/TP belum divalidasi terhadap arah Long/Short. Harga SL/TP yang berada di sisi yang salah dapat menghasilkan estimasi PnL/R:R yang membingungkan.
+- Batas kalkulator tetap berlaku: simulasi belum memakai instrument metadata tick/step/min-notional, fee, funding, slippage, dan liquidation calculation exchange. Jangan menganggapnya sebagai kalkulator order presisi.
+
+### 22.2 Perbaikan yang dikirim ke main
+- public/app.js — load() kini mengembalikan status keberhasilan snapshot. Jika fetch gagal, UI menampilkan banner bahwa data lama mungkin masih terlihat; tombol Refresh tidak lagi mengklaim berhasil dan memberi notifikasi gagal secara jujur. Commit 70b8a6b41fcc38f6321295a6b8bee4f10a35ea74.
+- lib/exchanges.js — response Binance Futures dan Bybit menyertakan kode positions_error terpisah dari saldo jika endpoint posisi gagal atau bentuk respons tidak valid. Commit 7f882b45f80f464d4b4b5e51097a02355b657efa.
+- public/trading.js — tabel posisi membedakan hasil kosong yang valid dari kegagalan pembacaan; status parsial diperlihatkan; izin Spot Trading Binance yang aktif menghasilkan peringatan; kalkulator menolak pair tidak valid dan SL/TP yang berada pada sisi salah untuk Long/Short. Commit 58caf2a69a980c028bf19a1bb2725fd0fdc680ac.
+- public/trading.css — menambahkan gaya peringatan untuk izin API dan data parsial. Commit db7ab58817492d060e9241c30c3732425be7001b.
+- test/exchanges.test.js — menambahkan dua tes untuk kegagalan endpoint posisi Binance dan Bybit saat wallet/saldo berhasil. Commit a40acd1a7986986549f4fedde9b2d5e286d132b3.
+- Total test case yang tercatat menjadi 33 (21 core + 12 Exchange Hub).
+
+### 22.3 Verifikasi
+- GitHub Actions push workflow untuk public/app.js commit 70b8a6b: completed / success (run #172).
+- GitHub Actions untuk public/trading.js commit 58caf2a: completed / success (run #177).
+- GitHub Actions untuk public/trading.css commit db7ab58: completed / success (run #178).
+- Saat catatan ini disusun, workflow npm test untuk commit test a40acd1 masih in progress (run #179); jangan tandai tes tambahan sebagai lulus sebelum run selesai.
+- Tes lokal tidak dijalankan karena working copy Node repository tidak tersedia dalam sesi ini.
+- Pemeriksaan source dan diff dilakukan melalui GitHub. Belum ada browser/device QA, pemeriksaan console/network, atau uji kredensial privat ke exchange.
+- Hostless build dan versi LIVE tetap tidak diketahui / belum terverifikasi. GitHub Actions hijau bukan bukti deploy Hostless.
+
+### 22.4 NEXT TASK
+1. Tunggu dan verifikasi GitHub Actions run #179 untuk a40acd1; jika gagal, perbaiki sebelum task berikutnya.
+2. QA browser desktop/mobile untuk Dashboard, sidebar, ticker publik, kalkulator, status parsial, dan tabel akun Exchange Hub.
+3. Uji endpoint market publik dan status API pada Hostless yang benar-benar ter-deploy; jangan menganggap environment credentials tersedia hanya dari source.
+4. Uji Binance read-only Spot dan Futures secara terpisah, lalu Bybit Unified Wallet/Linear. Periksa izin key tetap read-only dan tidak ada withdrawal/trading.
+5. Lanjutkan instrument metadata dan kalkulator berbasis tick size, step size, min notional, fee/funding serta risiko likuidasi setelah hasil read-only tervalidasi.
+6. Lanjutkan audit Dashboard lain: Watchlist/localStorage, Screener/filter/export CSV, News/Unlock/Alerts, AI Council/Workspace, System Health dan Command Center. Pastikan semua menu lama tetap berfungsi.
+7. Verifikasi deployment Hostless, DATA_DIR/EROFS dan persistensi lintas restart hanya setelah akses deployment/log/mount tersedia.
