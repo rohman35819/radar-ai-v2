@@ -56,7 +56,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state } = {}) {
           if (aiBusy) return send(res, 202, { status: 'running' });
           aiBusy = runGroup({ tokens: st.tokens, stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 })
             .then((result) => { st.aiGroup = { ...(st.aiGroup || {}), last: result }; ingest.save(cfg, st); return result; })
-            .catch((e) => { console.error('AI group error', e.message); throw e; })
+            .catch((e) => { console.error('AI group error', e.message); return null; })
             .finally(() => { aiBusy = null; });
           return send(res, 202, { status: 'started' }, 'application/json', { 'cache-control': 'no-store' });
         }
