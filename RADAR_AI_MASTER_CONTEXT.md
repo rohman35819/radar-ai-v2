@@ -149,3 +149,73 @@ Gunakan pesan ini saat membuka obrolan baru:
 
 > Kita melanjutkan proyek RADAR AI V2, bukan membuat proyek baru. Baca `RADAR_AI_MASTER_CONTEXT.md` dari repository `rohman35819/radar-ai-v2` terlebih dahulu. Setelah itu periksa branch `main`, commit terbaru, dan file yang relevan sebelum bertindak. Ikuti aturan wajib dalam dokumen. Jangan minta saya menjelaskan ulang hal yang sudah tercatat. Lanjutkan dari bagian NEXT TASK. Jangan mengklaim tes/deploy/live berhasil tanpa verifikasi. Setelah bekerja, perbarui dokumen master ini.
 
+---
+
+## 12. KEBIJAKAN PENGEMBANGAN JANGKA PANJANG — V2 SAMPAI V3
+
+Bagian ini adalah aturan permanen proyek. Berlaku untuk semua obrolan, sesi pengembangan, kontributor AI/manusia, perubahan fitur, perbaikan, rilis, dan pergantian versi sampai RADAR AI V3 dirilis. Jangan menganggapnya selesai atau kedaluwarsa hanya karena satu task selesai.
+
+### 12.1 Kesinambungan tanpa mengulang dari nol
+1. RADAR AI adalah satu produk berkelanjutan. Setiap obrolan baru yang memiliki akses repository wajib membaca dokumen master ini dan `AGENTS.md`, lalu memeriksa kondisi aktual branch `main`, commit terbaru, dan file relevan.
+2. Gunakan riwayat Project/percakapan sebagai konteks tambahan bila tersedia. Jangan meminta pemilik mengulang informasi yang sudah ada di dokumen atau riwayat yang dapat diakses.
+3. Jika akses GitHub atau sumber konteks tidak tersedia, katakan dengan jelas apa yang tidak dapat dibaca. Jangan mengaku sudah memeriksa sesuatu yang belum diakses.
+4. Setelah memahami status, langsung lanjutkan NEXT TASK yang paling relevan. Jangan mengulang audit dari awal tanpa alasan teknis.
+
+### 12.2 Dokumentasi otomatis adalah bagian dari setiap pekerjaan
+Setiap perubahan bermakna pada kode, konfigurasi, arsitektur, UI/UX, integrasi, keamanan, pengujian, atau deployment WAJIB diikuti pembaruan dokumen dalam siklus kerja yang sama:
+- `RADAR_AI_MASTER_CONTEXT.md`: status terbaru, keputusan, progres, risiko, tes, commit, deployment, dan NEXT TASK.
+- `AGENTS.md`: hanya jika aturan kerja permanen berubah atau perlu diperjelas.
+- `README.md`: jika cara instalasi, konfigurasi, fitur publik, API, atau operasi pengguna berubah.
+- Catatan rilis/changelog: jika perubahan layak menjadi catatan versi.
+
+Jangan menunggu pemilik meminta dokumentasi. Jangan menulis status yang belum terbukti. Catat juga bila tes tidak dapat dijalankan dan alasannya.
+
+### 12.3 Riwayat dan keputusan tidak boleh hilang
+- Pertahankan riwayat keputusan penting, insiden, perubahan arsitektur, dan alasan teknis.
+- Tambahkan entri bertanggal untuk perubahan penting. Jika keputusan diganti, tandai keputusan lama sebagai superseded dan tulis keputusan penggantinya; jangan diam-diam menghapus jejak.
+- Sinkronkan master context, AGENTS, README, changelog, dan implementasi. Jika berbeda, verifikasi kode aktual lalu perbaiki dokumentasi.
+- Jangan memasukkan API key, API secret, token, password, data pribadi, atau kredensial ke dokumentasi.
+
+### 12.4 Standar perubahan dan kualitas
+- Pahami dampak sebelum mengedit. Buat perubahan sekecil mungkin yang menyelesaikan masalah.
+- Pertahankan fitur lama, route, kontrak API, data, dan alur kerja. Jangan melakukan refactor besar atau breaking change tanpa alasan kuat dan persetujuan pemilik.
+- Jalankan tes yang relevan, pemeriksaan sintaks, dan pemeriksaan diff. Periksa penghapusan tak sengaja, kebocoran secret, kompatibilitas, dan regresi.
+- Laporkan hasil faktual: berhasil, gagal, atau tidak dijalankan beserta alasan.
+- Catat commit SHA yang benar. Bedakan tegas status GitHub, Hostless Building/Failed, dan Hostless Live yang sudah diverifikasi.
+- Jika akses Hostless tidak tersedia, lanjutkan pekerjaan repository yang aman, catat blocker, dan jangan mengklaim deployment terverifikasi.
+
+### 12.5 Keamanan exchange dan perlindungan dana
+- Secret hanya berada di server-side environment/secret store; tidak boleh berada di frontend, GitHub, log, screenshot, atau chat.
+- Tidak ada izin withdrawal.
+- Koneksi read-only harus dibuktikan sebelum fitur private account dianggap selesai.
+- Trading live selalu OFF secara default. Tidak boleh mengirim order atau melakukan tindakan finansial tanpa persetujuan eksplisit pemilik dan seluruh kontrol keselamatan yang relevan.
+- Testnet, validasi order, SL/TP, reduce-only, idempotency, batas risiko, kill switch, audit log, dan rollback wajib disiapkan sebelum mempertimbangkan live trading.
+
+### 12.6 Jalur evolusi V2 menuju V3
+V3 adalah evolusi RADAR AI yang sama, bukan proyek baru dan bukan alasan untuk membuang hasil V2.
+1. Pertahankan V2 sebagai baseline stabil dan catat versi/commit terakhir yang diketahui baik.
+2. Sebelum memulai V3, dokumentasikan fitur V2, arsitektur, API/data contract, konfigurasi, penyimpanan data, keterbatasan, bug terbuka, dan keputusan yang masih berlaku.
+3. Kembangkan V3 pada branch terpisah atau direktori/struktur versi yang terisolasi. Jangan merusak aplikasi V2 yang masih digunakan.
+4. Tentukan perubahan skema dan migrasi data secara eksplisit. Sediakan backup, uji migrasi, kompatibilitas, dan rencana rollback sebelum perpindahan.
+5. Buat daftar acceptance criteria V3 yang dapat diuji. Uji fungsi inti, keamanan, performa, UI desktop/mobile, integrasi, dan pemulihan data.
+6. Jangan mengganti versi Live ke V3 sampai kriteria penerimaan terpenuhi, jalur rollback siap, dan pemilik menyetujui rilis.
+7. Setelah V3 dirilis, pertahankan catatan V2 sebagai arsip baseline dan terus gunakan master context ini untuk kesinambungan lintas versi.
+
+### 12.7 Format catatan riwayat
+Untuk setiap pekerjaan penting, tambahkan ringkasan dengan format:
+- Tanggal (Asia/Jakarta):
+- Tujuan:
+- Perubahan dan file:
+- Tes/check dan hasil:
+- Commit SHA:
+- GitHub:
+- Hostless build:
+- Hostless Live:
+- Risiko/bug terbuka:
+- NEXT TASK:
+
+### 12.8 Definisi selesai untuk setiap task
+Task belum dianggap selesai hanya karena kode telah ditulis. Selesai berarti perubahan relevan sudah diuji sejauh akses memungkinkan, diff diperiksa, dokumentasi diperbarui, commit dicatat, status deployment dinyatakan secara jujur, dan NEXT TASK ditinggalkan dengan jelas.
+
+### 12.9 Catatan penerapan aturan
+Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untuk pengembangan berikutnya sampai RADAR AI V3 keluar dan tetap menjadi pedoman kesinambungan setelah rilis V3.
