@@ -12,7 +12,7 @@ function loadWorker() {
       calls.cacheOpen.push(name);
       return { addAll: async (files) => { calls.staticFiles = files; } };
     },
-    keys: async () => ['radar-shell-v7', 'radar-shell-v6', 'radar-api-v6', 'old-cache'],
+    keys: async () => ['radar-shell-v7', 'radar-shell-v6', 'radar-api-v6', 'old-cache', 'other-app-cache'],
     delete: async (name) => { calls.cacheDeletes.push(name); return true; },
     match: async () => null,
   };
@@ -61,4 +61,5 @@ test('PWA shell menyediakan halaman Exchange Hub dan membersihkan cache API lama
   await activatePromise;
   assert.ok(calls.cacheDeletes.includes('radar-api-v6'));
   assert.equal(calls.cacheDeletes.includes('radar-shell-v7'), false);
+  assert.equal(calls.cacheDeletes.includes('other-app-cache'), false);
 });
