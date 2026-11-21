@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/trading.css">
 </head>
 <body class="trading-page">
-<header class="trade-header"><a class="back-link" href="/">← RADAR AI</a><div><b>EXCHANGE HUB</b><small>Multi-exchange trading workspace</small></div><span class="status-pill">READ-ONLY / BELUM TERHUBUNG</span></header>
+<header class="trade-header"><a class="back-link" href="/">← RADAR AI</a><div><b>EXCHANGE HUB</b><small>Multi-exchange trading workspace</small></div><span class="status-pill" id="hub-status">READ-ONLY / MEMERIKSA SERVER</span></header>
 <main class="trade-wrap">
 <section class="trade-intro"><div class="eyebrow">RADAR EXCHANGE WORKSPACE</div><h1>Satu halaman untuk semua exchange.</h1><p>Pusat Binance, Bybit, dan exchange berikutnya. Pantau koneksi dan siapkan analisis dari satu tempat. Saat ini halaman masih read-only/simulasi; belum ada order live.</p></section>
 <section class="exchange-switcher" aria-label="Pilih exchange">
@@ -17,8 +17,17 @@
 </section>
 <section class="exchange-overview trade-panel" aria-live="polite">
   <div class="exchange-overview-top"><div><div class="eyebrow" id="exchange-kicker">EXCHANGE AKTIF</div><h2 id="exchange-title">Binance</h2><p id="exchange-description">Spot dan USDⓈ-M Futures. Koneksi akun belum diaktifkan.</p></div><span class="pending" id="exchange-status">BELUM TERHUBUNG</span></div>
-  <div class="exchange-facts"><div><small>STATUS API</small><b id="api-state">Menunggu konfigurasi server</b></div><div><small>DATA MARKET</small><b>Publik · tanpa API key</b></div><div><small>AKSES AKUN</small><b>Read-only · menunggu koneksi</b></div></div>
-  <p class="exchange-note" id="exchange-note">API Key Binance tetap disimpan di server. Jangan masukkan API Secret ke halaman ini atau ke browser.</p>
+  <div class="exchange-facts"><div><small>STATUS API</small><b id="api-state">Memeriksa konfigurasi server…</b></div><div><small>DATA MARKET</small><b>Publik · tanpa API key</b></div><div><small>AKSES AKUN</small><b>Read-only · menunggu koneksi</b></div></div>
+  <p class="exchange-note" id="exchange-note">Kredensial hanya dibaca dari environment server. Halaman ini tidak meminta atau menyimpan API Secret.</p><div class="connection-actions"><button type="button" class="calculate-btn" id="connect-exchange" disabled>Periksa koneksi &amp; ambil data akun</button><span id="connection-feedback" role="status">Menunggu pemeriksaan konfigurasi.</span></div>
+</section>
+<section class="trade-panel account-panel" id="account-panel" aria-live="polite">
+  <div class="panel-heading"><div><h2>Ringkasan akun</h2><p>Saldo, aset, dan posisi yang dibaca langsung dari API exchange.</p></div><span class="demo-tag">READ-ONLY</span></div>
+  <div id="account-summary" class="account-stats"><div class="account-empty">Klik “Periksa koneksi” untuk mengambil data akun secara aman.</div></div>
+  <div class="account-columns">
+    <div><h3>Aset &amp; saldo</h3><div id="asset-list" class="data-table-wrap"><p class="muted">Belum ada data akun.</p></div></div>
+    <div><h3>Posisi terbuka</h3><div id="position-list" class="data-table-wrap"><p class="muted">Belum ada posisi.</p></div></div>
+  </div>
+  <p class="exchange-note" id="account-checked-at">Data privat tidak disimpan ke database RADAR AI dan tidak digunakan untuk mengirim order.</p>
 </section>
 <section class="trade-layout">
 <article class="trade-panel">
