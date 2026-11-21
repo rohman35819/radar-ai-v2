@@ -211,7 +211,7 @@ document.getElementById('toggle-access-token').addEventListener('click',event=>{
  event.currentTarget.setAttribute('aria-pressed',String(visible));
 });
 document.getElementById('clear-access-token').addEventListener('click',()=>{
- accessInput.value='';exchangeAccessToken='';accessInput.type='password';
+ accessInput.value='';exchangeAccessToken='';accountRequestId++;connectButton.disabled=false;connectButton.textContent='Uji koneksi & muat akun';refreshAccountButton.disabled=true;accessInput.type='password';
  document.getElementById('toggle-access-token').textContent='Tampilkan token';
  document.getElementById('toggle-access-token').setAttribute('aria-pressed','false');
  clearAccount();feedback.textContent='Token dan tampilan data akun dihapus dari halaman.';
