@@ -879,3 +879,12 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 3. Pastikan deployment Hostless memuat `radar-shell-v9` dan SHA terbaru; lakukan hard refresh/reinstall PWA bila aset lama masih tampil.
 4. Verifikasi Hostless build dan versi LIVE secara terpisah; jangan klaim live tanpa bukti.
 5. Lanjutkan prioritas proyek yang belum selesai: verifikasi volume `DATA_DIR`/EROFS dan QA Dashboard/Exchange Hub. Trading tetap OFF.
+
+
+### 25.7 Verifikasi CI dan penutupan perubahan
+- GitHub Actions run #238 (run ID `44953046099`) pada SHA `38a747bb7b38a9bbc08c9f0958afecb5d255164d`: `completed / success`; job `test` dan langkah `Run npm test` sukses. Ini memverifikasi suite pada HEAD tersebut sebelum perbaikan visual kecil status indicator.
+- Pada rangkaian commit berurutan, run untuk commit `4ace8b42c503d32ad0181aac8f518de76676408b` sempat gagal karena cache worker dinaikkan ke v9 sebelum fixture tes ikut diperbarui. Perubahan fixture pada `b1bf266` menyelaraskan ekspektasi; run sesudahnya untuk `f3b4ba1`, `6dd0d65`, `8df68ba`, `0ec76cf`, dan `38a747b` sukses. Kegagalan sementara tersebut telah teratasi, bukan kegagalan pada HEAD akhir yang diuji.
+- Perbaikan status indicator terakhir: `public/command.css` menambahkan display dot status. Commit: `d8ef479cfeb0e19f9c9177915d5b288d4545bac7`. CI untuk commit CSS terakhir ini harus dicek pada Actions sebelum final status tes.
+- Percobaan akses publik ke `https://radar-ai-v2.hostless.app/command.html` dan `/api/health` tidak dapat diambil dari lingkungan ini. Ini bukan bukti situs down. Hostless build dan versi LIVE tetap belum terverifikasi.
+- Ringkasan commit perubahan kode/UI: HTML `7373729`, CSS awal `1265364`, JS `26453e4`, PWA cache `4ace8b4`, fixture SW `b1bf266`, tes Command Center `f3b4ba1`, README `6dd0d65`, polish CSS `8df68ba`; sinkronisasi README `0ec76cf`; master context `38a747b`.
+- NEXT TASK tetap: verifikasi CI pada HEAD final setelah CSS status dot; QA visual dan interaksi browser desktop/mobile; verifikasi Hostless deploy/SHA Live; lanjutkan storage DATA_DIR/EROFS dan QA Dashboard/Exchange Hub.
