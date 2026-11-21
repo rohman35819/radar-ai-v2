@@ -61,7 +61,7 @@ test('PWA shell menyediakan halaman Exchange Hub dan membersihkan cache API lama
   let activatePromise;
   handlers.activate({ waitUntil: (promise) => { activatePromise = promise; } });
   await activatePromise;
-  assert.ok(calls.cacheDeletes.includes('radar-api-v6'));
+  assert.ok(calls.cacheDeletes.includes('radar-api-v7'));
   assert.equal(calls.cacheDeletes.includes('radar-shell-v8'), false);
   assert.equal(calls.cacheDeletes.includes('other-app-cache'), false);
 });
