@@ -11,7 +11,8 @@ test('Exchange Hub menyediakan kontrol token akses yang bisa ditampilkan dan dih
   assert.match(html, /id="toggle-access-token"/);
   assert.match(html, /id="clear-access-token"/);
   assert.match(js, /accessInput\.type=visible\?'text':'password'/);
-  assert.match(js, /exchangeAccessToken='';accessInput\.type='password'/);
+  assert.match(js, /exchangeAccessToken='';accountRequestId\+\+;/);
+  assert.match(js, /accessInput\.type='password'/);
   assert.doesNotMatch(js, /localStorage|sessionStorage/);
 });
 
