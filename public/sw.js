@@ -1,5 +1,5 @@
 'use strict';
-const SHELL = 'radar-shell-v2', API = 'radar-api-v2';
+const SHELL = 'radar-shell-v3', API = 'radar-api-v3';
 const FILES = ['/', '/index.html', '/app.js', '/style.css', '/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELL).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELL && k !== API).map((k) => caches.delete(k)))).then(() => self.clients.claim())));
