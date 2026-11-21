@@ -32,7 +32,11 @@ test('workspace review asks each configured provider independently', async () =>
   assert.equal(result.status, 'completed');
   assert.equal(result.agent_count, 4);
   assert.deepEqual(result.agents.map((a) => a.provider), ['gemini', 'groq', 'openrouter', 'openai']);
-  assert.equal(result.rounds[0].agents.length, 4);\n  assert.equal(result.rounds[1].agents.length, 4);\n  assert.equal(result.rounds[2].agents.length, 4);\n  assert.ok(result.minutes);\n  assert.equal(calls.length, 13);
+  assert.equal(result.rounds[0].agents.length, 4);
+  assert.equal(result.rounds[1].agents.length, 4);
+  assert.equal(result.rounds[2].agents.length, 4);
+  assert.ok(result.minutes);
+  assert.equal(calls.length, 13);
 });
 
 test('workspace review reports missing provider keys without throwing', async () => {
