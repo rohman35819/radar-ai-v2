@@ -3,7 +3,7 @@ const SHELL = 'radar-shell-v7';
 const FILES = [
   '/', '/index.html', '/app.js', '/style.css',
   '/trading.html', '/trading.js', '/trading.css',
-  '/command.html', '/membership.html', '/membership.js', '/membership.css',
+  '/command.html', '/command.css', '/command.js', '/membership.html', '/membership.js', '/membership.css',
   '/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png'
 ];
 self.addEventListener('install', (event) => {
