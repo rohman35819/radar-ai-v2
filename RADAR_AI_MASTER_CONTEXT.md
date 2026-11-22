@@ -1628,7 +1628,7 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 2. Divisi 01 — Security & Reliability: selesai melalui PR #24, merge commit d300076dd1d3ec15bd8315f925bc7cd2334ed959; CI PR #418 success, 71/71 tests. PR #12 lama ditutup sebagai superseded. DATA_DIR/volume Hostless masih butuh log dan konfigurasi aktual.
 3. Divisi 03 — Exchange: selesai melalui PR #25, merge commit 7416ed96ddf2047ef825688dce5fbb4675145f89; CI PR #421 success, 83/83 tests. PR #17 lama ditutup sebagai superseded. Hostless dan koneksi akun nyata belum diverifikasi.
 4. Divisi 04 — AI Intelligence: selesai melalui PR #26, merge commit 546b3afd1499c031825e56e22ed934809cf6005c; CI PR #424 success, 86/86 tests. PR #16 lama ditutup sebagai superseded. Fallback moderator menggunakan OpenRouter Free dan fail-safe WAIT.
-5. Divisi 08 — Procurement/Security support: PR #21 Gitleaks, Trivy, Dependabot. Latest head 017d475b255ab2427d158274005d573d67da70ed; workflow test run #403 success; scanner workflow run #2 gagal karena action reference aquasecurity/trivy-action@0.36.0 tidak ditemukan (setup job). Tetap draft sampai tag resmi yang valid dipilih, false positive/permissions/kuota diverifikasi, dan rerun sukses.
+5. Divisi 08 — Procurement/Security support: selesai melalui PR #27; Gitleaks dan Trivy secret scan sukses pada exact head, Dependabot weekly aktif setelah merge. PR #21 lama ditutup sebagai superseded. Trivy vulnerability scanner tidak menemukan manifest/lockfile yang didukung, jadi dependency vulnerability coverage belum ada sampai lockfile ditambahkan.
 6. Divisi 06 — Agent Platform (proposal/pilot): PR #18 registry/task queue/audit schema. Latest head 18c37f63cb9b5176a724d2c43b1eb1b8ee33b5d5; CI run #392 success. Tetap draft; audit persistence, schema, permission boundaries, retention, dan larangan klaim worker background sebelum pilot.
 7. Divisi 05 — QA/DevOps: PR #6 live deployment/visual verification remains draft; update workflow to current Actions versions, pin browser test dependencies, and make smoke test validate deployed SHA. Hostless access is a separate blocker.
 8. Exchange legacy: PR #7 Trading Terminal foundation ditutup sebagai superseded; diff menambahkan duplicate Trading Terminal navigation/page yang tumpang tindih dengan Exchange Hub /trading.html.
@@ -1720,3 +1720,26 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Free router berbiaya model $0 menurut OpenRouter, tetapi kapasitas/kuota gratis dapat terbatas. Kegagalan/limit menghasilkan WAIT. Hostless provider credentials dan runtime AI belum diverifikasi.
 - PR #16 lama ditutup sebagai superseded. Main push CI setelah merge menunggu pemeriksaan terpisah.
 - NEXT TASK tunggal: Divisi 08 audit dan perbaiki security scanner workflow PR #21; penyebab awal yang terverifikasi adalah aquasecurity/trivy-action@0.36.0 tidak ditemukan. Setelahnya Divisi 06 audit persistence/permission boundaries pada Agent Platform PR #18.
+
+## 49. SECURITY SCANNER WORKFLOW — CORRECTED ACTION REFS AND LEAST PRIVILEGE — 22 NOVEMBER 2026
+
+- Lead: Divisi 08 Procurement/Security support; owner review: Divisi 01; QA: Divisi 05.
+- Root cause terverifikasi: scanner job gagal pada setup karena workflow memakai `aquasecurity/trivy-action@0.36.0`; release resmi action menggunakan tag `v0.36.0`. Official release page lists v0.36.0 as an immutable release. Referensi: https://github.com/aquasecurity/trivy-action/releases.
+- Gitleaks action v3.0.0 adalah release resmi Node 24; untuk repository personal tidak memerlukan GITLEAKS_LICENSE. Komentar PR dan upload artifact dimatikan untuk menghindari permission write dan paparan artefak; full history tetap dipindai. Referensi: https://github.com/gitleaks/gitleaks-action/releases.
+- Dependabot tetap weekly untuk GitHub Actions dan npm. Tidak ada runtime npm dependency baru.
+- Patch dibuat ulang dari main HEAD 9ccdb25c9234596a599ec34bcb09b2eb912dbc99 pada branch ci/security-scans-delivery-v2. Tidak mengubah source aplikasi, secret, dependency runtime, atau konfigurasi Hostless.
+- Workflow permissions least-privilege: contents:read saja; Gitleaks comments/upload disabled. Trivy hanya filesystem scan HIGH/CRITICAL dan gagal jika ada finding; jangan suppress temuan secara luas.
+- File: .github/workflows/security.yml, .github/dependabot.yml, RADAR_AI_MASTER_CONTEXT.md.
+- Workflow berjalan pada pull_request dan push main; concurrency group memisahkan event type agar push/PR tidak saling membatalkan. Trivy CLI dipin eksplisit ke v0.76.2 (bukan versi bawaan action). Run awal: Gitleaks success; Trivy berjalan tetapi tidak menemukan file yang didukung untuk scanner vuln/misconfig, lalu job dibatalkan saat cleanup akibat concurrency. Ini bukan bukti clean scan. Konfigurasi diubah ke vuln+secret; run sebelumnya masih tertahan saat cleanup dan exact-head run berikutnya dipisah per SHA agar tidak tertahan oleh concurrency dari commit lama.
+- NEXT TASK: merge workflow security setelah review statis; setelah itu Divisi 06 audit persistence/permission boundaries, task queue durability, and no-background-worker claims pada Agent Platform PR #18.
+
+## 50. SECURITY SCANNING WORKFLOW VERIFIED — 22 NOVEMBER 2026
+
+- PR #27 ci(security): enable Gitleaks, Trivy and Dependabot with verified tags is validated on exact head 1ad9779ae9eeb81536c80d8398161e4f7d614d64.
+- Security workflow run #11 (45022162513) completed/success: Gitleaks job success; Trivy v0.76.2 secret scanner reports no issues. No secret values were exposed in logs/comments/artifacts.
+- Trivy vulnerability scanner explicitly reports no supported files for vuln scanning; repository currently has no supported dependency lockfile/manifest. This is not evidence that dependencies are vulnerability-free. Keep dependency coverage flagged NOT AVAILABLE until a lockfile or supported manifest exists.
+- Trivy action ref corrected to aquasecurity/trivy-action@v0.36.0; Gitleaks v3.0.0 (Node 24), comments/artifact upload disabled, contents:read only. Dependabot weekly for Actions and npm.
+- GitHub Actions test workflow #433 (45022162471) completed/success on same exact head; no runtime code changed.
+- No Hostless configuration, runtime dependency, secret, exchange permission, or paid service added.
+- PR #21 old branch is superseded by #27 and will be closed after integration. PR #27 remains draft until Divisi 01/05 review and then can merge.
+- NEXT TASK tunggal: Divisi 06 audit Agent Platform PR #18 for actual persistence semantics, retry/claim locking, worker execution boundaries, audit integrity, and explicit human approval; do not claim background autonomy.
