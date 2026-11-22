@@ -139,6 +139,9 @@ function renderAccount(data){
     apiPermissions.contract_trading?'Contract Trading':'',apiPermissions.withdrawals?'Withdrawal':'',
     apiPermissions.transfers?'Transfer':''].filter(Boolean).join(', ')
   :spotTradingEnabled&&futuresTradingEnabled?'izin Spot dan Futures Trading':spotTradingEnabled?'izin Spot Trading':'izin Futures Trading';
+ const bybitPermissionDetails=data.exchange==='bybit'&&apiPermissions.categories
+  ?Object.entries(apiPermissions.categories).filter(([,items])=>Array.isArray(items)&&items.length)
+   .map(([category,items])=>category+': '+items.join(', ')).join(' · '):'';
  const permissionStatus=tradingPermissionEnabled
   ?'PERINGATAN KEAMANAN: '+(data.exchange==='bybit'?'permission Bybit aktif: ':'izin API Key Binance aktif: ')+permissionWarning+'. RADAR tetap hanya membaca data dan tidak mengirim order.'
   :permissionUnknown
@@ -148,7 +151,7 @@ function renderAccount(data){
     :apiPermissions.read_only===true
      ?'Izin API Key Bybit terverifikasi read-only; permission trading, transfer, dan withdrawal tidak terdeteksi.'
      :'Status permission Bybit belum memenuhi kriteria read-only.';
- document.getElementById('account-checked-at').textContent=(permissionStatus?permissionStatus+' ':'')+'Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · RADAR hanya membaca data; tidak ada order, transfer, atau withdrawal.';
+ document.getElementById('account-checked-at').textContent=(permissionStatus?permissionStatus+' ':'')+(bybitPermissionDetails?'Rincian permission Bybit: '+bybitPermissionDetails+'. ':'')+'Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · RADAR hanya membaca data; tidak ada order, transfer, atau withdrawal.';
  document.getElementById('account-checked-at').classList.toggle('account-warning',tradingPermissionEnabled||permissionUnknown||!positionsAvailable);
  accountConnected=true;
  refreshAccountButton.disabled=false;
