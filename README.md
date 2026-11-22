@@ -4,7 +4,7 @@ Tanpa dependensi npm (V2.2) (butuh Node >= 20). Backend + dashboard PWA dalam sa
 
 ## Jalankan
     cp .env.example .env   # opsional; isi nilai lalu: export $(grep -v '^#' .env | xargs)
-    npm test               # 83 test case di 10 file
+    npm test               # 86 test case di 10 file
     npm start              # http://localhost:3000
 
 ## Pasang
@@ -59,6 +59,8 @@ Setelah koneksi akun berhasil, Exchange Hub menampilkan identitas akun, label op
 - `POST /api/refresh` butuh `ADMIN_TOKEN` (header `x-admin-token`). Rate limit 60 req/menit/IP dengan tabel identitas dibatasi 5.000 entri; ketika penuh, identitas baru ditolak sementara sampai entri kedaluwarsa dibersihkan (bucket aktif tidak dihapus massal). Secara default identitas IP memakai koneksi socket dan tidak mempercayai `x-forwarded-for`; bila aplikasi berada di belakang reverse proxy yang menghapus header masuk lalu menambahkan rantai `X-Forwarded-For` yang benar, set `TRUSTED_PROXY_HOPS` sesuai jumlah proxy tepercaya (default `0`). Jangan menaikkan nilainya tanpa memastikan rantai proxy Hostless. Semua endpoint admin menggunakan pembandingan token waktu-konstan di server; jangan bagikan token melalui chat atau menyimpannya di frontend.
 - Watchlist tersimpan di browser perangkat, bukan server.
 - Bukan saran keuangan.
+
+- Moderator fallback menggunakan OpenRouter Free Models Router (`openrouter/free`) secara paksa; `OPENROUTER_MODEL` berbayar tidak dipakai untuk jalur moderator. Kuota model gratis dapat dibatasi; jika Groq dan OpenRouter tidak tersedia, hasil tetap WAIT. Tidak ada fallback berbayar otomatis.
 
 ## Command Center
 - Halaman `/command.html` menjalankan rapat multi-agent melalui `POST /api/ai/command`; pilih Gemini, Groq, OpenRouter, dan/atau OpenAI.

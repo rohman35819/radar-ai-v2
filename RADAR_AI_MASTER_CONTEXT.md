@@ -1627,7 +1627,7 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 1. Divisi 02 — UI/UX: selesai melalui PR #23, merge commit 97d28214d883e1f5fc6ce8964ffcb0acf7ff02d9; CI main run #417 success, 70/70 tests. PR #14 lama ditutup sebagai superseded. Browser/Hostless QA tetap diperlukan.
 2. Divisi 01 — Security & Reliability: selesai melalui PR #24, merge commit d300076dd1d3ec15bd8315f925bc7cd2334ed959; CI PR #418 success, 71/71 tests. PR #12 lama ditutup sebagai superseded. DATA_DIR/volume Hostless masih butuh log dan konfigurasi aktual.
 3. Divisi 03 — Exchange: selesai melalui PR #25, merge commit 7416ed96ddf2047ef825688dce5fbb4675145f89; CI PR #421 success, 83/83 tests. PR #17 lama ditutup sebagai superseded. Hostless dan koneksi akun nyata belum diverifikasi.
-4. Divisi 04 — AI Intelligence: PR #16 moderator fallback Groq/OpenRouter dan fail-safe WAIT. Latest head b74e677298470b973d5528fe07f48cabb42c1d13; CI run #334 success. Rebase/update dan verifikasi fail-safe serta biaya/kuota sebelum merge.
+4. Divisi 04 — AI Intelligence: PR #16 dipindahkan ke branch feat/ai-moderator-fallback-delivery-v2 berbasis main terbaru; fallback moderator Groq → OpenRouter Free dan fail-safe WAIT sedang diuji.
 5. Divisi 08 — Procurement/Security support: PR #21 Gitleaks, Trivy, Dependabot. Latest head 017d475b255ab2427d158274005d573d67da70ed; workflow test run #403 success; scanner workflow run #2 gagal karena action reference aquasecurity/trivy-action@0.36.0 tidak ditemukan (setup job). Tetap draft sampai tag resmi yang valid dipilih, false positive/permissions/kuota diverifikasi, dan rerun sukses.
 6. Divisi 06 — Agent Platform (proposal/pilot): PR #18 registry/task queue/audit schema. Latest head 18c37f63cb9b5176a724d2c43b1eb1b8ee33b5d5; CI run #392 success. Tetap draft; audit persistence, schema, permission boundaries, retention, dan larangan klaim worker background sebelum pilot.
 7. Divisi 05 — QA/DevOps: PR #6 live deployment/visual verification remains draft; update workflow to current Actions versions, pin browser test dependencies, and make smoke test validate deployed SHA. Hostless access is a separate blocker.
@@ -1698,3 +1698,15 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Semua request exchange tetap GET. Tidak ada order, key update, transfer, withdrawal, atau perubahan izin kredensial. PR #17 lama ditutup sebagai superseded.
 - Main push CI setelah merge: menunggu pemeriksaan. Hostless Build/LIVE, verifikasi environment, dan koneksi akun nyata belum dilakukan.
 - NEXT TASK tunggal: Divisi 04 port moderator fallback ke branch main terbaru; pastikan semua provider failure berujung WAIT dan CI exact-head lulus. Setelah itu Divisi 08 memperbaiki security scanner workflow PR #21.
+
+## 47. AI MODERATOR FALLBACK — ZERO-COST GUARDRAIL — 22 NOVEMBER 2026
+
+- Lead: Divisi 04 AI Intelligence & Research; QA Gate: Divisi 05.
+- PR #16 lama berbasis main lama. Patch dipindahkan ke branch feat/ai-moderator-fallback-delivery-v2 dari main HEAD f30972e7b973c81d5af6956016b910ec3126123f.
+- Moderator utama Groq; fallback OpenRouter Free Models Router. Review fallback dipaksa memakai model openrouter/free meskipun OPENROUTER_MODEL berisi model berbayar. Tidak ada fallback berbayar otomatis.
+- OpenRouter menyatakan router openrouter/free memilih model gratis dengan harga $0; kuota dan kapasitas model gratis dapat dibatasi. Jika Groq dan OpenRouter gagal, keputusan wajib WAIT. Referensi: https://openrouter.ai/openrouter/free.
+- Error moderator disanitasi menjadi nama provider + unavailable; tidak mengembalikan pesan upstream mentah ke hasil rapat.
+- Fallback hanya dipakai jika ada minimal dua analisis valid, snapshot tidak stale, dan token pasar tersedia. Status moderator_unavailable menandai keputusan WAIT ketika seluruh moderator gagal.
+- File: lib/ai/group.js, lib/ai/openrouter.js, test/ai-group.test.js, README.md, RADAR_AI_MASTER_CONTEXT.md.
+- Test status: menunggu GitHub Actions pada exact head. Local npm test tidak dijalankan. Hostless Build/LIVE dan kredensial provider belum diverifikasi.
+- NEXT TASK: CI exact-head harus lulus; review fail-safe, sanitasi error, dan zero-cost override. Setelah merge, lanjutkan Divisi 08 untuk memperbaiki workflow security scanner.
