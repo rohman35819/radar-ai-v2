@@ -9,7 +9,7 @@ test('Early Gem Scanner tersedia di navigasi dan menampilkan batas data on-chain
   const css = fs.readFileSync(require.resolve('../public/style.css'), 'utf8');
   assert.match(html, /data-t="early-gems"/);
   assert.match(app, /function renderEarlyGems\(\)/);
-  assert.match(app, /pool bukan bukti token baru dibuat/i);
+  assert.match(app, /pool baru bukan bukti token baru dibuat/i);
   assert.match(app, /bukan audit kontrak/i);
   assert.match(css, /\.gem-grid/);
   assert.doesNotMatch(app, /innerHTML\s*=/);
