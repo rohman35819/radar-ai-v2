@@ -20,7 +20,7 @@ BEGIN
     RAISE EXCEPTION 'Agent Platform migration did not create all required tables';
   END IF;
 END;
-$$;
+$body$;
 
 INSERT INTO radar_agent.agent_registry
   (agent_id, agent_key, display_name, division_code, role_title, created_by)
@@ -40,7 +40,7 @@ VALUES
   ('00000000-0000-4000-8000-000000000003', 'worker', 'ci-worker', 'task.created', 'task', 'qa-smoke-task',
    '00000000-0000-4000-8000-000000000002');
 
-DO $$
+DO $body$
 BEGIN
   BEGIN
     UPDATE radar_agent.audit_events
@@ -59,17 +59,17 @@ BEGIN
     NULL;
   END;
 END;
-$$;
+$body$;
 
 RESET ROLE;
 
-DO $$
+DO $body$
 BEGIN
   IF (SELECT count(*) FROM radar_agent.audit_events
        WHERE event_id = '00000000-0000-4000-8000-000000000003') <> 1 THEN
     RAISE EXCEPTION 'Audit event was not preserved';
   END IF;
 END;
-$$;
+$body$;
 
 ROLLBACK;
