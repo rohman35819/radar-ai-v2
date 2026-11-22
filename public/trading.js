@@ -45,7 +45,7 @@ const summary=document.getElementById('account-summary');
 const assetList=document.getElementById('asset-list');
 const positionList=document.getElementById('position-list');
 const refreshAccountButton=document.getElementById('refresh-account');
-const money=value=>Number(value||0).toLocaleString('en-US',{maximumFractionDigits:8});
+const money=value=>value===null||value===undefined||value===''?'—':Number.isFinite(Number(value))?Number(value).toLocaleString('en-US',{maximumFractionDigits:8}):'—';
 function updateConnectionUi(){
  const cfg=exchangeConfigs[activeExchange.toLowerCase()];
  const ready=Boolean(cfg&&cfg.configured);
@@ -113,7 +113,7 @@ function renderAccount(data){
   if(!positionsAvailable)stats.push(['Status posisi',positionsError]);
  }else{
   const wallet=account.wallet||{};
-  assets=(wallet.coins||[]).map(x=>[x.asset,money(x.wallet_balance),money(x.equity),money(x.available_balance)]);
+  assets=(wallet.coins||[]).map(x=>[x.asset,money(x.wallet_balance),money(x.equity),money(x.withdrawable_balance)]);
   positions=account.positions||[];
   positionsAvailable=account.positions_available!==false;
   positionsError=account.positions_error||'BYBIT_POSITIONS_READ_UNAVAILABLE';
@@ -121,7 +121,7 @@ function renderAccount(data){
   if(!positionsAvailable)stats.push(['Status posisi',positionsError]);
  }
  stats.forEach(([label,value])=>summary.append(stat(label,value)));
- if(assets.length)assetList.append(table(data.exchange==='binance'?['Aset','Free','Locked','Total']:['Aset','Wallet','Equity','Available'],assets));
+ if(assets.length)assetList.append(table(data.exchange==='binance'?['Aset','Free','Locked','Total']:['Aset','Wallet','Equity','Withdrawable'],assets));
  else{const p=document.createElement('p');p.className='muted';p.textContent='Tidak ada saldo aset non-zero yang dikembalikan.';assetList.append(p);}
  if(positions.length)positionList.append(table(['Pair','Arah','Size','Entry','Mark','Unrealized PnL'],positions.map(x=>[x.symbol,x.side,money(x.size),money(x.entry_price),money(x.mark_price),money(x.unrealized_pnl)])));
  else{const p=document.createElement('p');p.className='muted';p.textContent=positionsAvailable?'Tidak ada posisi terbuka.':'Data posisi gagal dibaca ('+positionsError+'). Saldo berhasil diambil, tetapi hasil posisi belum dapat dipastikan.';positionList.append(p);}
