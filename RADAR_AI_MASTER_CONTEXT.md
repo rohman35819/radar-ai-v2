@@ -1833,47 +1833,45 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 
 ---
 
-## 58. DIVISI 03 — RADAR EARLY GEM SCANNER (IMPLEMENTASI AWAL) — 22 NOVEMBER 2026
+## 58. DIVISI 03 — RADAR EARLY GEM SCANNER — 22 NOVEMBER 2026
 
 ### Tujuan
-Melengkapi Market Screener CoinGecko kategori AI dengan feed on-chain untuk menemukan pool DEX baru lintas jaringan, termasuk pool token meme/long-tail yang belum terdaftar pada daftar market utama CoinGecko.
+Melengkapi Market Screener CoinGecko kategori AI dengan feed on-chain untuk menemukan pool DEX baru dan trending lintas jaringan, termasuk pool token meme/long-tail yang belum terdaftar pada daftar market utama CoinGecko.
 
 ### Keputusan sumber dan batas cakupan
-- Menggunakan CoinGecko Onchain API yang ditenagai GeckoTerminal: `GET /api/v3/onchain/networks/new_pools` (jendela 48 jam) dan `GET /api/v3/onchain/networks/trending_pools` (durasi ranking 24 jam), parameter `include=base_token,quote_token,dex,network`.
-- API mendokumentasikan jendela pool baru sekitar 48 jam, maksimum 20 pool per halaman, dan pagination sampai 10 halaman pada akses Demo. Konfigurasi default RADAR adalah 3 halaman new pools (maksimum 60 pool) plus 1 halaman trending per refresh; halaman new pools dipanggil berurutan dengan jeda 500 ms. Jika endpoint trending gagal, data new pools tetap diperbarui dan health `onchain_trending` menandai kegagalan parsial.
-- Memakai `COINGECKO_DEMO_KEY` yang sudah ada; tidak menambah dependency runtime, key baru, atau biaya provider.
-- Istilah UI memakai **NEW POOL**, bukan klaim "token baru diluncurkan": tanggal pool tidak selalu sama dengan tanggal token dibuat. Token tanpa pool, pool tanpa likuiditas, jaringan yang belum didukung/terindeks, atau pool yang belum terindeks tidak terdeteksi.
-- Pools Megafilter, honeypot checks, GT Score, holder concentration, mint/freeze authority dan contract audit tidak diklaim tersedia pada implementasi Demo ini. Flag RADAR hanya pemeriksaan kualitas data sederhana.
+- Menggunakan CoinGecko Onchain API yang ditenagai GeckoTerminal: `GET /api/v3/onchain/networks/new_pools` (pool baru sekitar 48 jam) dan `GET /api/v3/onchain/networks/trending_pools` (ranking trending 24 jam), dengan `include=base_token,quote_token,dex,network`.
+- API mengembalikan maksimum 20 pool per halaman; default RADAR 3 halaman new pools (maksimum 60 pool) plus 1 halaman trending per refresh. Halaman new pools dipanggil berurutan dengan jeda 500 ms.
+- Dengan `REFRESH_MIN=10`, default maksimal empat panggilan on-chain per 10 menit. Memakai `COINGECKO_DEMO_KEY` yang sudah ada; tidak menambah dependency runtime, key baru, atau biaya provider.
+- Istilah UI memakai **NEW POOL**, bukan klaim "token baru diluncurkan": tanggal pool tidak sama dengan tanggal token dibuat. Token tanpa pool, pool tanpa likuiditas, jaringan yang belum didukung/terindeks, atau pool yang belum terindeks tidak terdeteksi.
+- Pools Megafilter, honeypot checks, GT Score, holder concentration, mint/freeze authority dan contract audit tidak diklaim tersedia pada implementasi Demo. TRENDING adalah ranking provider, bukan jaminan keamanan.
 
 ### Implementasi
-- `lib/onchain.js`: fetch dengan timeout, kode error tersanitasi, batas halaman 1–10, parsing relasi token/network/DEX, deduplikasi network+pool, gabungan new pools dan trending pools, normalisasi harga, likuiditas, volume 24 jam, FDV, market cap, transaksi, waktu/umur pool, URL GeckoTerminal, dan flags data yang tidak tersedia/rendah. Trending endpoint bersifat tambahan; kegagalannya tidak membuang new-pool feed.
-- `lib/sources.js`: ekspor fetchEarlyGems ke pipeline sumber.
-- `lib/ingest.js`: konfigurasi `EARLY_GEMS_ENABLED` dan `ONCHAIN_PAGES`; sumber on-chain berjalan independen dari CoinGecko AI screener. Bila new-pool source gagal, health on-chain mencatat error dan cache pool sebelumnya dipertahankan; trending health dicatat terpisah agar kegagalan parsial terlihat.
-- `server.js`: snapshot menambahkan `early_gems`, metadata waktu/sumber, dan status konfigurasi boolean. Tidak mengirim API key ke browser.
-- `public/index.html`, `public/app.js`, `public/style.css`: menu Early Gem Scanner, filter pencarian/likuiditas, kartu chain/DEX/harga/liquidity/volume/FDV/market cap/umur pool, flag kualitas data, tautan pool GeckoTerminal, serta status feed stale/error. Render menggunakan textContent/DOM nodes, bukan HTML dari upstream.
-- `public/sw.js`: shell cache dinaikkan agar aset dashboard terbaru dimuat.
-- `test/onchain.test.js` dan `test/early-gem-ui.test.js`: pengujian normalisasi, data hilang, duplikasi, API key server-side, batas halaman, cache saat sumber gagal, snapshot contract, navigasi dan copy batas keamanan.
-- `.env.example` dan `README.md`: dokumentasi konfigurasi, kuota, batas coverage dan batas risiko.
-- `package.json`: syntax checks menambahkan modul on-chain dan pipeline ingest/sources.
+- `lib/onchain.js`: timeout, error code tersanitasi, batas halaman 1–10, parsing relasi token/network/DEX, deduplikasi network+pool, gabungan new pools dan trending pools, normalisasi harga, likuiditas, volume 24 jam, FDV, market cap, transaksi, umur pool, URL GeckoTerminal, dan data-quality flags. Trending endpoint bersifat tambahan; kegagalannya tidak membuang new-pool feed.
+- `lib/sources.js`: ekspor fetchEarlyGems.
+- `lib/ingest.js`: konfigurasi `EARLY_GEMS_ENABLED` dan `ONCHAIN_PAGES`; source on-chain independen dari CoinGecko AI screener. Cache pool lama dipertahankan saat new-pool source gagal; `health.onchain_trending` menandai kegagalan parsial.
+- `server.js`: snapshot menambahkan `early_gems`, metadata, dan boolean config status; API key tidak dikirim ke browser.
+- `public/index.html`, `public/app.js`, `public/style.css`: menu Early Gem Scanner, pencarian/filter liquidity, label NEW POOL/TRENDING/NEW + TRENDING, metrik harga/perubahan/buy-sell/liquidity/volume/FDV/market cap, flags, link GeckoTerminal, dan status stale/disabled/error. Rendering memakai DOM nodes/textContent, bukan HTML upstream.
+- `public/sw.js`: cache shell dinaikkan.
+- `test/onchain.test.js`, `test/early-gem-ui.test.js`: normalisasi, null values, signed price change, dedupe, demo-key header, page limit, trending merge/partial failure, ingest cache retention, snapshot contract, UI navigation/safety copy.
+- `.env.example`, `README.md`, dan master context diperbarui.
 
 ### Konfigurasi
-- `EARLY_GEMS_ENABLED=1` (default); `0` menonaktifkan sumber on-chain.
-- `ONCHAIN_PAGES=3` (default; 1–10; hingga 20 pool per halaman).
-- Refresh mengikuti `REFRESH_MIN` (default 10 menit). Dengan konfigurasi default, maksimal empat panggilan on-chain per 10 menit.
+- `EARLY_GEMS_ENABLED=1` default; set `0` untuk menonaktifkan.
+- `ONCHAIN_PAGES=3` default, rentang 1–10; hingga 20 pool per halaman.
+- Refresh mengikuti `REFRESH_MIN` (default 10 menit).
 - Tidak ada order, transfer, withdrawal, atau tindakan finansial.
 
 ### Status verifikasi
-- Branch implementasi: `feat/early-gem-scanner-v1`, berbasis main HEAD `a475205e9d76e3ba27d8e5c4633b1c5c24aec05f`; PR #46 https://github.com/rohman35819/radar-ai-v2/pull/46, status open/ready-for-review, belum merged.
-- Feed menggabungkan new pools 48 jam (default 3 halaman) dan trending pools 24 jam (1 halaman). Kegagalan trending bersifat parsial dan tidak membuang feed new pools; health `onchain_trending` terpisah.
-- Exact-head `10b06067172e6ce280b3f8228f3ee1bdac2011b8`: GitHub Actions RADAR AI tests run #546 / ID `45036719589` completed/success; `npm test` 97 passed, 0 failed, 0 skipped, seluruh syntax checks lulus.
-- Exact-head security run #88 / ID `45036719579` completed/success: Gitleaks lulus; Trivy secret scanner tidak menemukan issue. Trivy vulnerability scanner melaporkan `Supported files for scanner(s) not found` untuk scanner `vuln`; repository belum menyediakan lockfile/manifest yang didukung untuk vulnerability coverage. Ini bukan bukti dependency bebas CVE.
-- Dua kegagalan CI sebelumnya (#528 syntax error UI, #530 assertion statis UI) telah diperbaiki dan exact-head rerun #546 lulus. Tes lokal tidak dijalankan; bukti test berasal dari GitHub Actions exact-head.
-- Hostless Build dan Hostless LIVE belum diverifikasi; belum ada konfigurasi Hostless yang diubah.
-- Implementasi awal menampilkan data provider yang terindeks saja. Tidak ada klaim seluruh token blockchain ditemukan atau token yang ditampilkan aman untuk dibeli.
+- Branch: `feat/early-gem-scanner-v1`, berbasis main HEAD `a475205e9d76e3ba27d8e5c4633b1c5c24aec05f`. PR #46 https://github.com/rohman35819/radar-ai-v2/pull/46 status open/ready-for-review, belum merged.
+- Final validated head sebelum pembaruan dokumentasi ini: `2b0fdc50a00030efcefa48f87a00436e1021c33e`.
+- GitHub Actions RADAR AI tests run #548 / ID `45036854931`: completed/success; `npm test` 97 passed, 0 failed, 0 skipped; syntax checks lulus.
+- Security run #90 / ID `45036854922`: completed/success. Gitleaks lulus; Trivy secret scanner tidak menemukan issue. Trivy vulnerability scanner melaporkan `Supported files for scanner(s) not found` untuk scanner `vuln`; dependency vulnerability coverage belum tersedia, bukan bukti dependency bebas CVE.
+- Dua CI awal (#528 syntax error UI, #530 assertion UI terlalu ketat) diperbaiki sebelum run #548.
+- Tes lokal tidak dijalankan; bukti test berasal dari GitHub Actions. Hostless Build/LIVE belum diverifikasi; tidak ada konfigurasi deployment yang diubah.
+- Tidak ada klaim seluruh token blockchain ditemukan atau token yang ditampilkan aman dibeli.
 
 ### NEXT TASK
-1. Selesaikan syntax/test workflow pada exact PR head; perbaiki setiap kegagalan sebelum review.
-2. Audit diff dan response snapshot, terutama secret handling, URL allowlist, stale/error cache, serta mobile UI.
-3. Minta QA independen Divisi 05 dan security review Divisi 01 bila diperlukan; jangan merge sebelum QA gate.
-4. Setelah merge/deploy disetujui, verifikasi Hostless Build dan LIVE secara terpisah, lalu cek `health.onchain`, jumlah pool, freshness dan error/rate limit pada dashboard.
-5. Tahap lanjutan: pencarian token by contract, trending pools, token metadata/GT score/honeypot signals hanya setelah kuota/API plan dan ketersediaan endpoint diverifikasi; jangan menganggap data Demo menyediakan semua metrik tersebut.
+1. Minta dan tunggu independent QA review Divisi 05 untuk parsing API response, partial failure, cache/stale behavior, mobile layout, dan secret/output handling. PR #46 belum boleh merge sebelum QA gate.
+2. Setelah QA mencatat PASS dan required checks exact-head tetap hijau, integrasikan PR sesuai release policy.
+3. Setelah merge/deploy disetujui, verifikasi Hostless Build dan LIVE terpisah; periksa `health.onchain`, `health.onchain_trending`, freshness, jumlah pool dan error/rate limit.
+4. Tahap berikutnya: contract-address search, metadata/GT Score/honeypot signals hanya setelah kuota/API plan dan endpoint terverifikasi; jangan klaim fitur yang belum tersedia pada Demo plan.
