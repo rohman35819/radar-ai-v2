@@ -1886,6 +1886,16 @@ Melengkapi Market Screener CoinGecko kategori AI dengan feed on-chain untuk mene
 - Tes lokal tidak dijalankan karena runtime sesi tidak dapat resolve `github.com`; hasil tes di atas berasal dari GitHub Actions.
 - Hostless Build/LIVE dan data provider pada environment Hostless belum diverifikasi. Tidak ada konfigurasi produksi atau deployment yang diubah.
 
+### 58.3 Penyempurnaan kartu token dan verifikasi akhir — 22 November 2026
+- Kartu Early Gem Scanner kini menampilkan alamat kontrak token (CA) secara ringkas serta tautan terpisah ke halaman Token dan Pool GeckoTerminal; kedua URL tetap dibatasi ke host resmi `www.geckoterminal.com`.
+- File tambahan pada penyempurnaan ini: `public/app.js`, `public/style.css`, `test/early-gem-ui.test.js`; README dan master context ikut disinkronkan.
+- Final code/documentation head saat catatan ini: `e6961cba7096c4f777bd570a859848094209195d`, compare terhadap main: ahead 57 / behind 0.
+- GitHub Actions RADAR AI tests run #564 / ID `45038711279`: completed/success; log menunjukkan **98 tests, 98 pass, 0 fail, 0 skipped**. Syntax checks dan `npm test` sukses.
+- Security run #106 / ID `45038711259`: completed/success. Gitleaks: `no leaks found`; Trivy secret scanner: `No issues detected`. Trivy vulnerability scanner tidak menemukan manifest/file yang didukung (`num=0`); dependency CVE coverage tidak tersedia.
+- PR #46 open, mergeable, belum merged. Permintaan independent QA Divisi 05 ada pada komentar PR #7081331274; sampai pemeriksaan ini belum ada review independen yang tercatat.
+- Hostless Build/LIVE dan panggilan provider dari environment Hostless belum diverifikasi. Tidak ada konfigurasi produksi, API key, atau deployment yang diubah.
+- Local test tidak dijalankan karena runtime sesi tidak dapat resolve `github.com`; hasil tes berasal dari GitHub Actions.
+
 ### NEXT TASK
 1. Minta dan tunggu independent QA review Divisi 05 untuk parsing API response, partial failure, cache/stale behavior, mobile layout, dan secret/output handling. PR #46 belum boleh merge sebelum QA gate.
 2. Setelah QA mencatat PASS dan required checks exact-head tetap hijau, integrasikan PR sesuai release policy.
