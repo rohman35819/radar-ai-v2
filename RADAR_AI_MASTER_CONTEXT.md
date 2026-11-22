@@ -1787,3 +1787,27 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 
 ### NEXT TASK tunggal
 Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan sinkronisasi branch terhadap main; Divisi 06 memperbaiki backlog P2 runtime queue pada issue #30 di PR terpisah setelah schema foundation diterima. Divisi 07 menyusun record keputusan/task memory berbasis provenance, supersedes, artifact references, retention dan full-text search; jangan menambah vector DB. Tidak ada worker provisioning sebelum quota Rp0/no-overage dan persetujuan BOS terbukti.
+
+
+---
+
+## 57. DIVISI 07 — PROVENANCE-FIRST MEMORY DESIGN — 22 NOVEMBER 2026
+- Added design proposal `docs/division-07-memory-knowledge-architecture.md`; this is documentation only, not an implementation or claim of persistent shared memory.
+- Canonical record domains: approved decisions/policies, project facts, task handoffs, execution evidence and sourced knowledge. Avoid raw chat dumps.
+- Every durable record requires source reference/revision, scope, sensitivity, approval state, validity and supersedes relation where applicable. Unmerged PRs are proposals, not facts about production.
+- Agent writes are proposals. Director/Divisi 01/05 review according to domain; BOS approval remains mandatory for owner policy, budget, provisioning, permission/secret changes and production boundaries.
+- Retrieval must apply identity/scope/sensitivity before ranking; approved/current items first; PostgreSQL full-text search and metadata indexes first. Vector DB/embeddings, Redis and paid SaaS are deferred.
+- Never store secrets, auth material, raw exchange payloads or unrelated sensitive personal data. Retention classes in the document are proposals pending Divisi 01/BOS approval.
+- PR #34 remains current schema-only candidate; independent Divisi 01/05 reviews pending. No memory tables, DB adapter, worker, scheduler or persistent memory runtime exists.
+- Budget Rp0; no external infrastructure provisioned. NEXT TASK: Divisi 07 review taxonomy and sample records with Divisi 01 privacy/access review and Divisi 05 QA; implementation waits for accepted schema and no-cost capacity.
+
+
+## 55. NEWS FEED RESILIENCE AND LIVE SOURCE DIAGNOSTICS — PR #38 — 22 NOVEMBER 2026
+
+- PR #22's earlier fix (default RSS feed + article summaries) is already merged, but BOS continued to report News errors. PR #38 adds source-level diagnostics and resilience rather than repeating that earlier patch.
+- Changes: NEWS_FEEDS whitespace fallback and comma/semicolon/newline parsing (max 8); explicit RSS/Atom Accept and User-Agent; 15s timeout and 2 MiB body limit; RSS/Atom parsing for numeric entities, CDATA, Atom alternate links, relative links and content:encoded; deduplication.
+- One failed source no longer blocks a healthy feed. All-failed/empty responses produce sanitized diagnostic codes. /api/snapshot now carries health.news_sources and News Intelligence shows per-source status and error code.
+- CI run #501 (45024388078) on PR #38 head 0cee779b6ae36df0f160a724f3770905f780ba06: npm test 90/90, 0 failed; diagnostic live RSS smoke success with 50 articles total (TechCrunch 20, Cointelegraph 30). Security scan run #43 (45024388073) success.
+- Live feed access from GitHub Actions is verified; this does NOT prove Hostless outbound network or current LIVE deployment. Hostless internal_error / DNS issue remains NOT VERIFIED until Hostless logs/Build/LIVE are accessible.
+- No new dependency, API key, paid service, DB migration or production data mutation. Rollback: revert PR #38 merge commit.
+- NEXT TASK: merge the safe News code after QA review, then verify Hostless Build and News page. If Hostless still fails while GitHub Actions feeds pass, investigate Hostless outbound DNS/egress, NEWS_FEEDS environment value and deployed SHA; do not claim live resolution.
