@@ -82,3 +82,10 @@ Setelah koneksi akun berhasil, Exchange Hub menampilkan identitas akun, label op
 - Review otomatis sekali sehari pukul 10.00 WIB (ubah dengan `AI_WORKSPACE_HOUR`, angka 0-23). Set `AI_WORKSPACE_ENABLED=0` untuk menonaktifkan. Endpoint manual: `POST /api/ai/workspace/run` dengan header `x-admin-token`; hasil: `GET /api/ai/workspace`.
 - Review memerlukan API key provider. Satu siklus dapat memanggil maksimal empat provider; OpenAI API dapat menimbulkan biaya token. Pantau anggaran provider.
 - Review hanya menghasilkan usulan. Belum ada agen yang mengubah kode otomatis; setiap implementasi harus melewati Direktur Utama, pengujian, draft PR, dan persetujuan pemilik.
+
+
+## Agent Platform foundation
+
+- Schema-only Stage 0/1 foundation is under review; no production DB, queue runtime, scheduler, or worker is active.
+- Migration and least-privilege smoke tests run against disposable PostgreSQL 16 in GitHub Actions only. No external database is provisioned.
+- Strict budget remains Rp0. See [Agent Platform architecture](docs/agent-platform-architecture.md) and [free-first infrastructure policy](docs/free-first-infrastructure-policy.md).
