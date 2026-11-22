@@ -31,12 +31,18 @@ async function load(){
   const response=await fetch('/api/solscan/overview',{cache:'no-store'}),payload=await response.json();
   if(!response.ok && !payload.configured) throw Object.assign(new Error(payload.code),{code:payload.code});
   setStatus(payload);$('#updated-at').textContent='Observed: '+new Date(payload.observed_at).toLocaleString('id-ID');
-  const endpoints=payload.endpoints||{},chain=unwrap(endpoints.chain_info),tx=arr(endpoints.latest_transactions),blocks=arr(endpoints.latest_blocks),tokens=arr(endpoints.trending_tokens);\n  const latest=(key)=>{const series=unwrap(endpoints[key])?.series;return Array.isArray(series)&&series.length?series[series.length-1]:null;};\n  const txDay=latest('transaction_analytics'),stakeDay=latest('stake_analytics'),feeDay=latest('fee_analytics'),defiDay=latest('defi_analytics');
+  const endpoints=payload.endpoints||{},chain=unwrap(endpoints.chain_info),tx=arr(endpoints.latest_transactions),blocks=arr(endpoints.latest_blocks),tokens=arr(endpoints.trending_tokens);
+  const latest=(key)=>{const series=unwrap(endpoints[key])?.series;return Array.isArray(series)&&series.length?series[series.length-1]:null;};
+  const txDay=latest('transaction_analytics'),stakeDay=latest('stake_analytics'),feeDay=latest('fee_analytics'),defiDay=latest('defi_analytics');
   const grid=$('#network-stats');grid.replaceChildren(
    stat('BLOCK TERAKHIR',fmt(chain?.blockHeight ?? blocks[0]?.slot ?? blocks[0]?.block_id),'Solscan indexed'),
    stat('EPOCH',fmt(chain?.currentEpoch),'Solana Mainnet'),
    stat('TOTAL TRANSAKSI',fmt(chain?.transactionCount),'Kumulatif jika tersedia'),
-   stat('TRENDING TOKENS',fmt(tokens.length),'Peringkat 24 jam'),\n   stat('TRANSAKSI HARIAN',fmt(txDay?.total),'Seri harian Solscan'),\n   stat('ACTIVE STAKE',fmt(stakeDay?.total_stake_sol)+' SOL','Total stake harian'),\n   stat('DEX VOLUME',money(defiDay?.volume_usd),'Volume harian on-chain'),\n   stat('NETWORK FEES',fmt(feeDay?.total_fee_sol ?? feeDay?.total_fee)+' SOL','Biaya harian jika tersedia')
+   stat('TRENDING TOKENS',fmt(tokens.length),'Peringkat 24 jam'),
+   stat('TRANSAKSI HARIAN',fmt(txDay?.total),'Seri harian Solscan'),
+   stat('ACTIVE STAKE',fmt(stakeDay?.total_stake_sol)+' SOL','Total stake harian'),
+   stat('DEX VOLUME',money(defiDay?.volume_usd),'Volume harian on-chain'),
+   stat('NETWORK FEES',fmt(feeDay?.total_fee_sol ?? feeDay?.total_fee)+' SOL','Biaya harian jika tersedia')
   );
   renderRows('#trending',tokens,(t)=>[t.symbol||short(t.address,5),money(t.price),money(t.volume_24h),fmt(t.num_trade_24h)+' trades',fmt(t.market_cap)],'Data trending token tidak tersedia untuk paket/API ini.');
   renderRows('#transactions',tx,(t)=>[short(t.tx_hash||t.signature||t.txHash),t.status||t.block_time||t.time||'Transaksi',t.fee!=null?'Fee '+fmt(t.fee):''], 'Transaksi terbaru belum tersedia.');
