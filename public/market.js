@@ -61,15 +61,15 @@ function marketRows() {
   visible.forEach((coin) => {
     const tr = node('tr');
     const asset = node('td', 'asset-cell');
-    const image = node('img', 'coin-image');
-    image.src = coin.image || '';
-    image.alt = '';
-    image.loading = 'lazy';
+    const image = node('span', 'coin-image', safeText(coin.symbol).slice(0, 3).toUpperCase());
+    const idr = market?.data?.markets_idr?.find((item) => item.id === coin.id);
     const identity = node('span', 'asset-name');
     identity.append(node('b', '', safeText(coin.name)), node('small', '', safeText(coin.symbol).toUpperCase() + ' · #' + safeText(coin.market_cap_rank)));
+    const priceCell = node('td', 'number-cell');
+    priceCell.append(node('span', '', fmtMoney(coin.current_price)), node('small', 'idr-price', idr ? 'Rp' + Number(idr.current_price).toLocaleString('id-ID', { maximumFractionDigits: 0 }) : 'IDR —'));
     asset.append(image, identity);
     tr.append(asset);
-    tr.append(node('td', 'number-cell', fmtMoney(coin.current_price)));
+    tr.append(priceCell);
     tr.append(changeNode(coin.price_change_percentage_1h_in_currency));
     tr.append(changeNode(coin.price_change_percentage_24h));
     tr.append(changeNode(coin.price_change_percentage_7d_in_currency));
@@ -227,16 +227,13 @@ async function loadMarket(force = false) {
   refreshBusy = true;
   $('#refresh').classList.add('spinning');
   try {
-    const response = await fetch('/api/market-intelligence' + (force ? '?refresh=1' : ''), { cache: 'no-store' });
+    const response = await fetch('/api/market-intelligence', { cache: 'no-store' });
     const result = await response.json();
     if (!response.ok && !result.data) throw new Error(result.message || result.code || 'Gagal mengambil data CoinGecko');
     market = result;
     renderAll();
     if (!$('#chart-coin').options.length) await loadChart();
-    if (force) {
-      const notice = $('#notice');
-      if (!notice.hidden) notice.textContent += ' Periksa kuota/key CoinGecko jika masalah berlanjut.';
-    }
+    if (force) $('#updated').textContent += ' · data memakai cache server 60 menit untuk menjaga kuota Demo';
   } catch (error) {
     $('#status').textContent = 'Gagal menghubungkan';
     $('#side-status').textContent = 'Periksa server';
