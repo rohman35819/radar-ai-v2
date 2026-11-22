@@ -1474,3 +1474,33 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 4. Complete Dashboard and Command Center desktop/mobile QA: all 12 navigation destinations, sidebar independent scroll, mobile drawer, data loading/error states, console and network.
 5. Continue EROFS investigation with actual Hostless mount and runtime logs; coordinate storage code changes with Divisi 01.
 6. Trace the `punycode` deprecation warning to its source; add a regression check only if a meaningful behavior risk is identified.
+
+---
+
+## 37. PERBAIKAN FRONTEND MARKET SCREENER — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 37.1 Temuan prioritas
+- Lead: Divisi 02 — UI/UX & Frontend. QA pendukung: Divisi 05 — QA, Testing & DevOps.
+- Setelah QA Gate section 36 pada main, audit source Dashboard menemukan bug runtime di public/app.js: renderScreener() membuat kontrol filter secara detached, tetapi mencoba membaca #filter-trend dan #filter-sort melalui document.querySelector sebelum controls dimasukkan ke #view. Selector menghasilkan null dan assignment .value menyebabkan TypeError; halaman Market Screener gagal dirender.
+- Ini bug fungsional P1 untuk alur Screener; tidak memerlukan perubahan API atau backend.
+
+### 37.2 Patch dan regresi
+- public/app.js: assignment nilai trend/sort dipindah tepat setelah v.append(...) memasang seluruh kontrol ke DOM. Event listener tetap di-bind setelah mount; state filter, reset, sorting, dan ekspor CSV dipertahankan.
+- test/frontend-ui.test.js (baru): dua tes source-level memeriksa urutan mount/query/listener serta memastikan 12 tujuan navigasi (10 tombol internal + Exchange Hub + Command Center) tetap tersedia.
+- Tidak ada menu, route, kontrak API, dependency, kredensial, atau fungsi Exchange Hub/Command Center yang diubah.
+
+### 37.3 Branch, commit, dan pemeriksaan
+- Main HEAD saat branch dibuat: cc6d9af9b9dd96989898db4058771211a712be7e (memuat QA Gate dan perbaikan workflow Node 24 dari commit sebelumnya). Branch kerja terisolasi: uiux/screener-render-fix-v2.
+- Implementasi public/app.js: f9d9e44a6628d5e8c727f28d59c22653ad853ed8.
+- Tes regresi test/frontend-ui.test.js: d9aa8fb443af6d25a9d7992d4ae67e746576e0b8.
+- Pemeriksaan source melalui V8 Function parser: public/app.js dan file tes berhasil diparse. Pemeriksaan urutan menunjukkan mount index 1599, query trend 1928, query sort 1977, binding listener 2078; seluruhnya berurutan benar. Pemeriksaan navigasi menemukan seluruh 12 tujuan.
+- npm test belum dijalankan lokal. Browser desktop/mobile, console, dan network belum tersedia; hasil statis bukan pengganti QA runtime.
+- Hostless Build dan SHA LIVE tetap UNKNOWN / NOT VERIFIED.
+
+### 37.4 Status dan NEXT TASK
+1. Buat PR dari uiux/screener-render-fix-v2 ke main, lalu minta QA independen memeriksa diff dan acceptance criteria.
+2. Verifikasi GitHub Actions pada PR; pastikan npm test dan seluruh syntax checks lulus sebelum merge.
+3. Uji Market Screener di browser setelah deploy: buka halaman, pencarian, trend, sort, reset, filter saat refresh, empty state, dan ekspor CSV.
+4. Lanjutkan QA Dashboard, sidebar, Exchange Hub, dan Command Center pada desktop/mobile; periksa console/network serta state loading/error/empty.
+5. Audit konsistensi tombol tema terang/gelap; sebagian komponen stylesheet menggunakan warna hard-coded sehingga tema terang perlu verifikasi visual.
+6. Hostless build/live, DATA_DIR/EROFS, dan koneksi akun exchange nyata tetap belum terverifikasi. Koordinasikan storage dengan Divisi 01 dan deployment/browser gate dengan Divisi 05.
