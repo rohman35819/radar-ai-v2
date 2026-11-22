@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createApp } = require('../server');
+const { createApp, readGithubAppSettings } = require('../server');
 
 async function withServer(app, run) {
   await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve));
@@ -90,5 +90,30 @@ test('Gemini GitHub command endpoint is admin-protected and read-only', async ()
     assert.equal(received.instruction, payload.instruction);
     assert.equal(received.githubClient !== null, true);
     assert.equal(allowed.headers.get('cache-control'), 'no-store');
+  });
+});
+
+
+test('GitHub App settings accept the configured BOS variable names and legacy aliases', () => {
+  assert.deepEqual(readGithubAppSettings({
+    GITHUB_APP_ID: '5874271',
+    GITHUB_PRIVATE_KEY: 'private-pem',
+    GITHUB_INSTALLATION_ID: '184657160'
+  }), {
+    appId: '5874271',
+    privateKey: 'private-pem',
+    installationId: '184657160',
+    repository: 'rohman35819/radar-ai-v2'
+  });
+  assert.deepEqual(readGithubAppSettings({
+    GITHUB_APP_ID: '123',
+    GITHUB_APP_PRIVATE_KEY: 'legacy-pem',
+    GITHUB_APP_INSTALLATION_ID: '456',
+    GITHUB_REPOSITORY: 'owner/repo'
+  }), {
+    appId: '123',
+    privateKey: 'legacy-pem',
+    installationId: '456',
+    repository: 'owner/repo'
   });
 });
