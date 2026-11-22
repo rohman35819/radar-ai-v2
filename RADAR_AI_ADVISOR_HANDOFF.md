@@ -179,3 +179,12 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Never store secrets, credentials, raw exchange payloads or unrelated sensitive personal data. Retention periods remain proposals pending approval.
 - No persistent memory tables/service/runtime are active. Strict Rp0 and no-provisioning gate remain binding.
 - NEXT: Divisi 07 curate sample decision/task records; Divisi 01 review privacy/access/retention; Divisi 05 define provenance and retrieval QA. Implementation only after schema acceptance and verified zero-cost capacity.
+
+
+## 20. News Feed Resilience — PR #38 (22 November 2026)
+
+- PR #22 default-feed/article-summary fix was already merged, but News errors persisted. PR #38 adds robust feed parsing/configuration, per-source diagnostics and UI health display.
+- Exact tested code head: 0cee779b6ae36df0f160a724f3770905f780ba06. CI run #501 passed 90/90; live RSS diagnostic returned 50 articles (TechCrunch 20, Cointelegraph 30); security scan #43 passed.
+- If the final PR head changes for documentation only, preserve the above source-code test evidence and rerun CI before merge.
+- GitHub Actions network access to both RSS sources is verified. Hostless network egress, Build and LIVE SHA remain unverified. Do not claim production fixed until the deployed page shows feed health and articles.
+- No dependencies or paid services added. Rollback is a Git revert of the merge commit.
