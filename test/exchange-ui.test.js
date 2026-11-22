@@ -73,5 +73,7 @@ test('Exchange Hub verifies Bybit API key read-only state, account UID and walle
   assert.ok(js.includes('apiPermissions.read_only'));
   assert.ok(js.includes('apiPermissions.withdrawals'));
   assert.ok(js.includes('identity.account_id'));
+  assert.ok(js.includes('apiPermissions.categories'));
+  assert.ok(js.includes('Rincian permission Bybit'));
   assert.ok(exchangeService.includes('BYBIT_API_PERMISSION_READ_UNAVAILABLE'));
 });
