@@ -1861,6 +1861,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Modul Global Market: total market cap, volume 24 jam, BTC/ETH dominance, active crypto, dan jumlah markets.
 - Global Coin Scanner Top 100: harga USD dan IDR, perubahan 1h/24h/7d, market cap, volume, pencarian, gainers, losers.
 - Trending coins dari CoinGecko Search Trending.
+- Momentum Detector lintas 1h/24h/7d, High Turnover Watch (volume 24 jam / market cap), dan Risk Monitor berbasis ambang heuristik.
 - Sector Rotation berdasarkan perubahan market cap kategori.
 - Exchange Intelligence: ranking exchange, volume BTC, trust score, dan tabel trading pairs on-demand berisi harga, volume, serta bid/ask spread.
 - Historical charts untuk harga, market cap, dan volume pada rentang 1/7/30/90 hari.
@@ -1933,3 +1934,9 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - The test log includes `refresh error read-only filesystem` from the existing intentional storage-health EROFS test; suite still passed 98/98. This is test fixture output, not evidence of a new live Hostless failure.
 - Previous 59.7 test/security evidence for code head `3b78b60` is superseded by the exact-current-head evidence above.
 - PR #48 remains Draft; merge not performed. Hostless Build/LIVE, actual CoinGecko credential entitlement, and browser/device visual QA remain unverified.
+
+### 59.9 Extended market signals and scope boundary
+- Dashboard ditambah Momentum Detector yang hanya menampilkan aset dengan return positif terkonfirmasi pada 1h, 24h, dan 7d; High Turnover Watch memakai rasio volume 24 jam / market cap; Risk Monitor menandai penurunan 24 jam besar atau return negatif dengan turnover rendah.
+- Ketiganya merupakan heuristic/proxy dari data agregat Top 100. Tidak boleh disebut sebagai deteksi volume anomaly intraday, honeypot/security scanner, audit likuiditas, atau risk model terkalibrasi.
+- Follow-on P2 yang belum termasuk PR #48: strategy backtesting yang dapat dikonfigurasi, portfolio tracking manual, dan integrasi On-chain DEX/Early Gem ke halaman Market Intelligence.
+- Early Gem Scanner/GeckoTerminal sudah memiliki pekerjaan terpisah di Draft PR #46; jangan menganggap telah terintegrasi/merged atau memindahkan kodenya tanpa QA independen. Setelah PR #46 lolos review, rancang entry point ke dashboard Market Intelligence.
