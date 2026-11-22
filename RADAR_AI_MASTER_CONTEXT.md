@@ -1839,16 +1839,16 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 Melengkapi Market Screener CoinGecko kategori AI dengan feed on-chain untuk menemukan pool DEX baru lintas jaringan, termasuk pool token meme/long-tail yang belum terdaftar pada daftar market utama CoinGecko.
 
 ### Keputusan sumber dan batas cakupan
-- Menggunakan CoinGecko Onchain API yang ditenagai GeckoTerminal: `GET /api/v3/onchain/networks/new_pools`, parameter `include=base_token,quote_token,dex,network`.
-- API mendokumentasikan jendela pool baru sekitar 48 jam, maksimum 20 pool per halaman, dan pagination sampai 10 halaman pada akses Demo. Konfigurasi default RADAR adalah 3 halaman (maksimum 60 pool) per refresh, dipanggil berurutan dengan jeda 500 ms.
+- Menggunakan CoinGecko Onchain API yang ditenagai GeckoTerminal: `GET /api/v3/onchain/networks/new_pools` (jendela 48 jam) dan `GET /api/v3/onchain/networks/trending_pools` (durasi ranking 24 jam), parameter `include=base_token,quote_token,dex,network`.
+- API mendokumentasikan jendela pool baru sekitar 48 jam, maksimum 20 pool per halaman, dan pagination sampai 10 halaman pada akses Demo. Konfigurasi default RADAR adalah 3 halaman new pools (maksimum 60 pool) plus 1 halaman trending per refresh; halaman new pools dipanggil berurutan dengan jeda 500 ms. Jika endpoint trending gagal, data new pools tetap diperbarui dan health `onchain_trending` menandai kegagalan parsial.
 - Memakai `COINGECKO_DEMO_KEY` yang sudah ada; tidak menambah dependency runtime, key baru, atau biaya provider.
 - Istilah UI memakai **NEW POOL**, bukan klaim "token baru diluncurkan": tanggal pool tidak selalu sama dengan tanggal token dibuat. Token tanpa pool, pool tanpa likuiditas, jaringan yang belum didukung/terindeks, atau pool yang belum terindeks tidak terdeteksi.
 - Pools Megafilter, honeypot checks, GT Score, holder concentration, mint/freeze authority dan contract audit tidak diklaim tersedia pada implementasi Demo ini. Flag RADAR hanya pemeriksaan kualitas data sederhana.
 
 ### Implementasi
-- `lib/onchain.js`: fetch dengan timeout, kode error tersanitasi, batas halaman 1–10, parsing relasi token/network/DEX, deduplikasi network+pool, normalisasi harga, likuiditas, volume 24 jam, FDV, market cap, transaksi, waktu/umur pool, URL GeckoTerminal, dan flags data yang tidak tersedia/rendah.
+- `lib/onchain.js`: fetch dengan timeout, kode error tersanitasi, batas halaman 1–10, parsing relasi token/network/DEX, deduplikasi network+pool, gabungan new pools dan trending pools, normalisasi harga, likuiditas, volume 24 jam, FDV, market cap, transaksi, waktu/umur pool, URL GeckoTerminal, dan flags data yang tidak tersedia/rendah. Trending endpoint bersifat tambahan; kegagalannya tidak membuang new-pool feed.
 - `lib/sources.js`: ekspor fetchEarlyGems ke pipeline sumber.
-- `lib/ingest.js`: konfigurasi `EARLY_GEMS_ENABLED` dan `ONCHAIN_PAGES`; sumber on-chain berjalan independen dari CoinGecko AI screener. Bila gagal, health on-chain mencatat error dan cache pool sebelumnya dipertahankan.
+- `lib/ingest.js`: konfigurasi `EARLY_GEMS_ENABLED` dan `ONCHAIN_PAGES`; sumber on-chain berjalan independen dari CoinGecko AI screener. Bila new-pool source gagal, health on-chain mencatat error dan cache pool sebelumnya dipertahankan; trending health dicatat terpisah agar kegagalan parsial terlihat.
 - `server.js`: snapshot menambahkan `early_gems`, metadata waktu/sumber, dan status konfigurasi boolean. Tidak mengirim API key ke browser.
 - `public/index.html`, `public/app.js`, `public/style.css`: menu Early Gem Scanner, filter pencarian/likuiditas, kartu chain/DEX/harga/liquidity/volume/FDV/market cap/umur pool, flag kualitas data, tautan pool GeckoTerminal, serta status feed stale/error. Render menggunakan textContent/DOM nodes, bukan HTML dari upstream.
 - `public/sw.js`: shell cache dinaikkan agar aset dashboard terbaru dimuat.
@@ -1859,7 +1859,7 @@ Melengkapi Market Screener CoinGecko kategori AI dengan feed on-chain untuk mene
 ### Konfigurasi
 - `EARLY_GEMS_ENABLED=1` (default); `0` menonaktifkan sumber on-chain.
 - `ONCHAIN_PAGES=3` (default; 1–10; hingga 20 pool per halaman).
-- Refresh mengikuti `REFRESH_MIN` (default 10 menit). Dengan konfigurasi default, maksimal tiga panggilan on-chain per 10 menit.
+- Refresh mengikuti `REFRESH_MIN` (default 10 menit). Dengan konfigurasi default, maksimal empat panggilan on-chain per 10 menit.
 - Tidak ada order, transfer, withdrawal, atau tindakan finansial.
 
 ### Status verifikasi
