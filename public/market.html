@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080d19">
+<meta name="description" content="RADAR AI CoinGecko market intelligence dashboard">
+<title>RADAR AI · Market Intelligence</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/market.css">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar" id="sidebar">
+  <a class="brand" href="/"><span class="brand-mark">R</span><span><b>RADAR<span>AI</span></b><small>INTELLIGENCE TERMINAL</small></span></a>
+  <div class="side-label">WORKSPACE</div>
+  <nav class="side-nav">
+    <a class="trade-nav-link" href="/"><i>◫</i> Dashboard utama</a>
+    <a class="trade-nav-link active" href="/market.html"><i>◈</i> Market Intelligence <kbd>NEW</kbd></a>
+    <a class="trade-nav-link" href="/trading.html"><i>⌁</i> Exchange Hub</a>
+    <a class="trade-nav-link" href="/command.html"><i>✳</i> Command Center</a>
+  </nav>
+  <div class="sidebar-bottom"><div class="live-indicator"><span></span><div><b>MARKET DATA</b><small id="side-status">Menghubungkan…</small></div></div><div class="side-foot">RADAR AI V2 · COINGECKO</div></div>
+</aside>
+<button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Tutup menu"></button>
+<div class="main-shell">
+<header class="topbar">
+  <div class="top-left"><button class="mobile-menu" id="menu-toggle" type="button" aria-label="Buka menu" aria-controls="sidebar" aria-expanded="false"><span class="menu-icon" aria-hidden="true">☰</span><span class="menu-text">Menu</span></button><div><div class="eyebrow">CRYPTO INTELLIGENCE / COINGECKO</div><h1>Market Intelligence</h1></div></div>
+  <div class="top-actions"><div class="market-status"><span class="pulse"></span><span id="status">Memuat data…</span></div><button class="icon-btn" id="refresh" title="Muat ulang">↻</button></div>
+</header>
+<div id="notice" class="market-notice" hidden></div>
+<main class="content market-content">
+  <section class="market-hero">
+    <div><div class="eyebrow">GLOBAL CRYPTO MARKET</div><h2>Seluruh pasar, satu pandangan.</h2><p>Global market, coin scanner, momentum, sektor, exchange, dan histori harga dari CoinGecko.</p></div>
+    <div class="market-meta"><span class="live-chip" id="freshness">MENUNGGU DATA</span><small id="updated">Update belum tersedia</small></div>
+  </section>
+  <section class="market-stats" id="global-stats"><div class="market-skeleton"></div><div class="market-skeleton"></div><div class="market-skeleton"></div><div class="market-skeleton"></div><div class="market-skeleton"></div></section>
+  <section class="market-grid two">
+    <article class="market-panel">
+      <div class="market-heading"><div><h2>Market Regime</h2><p>Ringkasan kondisi global berbasis aturan</p></div><span class="tag">RADAR SIGNAL</span></div>
+      <div id="market-summary" class="market-summary">Menunggu data pasar…</div>
+    </article>
+    <article class="market-panel">
+      <div class="market-heading"><div><h2>Trending Discovery</h2><p>Aset yang sedang populer di pencarian CoinGecko</p></div></div>
+      <div id="trending-list" class="compact-list"><div class="muted">Memuat…</div></div>
+    </article>
+  </section>
+  <section class="market-panel ai-council-panel">
+    <div class="market-heading"><div><h2>AI Council Market Summary</h2><p>Ringkasan terakhir dari rapat AI RADAR, terpisah dari heuristik market regime</p></div><a class="text-btn" href="/">Buka Dashboard AI Council →</a></div>
+    <div id="ai-market-summary" class="market-summary"><div class="muted">Memeriksa laporan AI Council…</div></div>
+  </section>
+  <section class="market-panel">
+    <div class="market-heading"><div><h2>Global Coin Scanner</h2><p>Top 100 berdasarkan kapitalisasi pasar · gainers, losers, dan momentum</p></div><input id="coin-search" type="search" placeholder="Cari aset…" aria-label="Cari aset"></div>
+    <div class="table-scroll"><table><thead><tr><th>Aset</th><th>Harga</th><th>1 Jam</th><th>24 Jam</th><th>7 Hari</th><th>Market Cap</th><th>Volume 24J</th></tr></thead><tbody id="market-table"><tr><td colspan="7">Memuat data pasar…</td></tr></tbody></table></div>
+    <div class="table-foot" id="market-count">Menunggu data CoinGecko</div>
+  </section>
+  <section class="market-grid two">
+    <article class="market-panel"><div class="market-heading"><div><h2>Top Gainers</h2><p>Performa 24 jam tertinggi di Top 100</p></div></div><div id="gainers" class="compact-list"></div></article>
+    <article class="market-panel"><div class="market-heading"><div><h2>Top Losers</h2><p>Penurunan 24 jam terdalam di Top 100</p></div></div><div id="losers" class="compact-list"></div></article>
+  </section>
+  <section class="market-grid two">
+    <article class="market-panel"><div class="market-heading"><div><h2>Momentum Detector</h2><p>Aset dengan momentum positif lintas 1h, 24h, dan 7d</p></div></div><div id="momentum-list" class="compact-list"></div></article>
+    <article class="market-panel"><div class="market-heading"><div><h2>High Turnover Watch</h2><p>Volume 24 jam dibanding market cap · proxy aktivitas, bukan anomali intraday</p></div></div><div id="volume-activity" class="compact-list"></div></article>
+  </section>
+  <section class="market-panel">
+    <div class="market-heading"><div><h2>Risk Monitor</h2><p>Penurunan besar dan turnover rendah berdasarkan ambang heuristik</p></div><span class="tag">HEURISTIC</span></div>
+    <div id="risk-list" class="compact-list"></div>
+  </section>
+  <section class="market-panel">
+    <div class="market-heading"><div><h2>Historical Market Chart</h2><p>Harga, market cap, dan volume historis untuk aset pilihan</p></div><div class="chart-controls"><select id="chart-coin" aria-label="Pilih koin"></select><select id="chart-days" aria-label="Rentang grafik"><option value="7">7 hari</option><option value="30">30 hari</option><option value="90">90 hari</option><option value="1">24 jam</option></select><select id="chart-metric" aria-label="Jenis grafik"><option value="prices">Harga</option><option value="market_caps">Market cap</option><option value="total_volumes">Volume</option></select></div></div>
+    <div id="chart-meta" class="chart-meta">Pilih aset untuk memuat histori harga.</div><div id="price-chart" class="price-chart"><div class="muted">Grafik akan tampil setelah data dimuat.</div></div>
+    <div class="chart-legend"><span><i></i> Harga USD</span><span>Powered by CoinGecko</span></div>
+  </section>
+  <section class="market-panel">
+    <div class="market-heading"><div><h2>Exchange Trading Pairs</h2><p>Harga, volume, dan spread pasangan pasar pada exchange pilihan</p></div><select id="exchange-select" aria-label="Pilih exchange"></select></div>
+    <div class="table-scroll"><table><thead><tr><th>Pair</th><th>Market</th><th>Harga</th><th>Volume 24J</th><th>Spread</th><th>Trust</th></tr></thead><tbody id="exchange-tickers"><tr><td colspan="6">Pilih exchange untuk memuat pairs.</td></tr></tbody></table></div>
+    <div class="table-foot" id="exchange-ticker-status">Data dimuat saat exchange dipilih; cache server 60 menit.</div>
+  </section>
+  <section class="market-grid two">
+    <article class="market-panel"><div class="market-heading"><div><h2>Sector Rotation</h2><p>Kategori dengan perubahan market cap 24 jam</p></div></div><div id="sector-list" class="compact-list"></div></article>
+    <article class="market-panel"><div class="market-heading"><div><h2>Exchange Intelligence</h2><p>Volume exchange terpusat dan trust score CoinGecko</p></div></div><div id="exchange-list" class="compact-list"></div></article>
+  </section>
+  <div class="market-footnote">Data pasar disediakan oleh CoinGecko. Tampilkan atribusi ini saat menggunakan data. Market regime, turnover, dan risk flags RADAR merupakan heuristik statistik, bukan output model AI, bukan audit token/likuiditas, dan bukan saran keuangan. Data Demo dapat memiliki batas histori, frekuensi, serta kuota.</div>
+</main>
+</div>
+</div>
+<script src="/market.js"></script>
+</body>
+</html>
