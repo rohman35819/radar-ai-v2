@@ -46,3 +46,37 @@ test('GitHub App client creates installation token and opens only draft PRs', as
   assert.equal(calls.filter((c) => c.url.includes('/access_tokens')).length, 1);
   assert.equal(calls.find((c) => c.url.endsWith('/pulls')).options.body.includes('"draft":true'), true);
 });
+
+
+test('GitHub App connection probe reads the pinned repository with installation token', async () => {
+  const { privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url, options });
+    if (url.includes('/access_tokens')) return { ok: true, json: async () => ({ token: 'short-lived-token', expires_at: '2030-01-01T00:00:00Z' }) };
+    if (url === 'https://api.github.com/repos/owner/repo') return { ok: true, json: async () => ({ full_name: 'owner/repo', default_branch: 'main', permissions: { pull: true, push: true, admin: false } }) };
+    return { ok: false, status: 404, json: async () => ({ message: 'Not Found' }) };
+  };
+  const client = createGithubAppClient({
+    appId: '123', privateKey: privateKey.export({ type: 'pkcs8', format: 'pem' }),
+    installationId: '456', repository: 'owner/repo', fetchImpl, now: () => 1700000000000
+  });
+  const result = await client.checkConnection();
+  assert.deepEqual(result, { connected: true, repository: 'owner/repo', default_branch: 'main', access: { read: true, write: true, admin: false } });
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1].options.headers.authorization, 'Bearer short-lived-token');
+  assert.equal(calls[1].options.redirect, 'error');
+});
+
+test('GitHub App API rejects redirects rather than forwarding installation credentials', async () => {
+  const { privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const fetchImpl = async (url) => {
+    if (url.includes('/access_tokens')) return { ok: true, json: async () => ({ token: 'short-lived-token', expires_at: '2030-01-01T00:00:00Z' }) };
+    return { ok: false, status: 302, json: async () => ({ message: 'Found' }) };
+  };
+  const client = createGithubAppClient({
+    appId: '123', privateKey: privateKey.export({ type: 'pkcs8', format: 'pem' }),
+    installationId: '456', repository: 'owner/repo', fetchImpl, now: () => 1700000000000
+  });
+  await assert.rejects(client.checkConnection(), /GitHub API:/);
+});
