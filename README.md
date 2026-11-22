@@ -4,7 +4,7 @@ Tanpa dependensi npm (V2.2) (butuh Node >= 20). Backend + dashboard PWA dalam sa
 
 ## Jalankan
     cp .env.example .env   # opsional; isi nilai lalu: export $(grep -v '^#' .env | xargs)
-    npm test               # 86 test case di 10 file
+    npm test               # 90 test case di 10 file
     npm start              # http://localhost:3000
 
 ## Pasang
@@ -82,3 +82,8 @@ Setelah koneksi akun berhasil, Exchange Hub menampilkan identitas akun, label op
 - Review otomatis sekali sehari pukul 10.00 WIB (ubah dengan `AI_WORKSPACE_HOUR`, angka 0-23). Set `AI_WORKSPACE_ENABLED=0` untuk menonaktifkan. Endpoint manual: `POST /api/ai/workspace/run` dengan header `x-admin-token`; hasil: `GET /api/ai/workspace`.
 - Review memerlukan API key provider. Satu siklus dapat memanggil maksimal empat provider; OpenAI API dapat menimbulkan biaya token. Pantau anggaran provider.
 - Review hanya menghasilkan usulan. Belum ada agen yang mengubah kode otomatis; setiap implementasi harus melewati Direktur Utama, pengujian, draft PR, dan persetujuan pemilik.
+
+
+### News feed diagnostics
+
+Run `npm run news-check` to test configured RSS/Atom sources and print sanitized per-source status without exposing feed query strings or credentials. GitHub Actions runs this as a non-blocking diagnostic only for the News fix PR.

@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --check server.js && node --check lib/exchanges.js && node --check public/trading.js && node --check public/app.js && node --check public/sw.js && node --check public/command.js && node --check lib/ai/openai.js && node --test test/*.test.js",
-    "live-check": "node scripts/live-check.js"
+    "live-check": "node scripts/live-check.js",
+    "news-check": "node scripts/news-live-check.js"
   },
   "license": "UNLICENSED",
   "private": true
