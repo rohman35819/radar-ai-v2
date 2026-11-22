@@ -159,3 +159,13 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - No independent Divisi 01/05 review exists yet. Do not merge PR #18 until P1 findings are closed and both gates independently review. Do not activate/provision a worker; strict Rp0 and Hostless overage gate remain binding.
 - Branch for documentation update: `docs/agent-platform-pr18-audit-handoff`. See master context section 51 and issue https://github.com/rohman35819/radar-ai-v2/issues/30.
 - NEXT TASK: Direktur coordinates Divisi 06/01/05 to close P1 and deliver PostgreSQL queue integration evidence; Divisi 07 defines provenance-based memory records without vector infrastructure.
+
+
+## 15. Agent Platform security audit remediation — PR #31 (22 November 2026)
+
+- PR #18 closed as superseded. PR #31 is a clean reapplication on main after issue #30 audit findings.
+- P1 schema fixes: division 01–08; daily budget hard-zero; concurrency 1; max attempts 3; attempt_count bounded; payload/metadata caps; no unused hash-chain fields.
+- Runtime test role can read registry and insert audit only. It cannot read/write queue, update/delete/truncate audit, or inherit table-owner membership. This is not a worker role.
+- PostgreSQL 16 integration tests run only in ephemeral GitHub Actions. No production DB, Hostless worker, or external infrastructure is provisioned.
+- P2 runtime correctness (status transitions, deadlines, dependency cycles, atomic claim/lease fencing, double-claim, idempotency, retries/dead-letter, rollback/restart) remains deferred until a worker is designed and independently tested.
+- Issue #30 remains open until Divisi 01/05 independently review the P1 controls and agree P2 is blocked behind worker activation. Keep Rp0, Stage 0/1, default paused, no background autonomy claims.
