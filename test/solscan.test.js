@@ -88,3 +88,18 @@ test('Solscan server routes return adapter data without exposing the API key', a
     assert.equal((await wallet.json()).address, '11111111111111111111111111111111');
   } finally { app.stop(); }
 });
+
+test('Solscan request timeout also covers response body parsing', async () => {
+  const service = createSolscanService({
+    apiKey: 'test-key',
+    timeoutMs: 1,
+    fetchImpl: async () => ({
+      ok: true,
+      json: async () => { const error = new Error('aborted while reading body'); error.name = 'AbortError'; throw error; }
+    })
+  });
+  const result = await service.overview();
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'SOLSCAN_TIMEOUT');
+  assert.equal(result.endpoint_count, 0);
+});
