@@ -66,5 +66,5 @@ The earlier architecture note estimated approximately USD 2.74/month for a small
 ## 8. Current blockers
 - Hostless account usage, remaining free pool, overage toggle, and worker/database availability are not accessible from the GitHub connector.
 - No Hostless provisioning, Neon database, Cloudflare worker, or paid AI provider has been created in this task.
-- PostgreSQL migration test still requires an approved disposable free database or a reproducible local PostgreSQL runner.
+- Migration 001 and audit-role smoke test now run on an ephemeral PostgreSQL 16 service inside GitHub Actions; run #381 passed. No external database was provisioned.
 - Agent Platform remains schema foundation only; no queue runtime or worker is active.
