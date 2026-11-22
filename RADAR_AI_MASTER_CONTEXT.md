@@ -1242,3 +1242,33 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Run awal pada commit bertahap gagal karena tes belum diselaraskan dengan endpoint keempat dan assertion UI lama; penyebab tercatat dari log Actions. Tes diperbarui dan run final pada HEAD dokumentasi sukses.
 - Hostless: pemeriksaan URL publik masih gagal diakses dari sesi ini (cache miss/Internal Error). Build Hostless dan SHA Live tetap tidak diketahui; jangan mengklaim perubahan sudah LIVE.
 - HEAD yang diverifikasi saat pencatatan ini: `9427a7f53e1f58ffe4a1cfec74657ce9b7f9ea25`. Commit dokumentasi status final akan menghasilkan HEAD berikutnya dan perlu CI baru.
+
+
+## 34. IDENTITAS AKUN EXCHANGE HUB — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 34.1 Tujuan dan keputusan
+- Pemilik meminta Exchange Hub menampilkan nama/identitas akun setelah token akses privat dimasukkan, agar jelas akun mana yang benar-benar terhubung.
+- API resmi Binance yang dipakai untuk membaca akun tidak menyediakan username/email akun. RADAR tidak akan mengarang atau menebak identitas pribadi.
+- Keputusan UI: tampilkan label akun opsional dari environment `BINANCE_ACCOUNT_LABEL` / `BYBIT_ACCOUNT_LABEL`; bila kosong, tampilkan nama exchange generik. Sertakan fingerprint SHA-256 satu arah 10 karakter dari API Key untuk membedakan konfigurasi key. Fingerprint bukan kredensial dan tidak dapat digunakan untuk autentikasi.
+- API Key dan Secret mentah tetap server-side. Label tidak membuktikan identitas legal pemilik akun; keberhasilan request private API yang sudah ditandatangani menjadi bukti bahwa konfigurasi key tersebut merespons.
+
+### 34.2 Perubahan file
+- `lib/exchanges.js`: normalisasi identitas akun Binance/Bybit; label opsional dan fingerprint satu arah.
+- `public/trading.html`, `public/trading.js`, `public/trading.css`: panel identitas akun pada bagian atas Ringkasan Akun; status hanya tampil setelah respons private account berhasil.
+- `test/exchanges.test.js`: uji label, fingerprint, dan tidak bocornya API Key/Secret.
+- `test/exchange-ui.test.js`: uji panel identitas dan render field identitas.
+- `README.md`: dokumentasi environment label dan batasan username API.
+- Tidak ada perubahan permission, route order, transaksi, withdrawal, transfer, token Exchange Hub, atau dependency.
+
+### 34.3 Pengujian dan deployment
+- Pemeriksaan sumber/diff dilakukan melalui GitHub; tes lokal belum dijalankan karena sesi ini tidak memiliki working copy Node.js.
+- Target CI: seluruh pemeriksaan sintaks dan `npm test` (63 test case setelah dua test baru).
+- Hostless Build dan SHA Live belum diverifikasi. Commit GitHub tidak berarti perubahan sudah LIVE.
+- Tidak ada kredensial nyata yang dibaca atau ditambahkan ke repository.
+
+### 34.4 NEXT TASK
+1. Verifikasi GitHub Actions untuk commit fitur identitas dan seluruh test suite.
+2. Verifikasi Hostless Build dan SHA Live secara terpisah.
+3. Setelah deployment, pemilik mengisi label opsional di Hostless Production jika ingin nama tampilan khusus, lalu redeploy dan uji koneksi akun.
+4. Lanjutkan QA Exchange Hub desktop/mobile, terutama identitas saat switch exchange, gagal koneksi, dan refresh token.
+5. Lanjutkan audit DATA_DIR/EROFS dan QA Dashboard sesuai roadmap.

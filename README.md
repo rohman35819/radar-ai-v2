@@ -4,7 +4,7 @@ Tanpa dependensi npm (V2.2) (butuh Node >= 20). Backend + dashboard PWA dalam sa
 
 ## Jalankan
     cp .env.example .env   # opsional; isi nilai lalu: export $(grep -v '^#' .env | xargs)
-    npm test               # 61 test case di 8 file
+    npm test               # 63 test case di 8 file
     npm start              # http://localhost:3000
 
 ## Pasang
@@ -36,7 +36,8 @@ Environment server (Hostless):
 - Binance: `BINANCE_API_KEY`, `BINANCE_API_SECRET`.
 - Bybit: `BYBIT_API_KEY`, `BYBIT_API_SECRET`.
 - Akses privat halaman: `EXCHANGE_ACCESS_TOKEN` (jika kosong, backend memakai `ADMIN_TOKEN` sebagai fallback). Masukkan token tersebut pada kolom kunci akses di Exchange Hub; token hanya berada di memori halaman selama tab terbuka; pengguna dapat menampilkan atau menghapus token dari halaman.
-- Opsional: `BINANCE_API_BASE`, `BINANCE_FUTURES_BASE`, `BYBIT_API_BASE`, `BYBIT_ACCOUNT_TYPE`.
+- Opsional: `BINANCE_API_BASE`, `BINANCE_FUTURES_BASE`, `BYBIT_API_BASE`, `BYBIT_ACCOUNT_TYPE`, `BINANCE_ACCOUNT_LABEL`, `BYBIT_ACCOUNT_LABEL`.
+- `BINANCE_ACCOUNT_LABEL` / `BYBIT_ACCOUNT_LABEL` adalah nama panggilan tampilan yang kamu tentukan sendiri di environment Hostless (contoh: `Akun Utama`). API exchange tidak menyediakan username/email pribadi melalui endpoint akun yang dipakai RADAR. Jika label tidak diisi, halaman menampilkan nama exchange dan fingerprint API Key SHA-256 10 karakter; fingerprint bukan API Key dan tidak dapat dipakai untuk autentikasi.
 
 Gunakan kredensial dengan izin baca akun saja. Nonaktifkan withdrawal, spot trading, futures trading, dan transfer. Jangan memasukkan secret ke chat, frontend, repository, atau log.
 
@@ -46,7 +47,7 @@ Endpoint:
 - `GET /api/exchanges/bybit/account`: membaca Unified Wallet dan posisi Linear melalui API V5.
 - `GET /api/exchanges/market?exchange=binance|bybit&symbol=BTCUSDT`: membaca ticker publik 24 jam Spot dan Futures/Linear; tidak memerlukan API key.
 
-Koneksi privat dilindungi token pemilik pada header `x-exchange-access-token`; tanpa token server yang dikonfigurasi endpoint akun menolak akses. Status konfigurasi hanya mengungkap boolean dan tidak mengembalikan nilai token atau kredensial exchange. Masukkan `EXCHANGE_ACCESS_TOKEN` (atau `ADMIN_TOKEN` fallback) pada kolom akses privat, lalu tekan tombol uji koneksi. Tombol Perbarui akun memakai token sesi yang sama, dan token dapat dihapus manual dari halaman. Token tidak disimpan ke localStorage/sessionStorage dan hanya digunakan selama halaman terbuka. Data akun hanya diteruskan ke browser untuk ditampilkan dan tidak disimpan ke state RADAR AI. Endpoint ini tidak membuat, mengubah, atau membatalkan order. Koneksi dinyatakan berhasil hanya setelah permintaan privat ke exchange berhasil; keberadaan environment saja bukan bukti koneksi. Untuk Binance, izin trading API Key diperiksa melalui endpoint resmi `GET /sapi/v1/account/apiRestrictions`, menggunakan field `enableSpotAndMarginTrading` dan `enableFutures`. Flag `canTrade` dari `/api/v3/account` atau `/fapi/v2/account` hanya menggambarkan kemampuan trading akun, bukan izin khusus API Key, sehingga tidak boleh dipakai untuk menyimpulkan izin Key. Bila endpoint izin tidak tersedia, UI menyatakan status izin belum terverifikasi dan tidak menganggapnya nonaktif. Izin withdrawal/transfer juga dibaca untuk transparansi; RADAR tidak menyediakan aksi tersebut. RADAR sendiri tetap read-only: seluruh request akun/market menggunakan HTTP GET dan tidak menyediakan endpoint order, transfer, atau withdrawal. Gunakan key dengan izin baca saja dan withdrawal/trading/transfer dinonaktifkan.
+Setelah koneksi akun berhasil, Exchange Hub menampilkan identitas akun, label opsional dari environment, serta fingerprint API Key satu arah untuk membedakan konfigurasi key tanpa mengirim key mentah ke browser. Ini bukan username resmi dari Binance/Bybit. Koneksi privat dilindungi token pemilik pada header `x-exchange-access-token`; tanpa token server yang dikonfigurasi endpoint akun menolak akses. Status konfigurasi hanya mengungkap boolean dan tidak mengembalikan nilai token atau kredensial exchange. Masukkan `EXCHANGE_ACCESS_TOKEN` (atau `ADMIN_TOKEN` fallback) pada kolom akses privat, lalu tekan tombol uji koneksi. Tombol Perbarui akun memakai token sesi yang sama, dan token dapat dihapus manual dari halaman. Token tidak disimpan ke localStorage/sessionStorage dan hanya digunakan selama halaman terbuka. Data akun hanya diteruskan ke browser untuk ditampilkan dan tidak disimpan ke state RADAR AI. Endpoint ini tidak membuat, mengubah, atau membatalkan order. Koneksi dinyatakan berhasil hanya setelah permintaan privat ke exchange berhasil; keberadaan environment saja bukan bukti koneksi. Untuk Binance, izin trading API Key diperiksa melalui endpoint resmi `GET /sapi/v1/account/apiRestrictions`, menggunakan field `enableSpotAndMarginTrading` dan `enableFutures`. Flag `canTrade` dari `/api/v3/account` atau `/fapi/v2/account` hanya menggambarkan kemampuan trading akun, bukan izin khusus API Key, sehingga tidak boleh dipakai untuk menyimpulkan izin Key. Bila endpoint izin tidak tersedia, UI menyatakan status izin belum terverifikasi dan tidak menganggapnya nonaktif. Izin withdrawal/transfer juga dibaca untuk transparansi; RADAR tidak menyediakan aksi tersebut. RADAR sendiri tetap read-only: seluruh request akun/market menggunakan HTTP GET dan tidak menyediakan endpoint order, transfer, atau withdrawal. Gunakan key dengan izin baca saja dan withdrawal/trading/transfer dinonaktifkan.
 
 ## Catatan
 

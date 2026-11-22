@@ -263,3 +263,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
  .roadmap{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){.back-link{transition:none}}
+
+
+/* Verified account identity */
+.account-identity{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 14px;padding:15px 17px;border:1px solid rgba(86,170,224,.32);border-radius:13px;background:linear-gradient(110deg,rgba(21,67,101,.42),rgba(8,26,44,.72))}
+.account-identity>div{display:grid;gap:5px;min-width:0}
+.account-identity small{color:#8eb9dc;font-size:9px;font-weight:800;letter-spacing:.12em}
+.account-identity b{color:#f0f7ff;font-size:15px;overflow-wrap:anywhere}
+.account-identity span{color:#9db4cd;font-size:10px;line-height:1.5}
+.account-identity .identity-verified{flex:none;padding:7px 10px;border:1px solid rgba(95,205,164,.28);border-radius:999px;background:rgba(39,126,94,.13);color:#8ce0bc;font-weight:750}
+@media(max-width:520px){.account-identity{align-items:flex-start;flex-direction:column;gap:9px}.account-identity b{font-size:13px}}

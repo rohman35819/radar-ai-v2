@@ -40,6 +40,7 @@ let exchangeAccessToken='';
 let accountRequestId=0;
 let accountConnected=false;
 let exchangeAccessConfigured=false;
+const identityPanel=document.getElementById('account-identity');
 const summary=document.getElementById('account-summary');
 const assetList=document.getElementById('asset-list');
 const positionList=document.getElementById('position-list');
@@ -63,6 +64,9 @@ function updateConnectionUi(){
  else feedback.textContent='Server siap. Tekan “Uji koneksi & muat akun” untuk memeriksa izin baca.';
 }
 function clearAccount(){
+ identityPanel.replaceChildren();
+ const identityEmpty=document.createElement('div');identityEmpty.innerHTML='<small>IDENTITAS AKUN</small><b>Belum terhubung</b>';
+ const identityHint=document.createElement('span');identityHint.textContent='Menunggu verifikasi API';identityPanel.append(identityEmpty,identityHint);
  summary.replaceChildren();assetList.replaceChildren();positionList.replaceChildren();
  const empty=document.createElement('div');empty.className='account-empty';empty.textContent='Klik “Periksa koneksi” untuk mengambil data akun secara aman.';summary.append(empty);
  const a=document.createElement('p');a.className='muted';a.textContent='Belum ada data akun.';assetList.append(a);
@@ -89,6 +93,15 @@ function table(headers,rows){
 function renderAccount(data){
  summary.replaceChildren();assetList.replaceChildren();positionList.replaceChildren();
  const account=data.account||{};let assets=[],positions=[],stats=[],positionsAvailable=true,positionsError='';
+ const identity=account.identity||{};
+ identityPanel.replaceChildren();
+ const identityMain=document.createElement('div');
+ const identityCaption=document.createElement('small');identityCaption.textContent='IDENTITAS AKUN · '+String(data.exchange||'EXCHANGE').toUpperCase();
+ const identityName=document.createElement('b');identityName.textContent=identity.display_name||('Akun '+String(data.exchange||'exchange'));
+ const identityFingerprint=document.createElement('span');identityFingerprint.textContent='Fingerprint API Key: '+(identity.key_fingerprint||'tidak tersedia');
+ identityMain.append(identityCaption,identityName,identityFingerprint);
+ const identityVerified=document.createElement('span');identityVerified.className='identity-verified';identityVerified.textContent='API akun berhasil merespons';
+ identityPanel.append(identityMain,identityVerified);
  if(data.exchange==='binance'){
   const spot=account.spot||{},futures=account.futures||{};
   assets=(spot.balances||[]).map(x=>[x.asset,money(x.free),money(x.locked),money(x.total)]);

@@ -17,6 +17,13 @@ test('Exchange Hub menyediakan kontrol token akses yang bisa ditampilkan dan dih
   assert.doesNotMatch(js, /localStorage|sessionStorage/);
 });
 
+test('Exchange Hub menampilkan identitas akun terverifikasi dan fingerprint tanpa menyimpan token browser', () => {
+  assert.match(html, /id="account-identity"/);
+  assert.match(js, /identity\.display_name/);
+  assert.match(js, /identity\.key_fingerprint/);
+  assert.match(js, /API akun berhasil merespons/);
+});
+
 test('Exchange Hub memiliki tombol refresh akun yang memakai koneksi privat yang sama', () => {
   assert.match(html, /id="refresh-account"/);
   assert.match(js, /refreshAccountButton\.addEventListener\('click',connectExchange\)/);

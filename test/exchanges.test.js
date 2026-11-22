@@ -48,6 +48,28 @@ test('Binance menandatangani request di server dan menormalkan saldo serta posis
   assert.equal(JSON.stringify(result).includes(secret), false);
 });
 
+test('Binance returns a safe account label and one-way API key fingerprint without exposing credentials', async () => {
+  const key = 'private-binance-api-key';
+  const service = createExchangeService({
+    env: { BINANCE_API_KEY: key, BINANCE_API_SECRET: 'private-secret', BINANCE_ACCOUNT_LABEL: 'Akun Utama Rohman' },
+    fetchImpl: async (url) => {
+      const pathname = new URL(url).pathname;
+      if (pathname === '/api/v3/account') return response({ balances: [] });
+      if (pathname === '/fapi/v2/account') return response({});
+      if (pathname === '/fapi/v2/positionRisk') return response([]);
+      if (pathname === '/sapi/v1/account/apiRestrictions') return response({ enableSpotAndMarginTrading: false, enableFutures: false });
+      throw new Error('unexpected endpoint');
+    },
+  });
+  const result = await service.account('binance');
+  assert.equal(result.account.identity.display_name, 'Akun Utama Rohman');
+  assert.equal(result.account.identity.label_configured, true);
+  assert.match(result.account.identity.key_fingerprint, /^[A-F0-9]{10}$/);
+  assert.notEqual(result.account.identity.key_fingerprint, key);
+  assert.equal(JSON.stringify(result).includes(key), false);
+  assert.equal(JSON.stringify(result).includes('private-secret'), false);
+});
+
 test('Binance reports actual API Key trading permissions independently from account canTrade', async () => {
   const service = createExchangeService({
     env: { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' },
