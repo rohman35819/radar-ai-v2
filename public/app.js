@@ -249,6 +249,8 @@ function renderEarlyGems(){
    const flags=(x.risk_flags||[]).map(flag=>({liquidity_unknown:'Likuiditas N/A',liquidity_low:'Likuiditas rendah',volume_unknown:'Volume N/A',volume_low:'Volume rendah',market_cap_unverified:'Market cap belum diverifikasi',trade_count_unknown:'Jumlah transaksi N/A'}[flag]||flag));
    const age=x.age_hours!==null&&Number.isFinite(Number(x.age_hours))?(Number(x.age_hours)<1?Math.max(1,Math.round(Number(x.age_hours)*60))+' menit lalu':Number(x.age_hours)<48?Number(x.age_hours).toFixed(1)+' jam lalu':(Number(x.age_hours)/24).toFixed(1)+' hari lalu'):'Umur pool N/A';
    const link=typeof x.pool_url==='string'&&x.pool_url.startsWith('https://www.geckoterminal.com/')?x.pool_url:null;
+   const tokenLink=typeof x.token_url==='string'&&x.token_url.startsWith('https://www.geckoterminal.com/')?x.token_url:null;
+   const tokenAddress=String(x.token_address||'');
    const item=el('article',{class:'gem-card'},
     el('div',{class:'gem-card-top'},
      el('div',{class:'gem-identity'},el('span',{class:'coin-avatar'},esc(x.symbol).slice(0,3)),el('div',{},el('b',{},esc(x.symbol)),el('small',{},esc(x.token_name)))),
@@ -262,7 +264,7 @@ function renderEarlyGems(){
      el('div',{},el('small',{},'PERUBAHAN 24J'),el('b',{},pct(x.price_change_24h_pct))),
      el('div',{},el('small',{},'BUY / SELL 24J'),el('b',{},(x.buys_24h??'—')+' / '+(x.sells_24h??'—')))),
     flags.length?el('div',{class:'gem-flags'},...flags.map(flag=>el('span',{class:'flag'},flag))):el('div',{class:'gem-flags'},el('span',{class:'gem-clean'},'Tidak ada flag kualitas data')),
-    el('div',{class:'gem-footer'},el('small',{},'Pool: '+(x.pool_address?String(x.pool_address).slice(0,8)+'…'+String(x.pool_address).slice(-6):'N/A')),link?el('a',{href:link,target:'_blank',rel:'noopener noreferrer'},'Buka di GeckoTerminal ↗'):null));
+    el('div',{class:'gem-footer'},el('small',{title:tokenAddress},'CA: '+(tokenAddress?tokenAddress.slice(0,8)+'…'+tokenAddress.slice(-6):'N/A')),el('div',{class:'gem-links'},tokenLink?el('a',{href:tokenLink,target:'_blank',rel:'noopener noreferrer'},'Token ↗'):null,link?el('a',{href:link,target:'_blank',rel:'noopener noreferrer'},'Pool ↗'):null)));
    results.append(item);
   });
   $('#gem-count').textContent=rows.length+' pool ditampilkan';
