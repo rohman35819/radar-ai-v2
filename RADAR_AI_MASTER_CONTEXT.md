@@ -1629,3 +1629,35 @@ Sebelum provisioning, wajib ada bukti plan/remaining quota, estimasi compute/sto
 3. Divisi 01 review DB TLS/least privilege/secrets/approval/kill switch; Divisi 05 independent QA untuk migration/concurrency/recovery.
 4. Direktur Utama menetapkan PIC terpisah dan menghindari konflik file; Divisi 07 menyiapkan memory records tanpa embedding.
 5. Hostless quota/billing harus diverifikasi oleh pemilik akun melalui dashboard resmi sebelum worker/database dibuat.
+
+
+---
+
+## 40. VALIDASI POSTGRESQL GRATIS DI CI — 22 NOVEMBER 2026
+
+### Implementasi
+- Workflow .github/workflows/test.yml kini menjalankan service container PostgreSQL 16 sementara di GitHub Actions; tidak ada database eksternal/produksi yang dibuat.
+- Migration db/migrations/001_agent_platform.sql diterapkan pada database disposable dalam CI.
+- db/tests/001_agent_platform_smoke.sql memeriksa empat tabel, membuat runtime role NOLOGIN dengan least-privilege, menguji INSERT audit event, dan membuktikan role tidak memiliki UPDATE/DELETE atas audit_events.
+- Trigger append-only tetap menjadi defense-in-depth. Uji CI saat ini memverifikasi role runtime tidak dapat UPDATE/DELETE karena privilege tidak diberikan.
+- Trigger push workflow diperluas untuk branch feat/** agar perubahan branch fitur tervalidasi.
+
+### Hasil bukti
+- Branch head dan PR #18 head saat pencatatan: 8a7b7e9f0c6d1c7425aac111b25c49496d16d534.
+- GitHub Actions run #381, ID 44998478751, event push, completed/success.
+- Job test: npm test 68 passed, 0 failed; PostgreSQL 16 service initialized; migration 001 berhasil; schema/runtime audit-permission smoke test berhasil.
+- Run #382 (pull_request) masih berjalan saat audit ini; run #381 pada branch head yang sama sudah sukses.
+- Beberapa run sebelumnya gagal akibat delimiter dollar-quote pada smoke test. Kesalahan diperbaiki; jangan menyembunyikan percobaan gagal. Run #381 adalah bukti sukses setelah perbaikan.
+
+### Batas validasi
+- Ini membuktikan migration dapat diterapkan pada PostgreSQL 16 disposable dan smoke test role/audit berjalan di CI.
+- Ini belum membuktikan DB adapter, queue concurrency/double-claim, lease recovery, retry/backoff, dependency blocking, scheduler, worker runtime, Hostless deploy/Live, atau ketahanan produksi.
+- Tidak ada biaya resource eksternal; service container berjalan hanya selama job CI.
+- PR #18 tetap draft dan belum merge. Security review Divisi 01 dan QA independen Divisi 05 tetap diperlukan.
+
+### NEXT TASK
+1. Divisi 06: implement DB adapter + queue service dengan injected pool, feature flag default OFF; transactional enqueue/claim SKIP LOCKED/lease fencing/heartbeat/complete/retry/dead-letter.
+2. Divisi 05: tambahkan concurrency tests dua claimant, stale lease, idempotency, dependency gate, retries, restart recovery, dan failure injection.
+3. Divisi 01: review privilege boundary, trigger, schema ownership, TLS/secret config, kill switch, and approval policy.
+4. Divisi 07: canonical decision/task memory records; provenance dan supersedes; full-text/metadata retrieval.
+5. Jangan provisioning Hostless worker/database sampai kuota Rp0 dan overage guard diverifikasi melalui akun resmi.
