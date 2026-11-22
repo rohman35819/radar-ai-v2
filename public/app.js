@@ -139,7 +139,10 @@ function renderNews(){
  v.append(sectionHead('News Intelligence','Berita dari sumber RSS yang dikonfigurasi.'));
  const status=el('div',{class:'panel news-health'},
   el('div',{class:'health-line'},el('span',{},'Koneksi RSS'),el('b',{class:health?.ok?'positive':health?'negative':'muted'},health?.ok?'● ONLINE':health?'● ERROR':'● BELUM DICEK')));
- sources.forEach(source=>status.append(el('div',{class:'health-line'},el('span',{},esc(source.host)),el('b',{class:source.ok?'positive':'negative'},source.ok?'● ONLINE · '+source.count+' artikel':'● '+esc(source.error||'ERROR'))));
+ sources.forEach((source) => {
+  const label = source.ok ? '● ONLINE · ' + source.count + ' artikel' : '● ' + (source.error || 'ERROR');
+  status.append(el('div',{class:'health-line'},el('span',{},esc(source.host)),el('b',{class:source.ok?'positive':'negative'},label)));
+ });
  if(health?.error)status.append(el('p',{class:'muted news-health-error'},'Kode diagnostik: '+esc(health.error)));
  v.append(status);
  if(!news.length)return v.append(empty(health&&!health.ok?'Sumber RSS bermasalah':'Belum ada berita',health?.error?'Status: '+health.error+' — periksa NEWS_FEEDS dan akses jaringan server.':'Feed terhubung tetapi belum mengirim artikel, atau refresh berikutnya belum berjalan.'));
