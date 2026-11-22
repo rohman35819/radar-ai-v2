@@ -258,6 +258,24 @@ async function loadChart() {
     $('#price-chart').replaceChildren(node('div', 'negative', 'Grafik tidak tersedia: ' + safeText(error.message)));
   } finally { chartBusy = false; }
 }
+async function loadAICouncilSummary() {
+  const target = $('#ai-market-summary');
+  try {
+    const response = await fetch('/api/ai/group', { cache: 'no-store' });
+    if (!response.ok) throw new Error('AI Council unavailable');
+    const result = await response.json();
+    const report = result.group?.last;
+    target.replaceChildren();
+    if (!report) return target.append(node('div', 'muted', 'Belum ada laporan AI Council tersimpan. Jalankan rapat dari dashboard utama untuk menampilkan ringkasan di sini.'));
+    const final = report.final || {};
+    target.append(node('div', 'regime-value ' + String(final.decision || 'WAIT').toLowerCase(), safeText(final.decision || 'WAIT')));
+    target.append(node('p', 'summary-fact', safeText(final.summary || 'Tidak ada ringkasan AI.')));
+    target.append(node('small', 'muted', 'Provider: ' + safeText(final.provider) + ' · ' + new Date(report.created_at).toLocaleString('id-ID') + ' · ' + safeText(report.status)));
+    (final.reasons || []).slice(0, 3).forEach((reason) => target.append(node('p', 'summary-fact', '• ' + safeText(reason))));
+  } catch {
+    target.replaceChildren(node('div', 'muted', 'Laporan AI Council belum dapat dimuat.'));
+  }
+}
 function renderAll() {
   if (!market) return;
   globalMetrics();
@@ -268,6 +286,7 @@ function renderAll() {
   renderExchanges();
   renderSummary();
   renderExchangeSelector();
+  loadAICouncilSummary();
   updateStatus();
 }
 async function loadMarket(force = false) {
