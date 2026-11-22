@@ -19,7 +19,7 @@ test('agent registry defaults to paused and restricts autonomy to Stage 0/1', ()
 });
 
 test('task queue has idempotency, bounded retries, leases and dispatch indexes', () => {
-  for (const fragment of ['idempotency_key text UNIQUE', 'max_attempts BETWEEN 1 AND 10',
+  for (const fragment of ['idempotency_key text UNIQUE', 'max_attempts BETWEEN 1 AND 3',
     'lease_token uuid', 'task_queue_dispatch_idx', 'task_queue_lease_expiry_idx']) {
     assert.ok(migration.includes(fragment), 'missing queue contract: ' + fragment);
   }
@@ -42,7 +42,7 @@ test('audit events reject update and delete and constrain actor/outcome', () => 
 
 
 test('registry covers divisions 01-08 and enforces zero budget and one-worker concurrency', () => {
-  assert.ok(migration.includes("division_code ~ '^0[1-8]$'"));
+  assert.ok(migration.includes("division_code IN ('01', '02', '03', '04', '05', '06', '07', '08')"));
   assert.ok(migration.includes('max_concurrency = 1'));
   assert.ok(migration.includes('daily_budget_usd = 0'));
 });
