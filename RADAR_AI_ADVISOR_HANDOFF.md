@@ -179,3 +179,14 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Never store secrets, credentials, raw exchange payloads or unrelated sensitive personal data. Retention periods remain proposals pending approval.
 - No persistent memory tables/service/runtime are active. Strict Rp0 and no-provisioning gate remain binding.
 - NEXT: Divisi 07 curate sample decision/task records; Divisi 01 review privacy/access/retention; Divisi 05 define provenance and retrieval QA. Implementation only after schema acceptance and verified zero-cost capacity.
+
+
+## 20. Extensible AI provider registry — secure candidate (22 November 2026)
+- BOS requested no fixed provider-name roster. Branch: `feat/ai-provider-registry-secure`; previous PR #28 remains draft/stale and is superseded by this candidate when PR is opened.
+- Server-side env registry + authenticated GET provider list + dynamic Command Center participant checkboxes. The server validates provider IDs; no API key is returned to the browser.
+- Custom providers require ENABLED=1, COST_CLASS=free under Rp0, model, safe HTTPS base URL and OpenAI-compatible protocol. Custom providers are opt-in per session and never auto-join background runs.
+- Paid OpenAI/custom providers are gated by AI_WORKSPACE_ALLOW_PAID=1; keep 0 while Rp0 remains binding. Verify actual provider quota/overage before setting any cost class to free.
+- Redirects rejected; URL credentials/query/fragment/non-443/IP/local hosts rejected; provider errors sanitized; outbound context allowlisted and redacted.
+- First adapter supports OpenAI-compatible chat-completions; native protocols need dedicated adapters. No provider secrets or live API calls used; no Hostless deployment.
+- Test inventory expected 95 tests / 10 files. Verify exact-head CI before review/merge. Divisi 01 security, Divisi 04 compatibility, Divisi 05 QA review required.
+- No offline autonomy or write permissions are granted; AI outputs remain proposals only.
