@@ -4,7 +4,7 @@ Tanpa dependensi npm (V2.2) (butuh Node >= 20). Backend + dashboard PWA dalam sa
 
 ## Jalankan
     cp .env.example .env   # opsional; isi nilai lalu: export $(grep -v '^#' .env | xargs)
-    npm test               # 90 test case di 10 file
+    npm test               # syntax checks + seluruh test/*.test.js
     npm start              # http://localhost:3000
 
 ## Pasang
@@ -20,6 +20,7 @@ PWA menyimpan shell halaman agar dapat dibuka kembali saat offline. Respons API 
 |---|---|
 | Logika screener, FDV, filter kategori, join gecko_id, parser RSS, validasi unlock, aturan alert + cooldown, server + rate limit + path traversal, kegagalan sumber, signature Binance/Bybit, normalisasi saldo/posisi, route Exchange Hub | **Diuji otomatis** (60 test case di delapan file; exchange memakai respons API mock, belum membuktikan koneksi akun Hostless/live) |
 | Panggilan nyata ke CoinGecko, DeFiLlama, RSS | Jalankan `npm run live-check` di mesin ber-internet (tes API nyata). Telegram: belum diuji |
+| Early Gem Scanner | Feed pool DEX baru lintas-chain dari CoinGecko Onchain / GeckoTerminal; default 3 halaman (maks. 60 pool) per refresh. Pool baru bukan bukti token baru dibuat; bukan seluruh kontrak token dan bukan audit keamanan. |
 | Lonjakan volume | Estimasi dari selisih volume 24j bergulir antar refresh (~10 mnt) vs median selisih token itu sendiri; CoinGecko gratis tidak punya volume per-10-menit asli. Butuh ~1 jam riwayat sebelum aktif |
 | Dashboard/PWA di perangkat Android | **Belum diuji di perangkat**; sintaks dan file statis diperiksa |
 | Exchange Hub Binance/Bybit | Backend akun read-only dan ticker market publik tersedia; koneksi akun nyata menunggu verifikasi environment Hostless dan izin API |
@@ -27,6 +28,22 @@ PWA menyimpan shell halaman agar dapat dibuka kembali saat offline. Respons API 
 | Telegram | **Butuh konfigurasi**: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 | CoinGecko Demo key | Disarankan (`COINGECKO_DEMO_KEY`); cek ToS jika komersial |
 | Makro/ekonomi global | **Belum ada** modul khusus; hanya lewat `NEWS_FEEDS` |
+
+## Early Gem Scanner (on-chain discovery)
+
+Dashboard memiliki menu **Early Gem Scanner** yang melengkapi Market Screener CoinGecko kategori AI. Feed ini memakai CoinGecko Onchain API (data GeckoTerminal) melalui endpoint `/onchain/networks/new_pools` untuk mengambil pool DEX terbaru lintas jaringan. Sumber mengembalikan pool baru dalam jendela sekitar 48 jam; tiap halaman berisi hingga 20 pool.
+
+Environment:
+- `EARLY_GEMS_ENABLED=1` (default): aktifkan feed on-chain; set `0` untuk menonaktifkan.
+- `ONCHAIN_PAGES=3` (default, rentang 1–10): jumlah halaman yang diminta tiap refresh; default maksimal 60 pool per refresh.
+- Menggunakan `COINGECKO_DEMO_KEY` yang sama dengan feed CoinGecko utama. Key hanya dikirim dari server ke CoinGecko, tidak pernah dikirim ke browser.
+- Dengan `REFRESH_MIN=10` dan 3 halaman, RADAR membuat maksimal tiga permintaan on-chain per 10 menit. Demo API mendokumentasikan kuota 30 permintaan/menit; jangan menaikkan halaman/refresh agresif.
+
+Scanner menormalisasi network, DEX, alamat token/pool, harga, likuiditas, volume 24 jam, transaksi, umur pool, FDV dan market cap. Nilai yang tidak disediakan tetap `null`/N/A; market cap yang belum diverifikasi diberi flag. Filter likuiditas di dashboard hanya filter data, bukan sinyal beli.
+
+**Batas penting:** pool baru tidak sama dengan token yang baru dibuat. Token tanpa pool likuid, jaringan yang belum didukung/terindeks, atau pool yang belum masuk indeks tidak akan terlihat. Feed bukan daftar seluruh token/kontrak blockchain. Flag likuiditas/volume/market cap adalah pemeriksaan kualitas data sederhana, bukan honeypot detector, audit kontrak, analisis holder, atau jaminan keamanan. RADAR tidak mengirim transaksi atau order.
+
+Referensi endpoint: https://docs.coingecko.com/reference/latest-pools-list
 
 ## Exchange Hub (read-only)
 
