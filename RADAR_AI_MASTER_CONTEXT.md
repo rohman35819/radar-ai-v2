@@ -1421,3 +1421,56 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 4. Implementasikan fondasi organisasi terlebih dahulu dalam mode observe/propose; jangan langsung memberi worker hak merge/deploy.
 5. Setelah audit DATA_DIR/EROFS dan QA prioritas saat ini, mulai pilot satu worker dengan ruang lingkup kecil, lalu ukur sebelum memperluas ke lima divisi.
 6. Tetap lanjutkan roadmap yang sudah berjalan: Hostless verification bila akses tersedia, audit DATA_DIR/EROFS, QA Exchange Hub, dan QA Dashboard. Organisasi baru tidak boleh menjadi alasan menunda bug/stabilitas yang sudah tercatat.
+
+
+---
+
+## 36. QA GATE & CI MAINTENANCE — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 36.1 Repository and scope verification
+- Divisi lead: 05 — QA, Testing & DevOps. Scope: independent CI/release audit; supporting owners for Exchange Hub, Dashboard/UI, Security & Reliability, and AI/Command Center remain responsible for domain implementation.
+- Full `RADAR_AI_MASTER_CONTEXT.md` and `AGENTS.md` were fetched from `main`; section 35 routing and latest NEXT TASK were reviewed.
+- Latest pre-audit main HEAD: `6a52a4a0fe89dd6b309a65cd5c58ad100ddf841a` (`docs: add AI division routing rules for contributors`). Recent preceding commits `bb7f819` and `95cd69c` are documentation changes; latest feature implementation commit in the reviewed chain is `14745010a388973f7fdeafaf8fc2326f7496f72a` (Exchange Hub account identity).
+- Reviewed current package scripts, workflow `.github/workflows/test.yml`, server.js, lib/exchanges.js, lib/ingest.js, public/index.html, public/app.js, public/style.css, public/trading.html, public/trading.js, test/radar.test.js, test/exchanges.test.js, and test/exchange-ui.test.js.
+- `package.json` defines `npm test` as syntax checks for server/exchange/dashboard/PWA/Command Center/OpenAI files followed by `node --test test/*.test.js`. No runtime npm dependencies are declared.
+
+### 36.2 Verified CI evidence
+- GitHub Actions run #296 / run ID `44992834181`, job `test`, was fetched. Job status: completed; conclusion: success.
+- The job log confirms the workflow executed the package test command and reported **63 tests, 63 pass, 0 fail, 0 skipped**. This CI evidence is associated with the Exchange Hub identity implementation commit `14745010a388973f7fdeafaf8fc2326f7496f72a`, as recorded in the prior verified project history. Do not treat it as a new local test run or proof that the newest documentation HEAD has a separate completed CI run.
+- CI warnings in the retrieved log: Node.js 20 deprecation warnings from `actions/checkout@v4` and `actions/setup-node@v4`; Node's `punycode` module deprecation warning. They did not fail the run.
+- Commit CI maintenance patch below upgrades both workflow actions to v7, whose documented runtime is Node 24. Punycode warning remains untriaged; no evidence yet identifies its originating dependency/call path.
+
+### 36.3 QA changes
+- `.github/workflows/test.yml`: upgraded `actions/checkout@v4` and `actions/setup-node@v4` to `@v7` to remove the observed Node 20 action-runtime deprecation and align workflow actions with the Node 24 test runtime.
+- Workflow action v7 compatibility is documented by the upstream action repositories; the workflow still uses the same trigger, runner, Node version, and `npm test` command. No application runtime, secrets, exchange permissions, or deployment settings were changed.
+- CI workflow patch commit: `67e8ab0004feddbe1267440d3c63b8ff91b7960d`.
+- A separate documentation commit is expected to follow this entry. New CI for the workflow patch / documentation HEAD has not yet been verified in this audit.
+
+### 36.4 Test and deployment status
+- CI (previous feature commit): **PASS**, 63/63 tests, 0 failures; job and logs fetched from GitHub Actions.
+- Local `npm test`: **NOT RUN**. A local clone attempt was blocked because the execution environment could not resolve `github.com`; no claim of local execution is made.
+- GitHub combined status API for the latest pre-audit HEAD returned no status entries. The available workflow-run connector only exposes pull-request-triggered runs and returned an empty list for that push commit; therefore it cannot establish the latest push-run result.
+- Hostless Build: **UNKNOWN / NOT VERIFIED**. No Hostless account connector or deployment log access is available in this session.
+- Hostless LIVE: **NOT VERIFIED**. Public root and `/api/health` checks could not be fetched from this environment. No active deployment SHA was established.
+- Desktop/mobile browser QA, browser console/network inspection, and visual checks were **NOT RUN**; no browser automation or Hostless session is available here.
+
+### 36.5 Findings and ownership
+- **P2 — CI maintenance:** workflow used Actions v4 and emitted Node.js 20 deprecation warnings despite testing on Node 24. Mitigation committed in `.github/workflows/test.yml`; verify next Actions run and confirm warnings disappear. Owner: Divisi 05.
+- **P3 — CI warning:** `punycode` deprecation appears during test job cleanup. Source not identified; do not suppress until dependency/call path is established. Owner: Divisi 05 to trace; route dependency update to the owning module when identified.
+- **P1/P2 — Deployment verification blocker:** Hostless build and active Live SHA remain unknown. This is an evidence/access blocker, not a confirmed deployment failure.
+- **P2 — Storage reliability:** historical EROFS concern remains unresolved pending Hostless volume/runtime logs. Do not change DATA_DIR, reset state, or introduce ephemeral fallback without verified mount configuration.
+- **Exchange Hub:** automated coverage includes account permission separation, server-side signing, account identity/fingerprint, no credential exposure in UI tests, and safe failure handling. Real account connection and responsive visual behavior remain unverified until deployed/browser-tested.
+- **Dashboard/Command Center:** menu shell and source files were reviewed; no live rendering, console/network, or viewport test was possible. Do not mark frontend QA passed.
+
+### 36.6 QA Gate decision
+- Application release readiness: **NOT VERIFIED** (Hostless build/live and visual QA evidence missing).
+- Automated test suite: **PASS on the previously verified feature commit only**; current main HEAD requires a fresh successful workflow run.
+- No release/deployment action was performed. No production settings, credentials, account permissions, or exchange endpoints were changed.
+
+### 36.7 NEXT TASK
+1. Verify GitHub Actions for the newest main HEAD after the workflow and documentation commits; confirm Node 20 action warnings are gone and all tests pass.
+2. Obtain read-only Hostless deployment/log access through the project's authorized integration; verify build state, deployment commit SHA, runtime health, and public app separately. Do not request or reveal secrets.
+3. Complete Exchange Hub desktop/mobile QA after deployment: switch exchange, failed private API request, refresh, account identity, responsive tables, and keyboard focus.
+4. Complete Dashboard and Command Center desktop/mobile QA: all 12 navigation destinations, sidebar independent scroll, mobile drawer, data loading/error states, console and network.
+5. Continue EROFS investigation with actual Hostless mount and runtime logs; coordinate storage code changes with Divisi 01.
+6. Trace the `punycode` deprecation warning to its source; add a regression check only if a meaningful behavior risk is identified.
