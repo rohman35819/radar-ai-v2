@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const html = fs.readFileSync(require.resolve('../public/trading.html'), 'utf8');
 const css = fs.readFileSync(require.resolve('../public/trading.css'), 'utf8');
 const js = fs.readFileSync(require.resolve('../public/trading.js'), 'utf8');
+const exchangeService = fs.readFileSync(require.resolve('../lib/exchanges.js'), 'utf8');
 
 test('Exchange Hub menyediakan kontrol token akses yang bisa ditampilkan dan dihapus', () => {
   assert.match(html, /id="toggle-access-token"/);
@@ -47,6 +48,7 @@ test('Exchange Hub tetap read-only saat API Key Binance memiliki izin trading ak
   assert.match(js, /PERINGATAN KEAMANAN: API Key Binance masih memiliki/);
   assert.match(js, /RADAR tetap berjalan dalam mode baca-saja dan tidak mengirim order/);
   assert.match(js, /gunakan key baru read-only saat memungkinkan/);
-  assert.match(js, /method:'GET'/);
+  assert.match(exchangeService, /method: 'GET'/);
+  assert.doesNotMatch(exchangeService, /method: '(POST|PUT|PATCH|DELETE)'/);
   assert.doesNotMatch(js, /\/api\/v[13]\/order|\/fapi\/v1\/order|\/fapi\/v2\/order/);
 });
