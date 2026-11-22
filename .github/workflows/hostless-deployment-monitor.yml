@@ -113,6 +113,7 @@ jobs:
           NODE
 
       - name: Verify public LIVE readiness
+        if: always()
         id: live
         shell: bash
         run: |
