@@ -11,7 +11,7 @@ GRANT INSERT ON radar_agent.audit_events TO radar_agent_runtime;
 
 BEGIN;
 
-DO $
+DO $body$
 BEGIN
   IF to_regclass('radar_agent.agent_registry') IS NULL
      OR to_regclass('radar_agent.task_queue') IS NULL
