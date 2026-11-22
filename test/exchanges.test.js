@@ -293,3 +293,20 @@ test('Bybit treats incomplete core permission categories as unverified', async (
   assert.equal(result.account.api_permissions.available, false);
   assert.equal(result.account.api_permissions.error, 'BYBIT_API_PERMISSION_READ_UNAVAILABLE');
 });
+
+
+test('Binance exposes withdrawal and transfer API key permissions independently from trading flags', async () => {
+  const service = createExchangeService({ env: { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' }, fetchImpl: async (url) => {
+    const pathname = new URL(url).pathname;
+    if (pathname === '/api/v3/account') return response({ balances: [] });
+    if (pathname === '/fapi/v2/account') return response({});
+    if (pathname === '/fapi/v2/positionRisk') return response([]);
+    if (pathname === '/sapi/v1/account/apiRestrictions') return response({ enableSpotAndMarginTrading: false, enableFutures: false, enableWithdrawals: true, enableInternalTransfer: true, permitsUniversalTransfer: false });
+    throw new Error('unexpected endpoint');
+  } });
+  const result = await service.account('binance');
+  assert.equal(result.account.api_permissions.spot_trading, false);
+  assert.equal(result.account.api_permissions.futures_trading, false);
+  assert.equal(result.account.api_permissions.withdrawals, true);
+  assert.equal(result.account.api_permissions.internal_transfer, true);
+});
