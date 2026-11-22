@@ -76,6 +76,14 @@ Setelah koneksi akun berhasil, Exchange Hub menampilkan identitas akun, label op
 - Diskusi memakai satu snapshot ringkas, tiga analisis independen, lalu satu review moderator Groq. Jika kurang dari dua analisis valid atau snapshot basi, hasil akhir WAIT.
 - Fitur ini hanya analisis dan laporan. Tidak mengirim order trading. Pastikan `DATA_DIR` persisten agar laporan terakhir tidak hilang setelah restart.
 
+## GitHub App Agent gateway (read-only pilot)
+- Server-side env: `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_PRIVATE_KEY`, and optional `GITHUB_REPOSITORY` (default `rohman35819/radar-ai-v2`). Compatibility aliases `GITHUB_APP_INSTALLATION_ID` and `GITHUB_APP_PRIVATE_KEY` are also accepted.
+- The private key stays only in Hostless/server environment. Never place it in browser code, Git, logs, or chat.
+- `GET /api/github/status` requires `x-admin-token: ADMIN_TOKEN`. It exchanges an App JWT for a short-lived installation token, checks repository metadata and `README.md` content access, and returns only repository identity plus granted installation permission names. The response is `no-store`; tokens and private keys are never returned.
+- `GET /api/github/file?path=lib%2Fai%2Fworkspace.js` also requires `x-admin-token`. Reads are restricted to `public/`, `lib/ai/`, and `test/`, with a 64 KiB response cap. Path traversal and all other paths are rejected by the GitHub App client.
+- This pilot is **read-only from the RADAR API**. No endpoint exposes GitHub write, branch, PR, merge, issue mutation, or deployment operations. The App's configured write permissions are not exercised by this pilot.
+- This does not yet connect Gemini Function Calling to GitHub. The next stage is a capability-scoped tool adapter and approval-gated draft-PR workflow; no autonomous code changes or merge are enabled by this change.
+
 ## Ruang Kerja AI (review mandiri)
 - Tab **Ruang Kerja** menampilkan temuan dan proposal mandiri dari Gemini, Groq, OpenRouter, dan OpenAI.
 - Setiap agen memakai sudut pandang berbeda: UX/produk, reliability/QA, arsitektur/riset, dan engineering/keamanan. Mereka mengusulkan maksimal tiga perbaikan dan menyertakan manfaat, risiko, file terkait, serta kriteria penerimaan.
