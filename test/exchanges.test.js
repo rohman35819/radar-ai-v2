@@ -28,13 +28,18 @@ test('Binance menandatangani request di server dan menormalkan saldo serta posis
       assert.equal(signature, expected);
       if (parsed.pathname === '/api/v3/account') return response({ canTrade: false, balances: [{ asset: 'USDT', free: '12.5', locked: '1' }, { asset: 'BTC', free: '0', locked: '0' }] });
       if (parsed.pathname === '/fapi/v2/account') return response({ canTrade: true, totalWalletBalance: '25', availableBalance: '20', totalUnrealizedProfit: '2' });
+      if (parsed.pathname === '/sapi/v1/account/apiRestrictions') return response({ enableReading: true, enableSpotAndMarginTrading: false, enableFutures: false, enableWithdrawals: false, enableInternalTransfer: false, permitsUniversalTransfer: false });
       if (parsed.pathname === '/fapi/v2/positionRisk') return response([{ symbol: 'BTCUSDT', positionAmt: '0.01', entryPrice: '50000', markPrice: '51000', unRealizedProfit: '10', leverage: '5', marginType: 'isolated' }, { symbol: 'ETHUSDT', positionAmt: '0' }]);
       throw new Error('unexpected endpoint');
     },
   });
   const result = await service.account('binance');
-  assert.equal(seen.length, 3);
+  assert.equal(seen.length, 4);
   assert.equal(result.connected, true);
+  assert.equal(result.account.api_permissions.available, true);
+  assert.equal(result.account.api_permissions.spot_trading, false);
+  assert.equal(result.account.api_permissions.futures_trading, false);
+  assert.equal(result.account.api_permissions.withdrawals, false);
   assert.equal(result.account.spot.balances.length, 1);
   assert.equal(result.account.spot.balances[0].total, 13.5);
   assert.equal(result.account.futures.wallet_balance, 25);
