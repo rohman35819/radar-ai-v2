@@ -1661,3 +1661,9 @@ Sebelum provisioning, wajib ada bukti plan/remaining quota, estimasi compute/sto
 3. Divisi 01: review privilege boundary, trigger, schema ownership, TLS/secret config, kill switch, and approval policy.
 4. Divisi 07: canonical decision/task memory records; provenance dan supersedes; full-text/metadata retrieval.
 5. Jangan provisioning Hostless worker/database sampai kuota Rp0 dan overage guard diverifikasi melalui akun resmi.
+
+
+### 40.5 CI terbaru untuk seluruh PR head
+- PR #18 head terbaru saat pembaruan dokumentasi: f9ed31656783d8547ee29a1f2f9f67e3bdbab39c.
+- Workflow run #388 (ID 44998578268), event pull_request, dan run #387 (ID 44998573643), event push: keduanya completed/success pada head tersebut.
+- Seluruh langkah npm test, migration PostgreSQL 16, dan audit-role smoke test selesai sukses pada kedua run.
