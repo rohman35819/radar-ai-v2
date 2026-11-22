@@ -1511,3 +1511,42 @@ ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus 
 4. Bandingkan Hostless scheduler, GitHub Actions, dan worker service terpisah berdasarkan uptime, biaya, secret management, persistence, dan operasional.
 5. Rancang pilot Stage 0/1: Agent Registry, persistent Task Queue schema, dan Audit Event; tanpa merge/deploy otomatis.
 6. Jangan menunda NEXT TASK stabilitas dan QA yang telah tercatat di section 36.
+
+
+## 38. VERIFIKASI PERMISSION DAN IDENTITAS API KEY BYBIT — 22 NOVEMBER 2026
+
+### 38.1 Temuan audit Divisi 03
+- Backend Bybit sebelumnya hanya membaca Unified Wallet dan posisi Linear; tidak memanggil endpoint metadata API Key. UI karena itu belum dapat membuktikan apakah key benar-benar read-only atau memiliki permission trading/withdrawal/transfer.
+- Endpoint resmi Bybit `GET /v5/user/query-api` tersedia untuk master dan sub-user API key, mengembalikan `readOnly`, kategori `permissions`, dan `userID`. Referensi: https://bybit-exchange.github.io/docs/v5/user/apikey-info.
+- File `NEXT_TASK.md` tidak ditemukan pada root branch `main`; prioritas Divisi 03 diambil dari roadmap, catatan integrasi dan status kode aktual dalam master context/README.
+
+### 38.2 Perubahan
+- `lib/exchanges.js`: menambahkan signed HTTP GET `/v5/user/query-api`; hanya mengembalikan UID, flag read-only, dan daftar permission kategori yang disanitasi. `apiKey`, `secret`, IP whitelist, dan metadata sensitif lain tidak diteruskan ke browser. Normalisasi saldo Bybit juga tidak lagi mengganti `availableToWithdraw` yang hilang dengan `availableToBorrow`; nilai withdrawable yang tidak tersedia dikirim sebagai null.
+- `public/trading.js`: menampilkan UID Bybit bila tersedia, daftar kategori permission aktual yang disanitasi, serta membedakan permission read-only, trading, withdrawal, transfer, dan status belum terverifikasi. Audit tambahan memastikan UI Binance juga memperingatkan withdrawal/transfer aktif, bukan hanya Spot/Futures trading; nilai withdrawable yang tidak tersedia ditampilkan sebagai tanda strip, bukan nol.
+- `test/exchanges.test.js`: memperluas mock Bybit untuk verifikasi HMAC, UID, permission read-only, redaksi API key, dan fallback ketika endpoint permission gagal; menambah tes pemisahan withdrawal/transfer Binance, pencegahan fallback `availableToBorrow`, serta normalisasi HTTP/Binance/Bybit rate-limit dan penerusan Retry-After.
+- `test/exchange-ui.test.js`: menambah assertion untuk kontrak permission Bybit.
+- `server.js`: memetakan rate limit ke HTTP 429 dan meneruskan header `Retry-After` secara aman untuk route akun privat dan market.
+- `README.md`: mendokumentasikan endpoint, batas verifikasi, dan perilaku rate limit.
+
+### 38.3 Keamanan dan batasan
+- Semua request akun Bybit tetap HTTP GET dan ditandatangani di server. Tidak ada endpoint update API key, order, transfer, atau withdrawal.
+- Rate limit: HTTP 429/418, Bybit HTTP 403 `access too frequent`, Binance `-1003`, dan Bybit `10006`/`10429` dinormalisasi menjadi `EXCHANGE_RATE_LIMITED`; header `Retry-After` diteruskan ke client bila tersedia. Tidak ada retry otomatis setelah rate-limit agar tidak memperparah pembatasan/IP ban.
+- Jika metadata permission tidak tersedia atau kategori inti `Spot`, `ContractTrade`, dan `Wallet` tidak lengkap, UI wajib menyatakan belum terverifikasi; koneksi saldo tidak boleh dianggap bukti read-only.
+- Scope `Wallet.SubMemberTransferList` hanya memberi akses daftar transfer; tidak dihitung sebagai izin untuk melakukan transfer. Hanya `AccountTransfer` dan `SubMemberTransfer` yang memicu peringatan kemampuan transfer.
+- UID hanya ditampilkan sebagai identitas teknis dari respons exchange, bukan nama/email pemilik.
+- Binance tetap memakai endpoint resmi `/sapi/v1/account/apiRestrictions`; tidak ada perubahan permission atau environment exchange.
+
+### 38.4 Verifikasi dan status
+- Branch implementasi: `feature/bybit-api-key-permission-verification-final`, dibuat ulang dari main HEAD terbaru setelah tiga commit dokumentasi masuk.
+- GitHub Actions run #44997021692 untuk commit kode `d7228f2d6c049c9e72b3f4f0870453444fe203fa`: **PASS, 74/74 tests, 0 failures**; job `test` selesai sukses. Log mencakup tes permission Bybit unavailable/incomplete, UID, redaksi API key, permission withdrawal/transfer Binance, withdrawable balance, pembedaan scope transfer Bybit, serta normalisasi HTTP 429/418, Binance `-1003`, Bybit `10006`/`10429`/HTTP 403 access-too-frequent dan penerusan Retry-After.
+- Pemeriksaan sintaks JavaScript melalui parser V8 untuk `lib/exchanges.js`, `server.js`, `public/trading.js`, `test/exchanges.test.js`, dan `test/exchange-ui.test.js`: PASS. Audit statis juga memastikan method exchange yang didefinisikan hanya GET, endpoint order tidak ditemukan, dan UI memisahkan permission withdrawal/transfer dari status trading.
+- PR baru akan dibuat dari branch sinkron terbaru; PR #15 lama ditutup setelah sinkronisasi dan verifikasi selesai.
+- Main HEAD saat sinkronisasi: `b6c005ed4a217e8425652ecf6e26986e6cefcee2`; tiga commit terbaru hanya mengubah dokumentasi organisasi/advisor, dan branch ini dibuat langsung dari HEAD tersebut.
+- Hostless Build dan Hostless LIVE: belum diverifikasi.
+- Koneksi exchange nyata: belum diuji; tidak ada akses ke kredensial Hostless dan tidak ada permintaan secret kepada Owner.
+
+### 38.5 NEXT TASK Divisi 03
+1. Minta review independen QA untuk PR #15; pertahankan merge gate dan gabungkan hanya setelah review menyetujui perubahan.
+2. QA hasil metadata permission Bybit dengan respons nyata setelah deploy yang disetujui, tanpa mengubah izin API.
+3. Verifikasi identitas, saldo, posisi, dan permission Binance read-only pada environment Hostless.
+4. Lanjutkan QA responsif Exchange Hub dan audit error/timeout/rate-limit.
