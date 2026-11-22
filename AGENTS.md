@@ -50,3 +50,10 @@ Every new RADAR conversation must:
 - Never claim ChatGPT folders/chats run continuously or coordinate automatically. Offline autonomy requires deployed scheduler, durable queue/state, worker runtime, shared memory, permission gateway, audit/observability, budget limits, approval gates, and kill switch.
 - Begin with observe/propose and one isolated low-risk pilot. Workers cannot grant themselves permissions, merge/deploy without policy gates, or perform financial/production-sensitive actions without explicit Owner approval.
 - Re-verify current `main`, PRs, CI, implementation, and Hostless status; handoff snapshots are historical evidence, not current truth.
+
+## Division 08 — Procurement & Tools
+- The permanent charter and new-chat handoff are in `DIVISION_08_PROCUREMENT_TOOLS.md`; read it together with the complete master context before procurement/tool research.
+- Route tool discovery, free/open-source alternatives, API/provider evaluation, pricing/quota verification, and technology procurement research to Division 08.
+- Division 08 researches and recommends; domain divisions validate technical fit, Division 05 performs independent QA, and Executive Office sets priority.
+- No paid purchase, payment method, production provider replacement, or paid service activation without the required explicit BOS approval.
+- Verify free-tier limits and official terms; never describe a free trial as a permanently free service. Keep secrets out of chat, Git, frontend, and logs.
