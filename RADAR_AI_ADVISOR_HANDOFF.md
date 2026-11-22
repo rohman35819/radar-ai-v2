@@ -181,10 +181,10 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - NEXT: Divisi 07 curate sample decision/task records; Divisi 01 review privacy/access/retention; Divisi 05 define provenance and retrieval QA. Implementation only after schema acceptance and verified zero-cost capacity.
 
 
-## 20. News Feed Resilience — PR #38 (22 November 2026)
+## 20. News Feed Resilience — PR #39 (22 November 2026)
 
-- PR #22 default-feed/article-summary fix was already merged, but News errors persisted. PR #38 adds robust feed parsing/configuration, per-source diagnostics and UI health display.
-- Exact tested code head: 0cee779b6ae36df0f160a724f3770905f780ba06. CI run #501 passed 90/90; live RSS diagnostic returned 50 articles (TechCrunch 20, Cointelegraph 30); security scan #43 passed.
-- If the final PR head changes for documentation only, preserve the above source-code test evidence and rerun CI before merge.
+- PR #22 default-feed/article-summary fix was already merged, but News errors persisted. PR #39 adds robust feed parsing/configuration, per-source diagnostics and UI health display.
+- Merged to main: commit 6664030a102c8c46d387c139b7cfeede66f588b0. Main CI run #503 passed 90/90; main security scan #45 passed. PR CI live RSS diagnostic returned 50 articles (TechCrunch 20, Cointelegraph 30), both sources healthy.
+- Source patch was validated on PR #39 exact head 1f0ab80a68d814aa9ebd61b1b82d4951cbefd87b; main CI subsequently passed on the merge SHA.
 - GitHub Actions network access to both RSS sources is verified. Hostless network egress, Build and LIVE SHA remain unverified. Do not claim production fixed until the deployed page shows feed health and articles.
 - No dependencies or paid services added. Rollback is a Git revert of the merge commit.
