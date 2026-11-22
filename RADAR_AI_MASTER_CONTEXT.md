@@ -1486,8 +1486,8 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 
 ### 37.2 Perubahan
 - `lib/exchanges.js`: menambahkan signed HTTP GET `/v5/user/query-api`; hanya mengembalikan UID, flag read-only, dan daftar permission kategori yang disanitasi. `apiKey`, `secret`, IP whitelist, dan metadata sensitif lain tidak diteruskan ke browser.
-- `public/trading.js`: menampilkan UID Bybit bila tersedia, daftar kategori permission aktual yang disanitasi, serta membedakan permission read-only, trading, withdrawal, transfer, dan status belum terverifikasi.
-- `test/exchanges.test.js`: memperluas mock Bybit untuk verifikasi HMAC, UID, permission read-only, redaksi API key, dan fallback ketika endpoint permission gagal.
+- `public/trading.js`: menampilkan UID Bybit bila tersedia, daftar kategori permission aktual yang disanitasi, serta membedakan permission read-only, trading, withdrawal, transfer, dan status belum terverifikasi. Audit tambahan memastikan UI Binance juga memperingatkan withdrawal/transfer aktif, bukan hanya Spot/Futures trading.
+- `test/exchanges.test.js`: memperluas mock Bybit untuk verifikasi HMAC, UID, permission read-only, redaksi API key, dan fallback ketika endpoint permission gagal; menambah tes pemisahan withdrawal/transfer Binance dari flag trading.
 - `test/exchange-ui.test.js`: menambah assertion untuk kontrak permission Bybit.
 - `README.md`: mendokumentasikan endpoint dan batas verifikasi.
 
