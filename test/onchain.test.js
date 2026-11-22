@@ -1,6 +1,10 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const ingest = require('../lib/ingest');
 const { normalizeNewPools, fetchEarlyGems } = require('../lib/onchain');
 
 const now = Date.parse('2026-11-22T12:00:00Z');
@@ -70,4 +74,28 @@ test('onchain: fetch membatasi halaman dan memakai demo key hanya di server', as
   assert.equal(calls.length, 1); // berhenti saat halaman tidak penuh
   assert.match(calls[0].url, /include=base_token%2Cquote_token%2Cdex%2Cnetwork/);
   assert.equal(calls[0].options.headers['x-cg-demo-api-key'], 'demo-secret-not-logged');
+});
+
+test('onchain ingest: cache pool baru, pertahankan cache lama saat sumber gagal, dan snapshot menyajikan metadata', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'radar-onchain-'));
+  const cfg = { ...ingest.loadConfig(), dataDir: dir, feeds: [], tgToken: '', tgChat: '', exchEnabled: false, earlyGemsEnabled: true };
+  const state = ingest.emptyState();
+  const pool = normalizeNewPools(payload(), now)[0];
+  const src = {
+    fetchAiCoins: async () => [],
+    fetchLlama: async () => ({ protocols: [], fees: [], revenue: [] }),
+    fetchNews: async () => [],
+    fetchUnlocks: async () => [],
+    fetchEarlyGems: async () => ({ items: [pool], fetched_at: new Date(now).toISOString(), source: 'test', pages_requested: 1 })
+  };
+  await ingest.refresh(state, cfg, src);
+  assert.equal(state.earlyGems.length, 1);
+  assert.equal(state.health.onchain.ok, true);
+  assert.equal(state.earlyGemsMeta.pool_count, 1);
+  src.fetchEarlyGems = async () => { const error = new Error('rate limited'); error.code = 'ONCHAIN_RATE_LIMITED'; throw error; };
+  await ingest.refresh(state, cfg, src);
+  assert.equal(state.earlyGems.length, 1);
+  assert.equal(state.health.onchain.ok, false);
+  assert.equal(state.health.onchain.error, 'ONCHAIN_RATE_LIMITED');
+  assert.equal(state.earlyGemsMeta.pool_count, 1);
 });
