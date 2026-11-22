@@ -83,7 +83,6 @@ Setelah koneksi akun berhasil, Exchange Hub menampilkan identitas akun, label op
 - `GET /api/github/file?path=lib%2Fai%2Fworkspace.js` also requires `x-admin-token`. Reads are restricted to `public/`, `lib/ai/`, and `test/`, with a 64 KiB response cap. Path traversal and all other paths are rejected by the GitHub App client.
 - `POST /api/ai/github/command` requires `x-admin-token` and a server-side `GEMINI_API_KEY`. Gemini Function Calling receives only two tools: `github_get_status` and `github_read_file`. Tool calls are executed server-side against the pinned repository, limited to read-only operations, at most 6 calls / 3 model rounds. File content is truncated to 12,000 characters before being returned to Gemini.
 - This pilot is **read-only from the RADAR API**. No endpoint exposes GitHub write, branch, PR, merge, issue mutation, or deployment operations. The App's configured write permissions are not exercised by this pilot.
-- Gemini Function Calling is connected to the read-only gateway through `POST /api/ai/github/command`. Code-writing tools are intentionally not exposed yet; the next stage is an approval-gated draft-PR workflow, not autonomous merge or deployment.
 
 ## Ruang Kerja AI (review mandiri)
 - Tab **Ruang Kerja** menampilkan temuan dan proposal mandiri dari Gemini, Groq, OpenRouter, dan OpenAI.
