@@ -1787,3 +1787,14 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 
 ### NEXT TASK tunggal
 Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan sinkronisasi branch terhadap main; Divisi 06 memperbaiki backlog P2 runtime queue pada issue #30 di PR terpisah setelah schema foundation diterima. Divisi 07 menyusun record keputusan/task memory berbasis provenance, supersedes, artifact references, retention dan full-text search; jangan menambah vector DB. Tidak ada worker provisioning sebelum quota Rp0/no-overage dan persetujuan BOS terbukti.
+
+
+## 53. AGENT PLATFORM — TRUSTED AUDIT WRITER AND MAIN SYNC — 22 NOVEMBER 2026
+
+- PR #18, #29, dan #32 ditutup sebagai superseded karena stale base/temuan audit tambahan. PR #33 dibangun ulang dari main HEAD 6b30a57a630d830ba84fba76410696cd616a60a9.
+- P1 actor attribution: runtime observer role tidak lagi memiliki INSERT pada audit_events. Hanya database owner/trusted service yang dapat menulis audit sampai ada SECURITY DEFINER writer yang mengikat actor identity ke authenticated worker. Ini mencegah worker memalsukan actor_type/actor_id.
+- Role smoke: SELECT agent_registry saja; tidak ada akses task_queue/dependencies, tidak ada INSERT/UPDATE/DELETE/TRUNCATE audit, dan bukan anggota role pemilik. Audit trigger UPDATE/DELETE tetap diuji pada owner context.
+- P1 lainnya: division 01–08; daily_budget_usd=0; max_concurrency=1; max_attempts<=3; attempt_count<=max_attempts; payload/metadata bounds; unused hash-chain columns removed.
+- P2 runtime gates tetap: legal status transitions, deadline-on-claim, dependency completion/cycle prevention, atomic claim/lease fencing, double-claim, stale lease, idempotency race, retry/dead-letter, atomic task+audit, restart recovery, trusted audit writer implementation, approval queue, kill switch, memory provenance/retention.
+- PR #33 draft, CI exact-head pending. PostgreSQL 16 ephemeral CI only; no production DB/worker, no Hostless resource, no paid service. Issue #30 remains open pending independent Divisi 01/05 review.
+- NEXT TASK: Divisi 01/05 review PR #33's observer/audit boundary and PostgreSQL smoke. Merge only schema foundation after sign-off; runtime remains OFF.
