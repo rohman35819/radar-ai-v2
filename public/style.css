@@ -203,5 +203,6 @@ body{
 .gem-footer{border-top:1px solid var(--line);padding-top:9px}
 .gem-footer small{font-size:8px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
 .gem-footer a{font-size:9px;color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap}
+.gem-links{display:flex;align-items:center;gap:10px;flex:none}
 @media(max-width:900px){.gem-grid{grid-template-columns:1fr}}
 @media(max-width:760px){.gem-filters{grid-template-columns:1fr}.gem-filters input,.gem-filters select,.gem-filters button{grid-column:auto}.gem-card{padding:12px}.gem-identity b,.gem-identity small{max-width:160px}}
