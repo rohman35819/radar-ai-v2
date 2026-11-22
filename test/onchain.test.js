@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const ingest = require('../lib/ingest');
+const { createApp } = require('../server');
 const { normalizeNewPools, fetchEarlyGems } = require('../lib/onchain');
 
 const now = Date.parse('2026-11-22T12:00:00Z');
@@ -92,6 +93,14 @@ test('onchain ingest: cache pool baru, pertahankan cache lama saat sumber gagal,
   assert.equal(state.earlyGems.length, 1);
   assert.equal(state.health.onchain.ok, true);
   assert.equal(state.earlyGemsMeta.pool_count, 1);
+  const app = createApp({ cfg, state });
+  await new Promise((resolve) => app.server.listen(0, resolve));
+  try {
+    const response = await fetch(`http://127.0.0.1:${app.server.address().port}/api/snapshot`);
+    const snapshot = await response.json();
+    assert.equal(snapshot.early_gems.length, 1);
+    assert.equal(snapshot.early_gems_meta.source, 'test');
+  } finally { app.stop(); }
   src.fetchEarlyGems = async () => { const error = new Error('rate limited'); error.code = 'ONCHAIN_RATE_LIMITED'; throw error; };
   await ingest.refresh(state, cfg, src);
   assert.equal(state.earlyGems.length, 1);
