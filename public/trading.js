@@ -45,7 +45,7 @@ const summary=document.getElementById('account-summary');
 const assetList=document.getElementById('asset-list');
 const positionList=document.getElementById('position-list');
 const refreshAccountButton=document.getElementById('refresh-account');
-const money=value=>Number(value||0).toLocaleString('en-US',{maximumFractionDigits:8});
+const money=value=>value===null||value===undefined||value===''?'—':Number.isFinite(Number(value))?Number(value).toLocaleString('en-US',{maximumFractionDigits:8}):'—';
 function updateConnectionUi(){
  const cfg=exchangeConfigs[activeExchange.toLowerCase()];
  const ready=Boolean(cfg&&cfg.configured);
@@ -100,6 +100,7 @@ function renderAccount(data){
  const identityName=document.createElement('b');identityName.textContent=identity.display_name||('Akun '+String(data.exchange||'exchange'));
  const identityFingerprint=document.createElement('span');identityFingerprint.textContent='Fingerprint API Key: '+(identity.key_fingerprint||'tidak tersedia');
  identityMain.append(identityCaption,identityName,identityFingerprint);
+ if(identity.account_id){const accountId=document.createElement('span');accountId.textContent='ID akun exchange: '+identity.account_id;identityMain.append(accountId);}
  const identityVerified=document.createElement('span');identityVerified.className='identity-verified';identityVerified.textContent='API akun berhasil merespons';
  identityPanel.append(identityMain,identityVerified);
  if(data.exchange==='binance'){
@@ -112,7 +113,7 @@ function renderAccount(data){
   if(!positionsAvailable)stats.push(['Status posisi',positionsError]);
  }else{
   const wallet=account.wallet||{};
-  assets=(wallet.coins||[]).map(x=>[x.asset,money(x.wallet_balance),money(x.equity),money(x.available_balance)]);
+  assets=(wallet.coins||[]).map(x=>[x.asset,money(x.wallet_balance),money(x.equity),money(x.withdrawable_balance)]);
   positions=account.positions||[];
   positionsAvailable=account.positions_available!==false;
   positionsError=account.positions_error||'BYBIT_POSITIONS_READ_UNAVAILABLE';
@@ -120,32 +121,47 @@ function renderAccount(data){
   if(!positionsAvailable)stats.push(['Status posisi',positionsError]);
  }
  stats.forEach(([label,value])=>summary.append(stat(label,value)));
- if(assets.length)assetList.append(table(data.exchange==='binance'?['Aset','Free','Locked','Total']:['Aset','Wallet','Equity','Available'],assets));
+ if(assets.length)assetList.append(table(data.exchange==='binance'?['Aset','Free','Locked','Total']:['Aset','Wallet','Equity','Withdrawable'],assets));
  else{const p=document.createElement('p');p.className='muted';p.textContent='Tidak ada saldo aset non-zero yang dikembalikan.';assetList.append(p);}
  if(positions.length)positionList.append(table(['Pair','Arah','Size','Entry','Mark','Unrealized PnL'],positions.map(x=>[x.symbol,x.side,money(x.size),money(x.entry_price),money(x.mark_price),money(x.unrealized_pnl)])));
  else{const p=document.createElement('p');p.className='muted';p.textContent=positionsAvailable?'Tidak ada posisi terbuka.':'Data posisi gagal dibaca ('+positionsError+'). Saldo berhasil diambil, tetapi hasil posisi belum dapat dipastikan.';positionList.append(p);}
  const apiPermissions=account.api_permissions||{};
- const permissionCheckAvailable=data.exchange!=='binance'||apiPermissions.available===true;
+ const permissionCheckAvailable=apiPermissions.available===true;
  const spotTradingEnabled=data.exchange==='binance'&&permissionCheckAvailable&&Boolean(apiPermissions.spot_trading);
  const futuresTradingEnabled=data.exchange==='binance'&&permissionCheckAvailable&&Boolean(apiPermissions.futures_trading);
- const tradingPermissionEnabled=spotTradingEnabled||futuresTradingEnabled;
- const permissionUnknown=data.exchange==='binance'&&!permissionCheckAvailable;
- const permissionWarning=spotTradingEnabled&&futuresTradingEnabled?'izin Spot dan Futures Trading':spotTradingEnabled?'izin Spot Trading':'izin Futures Trading';
+ const binanceWithdrawalsEnabled=data.exchange==='binance'&&permissionCheckAvailable&&Boolean(apiPermissions.withdrawals);
+ const binanceTransferEnabled=data.exchange==='binance'&&permissionCheckAvailable&&(Boolean(apiPermissions.internal_transfer)||Boolean(apiPermissions.universal_transfer));
+ const bybitWriteEnabled=data.exchange==='bybit'&&permissionCheckAvailable&&(
+  apiPermissions.read_only!==true||Boolean(apiPermissions.spot_trading)||Boolean(apiPermissions.contract_trading)||
+  Boolean(apiPermissions.withdrawals)||Boolean(apiPermissions.transfers));
+ const tradingPermissionEnabled=spotTradingEnabled||futuresTradingEnabled||binanceWithdrawalsEnabled||binanceTransferEnabled||bybitWriteEnabled;
+ const permissionUnknown=!permissionCheckAvailable;
+ const permissionWarning=data.exchange==='bybit'
+  ?[apiPermissions.read_only!==true?'API Key tidak read-only':'',apiPermissions.spot_trading?'Spot Trading':'',
+    apiPermissions.contract_trading?'Contract Trading':'',apiPermissions.withdrawals?'Withdrawal':'',
+    apiPermissions.transfers?'Transfer':''].filter(Boolean).join(', ')
+  :[spotTradingEnabled?'Spot Trading':'',futuresTradingEnabled?'Futures Trading':'',
+    binanceWithdrawalsEnabled?'Withdrawal':'',binanceTransferEnabled?'Transfer':''].filter(Boolean).join(', ');
+ const bybitPermissionDetails=data.exchange==='bybit'&&apiPermissions.categories
+  ?Object.entries(apiPermissions.categories).filter(([,items])=>Array.isArray(items)&&items.length)
+   .map(([category,items])=>category+': '+items.join(', ')).join(' · '):'';
  const permissionStatus=tradingPermissionEnabled
-  ?'PERINGATAN KEAMANAN: izin '+permissionWarning+' pada API Key Binance aktif. RADAR tetap hanya membaca data dan tidak mengirim order.'
+  ?'PERINGATAN KEAMANAN: '+(data.exchange==='bybit'?'permission Bybit aktif: ':'izin API Key Binance aktif: ')+permissionWarning+'. RADAR tetap hanya membaca data dan tidak mengirim order.'
   :permissionUnknown
-   ?'Status izin trading API Key Binance belum dapat diverifikasi oleh endpoint izin resmi. Jangan anggap key sudah read-only sebelum diperiksa di Binance.'
+   ?'Status izin API Key belum dapat diverifikasi oleh endpoint resmi. Jangan anggap key sudah read-only sebelum diperiksa langsung di exchange.'
    :data.exchange==='binance'
-    ?'Izin API Key terverifikasi: Spot & Margin Trading dan Futures Trading nonaktif.'
-    :'';
- document.getElementById('account-checked-at').textContent=(permissionStatus?permissionStatus+' ':'')+'Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · RADAR hanya membaca data; tidak ada order, transfer, atau withdrawal.';
+    ?'Izin API Key terverifikasi: Spot & Margin Trading, Futures Trading, Withdrawal, dan Transfer nonaktif.'
+    :apiPermissions.read_only===true
+     ?'Izin API Key Bybit terverifikasi read-only; permission trading, transfer, dan withdrawal tidak terdeteksi.'
+     :'Status permission Bybit belum memenuhi kriteria read-only.';
+ document.getElementById('account-checked-at').textContent=(permissionStatus?permissionStatus+' ':'')+(bybitPermissionDetails?'Rincian permission Bybit: '+bybitPermissionDetails+'. ':'')+'Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · RADAR hanya membaca data; tidak ada order, transfer, atau withdrawal.';
  document.getElementById('account-checked-at').classList.toggle('account-warning',tradingPermissionEnabled||permissionUnknown||!positionsAvailable);
  accountConnected=true;
  refreshAccountButton.disabled=false;
- document.getElementById('exchange-status').textContent=tradingPermissionEnabled?'TERHUBUNG · PERIKSA IZIN API':permissionUnknown?'TERHUBUNG · IZIN BELUM TERVERIFIKASI':positionsAvailable?'TERHUBUNG · READ-ONLY':'TERHUBUNG · DATA PARSIAL';
- document.getElementById('hub-status').textContent=tradingPermissionEnabled?'PERINGATAN / IZIN TRADING AKTIF':permissionUnknown?'READ-ONLY / IZIN BELUM TERVERIFIKASI':positionsAvailable?'READ-ONLY / TERHUBUNG':'READ-ONLY / DATA PARSIAL';
+ document.getElementById('exchange-status').textContent=tradingPermissionEnabled?'TERHUBUNG · PERIKSA PERMISSION API':permissionUnknown?'TERHUBUNG · IZIN BELUM TERVERIFIKASI':positionsAvailable?'TERHUBUNG · READ-ONLY':'TERHUBUNG · DATA PARSIAL';
+ document.getElementById('hub-status').textContent=tradingPermissionEnabled?'PERINGATAN / PERMISSION API AKTIF':permissionUnknown?'TERHUBUNG / IZIN BELUM TERVERIFIKASI':positionsAvailable?'READ-ONLY / TERHUBUNG':'READ-ONLY / DATA PARSIAL';
  document.getElementById('api-state').textContent=tradingPermissionEnabled?'Izin trading aktif':permissionUnknown?'Izin API belum terverifikasi':positionsAvailable?'Permintaan akun berhasil':'Sebagian data akun tidak tersedia';
- feedback.textContent=tradingPermissionEnabled?'Koneksi berhasil. Izin '+permissionWarning+' pada API Key masih aktif. RADAR tidak mengirim order.':permissionUnknown?'Koneksi berhasil, tetapi endpoint pemeriksaan izin API Key tidak tersedia. Periksa izin langsung di Binance; RADAR tidak menyimpulkan izin dari status kemampuan trading akun.':positionsAvailable?'Data akun berhasil dibaca dari '+activeExchange+'. Tidak ada order yang dikirim.':'Saldo terbaca; data posisi belum lengkap.';
+ feedback.textContent=tradingPermissionEnabled?'Koneksi berhasil, tetapi '+permissionWarning+' perlu ditinjau di pengaturan API Key. RADAR tidak mengirim order.':permissionUnknown?'Koneksi berhasil, tetapi permission API Key belum dapat diverifikasi. Periksa izin langsung di '+activeExchange+'.':positionsAvailable?'Data akun berhasil dibaca dari '+activeExchange+'. Permission API Key sudah diperiksa; tidak ada order yang dikirim.':'Saldo terbaca; data posisi belum lengkap.';
 }
 async function loadExchangeStatus(){
  try{
