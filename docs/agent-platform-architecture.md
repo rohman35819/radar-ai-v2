@@ -114,3 +114,18 @@ The initial worker must be read-only/propose-only. A later isolated code-generat
 ## Next task
 
 Divisi 06: add a minimal DB adapter and transactional queue service behind a feature flag, after a disposable PostgreSQL migration test harness is available. Divisi 01 reviews DB roles/secrets. Divisi 05 independently validates concurrency, lease recovery, idempotency and audit immutability. Do not deploy a worker until those gates pass.
+
+
+## Free-first policy update — 2026-11-22
+
+The Owner approved a strict **Rp0** infrastructure policy. This supersedes the earlier USD 2.74/month worker estimate as an unapproved cost assumption.
+
+- Reuse the existing Hostless account only if actual shared free allowance and overage controls are verified. Do not provision a worker/database based on published plan descriptions alone.
+- Existing GitHub Actions is the first CI resource; it is not an always-on queue consumer.
+- Neon Free is a disposable integration-test candidate only, subject to account availability and current quota checks; never connect it to production.
+- Cloudflare Workers Free, if considered, is only a lightweight stateless trigger—not a long-running Node worker.
+- Free LLM tiers are optional non-sensitive experiments, never a required production dependency. No private RADAR data, exchange payloads, secrets, or credentials may be sent.
+- If no zero-cost, overage-safe worker/database capacity is available, implementation stops at tested code. No paid fallback is allowed.
+- Provisioning requires visible remaining quota, no-card/no-upgrade confirmation, overage prevention, rollback plan, least-privilege secrets, and explicit Owner approval for account-changing actions.
+
+See docs/free-first-infrastructure-policy.md for the binding provisioning gate and service allocation.
