@@ -45,6 +45,40 @@ test('storage: state tersimpan dipulihkan dan JSON rusak tidak di-reset diam-dia
   assert.throws(() => ingest.load({ dataDir: dir }), SyntaxError);
 });
 
+test('health: kegagalan persistensi menurunkan status dan pemulihan mengembalikan status', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'radar-storage-health-'));
+  const cfg = { ...ingest.loadConfig(), dataDir: dir, feeds: [], tgToken: '', tgChat: '' };
+  const src = {
+    fetchAiCoins: async () => [], fetchLlama: async () => ({ protocols: [], fees: [], revenue: [] }),
+    fetchNews: async () => [], fetchUnlocks: async () => [],
+  };
+  const app = createApp({ cfg, src });
+  await new Promise((resolve) => app.server.listen(0, resolve));
+  const base = `http://127.0.0.1:${app.server.address().port}`;
+  const originalRename = fs.renameSync;
+  try {
+    let health = await (await fetch(base + '/api/health')).json();
+    assert.strictEqual(health.storage.status, 'unchecked');
+    fs.renameSync = () => { const error = new Error('read-only filesystem'); error.code = 'EROFS'; throw error; };
+    await app.refresh();
+    const failed = await fetch(base + '/api/health');
+    assert.strictEqual(failed.status, 503);
+    health = await failed.json();
+    assert.strictEqual(health.status, 'degraded');
+    assert.deepStrictEqual(health.storage, { status: 'error', code: 'EROFS' });
+    fs.renameSync = originalRename;
+    await app.refresh();
+    const recovered = await fetch(base + '/api/health');
+    assert.strictEqual(recovered.status, 200);
+    health = await recovered.json();
+    assert.strictEqual(health.storage.status, 'ok');
+    assert.strictEqual(health.storage.code, null);
+  } finally {
+    fs.renameSync = originalRename;
+    app.stop();
+  }
+});
+
 test('storage: EROFS saat atomic rename dipropagasi dan state lama tetap utuh', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'radar-state-'));
   const stateFile = path.join(dir, 'state.json');
