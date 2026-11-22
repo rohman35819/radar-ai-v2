@@ -1,5 +1,5 @@
 'use strict';
-const SHELL = 'radar-shell-v10';
+const SHELL = 'radar-shell-v11';
 const FILES = [
   '/', '/index.html', '/app.js', '/style.css',
   '/trading.html', '/trading.js', '/trading.css',
