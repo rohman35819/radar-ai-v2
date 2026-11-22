@@ -1626,7 +1626,7 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 ### 41.3 Backlog terurut lintas divisi setelah News
 1. Divisi 02 — UI/UX: selesai melalui PR #23, merge commit 97d28214d883e1f5fc6ce8964ffcb0acf7ff02d9; CI main run #417 success, 70/70 tests. PR #14 lama ditutup sebagai superseded. Browser/Hostless QA tetap diperlukan.
 2. Divisi 01 — Security & Reliability: selesai melalui PR #24, merge commit d300076dd1d3ec15bd8315f925bc7cd2334ed959; CI PR #418 success, 71/71 tests. PR #12 lama ditutup sebagai superseded. DATA_DIR/volume Hostless masih butuh log dan konfigurasi aktual.
-3. Divisi 03 — Exchange: patch Bybit dipindahkan ke branch feat/bybit-permission-delivery-v2 berbasis main terbaru; verifikasi permission read-only, redaksi kredensial, serta rate-limit/retry-after; CI baru menunggu.
+3. Divisi 03 — Exchange: selesai melalui PR #25, merge commit 7416ed96ddf2047ef825688dce5fbb4675145f89; CI PR #421 success, 83/83 tests. PR #17 lama ditutup sebagai superseded. Hostless dan koneksi akun nyata belum diverifikasi.
 4. Divisi 04 — AI Intelligence: PR #16 moderator fallback Groq/OpenRouter dan fail-safe WAIT. Latest head b74e677298470b973d5528fe07f48cabb42c1d13; CI run #334 success. Rebase/update dan verifikasi fail-safe serta biaya/kuota sebelum merge.
 5. Divisi 08 — Procurement/Security support: PR #21 Gitleaks, Trivy, Dependabot. Latest head 017d475b255ab2427d158274005d573d67da70ed; workflow test run #403 success; scanner workflow run #2 gagal karena action reference aquasecurity/trivy-action@0.36.0 tidak ditemukan (setup job). Tetap draft sampai tag resmi yang valid dipilih, false positive/permissions/kuota diverifikasi, dan rerun sukses.
 6. Divisi 06 — Agent Platform (proposal/pilot): PR #18 registry/task queue/audit schema. Latest head 18c37f63cb9b5176a724d2c43b1eb1b8ee33b5d5; CI run #392 success. Tetap draft; audit persistence, schema, permission boundaries, retention, dan larangan klaim worker background sebelum pilot.
@@ -1685,5 +1685,16 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Rate limit: HTTP 429/418, Binance -1003, Bybit 10006/10429 dan HTTP 403 access-too-frequent dipetakan ke EXCHANGE_RATE_LIMITED; Retry-After / X-Bapi-Limit-Reset-Timestamp diteruskan secara aman; cooldown 600 detik hanya fallback konservatif untuk Bybit IP rate limit. Tidak ada retry otomatis.
 - Semua exchange request tetap GET. Tidak ada endpoint order, update key, transfer, atau withdrawal. Tidak ada izin exchange yang diubah dan tidak ada secret diminta.
 - File: lib/exchanges.js, public/trading.js, server.js, test/exchanges.test.js, test/exchange-ui.test.js, README.md, RADAR_AI_MASTER_CONTEXT.md.
-- Test status: CI baru menunggu; CI lama PR #17 run #369 success pada snapshot lama dan tidak dianggap bukti untuk branch baru. Hostless Build/LIVE dan koneksi akun nyata belum diverifikasi.
+- GitHub Actions PR #25 run #421 (45021606752) pada exact head 29bd6f9453370f1828b10a4db1b375a325100502 completed/success; npm test 83/83, 0 fail, 0 skipped. Main push CI setelah merge masih menunggu pemeriksaan.
+- PR #25 merged ke main pada 7416ed96ddf2047ef825688dce5fbb4675145f89; PR #17 lama ditutup sebagai superseded.
 - NEXT TASK: jalankan CI exact-head, review keamanan redaksi permission, error/rate-limit dan header Retry-After; merge hanya jika seluruh test lulus. Setelahnya Divisi 04 AI moderator fallback.
+
+## 46. BYBIT PERMISSION HARDENING MERGED — 22 NOVEMBER 2026
+
+- PR #25 feat(exchange): verify Bybit API key permissions and rate limits di-squash merge ke main pada commit 7416ed96ddf2047ef825688dce5fbb4675145f89.
+- GitHub Actions PR run #421 (45021606752) pada exact head 29bd6f9453370f1828b10a4db1b375a325100502 completed/success; npm test 83/83, 0 failed, 0 skipped.
+- Patch memverifikasi Bybit API key melalui signed GET /v5/user/query-api, menyaring metadata permission yang dikirim ke UI, menandai permission tidak lengkap sebagai unverified, memisahkan SubMemberTransferList dari kemampuan transfer, dan tidak mengarang withdrawable balance.
+- Exchange rate limit HTTP 429/418, Binance -1003, Bybit 10006/10429, dan Bybit IP access-too-frequent dinormalisasi; Retry-After diteruskan secara aman; tidak ada retry otomatis.
+- Semua request exchange tetap GET. Tidak ada order, key update, transfer, withdrawal, atau perubahan izin kredensial. PR #17 lama ditutup sebagai superseded.
+- Main push CI setelah merge: menunggu pemeriksaan. Hostless Build/LIVE, verifikasi environment, dan koneksi akun nyata belum dilakukan.
+- NEXT TASK tunggal: Divisi 04 port moderator fallback ke branch main terbaru; pastikan semua provider failure berujung WAIT dan CI exact-head lulus. Setelah itu Divisi 08 memperbaiki security scanner workflow PR #21.
