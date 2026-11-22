@@ -1873,3 +1873,16 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Acceptance berikutnya: uji autentikasi key di Hostless, validasi response real, verifikasi paket/CU, tambahkan fixture tests dan QA mobile/desktop. Jangan menyatakan integrasi LIVE sampai Hostless deploy dan endpoint berhasil diverifikasi.
 - Commit awal file adapter/UI pada branch: fd2a34f, b5d5d6a, 412701d, 3d9919f; backend route commit: e3db41d. Update dashboard UI dan dokumentasi menyusul pada branch yang sama.
 - NEXT TASK: selesaikan pengujian backend/service, review response schema endpoint aktual, buka PR dan tunggu CI; setelah merge, verifikasi Hostless build dan LIVE secara terpisah.
+
+
+### 60.1 DELIVERY UPDATE — 22 NOVEMBER 2026
+
+- Implementasi Solscan digabung ke `main` melalui PR #52: https://github.com/rohman35819/radar-ai-v2/pull/52.
+- Merge commit / main HEAD saat pencatatan: `6879ccd29a5a5169005e05caeb97dbc81a17be21`.
+- File implementasi: `lib/solscan.js`, `server.js`, `public/solscan.html`, `public/solscan.js`, `public/solscan.css`, `public/index.html`, `public/app.js`, `public/style.css`, `.env.example`, `package.json`, `test/solscan.test.js`, `README.md`, dan master context ini.
+- CI PR run #607 pada head `6406b67157bf61f20bc9de8e1742050498738b2d`: completed / success. `npm test` berhasil; skrip test juga memeriksa sintaks `public/solscan.js` dan `lib/solscan.js`.
+- Security run #149 pada head yang sama: Gitleaks success dan Trivy success. Tidak ada secret yang terdeteksi.
+- Hostless Build dan LIVE: belum terverifikasi. Pemeriksaan endpoint publik `/api/solscan/overview` tidak dapat diakses melalui jalur verifikasi yang tersedia pada sesi ini. Jangan menganggap merge GitHub otomatis berarti deployment LIVE.
+- Integrasi saat ini menampilkan 9 endpoint ringkasan (chain info, analytics transaksi/stake/fee/DeFi/compute, token trending, latest transactions, latest blocks) dan 7 endpoint wallet lookup on-demand. Semua request read-only; API key hanya di backend. Cache 5 menit; wallet lookup dibatasi 10 permintaan RADAR/menit/IP; error endpoint parsial ditampilkan terpisah.
+- Batasan: belum semua endpoint Solscan diaktifkan. Token deep-dive, holders, NFT, market pools/OHLCV, program analytics, account labels/funded-by, dan CU usage perlu tahap lanjutan setelah API key benar-benar terautentikasi di Hostless dan paket/CU BOS diverifikasi. Jangan mengklaim semua 70 endpoint telah tampil.
+- NEXT TASK: verifikasi Hostless deployment dan autentikasi `SOLSCAN_API_KEY` melalui dashboard LIVE. Setelah data overview berhasil, lanjutkan tahap berikutnya: token intelligence + holder distribution + NFT/market/program panels secara on-demand, dengan pengendalian CU dan provenance.
