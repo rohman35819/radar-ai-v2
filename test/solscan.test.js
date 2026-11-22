@@ -63,3 +63,28 @@ test('Solscan service reports missing key without exposing credentials', async (
   assert.equal(result.code, 'SOLSCAN_API_KEY_NOT_CONFIGURED');
   assert.equal(JSON.stringify(result).includes('token'), false);
 });
+
+test('Solscan server routes return adapter data without exposing the API key', async () => {
+  const { createApp } = require('../server');
+  const { mkdtempSync } = require('node:fs');
+  const { tmpdir } = require('node:os');
+  const { join } = require('node:path');
+  const dir = mkdtempSync(join(tmpdir(), 'radar-solscan-route-'));
+  const app = createApp({
+    cfg: { ...require('../lib/ingest').loadConfig(), dataDir: dir, adminToken: '' },
+    solscanService: {
+      overview: async () => ({ configured: true, ok: true, endpoint_count: 1, endpoint_total: 1, source: 'Solscan Pro API v2.0' }),
+      wallet: async (address) => ({ address, ok: true, endpoint_count: 1, endpoint_total: 1 })
+    }
+  });
+  await new Promise((resolve) => app.server.listen(0, resolve));
+  const base = 'http://127.0.0.1:' + app.server.address().port;
+  try {
+    const overview = await fetch(base + '/api/solscan/overview');
+    assert.equal(overview.status, 200);
+    assert.equal((await overview.json()).source, 'Solscan Pro API v2.0');
+    const wallet = await fetch(base + '/api/solscan/wallet?address=11111111111111111111111111111111');
+    assert.equal(wallet.status, 200);
+    assert.equal((await wallet.json()).address, '11111111111111111111111111111111');
+  } finally { app.stop(); }
+});
