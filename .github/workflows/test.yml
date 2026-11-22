@@ -15,6 +15,10 @@ jobs:
         with:
           node-version: 24
       - run: npm test
+      - name: Hostless LIVE readiness and News probe (diagnostic only)
+        if: github.head_ref == 'ops/hostless-live-check'
+        run: npm run hostless-check
+        continue-on-error: true
       - name: Diagnostic live RSS smoke (non-blocking, News fix branch only)
         if: github.head_ref == 'fix/news-feed-resilience-v2'
         run: npm run news-check
