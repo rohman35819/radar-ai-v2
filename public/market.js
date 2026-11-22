@@ -311,6 +311,19 @@ async function loadMarket(force = false) {
     $('#refresh').classList.remove('spinning');
   }
 }
+function setSidebarOpen(open) {
+  const sidebar = $('#sidebar');
+  const toggle = $('#menu-toggle');
+  sidebar.classList.toggle('open', open);
+  document.body.classList.toggle('sidebar-open', open);
+  toggle.setAttribute('aria-expanded', String(open));
+  toggle.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
+}
+$('#menu-toggle').addEventListener('click', () => setSidebarOpen(!$('#sidebar').classList.contains('open')));
+$('#sidebar-backdrop').addEventListener('click', () => setSidebarOpen(false));
+document.querySelectorAll('.side-nav a').forEach((link) => link.addEventListener('click', () => setSidebarOpen(false)));
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
+window.addEventListener('resize', () => { if (window.innerWidth > 760) setSidebarOpen(false); });
 $('#refresh').addEventListener('click', () => loadMarket(true));
 $('#coin-search').addEventListener('input', (event) => { search = event.target.value.trim().toLowerCase(); marketRows(); });
 $('#chart-coin').addEventListener('change', loadChart);
