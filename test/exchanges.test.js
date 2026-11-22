@@ -367,3 +367,10 @@ test('private Exchange Hub forwards safe Retry-After for rate-limited exchange r
     assert.equal(body.code, 'EXCHANGE_RATE_LIMITED');
   } finally { app.stop(); }
 });
+
+
+test('Bybit HTTP 403 access-too-frequent response is normalized as rate-limited', async () => {
+  const service = createExchangeService({ env: {}, fetchImpl: async () => response({ retMsg: 'access too frequent' }, false, 403, { 'retry-after': '600' }) });
+  await assert.rejects(service.market('bybit', 'BTCUSDT'), (error) =>
+    error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429 && error.retryAfterSeconds === 600);
+});
