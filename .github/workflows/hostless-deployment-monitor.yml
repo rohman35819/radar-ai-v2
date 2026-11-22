@@ -65,8 +65,9 @@ jobs:
             process.exit(1);
           }
           const timeOf = (item) => Date.parse(item.createdAt || item.created_at || item.startedAt || item.started_at || item.queuedAt || '') || 0;
-          rows = [...rows].sort((a, b) => timeOf(a) - timeOf(b));
-          const latest = rows[rows.length - 1];
+          const hasTimestamps = rows.some((item) => timeOf(item) > 0);
+          rows = [...rows].sort((a, b) => timeOf(b) - timeOf(a));
+          const latest = hasTimestamps ? rows[0] : rows[0];
           const get = (...keys) => {
             for (const key of keys) if (latest[key] !== undefined && latest[key] !== null) return latest[key];
             return '';
