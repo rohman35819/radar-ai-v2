@@ -1863,8 +1863,10 @@ Melengkapi Market Screener CoinGecko kategori AI dengan feed on-chain untuk mene
 - Tidak ada order, transfer, withdrawal, atau tindakan finansial.
 
 ### Status verifikasi
-- Branch implementasi: `feat/early-gem-scanner-v1`, berbasis main HEAD `a475205e9d76e3ba27d8e5c4633b1c5c24aec05f`.
-- Perubahan source, UI, test dan dokumentasi sudah ditulis; exact-head GitHub Actions masih menunggu PR.
+- Branch implementasi: `feat/early-gem-scanner-v1`, berbasis main HEAD `a475205e9d76e3ba27d8e5c4633b1c5c24aec05f`; PR #46 https://github.com/rohman35819/radar-ai-v2/pull/46, status open/ready-for-review, belum merged.
+- Feed menggabungkan new pools 48 jam (default 3 halaman) dan trending pools 24 jam (1 halaman). Kegagalan trending bersifat parsial dan tidak membuang feed new pools; health `onchain_trending` terpisah.
+- CI awal run #528 gagal karena string UI terpotong (syntax error); setelah perbaikan, run #530 gagal pada assertion teks UI yang terlalu ketat. Assertion dan dispatch UI sudah diperbaiki; exact-head `27634e1d282591bc7b8eda371437ff25a74c7960` perlu dijalankan ulang sebelum status PASS.
+- Security scan run #70 sukses pada head awal, tetapi belum dianggap sebagai bukti exact-head untuk perubahan terakhir.
 - Tes lokal belum dijalankan pada working copy sesi ini; tidak ada klaim tes lulus sebelum workflow exact-head selesai.
 - Hostless Build dan Hostless LIVE belum diverifikasi; belum ada konfigurasi Hostless yang diubah.
 - Implementasi awal menampilkan data provider yang terindeks saja. Tidak ada klaim seluruh token blockchain ditemukan atau token yang ditampilkan aman untuk dibeli.
