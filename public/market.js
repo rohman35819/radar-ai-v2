@@ -178,6 +178,43 @@ async function loadExchangeTickers() {
     $('#exchange-select').dataset.loaded = id;
   }
 }
+function renderMomentum() {
+  const rows = (market?.data?.markets || []).map((coin) => ({
+    coin,
+    h1: Number(coin.price_change_percentage_1h_in_currency),
+    h24: Number(coin.price_change_percentage_24h),
+    d7: Number(coin.price_change_percentage_7d_in_currency)
+  })).filter((item) => Number.isFinite(item.h24) && item.h24 > 0)
+    .sort((a, b) => (b.h1 + b.h24 + (Number.isFinite(b.d7) ? b.d7 : 0)) - (a.h1 + a.h24 + (Number.isFinite(a.d7) ? a.d7 : 0))).slice(0, 8);
+  renderCompact($('#momentum-list'), rows, (item) => {
+    const row = node('div', 'compact-row');
+    row.append(node('b', '', safeText(item.coin.symbol).toUpperCase()), node('span', 'compact-name', safeText(item.coin.name)), changeNode(item.h24));
+    return row;
+  }, 'Belum ada aset dengan momentum positif yang konsisten.');
+}
+function turnover(coin) {
+  const cap = Number(coin.market_cap), volume = Number(coin.total_volume);
+  return Number.isFinite(cap) && cap > 0 && Number.isFinite(volume) ? volume / cap * 100 : null;
+}
+function renderVolumeActivity() {
+  const rows = (market?.data?.markets || []).map((coin) => ({ coin, ratio: turnover(coin) })).filter((item) => item.ratio !== null)
+    .sort((a, b) => b.ratio - a.ratio).slice(0, 8);
+  renderCompact($('#volume-activity'), rows, (item) => {
+    const row = node('div', 'compact-row');
+    row.append(node('b', '', safeText(item.coin.symbol).toUpperCase()), node('span', 'compact-name', safeText(item.coin.name)), node('small', 'muted', item.ratio.toFixed(2) + '% turnover'));
+    return row;
+  }, 'Data volume belum tersedia.');
+}
+function renderRisk() {
+  const rows = (market?.data?.markets || []).map((coin) => ({ coin, turnover: turnover(coin), change: Number(coin.price_change_percentage_24h) }))
+    .filter((item) => Number.isFinite(item.change) && (item.change <= -10 || (item.change < 0 && item.turnover !== null && item.turnover < 1)))
+    .sort((a, b) => a.change - b.change).slice(0, 10);
+  renderCompact($('#risk-list'), rows, (item) => {
+    const row = node('div', 'compact-row');
+    row.append(node('b', '', safeText(item.coin.symbol).toUpperCase()), node('span', 'compact-name', item.change <= -10 ? 'Penurunan 24J besar' : 'Turnover rendah'), changeNode(item.change));
+    return row;
+  }, 'Tidak ada aset Top 100 yang melewati ambang risiko heuristik saat ini.');
+}
 function renderSummary() {
   const g = market?.data?.global?.data || {};
   const rows = market?.data?.markets || [];
@@ -284,6 +321,9 @@ function renderAll() {
   marketRows();
   renderTrending();
   renderMovers();
+  renderMomentum();
+  renderVolumeActivity();
+  renderRisk();
   renderSectors();
   renderExchanges();
   renderSummary();
