@@ -1625,19 +1625,19 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 
 ### 41.3 Backlog terurut lintas divisi setelah News
 1. Divisi 02 — UI/UX: selesai melalui PR #23, merge commit 97d28214d883e1f5fc6ce8964ffcb0acf7ff02d9; CI main run #417 success, 70/70 tests. PR #14 lama ditutup sebagai superseded. Browser/Hostless QA tetap diperlukan.
-2. Divisi 01 — Security & Reliability: PR #12 storage readiness /api/ready dan sanitasi error EROFS. Latest head 881434f5d8b50a72ec8d596adc4e76180102198a; CI run #304 success. Base lama; update/rebase, review ulang health/readiness semantik, lalu rerun CI. DATA_DIR/volume Hostless masih butuh log dan konfigurasi aktual.
+2. Divisi 01 — Security & Reliability: selesai melalui PR #24, merge commit d300076dd1d3ec15bd8315f925bc7cd2334ed959; CI PR #418 success, 71/71 tests. PR #12 lama ditutup sebagai superseded. DATA_DIR/volume Hostless masih butuh log dan konfigurasi aktual.
 3. Divisi 03 — Exchange: PR #17 Bybit identity/permission. Latest head 576856a85d477fac5b31912858704ddddc5573f0; CI run #369 success. Rebase/update, cek diff keamanan, uji hanya read-only, dan pastikan tidak ada withdrawal/trading.
 4. Divisi 04 — AI Intelligence: PR #16 moderator fallback Groq/OpenRouter dan fail-safe WAIT. Latest head b74e677298470b973d5528fe07f48cabb42c1d13; CI run #334 success. Rebase/update dan verifikasi fail-safe serta biaya/kuota sebelum merge.
-5. Divisi 08 — Procurement/Security support: PR #21 Gitleaks, Trivy, Dependabot. Latest head 017d475b255ab2427d158274005d573d67da70ed; workflow test run #403 success; scanner workflow run #2 failure pada snapshot yang sama. Tetap draft sampai failure scanner ditelusuri, false positive/permissions/kuota diverifikasi, dan rerun sukses.
+5. Divisi 08 — Procurement/Security support: PR #21 Gitleaks, Trivy, Dependabot. Latest head 017d475b255ab2427d158274005d573d67da70ed; workflow test run #403 success; scanner workflow run #2 gagal karena action reference aquasecurity/trivy-action@0.36.0 tidak ditemukan (setup job). Tetap draft sampai tag resmi yang valid dipilih, false positive/permissions/kuota diverifikasi, dan rerun sukses.
 6. Divisi 06 — Agent Platform (proposal/pilot): PR #18 registry/task queue/audit schema. Latest head 18c37f63cb9b5176a724d2c43b1eb1b8ee33b5d5; CI run #392 success. Tetap draft; audit persistence, schema, permission boundaries, retention, dan larangan klaim worker background sebelum pilot.
 7. Divisi 05 — QA/DevOps: PR #6 live deployment/visual verification remains draft; update workflow to current Actions versions, pin browser test dependencies, and make smoke test validate deployed SHA. Hostless access is a separate blocker.
-8. Exchange legacy: PR #7 Trading Terminal foundation remains draft/hold because current Exchange Hub /trading.html supersedes the legacy scope. Close as superseded only after confirming no unique needed change remains.
+8. Exchange legacy: PR #7 Trading Terminal foundation ditutup sebagai superseded; diff menambahkan duplicate Trading Terminal navigation/page yang tumpang tindih dengan Exchange Hub /trading.html.
 
 ### 41.4 Operasional dan status saat catatan ini dibuat
 - Main HEAD setelah News merge: 66eff5667715fd3138336bc3f2e6a5172ba1b5cf; GitHub Actions main run #411 completed/success; 67/67 tests.
 - Tidak ada Hostless connector/log/deployment SHA yang tersedia; Build/LIVE = NOT VERIFIED.
 - Tidak ada worker runtime teruji yang berjalan di background. Divisi 06/07 tetap tahap desain/draft.
-- NEXT TASK tunggal: Divisi 01 memperbarui storage health observability melalui patch baru berbasis main, menjalankan CI, dan meninjau semantik liveness/readiness. Setelah selesai, lanjutkan PR #17; jangan mengerjakan implementasi domain paralel.
+- NEXT TASK tunggal: Divisi 03 memindahkan PR #17 Bybit identity/permission ke branch berbasis main terbaru, meninjau scope read-only dan permission, lalu menjalankan CI. Setelah selesai, lanjutkan PR #16; jangan mengerjakan implementasi domain paralel.
 
 ## 42. PERBAIKAN SCREENER DAN MEMBERSHIP — 22 NOVEMBER 2026
 
@@ -1663,3 +1663,14 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Test status dan commit: menunggu GitHub Actions untuk PR baru. Local npm test tidak dijalankan.
 - Hostless Build/LIVE dan konfigurasi volume DATA_DIR masih NOT VERIFIED; tes filesystem lokal tidak membuktikan volume Hostless writable/persistent.
 - NEXT TASK: jalankan CI PR, lakukan QA independen atas sanitasi dan transisi status; kemudian integrasikan jika exact-head CI lulus. Verifikasi Hostless /api/health dan /api/ready setelah akses deployment tersedia.
+
+## 44. STORAGE READINESS MERGED — 22 NOVEMBER 2026
+
+- PR #24 fix(storage): expose persistence readiness and health telah di-squash merge ke main pada commit d300076dd1d3ec15bd8315f925bc7cd2334ed959.
+- GitHub Actions PR run #418 (45021234603) pada exact head e06740705ee0745350d1f43ee7bc89200d8d844f completed/success; npm test 71/71, 0 fail, 0 skipped.
+- Main HEAD setelah merge: d300076dd1d3ec15bd8315f925bc7cd2334ed959. Main push CI setelah merge masih menunggu pemeriksaan; jangan samakan PR CI dengan main push CI.
+- PR #12 lama ditutup sebagai superseded oleh #24; tidak ada dua patch storage paralel.
+- Perubahan API: /api/health tetap HTTP 200 liveness dan kini menampilkan status storage; /api/ready menjadi readiness 200/ready atau 503/degraded berdasarkan persistensi. Semua jalur AI/refresh save memakai persistState; kode error tidak dikenal disanitasi menjadi STORAGE_WRITE_FAILED.
+- Tidak ada fallback ke filesystem ephemeral dan tidak ada penghapusan/reset state.
+- Hostless Build, LIVE SHA, DATA_DIR mount dan runtime logs tetap NOT VERIFIED; endpoint baru belum diuji pada deployment Hostless.
+- NEXT TASK tunggal: Divisi 03 memindahkan Bybit identity/permission PR ke branch berbasis main terbaru, memeriksa permission read-only dan jalur error, lalu menguji CI. Setelahnya Divisi 04 moderator fallback.
