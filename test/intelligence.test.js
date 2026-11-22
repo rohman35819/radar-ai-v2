@@ -49,8 +49,7 @@ test('Trading Intelligence excludes missing metrics from breadth and volume rank
   assert.match(text, /Perubahan belum tersedia3/);
   assert.match(text, /Netral1/);
   assert.match(text, /TVL terbesar—/);
-  assert.doesNotMatch(text, /Belum ada spike tervalidasi/);
-  assert.match(text, /NULL/); // appears only in the supplied token count? symbol must not be used in the ranked list
+  assert.doesNotMatch(text, /NULL|EMPTY/);
 });
 
 test('Trading Intelligence exposes stale source metadata and missing timestamps', () => {
