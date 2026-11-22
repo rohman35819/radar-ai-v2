@@ -1,7 +1,7 @@
 # RADAR AI — MASTER PROJECT CONTEXT
 
 > Dokumen pegangan utama proyek. Baca dokumen ini sebelum menjawab atau mengubah kode.
-> Terakhir diperbarui: 22 November 2026 (Asia/Jakarta).
+> Terakhir diperbarui: 22 November 2026 (Asia/Jakarta) — ditambah mandat Chief Strategy Advisor dan roadmap otonomi offline.
 > Repository: https://github.com/rohman35819/radar-ai-v2
 > Aplikasi: https://radar-ai-v2.hostless.app/
 
@@ -1474,3 +1474,40 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 4. Complete Dashboard and Command Center desktop/mobile QA: all 12 navigation destinations, sidebar independent scroll, mobile drawer, data loading/error states, console and network.
 5. Continue EROFS investigation with actual Hostless mount and runtime logs; coordinate storage code changes with Divisi 01.
 6. Trace the `punycode` deprecation warning to its source; add a regression check only if a meaningful behavior risk is identified.
+
+
+---
+
+## 37. CHIEF STRATEGY ADVISOR & RADAR AI OFFLINE AUTONOMY — 22 NOVEMBER 2026
+
+### 37.1 Permintaan Owner dan keputusan organisasi
+- Owner meminta folder penasihat strategis baru yang bertugas menyusun organisasi, menentukan divisi/kapabilitas yang harus dibentuk, dan merancang RADAR AI agar terus bekerja saat Owner offline.
+- Folder baru: `00-CHIEF-STRATEGY-ADVISOR`. Mandat lengkap, prompt pembuka, ringkasan percakapan, struktur, dan backlog penerus ada di `RADAR_AI_ADVISOR_HANDOFF.md`.
+- Penasihat adalah arsitek strategi/organisasi; Direktur Utama tetap pemimpin operasional; divisi tetap pemilik implementasi domain.
+- Organisasi awal lima divisi dan Executive Office tetap berlaku (section 35). Rekomendasi penambahan:
+  - **Divisi 06 — Agent Platform & Automation:** registry, scheduler, queue, orchestrator, worker runtime, permission gateway, isolated workspaces, retry, budget, approval, kill switch.
+  - **Divisi 07 — Knowledge & Memory Systems:** shared knowledge, durable state, memory retrieval, provenance, deduplication, retention, versioning, handoff.
+  - QA Gate dan Security Gate adalah fungsi lintas divisi, bukan divisi baru.
+- Divisi 06/07 adalah rancangan, belum boleh disebut aktif sebelum implementasi dan pengujian runtime.
+
+### 37.2 Definisi kerja otomatis saat Owner offline
+ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus di background. Kemampuan offline harus dibangun di aplikasi RADAR AI sendiri dengan scheduler, persistent task queue, orchestrator, worker runtime, registry, shared memory, permission gateway, independent QA, audit/observability, budget manager, approval queue, kill switch, serta backup/recovery.
+- Siklus target: Observe → Plan → Queue → Assign → Execute → Test → Independent Review → Approve/Merge → Monitor → Learn.
+- Mulai dari Stage 0/1 (observe/propose); pilot satu worker low-risk/isolated setelah fondasi dan guardrail siap.
+- Worker tidak boleh menaikkan haknya sendiri, mengubah policy, menjalankan transaksi, withdraw, atau live trading.
+- Merge/deploy/production/secret/permission/migrasi berisiko dan seluruh tindakan finansial mengikuti approval eksplisit Owner sesuai policy.
+- Setiap task memiliki scope, acceptance criteria, dependency, timeout, retry, biaya maksimum, audit trace, dan kondisi berhenti.
+
+### 37.3 Handoff dan konteks penerus
+- Ringkasan percakapan 22 November 2026, mandat Penasihat, struktur organisasi usulan, arsitektur target, tahapan otonomi, guardrails, KPI, prompt pembuka, dan NEXT TASK dicatat di `RADAR_AI_ADVISOR_HANDOFF.md`.
+- Snapshot saat penyusunan: main HEAD `cc6d9af9b9dd96989898db4058771211a712be7e`; GitHub Actions main run #307 completed/success. Hostless Build dan Live belum diverifikasi.
+- PR terbuka pada snapshot: #16 AI moderator fallback, #15 Bybit identity/permissions, #14 Screener/membership preview, #12 storage persistence health, #6 live deployment/visual verification (draft), #7 Trading Terminal foundation (draft). Periksa ulang sebelum bertindak.
+- Penerus wajib membaca file handoff dan memverifikasi ulang repository; snapshot bukan status permanen.
+
+### 37.4 NEXT TASK Penasihat
+1. Verifikasi ulang master, AGENTS, HEAD, PR, CI, dan status Hostless.
+2. Susun backlog Divisi 06/07 dengan milestone, acceptance criteria, permission matrix, KPI, dan resource budget.
+3. Audit batas runtime/cron/persistence Hostless sebelum memilih lokasi worker always-on.
+4. Bandingkan Hostless scheduler, GitHub Actions, dan worker service terpisah berdasarkan uptime, biaya, secret management, persistence, dan operasional.
+5. Rancang pilot Stage 0/1: Agent Registry, persistent Task Queue schema, dan Audit Event; tanpa merge/deploy otomatis.
+6. Jangan menunda NEXT TASK stabilitas dan QA yang telah tercatat di section 36.
