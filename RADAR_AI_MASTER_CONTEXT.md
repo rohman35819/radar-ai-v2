@@ -1485,9 +1485,9 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 - File `NEXT_TASK.md` tidak ditemukan pada root branch `main`; prioritas Divisi 03 diambil dari roadmap, catatan integrasi dan status kode aktual dalam master context/README.
 
 ### 37.2 Perubahan
-- `lib/exchanges.js`: menambahkan signed HTTP GET `/v5/user/query-api`; hanya mengembalikan UID, flag read-only, dan daftar permission kategori yang disanitasi. `apiKey`, `secret`, IP whitelist, dan metadata sensitif lain tidak diteruskan ke browser.
-- `public/trading.js`: menampilkan UID Bybit bila tersedia, daftar kategori permission aktual yang disanitasi, serta membedakan permission read-only, trading, withdrawal, transfer, dan status belum terverifikasi. Audit tambahan memastikan UI Binance juga memperingatkan withdrawal/transfer aktif, bukan hanya Spot/Futures trading.
-- `test/exchanges.test.js`: memperluas mock Bybit untuk verifikasi HMAC, UID, permission read-only, redaksi API key, dan fallback ketika endpoint permission gagal; menambah tes pemisahan withdrawal/transfer Binance dari flag trading.
+- `lib/exchanges.js`: menambahkan signed HTTP GET `/v5/user/query-api`; hanya mengembalikan UID, flag read-only, dan daftar permission kategori yang disanitasi. `apiKey`, `secret`, IP whitelist, dan metadata sensitif lain tidak diteruskan ke browser. Normalisasi saldo Bybit juga tidak lagi mengganti `availableToWithdraw` yang hilang dengan `availableToBorrow`; nilai withdrawable yang tidak tersedia dikirim sebagai null.
+- `public/trading.js`: menampilkan UID Bybit bila tersedia, daftar kategori permission aktual yang disanitasi, serta membedakan permission read-only, trading, withdrawal, transfer, dan status belum terverifikasi. Audit tambahan memastikan UI Binance juga memperingatkan withdrawal/transfer aktif, bukan hanya Spot/Futures trading; nilai withdrawable yang tidak tersedia ditampilkan sebagai tanda strip, bukan nol.
+- `test/exchanges.test.js`: memperluas mock Bybit untuk verifikasi HMAC, UID, permission read-only, redaksi API key, dan fallback ketika endpoint permission gagal; menambah tes pemisahan withdrawal/transfer Binance dari flag trading serta pencegahan fallback `availableToBorrow` menjadi withdrawable balance.
 - `test/exchange-ui.test.js`: menambah assertion untuk kontrak permission Bybit.
 - `README.md`: mendokumentasikan endpoint dan batas verifikasi.
 
