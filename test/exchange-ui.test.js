@@ -44,10 +44,14 @@ test('Exchange Hub memiliki layout responsif dan fokus keyboard yang terlihat', 
   assert.match(css, /button:focus-visible,input:focus-visible/);
   assert.match(html, /aria-pressed="false"/);
 });
-test('Exchange Hub tetap read-only saat API Key Binance memiliki izin trading aktif', () => {
-  assert.match(js, /PERINGATAN KEAMANAN: API Key Binance masih memiliki/);
-  assert.match(js, /RADAR tetap berjalan dalam mode baca-saja dan tidak mengirim order/);
-  assert.match(js, /gunakan key baru read-only saat memungkinkan/);
+test('Exchange Hub memakai status izin API Key khusus Binance, bukan canTrade akun', () => {
+  assert.match(exchangeService, /\/sapi\/v1\/account\/apiRestrictions/);
+  assert.match(exchangeService, /enableSpotAndMarginTrading/);
+  assert.match(exchangeService, /enableFutures/);
+  assert.match(js, /account\.api_permissions/);
+  assert.match(js, /permissionUnknown/);
+  assert.doesNotMatch(js, /Boolean\(account\.spot\?\.can_trade\)/);
+  assert.doesNotMatch(js, /Boolean\(account\.futures\?\.can_trade\)/);
   assert.match(exchangeService, /method: 'GET'/);
   assert.doesNotMatch(exchangeService, /method: '(POST|PUT|PATCH|DELETE)'/);
   assert.doesNotMatch(js, /\/api\/v[13]\/order|\/fapi\/v1\/order|\/fapi\/v2\/order/);
