@@ -192,6 +192,14 @@ Snapshot yang diverifikasi pada 22 November 2026:
 ## 21. Hostless LIVE verification blocker — diagnostic PR
 
 - `npm run hostless-check` probes `/api/ready` and `/api/snapshot` using only public endpoints. Output is sanitized and excludes raw bodies/secrets.
-- The probe is gated to branch `ops/hostless-live-check` and non-blocking. No production changes or credentials.
+- The probe is merged as `npm run hostless-check`, non-blocking in its diagnostic PR. No production changes or credentials.
 - GitHub Actions RSS check reached TechCrunch and Cointelegraph; Hostless deployment/network remains unknown until the dedicated probe returns.
-- If DNS fails, Hostless support/logs are required. If endpoints respond, inspect storage readiness, deployed News health and source-level error codes.
+- Exact result: app domain reachable; `/api/ready` 503 with `storage.status=error`, `code=EROFS`; `/api/snapshot` 200, 50 news items, `health.news.ok=true`, `news_sources=[]` (older deployed code). RSS is not the primary outage; filesystem persistence is.
+
+## 22. Hostless EROFS remediation gate (22 November 2026)
+
+- Hostless root filesystem is read-only. `DATA_DIR` defaults to `./data` when unset, which is under the app root and not writable on Hostless.
+- Temporary zero-cost option: set `DATA_DIR=/tmp/radar-ai-v2` in Hostless Settings → Environment variables. `/tmp` is writable but cleared on process restart; state, alert history and other JSON persistence will be lost after restart.
+- Durable option: attach an existing persistent volume at `/data` and set `DATA_DIR=/data`. A new volume may incur cost: Hostless free pool is shared (512 MiB persistent storage) while the minimum new disk is 1 GiB. Check the cost estimate and obtain owner approval before creating one.
+- No DATA_DIR change or volume provisioning has been executed. Wait for BOS to choose the ephemeral tradeoff or approve a durable storage plan.
+- After the owner-approved change, redeploy and run `npm run hostless-check`; expected `/api/ready` 200 and News health/source status visible.
