@@ -213,7 +213,7 @@ function renderEarlyGems(){
  const chains=new Set(all.map(x=>x.network_id).filter(Boolean));
  const totalVolume=all.reduce((sum,x)=>sum+(Number(x.volume_24h_usd)||0),0);
  const liquid=all.filter(x=>Number(x.liquidity_usd)>=5000).length;
- const fresh=all.filter(x=>Number.isFinite(Number(x.age_hours))&&Number(x.age_hours)<=24).length;
+ const fresh=all.filter(x=>x.age_hours!==null&&Number.isFinite(Number(x.age_hours))&&Number(x.age_hours)<=24).length;
  v.append(sectionHead('Early Gem Scanner','Pool DEX baru dari jaringan yang diindeks GeckoTerminal; bukan daftar semua token yang pernah dibuat.',
   el('span',{class:'muted'},meta?.fetched_at?'Update '+dateTime(meta.fetched_at):'Belum ada sinkronisasi')));
  v.append(el('div',{class:'stats-grid'},statCard('POOL TERDETEKSI',all.length,'Maksimal '+(meta?.pool_count||all.length)+' pool dalam feed','✧'),statCard('JARINGAN',chains.size,'Network berbeda pada hasil','◈'),statCard('VOLUME 24 JAM',money(totalVolume),'Agregat pool yang tampil','⇅'),statCard('LIKUIDITAS ≥ $5K',liquid,fresh+' pool berumur ≤ 24 jam','⌁')));
@@ -235,7 +235,7 @@ function renderEarlyGems(){
   if(!rows.length){results.append(empty(all.length?'Tidak ada pool yang cocok':'Belum ada data pool','Ubah filter atau periksa status sumber on-chain di atas.'));return;}
   rows.forEach(x=>{
    const flags=(x.risk_flags||[]).map(flag=>({liquidity_unknown:'Likuiditas N/A',liquidity_low:'Likuiditas rendah',volume_unknown:'Volume N/A',volume_low:'Volume rendah',market_cap_unverified:'Market cap belum diverifikasi',trade_count_unknown:'Jumlah transaksi N/A'}[flag]||flag));
-   const age=Number.isFinite(Number(x.age_hours))?(Number(x.age_hours)<1?Math.max(1,Math.round(Number(x.age_hours)*60))+' menit lalu':Number(x.age_hours)<48?Number(x.age_hours).toFixed(1)+' jam lalu':(Number(x.age_hours)/24).toFixed(1)+' hari lalu'):'Umur pool N/A';
+   const age=x.age_hours!==null&&Number.isFinite(Number(x.age_hours))?(Number(x.age_hours)<1?Math.max(1,Math.round(Number(x.age_hours)*60))+' menit lalu':Number(x.age_hours)<48?Number(x.age_hours).toFixed(1)+' jam lalu':(Number(x.age_hours)/24).toFixed(1)+' hari lalu'):'Umur pool N/A';
    const link=typeof x.pool_url==='string'&&x.pool_url.startsWith('https://www.geckoterminal.com/')?x.pool_url:null;
    const item=el('article',{class:'gem-card'},
     el('div',{class:'gem-card-top'},
