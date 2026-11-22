@@ -53,8 +53,9 @@ test('GitHub App connection probe reads the pinned repository with installation 
   const calls = [];
   const fetchImpl = async (url, options = {}) => {
     calls.push({ url, options });
-    if (url.includes('/access_tokens')) return { ok: true, json: async () => ({ token: 'short-lived-token', expires_at: '2030-01-01T00:00:00Z' }) };
-    if (url === 'https://api.github.com/repos/owner/repo') return { ok: true, json: async () => ({ full_name: 'owner/repo', default_branch: 'main', permissions: { pull: true, push: true, admin: false } }) };
+    if (url.includes('/access_tokens')) return { ok: true, json: async () => ({ token: 'short-lived-token', expires_at: '2030-01-01T00:00:00Z', permissions: { contents: 'write', issues: 'write', pull_requests: 'write', actions: 'read', metadata: 'read' } }) };
+    if (url === 'https://api.github.com/repos/owner/repo') return { ok: true, json: async () => ({ full_name: 'owner/repo', default_branch: 'main' }) };
+    if (url === 'https://api.github.com/repos/owner/repo/contents/README.md') return { ok: true, json: async () => ({ type: 'file', name: 'README.md' }) };
     return { ok: false, status: 404, json: async () => ({ message: 'Not Found' }) };
   };
   const client = createGithubAppClient({
@@ -62,10 +63,11 @@ test('GitHub App connection probe reads the pinned repository with installation 
     installationId: '456', repository: 'owner/repo', fetchImpl, now: () => 1700000000000
   });
   const result = await client.checkConnection();
-  assert.deepEqual(result, { connected: true, repository: 'owner/repo', default_branch: 'main', access: { read: true, write: true, admin: false } });
-  assert.equal(calls.length, 2);
+  assert.deepEqual(result, { connected: true, repository: 'owner/repo', default_branch: 'main', installation_permissions: { contents: 'write', issues: 'write', pull_requests: 'write', actions: 'read', metadata: 'read' } });
+  assert.equal(calls.length, 3);
   assert.equal(calls[1].options.headers.authorization, 'Bearer short-lived-token');
   assert.equal(calls[1].options.redirect, 'error');
+  assert.equal(calls[2].url.endsWith('/contents/README.md'), true);
 });
 
 test('GitHub App API rejects redirects rather than forwarding installation credentials', async () => {
