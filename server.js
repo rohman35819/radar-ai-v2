@@ -9,7 +9,7 @@ const sources = require('./lib/sources');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
-const { createGithubAppClient } = require('./lib/github/app-client');
+const { createGithubAppClient, validateRepoPath } = require('./lib/github/app-client');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
@@ -181,6 +181,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           if (!githubClient) return send(res, 503, { status: 'error', code: 'GITHUB_APP_NOT_CONFIGURED', message: 'GitHub App belum dikonfigurasi lengkap di server.' }, 'application/json', { 'cache-control': 'no-store' });
           const requestedPath = url.searchParams.get('path') || '';
           if (!requestedPath || requestedPath.length > 240) return send(res, 400, { status: 'error', code: 'INVALID_GITHUB_PATH', message: 'Path file tidak valid.' }, 'application/json', { 'cache-control': 'no-store' });
+          try { validateRepoPath(requestedPath); } catch { return send(res, 400, { status: 'error', code: 'GITHUB_PATH_NOT_ALLOWED', message: 'Path berada di luar folder yang diizinkan.' }, 'application/json', { 'cache-control': 'no-store' }); }
           Promise.resolve().then(() => githubClient.getFile(requestedPath)).then((file) => {
             if (!file || file.type !== 'file' || file.encoding !== 'base64' || typeof file.content !== 'string') return send(res, 404, { status: 'error', code: 'GITHUB_FILE_NOT_FOUND', message: 'File tidak ditemukan atau format tidak didukung.' }, 'application/json', { 'cache-control': 'no-store' });
             const decoded = Buffer.from(file.content.replace(/\s/g, ''), 'base64');
