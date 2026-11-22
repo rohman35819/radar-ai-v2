@@ -2009,3 +2009,16 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - No order execution, live trading, paid data, paid quota, or production mutation is authorized. Historical persistence waits for verified durable storage; EROFS means ephemeral filesystem is not a database.
 - Stage routing: Divisi 08 provider matrix; Divisi 03 exchange/derivatives semantics; Divisi 04 features/anti-look-ahead; Divisi 01 security; Divisi 05 fixtures and QA; Divisi 02 asset detail UI.
 - NEXT TASK after PR #48 QA: start Stage 0 provider/source matrix and data contract, then implement canonical identities and freshness/quality metadata before adding trade setups. Do not add entry/TP/SL until data quality and out-of-sample methodology are ready.
+
+---
+
+## 62. MARKET INTELLIGENCE DASHBOARD — CLEAN-BASE HANDOFF — 22 NOVEMBER 2026
+
+- Main advanced to `5850594a9b60f9da709ca965aad876cc144e6308` and introduced the approved-direction trade setup specification. PR #48 was found behind main and had conflicting master-context history; it was closed unmerged.
+- Current clean-base branch: `feat/coingecko-market-intelligence-dashboard-v2`, created from latest main. The approved `docs/market-intelligence-trade-setup-spec.md` is inherited directly from main.
+- Current PR: **#50**, Draft, base `main`. It contains the same tested Market Intelligence code, updated documentation/history, and the explicit scope boundary from the new trade setup spec.
+- PR #48 is superseded/closed, unmerged. Historical references to PR #48 in sections 60/61 describe the original implementation and are superseded by PR #50.
+- New branch files were copied from the prior implementation branch after reviewing the two main-only commits; main's new spec and section 59 were preserved. Compare main vs clean branch: ahead 13, behind 0 at branch creation.
+- CI and security scans must run again on PR #50 exact head; earlier passing evidence on PR #48 is not evidence for the new branch SHA.
+- No Hostless settings, production deployment, paid provider, or API secret was changed/read.
+- NEXT TASK: inspect PR #50 exact diff, run tests/security on exact head, then Divisi 01/05 review and browser/Hostless QA. Do not merge/deploy until all gates pass.
