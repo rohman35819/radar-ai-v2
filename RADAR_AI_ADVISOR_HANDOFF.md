@@ -203,3 +203,12 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Durable option: attach an existing persistent volume at `/data` and set `DATA_DIR=/data`. A new volume may incur cost: Hostless free pool is shared (512 MiB persistent storage) while the minimum new disk is 1 GiB. Check the cost estimate and obtain owner approval before creating one.
 - No DATA_DIR change or volume provisioning has been executed. Wait for BOS to choose the ephemeral tradeoff or approve a durable storage plan.
 - After the owner-approved change, redeploy and run `npm run hostless-check`; expected `/api/ready` 200 and News health/source status visible.
+
+## 21. AI provider registry — PR #42 current-main candidate (22 November 2026)
+- PR #41 was based on stale main and is superseded by PR #42. PR #42 branch: `feat/ai-provider-registry-secure-v2`, base main `a475205e9d76e3ba27d8e5c4633b1c5c24aec05f`.
+- Provider discovery from server env, authenticated provider-list endpoint, dynamic Command Center participants, server-side participant validation; API keys never sent to browser.
+- Custom providers explicitly enabled and opt-in per meeting, never auto-join background runs. Under Rp0 only costClass free; paid override remains disabled. OpenAI paid is excluded by default.
+- Redirect:error, HTTPS URL restrictions, secret/error redaction and outbound context allowlist. DNS rebinding remains residual; only trusted vendor hostnames may be configured.
+- First protocol: OpenAI-compatible chat completions. Native protocols require dedicated adapters.
+- README/test inventory updated to 99 tests / 10 files. PR #42 draft; exact-head CI and independent Divisi 01/04/05 reviews pending. No live API calls, secrets or deployment.
+- NEXT: exact-head CI + security/protocol/QA review; do not merge or enable paid provider until policy approval.
