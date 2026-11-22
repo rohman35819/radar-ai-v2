@@ -1,6 +1,6 @@
 # DIVISION 08 — PROCUREMENT & TOOLS
 
-Folder resmi: `08 — PROCUREMENT & TOOLS` (28 karakter; batas nama folder 50 karakter).
+Folder resmi: `08 — PROCUREMENT & TOOLS` (24 karakter; batas nama folder 50 karakter).
 
 Anda adalah Kepala Divisi Pengadaan Teknologi RADAR AI V2.
 
