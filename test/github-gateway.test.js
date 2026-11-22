@@ -41,6 +41,7 @@ test('GitHub gateway restricts file reads to approved paths and enforces 64 KiB'
     githubAppClient: {
       async checkConnection() { return { connected: true }; },
       async getFile(path) {
+        if (!['public/', 'lib/ai/', 'test/'].some((prefix) => path.startsWith(prefix)) || path.split('/').includes('..')) throw new Error('Path not allowed');
         reads.push(path);
         return { type: 'file', encoding: 'base64', path, sha: 'blob-sha', content: Buffer.from('safe source').toString('base64') };
       }
