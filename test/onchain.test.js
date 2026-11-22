@@ -97,11 +97,13 @@ test('onchain ingest: cache pool baru, pertahankan cache lama saat sumber gagal,
     fetchLlama: async () => ({ protocols: [], fees: [], revenue: [] }),
     fetchNews: async () => [],
     fetchUnlocks: async () => [],
-    fetchEarlyGems: async () => ({ items: [pool], fetched_at: new Date(now).toISOString(), source: 'test', pages_requested: 1 })
+    fetchEarlyGems: async () => ({ items: [pool], fetched_at: new Date(now).toISOString(), source: 'test', pages_requested: 1, trending_pool_count: 0, trending_error: 'ONCHAIN_RATE_LIMITED' })
   };
   await ingest.refresh(state, cfg, src);
   assert.equal(state.earlyGems.length, 1);
   assert.equal(state.health.onchain.ok, true);
+  assert.equal(state.health.onchain_trending.ok, false);
+  assert.equal(state.health.onchain_trending.error, 'ONCHAIN_RATE_LIMITED');
   assert.equal(state.earlyGemsMeta.pool_count, 1);
   const app = createApp({ cfg, state });
   await new Promise((resolve) => app.server.listen(0, resolve));
@@ -110,6 +112,8 @@ test('onchain ingest: cache pool baru, pertahankan cache lama saat sumber gagal,
     const snapshot = await response.json();
     assert.equal(snapshot.early_gems.length, 1);
     assert.equal(snapshot.early_gems_meta.source, 'test');
+    assert.equal(snapshot.config_needed.early_gems_enabled, true);
+    assert.equal(snapshot.config_needed.onchain_key, !cfg.cgKey);
   } finally { app.stop(); }
   src.fetchEarlyGems = async () => { const error = new Error('rate limited'); error.code = 'ONCHAIN_RATE_LIMITED'; throw error; };
   await ingest.refresh(state, cfg, src);
