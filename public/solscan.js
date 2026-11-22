@@ -6,7 +6,6 @@ const short = (v,n=7) => v ? String(v).slice(0,n)+'…'+String(v).slice(-n) : '�
 const esc = (v) => String(v ?? '—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const unwrap = (x) => x?.data?.data ?? x?.data ?? null;
 const arr = (x) => Array.isArray(unwrap(x)) ? unwrap(x) : Array.isArray(x?.data) ? x.data : [];
-const link = (path) => 'https://solscan.io/'+path;
 function renderRows(target, items, fields, emptyText) {
  const root=$(target); root.replaceChildren();
  if(!items.length){root.textContent=emptyText;return;}
@@ -33,7 +32,7 @@ async function load(){
   setStatus(payload);$('#updated-at').textContent='Observed: '+new Date(payload.observed_at).toLocaleString('id-ID');
   const endpoints=payload.endpoints||{},chain=unwrap(endpoints.chain_info),tx=arr(endpoints.latest_transactions),blocks=arr(endpoints.latest_blocks),tokens=arr(endpoints.trending_tokens);
   const latest=(key)=>{const series=unwrap(endpoints[key])?.series;return Array.isArray(series)&&series.length?series[series.length-1]:null;};
-  const txDay=latest('transaction_analytics'),stakeDay=latest('stake_analytics'),feeDay=latest('fee_analytics'),defiDay=latest('defi_analytics');
+  const txDay=latest('transaction_analytics'),stakeDay=latest('stake_analytics'),feeDay=latest('fee_analytics'),defiDay=latest('defi_analytics');\n  const lagValues=['transaction_analytics','stake_analytics','fee_analytics','defi_analytics','compute_analytics'].map(k=>unwrap(endpoints[k])?.lag_days).filter(v=>Number.isFinite(Number(v)));\n  const maxLag=lagValues.length?Math.max(...lagValues):null;
   const grid=$('#network-stats');grid.replaceChildren(
    stat('BLOCK TERAKHIR',fmt(chain?.blockHeight ?? blocks[0]?.slot ?? blocks[0]?.block_id),'Solscan indexed'),
    stat('EPOCH',fmt(chain?.currentEpoch),'Solana Mainnet'),
@@ -48,7 +47,7 @@ async function load(){
   renderRows('#transactions',tx,(t)=>[short(t.tx_hash||t.signature||t.txHash),t.status||t.block_time||t.time||'Transaksi',t.fee!=null?'Fee '+fmt(t.fee):''], 'Transaksi terbaru belum tersedia.');
   renderRows('#blocks',blocks,(b)=>['Slot '+fmt(b.slot||b.block_id||b.blockHeight),b.block_time||b.time||'',b.transaction_count!=null?fmt(b.transaction_count)+' tx':''], 'Data block belum tersedia.');
   const failures=Object.entries(endpoints).filter(([,v])=>!v.ok).map(([k,v])=>k+': '+v.code);
-  $('#notice').textContent=failures.length?'Sebagian endpoint tidak tersedia: '+failures.join(' · '):'Seluruh endpoint ringkasan yang diminta berhasil. Data diperbarui '+new Date(payload.observed_at).toLocaleString('id-ID')+'.';
+  $('#notice').textContent=(failures.length?'Sebagian endpoint tidak tersedia: '+failures.join(' · '):'Seluruh endpoint ringkasan yang diminta berhasil.')+' Data diobservasi '+new Date(payload.observed_at).toLocaleString('id-ID')+(maxLag===null?'':' · Lag maksimum analytics harian: '+maxLag+' hari.')+'; harga/market data mengikuti delay indeksasi Solscan.';
  }catch(error){$('#notice').textContent=showError(error.code||'SOLSCAN_UNAVAILABLE');$('#network-stats').replaceChildren(stat('STATUS','Tidak tersedia',showError(error.code)));setStatus({ok:false,code:error.code});}
  finally{$('#refresh').disabled=false;}
 }
@@ -77,4 +76,4 @@ $('#wallet-form').addEventListener('submit',async event=>{
   displayWallet(payload);
  }catch(error){$('#wallet-result').textContent=showError(error.code||'SOLSCAN_REQUEST_FAILED');}
 });
-$('#refresh').addEventListener('click',load);load();setInterval(load,300000);
+$('#refresh').addEventListener('click',load);\nconst menu=$('#menu-toggle'),sidebar=$('#sidebar'),backdrop=$('#sidebar-backdrop');\nconst setMenu=(open)=>{sidebar.classList.toggle('open',open);document.body.classList.toggle('sidebar-open',open);menu.setAttribute('aria-expanded',String(open));};\nmenu.addEventListener('click',()=>setMenu(!sidebar.classList.contains('open')));backdrop.addEventListener('click',()=>setMenu(false));document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false);});\nload();setInterval(load,300000);
