@@ -93,3 +93,20 @@ test('chart endpoint validates coin IDs and periods and uses chart cache', async
   await assert.rejects(service.chart('../secret', '7'), (error) => error.code === 'INVALID_COIN_ID');
   await assert.rejects(service.chart('bitcoin', '365'), (error) => error.code === 'INVALID_CHART_RANGE');
 });
+
+test('exchange ticker endpoint validates IDs and caches market pairs', async () => {
+  let calls = 0;
+  const service = createMarketIntelligenceService({
+    fetchImpl: async (url) => {
+      calls += 1;
+      assert.match(url, /exchanges\/binance\/tickers\?/);
+      return response({ tickers: [{ base: 'BTC', target: 'USDT', last: 50000 }] });
+    }
+  });
+  const first = await service.exchangeTickers('binance');
+  const second = await service.exchangeTickers('binance');
+  assert.equal(first.data.tickers[0].base, 'BTC');
+  assert.equal(second.cached, true);
+  assert.equal(calls, 1);
+  await assert.rejects(service.exchangeTickers('../private'), (error) => error.code === 'INVALID_EXCHANGE_ID');
+});
