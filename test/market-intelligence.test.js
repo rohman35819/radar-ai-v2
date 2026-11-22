@@ -111,3 +111,27 @@ test('exchange ticker endpoint validates IDs and caches market pairs', async () 
   assert.equal(calls, 1);
   await assert.rejects(service.exchangeTickers('../private'), (error) => error.code === 'INVALID_EXCHANGE_ID');
 });
+
+test('market intelligence cools down failed feeds instead of retrying every dashboard poll', async () => {
+  let clock = 0;
+  let globalCalls = 0;
+  const service = createMarketIntelligenceService({
+    now: () => clock,
+    fetchImpl: async (url) => {
+      if (url.includes('/global')) { globalCalls += 1; return response({}, 429); }
+      if (url.includes('/coins/markets?vs_currency=usd')) return response([]);
+      if (url.includes('/coins/markets?vs_currency=idr')) return response([]);
+      if (url.includes('/search/trending')) return response({ coins: [] });
+      if (url.includes('/coins/categories?')) return response([]);
+      return response([]);
+    }
+  });
+  const first = await service.dashboard();
+  const second = await service.dashboard();
+  assert.equal(first.sources.global.ok, false);
+  assert.equal(second.sources.global.ok, false);
+  assert.equal(globalCalls, 1);
+  clock = 6 * 60 * 1000;
+  await service.dashboard();
+  assert.equal(globalCalls, 2);
+});
