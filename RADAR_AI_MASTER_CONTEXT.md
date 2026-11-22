@@ -2116,3 +2116,15 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - The monitor workflow is now on `main`, so scheduled runs can start. It is **not operationally verified yet** until the owner adds `HOSTLESS_API_KEY` and one real run successfully reads the Hostless deployment API.
 - Owner action still required: add the read-only `deployments:read` API key in GitHub repository Actions Secrets. Do not send the token through chat. Check/set repository variable `HOSTLESS_APP_NAME` only if the Hostless app resource name is not `radar-ai-v2`.
 - Hostless Build and LIVE commit remain separate from GitHub merge/CI and are not yet verified by the new monitor.
+
+
+## 65. Executive Trading Intelligence — initial dashboard integration
+- Date: 2026-11-23.
+- Work branch: `feat/executive-trading-intelligence`, based on main at task start.
+- Added five-priority Trading Intelligence panels to the dashboard overview and a dedicated sidebar view: Smart Money/Whale, Token Flow/Liquidity, Market Regime/Momentum, Fundamental/Catalyst, and Exchange Intelligence.
+- Visual bars are computed from actual snapshot values and update with the existing dashboard polling (approximately 120 seconds); no synthetic ticks or fabricated price series.
+- Evidence gaps are explicit: labeled whale wallets, DEX pool liquidity/netflows, holder concentration, order-book depth, funding rate, and open interest are not present in the current snapshot. Volume/market-cap is only an activity proxy; screener breadth is not the whole market.
+- Reused sources: CoinGecko screener/global cache, DeFiLlama fundamentals, RSS news, unlock state, exchange candle-derived volume spikes, and Solscan overview.
+- Files changed: `public/intelligence.js`, `public/index.html`, `public/app.js`, `public/style.css`, this master context.
+- Tests pending; no Hostless build or LIVE verification claimed. Commit SHA pending.
+- NEXT TASK: run test suite, inspect diffs, open draft PR for independent QA. Then add verified wallet cohorts, DEX liquidity/holder distribution, and derivatives/order-book feeds; backtest signals before any probability score is shown.
