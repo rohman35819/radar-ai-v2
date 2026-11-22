@@ -1261,14 +1261,15 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Tidak ada perubahan permission, route order, transaksi, withdrawal, transfer, token Exchange Hub, atau dependency.
 
 ### 34.3 Pengujian dan deployment
-- Pemeriksaan sumber/diff dilakukan melalui GitHub; tes lokal belum dijalankan karena sesi ini tidak memiliki working copy Node.js.
-- Target CI: seluruh pemeriksaan sintaks dan `npm test` (63 test case setelah dua test baru).
-- Hostless Build dan SHA Live belum diverifikasi. Commit GitHub tidak berarti perubahan sudah LIVE.
+- Pemeriksaan diff GitHub mengonfirmasi hanya delapan file yang berubah sesuai lingkup fitur; tidak ada secret atau API credential nyata pada diff.
+- Tes lokal tidak dijalankan karena sesi ini tidak memiliki working copy Node.js.
+- GitHub Actions run #296 (44992834181) untuk commit fitur 14745010a388973f7fdeafaf8fc2326f7496f72a: completed / success. Job `test` dan langkah `npm test` completed / success; seluruh pemeriksaan sintaks dan test suite lulus. README memperkirakan 63 test case setelah dua test baru.
+- Hostless Build dan SHA Live belum diverifikasi. URL `/trading.html` dan `/api/exchanges/status` tidak dapat diakses dari pemeriksaan sesi ini; jangan menyimpulkan aplikasi sudah LIVE.
 - Tidak ada kredensial nyata yang dibaca atau ditambahkan ke repository.
 
 ### 34.4 NEXT TASK
-1. Verifikasi GitHub Actions untuk commit fitur identitas dan seluruh test suite.
-2. Verifikasi Hostless Build dan SHA Live secara terpisah.
-3. Setelah deployment, pemilik mengisi label opsional di Hostless Production jika ingin nama tampilan khusus, lalu redeploy dan uji koneksi akun.
-4. Lanjutkan QA Exchange Hub desktop/mobile, terutama identitas saat switch exchange, gagal koneksi, dan refresh token.
-5. Lanjutkan audit DATA_DIR/EROFS dan QA Dashboard sesuai roadmap.
+1. Verifikasi Hostless Build dan SHA Live secara terpisah; perubahan GitHub dan CI sukses bukan bukti deploy.
+2. Setelah deployment, pemilik dapat mengisi `BINANCE_ACCOUNT_LABEL` / `BYBIT_ACCOUNT_LABEL` di Hostless Production jika ingin nama tampilan khusus, lalu redeploy dan uji koneksi akun.
+3. Lanjutkan QA Exchange Hub desktop/mobile: identitas saat switch exchange, gagal koneksi, refresh token, dan tampilan tabel di layar kecil.
+4. Lanjutkan audit DATA_DIR/EROFS berdasarkan log serta mount Hostless.
+5. Lanjutkan QA Dashboard dan Command Center sesuai roadmap.
