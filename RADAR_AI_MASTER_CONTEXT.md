@@ -2139,3 +2139,11 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Code commits: provenance implementation `1736776853cc5e3b8eab857c4480b7ab8d6990c5`; syntax correction `7a42a6a93f204f09c201f083847b3e7154641ae4`; provenance styling `e1dd351725fa7bf9b6c9bc4a336c81dfba7a9163`.
 - Validation for these latest commits is pending exact-head GitHub Actions; prior green CI on the earlier code SHA does not validate these changes. Hostless Build/LIVE and browser visual QA remain unverified.
 - NEXT TASK: validate the exact updated PR head with npm tests, syntax checks, Gitleaks/Trivy; then audit the data contracts and source timestamps in the underlying API responses. Do not merge or claim LIVE until independent review and deployment verification pass.
+
+
+### 65.2 Missing-value handling correction — 23 November 2026
+- Review found JavaScript numeric coercion could treat `null` as zero in the volume/market-cap filter and market-breadth denominator. This could falsely inflate neutral counts or include missing ratios.
+- Added explicit numeric-presence validation. Market breadth now uses only tokens with an observed numeric 24h change; missing changes are counted separately as unavailable. Positive breadth percentage uses the valid-change denominator only. Volume/market-cap ranking excludes null/empty values.
+- Fundamental TVL ranking now excludes missing/non-numeric TVL rather than ranking it as zero. A missing TVL is not interpreted as no TVL.
+- Latest logic correction commit: `32ec6d9f145523ce228090b581128be1aa2f4d06`. Exact-head automated tests and security scans are pending; do not rely on previous green CI for this change.
+- NEXT TASK: add regression tests for null/empty/invalid values and verify all five panels against representative partial, stale, and failed provider fixtures. Then re-run exact-head CI and independent QA.
