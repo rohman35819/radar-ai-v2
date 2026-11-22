@@ -9,6 +9,7 @@ const sources = require('./lib/sources');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
+const { runGithubReadAgent } = require('./lib/ai/github-agent');
 const { createGithubAppClient, validateRepoPath } = require('./lib/github/app-client');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -46,7 +47,7 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, githubAppClient } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, githubAppClient, githubAgentRunner } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
   const githubAppSettings = {
     appId: process.env.GITHUB_APP_ID,
@@ -189,6 +190,32 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             send(res, 200, { status: 'success', file: { path: file.path, sha: file.sha, size: decoded.length, content: decoded.toString('utf8') } }, 'application/json', { 'cache-control': 'no-store' });
           }).catch(() => {
             send(res, 502, { status: 'error', code: 'GITHUB_FILE_READ_FAILED', message: 'Gagal membaca file dalam ruang lingkup yang diizinkan.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/ai/github/command' && req.method === 'POST') {
+          if (!hasValidAdminToken(req.headers['x-admin-token'])) return send(res, 403, { status: 'error', code: 'ADMIN_ACCESS_DENIED', message: 'Akses ditolak.' }, 'application/json', { 'cache-control': 'no-store' });
+          if (!githubClient) return send(res, 503, { status: 'error', code: 'GITHUB_APP_NOT_CONFIGURED', message: 'GitHub App belum dikonfigurasi lengkap di server.' }, 'application/json', { 'cache-control': 'no-store' });
+          if (!process.env.GEMINI_API_KEY && !githubAgentRunner) return send(res, 503, { status: 'error', code: 'GEMINI_NOT_CONFIGURED', message: 'GEMINI_API_KEY belum dikonfigurasi di server.' }, 'application/json', { 'cache-control': 'no-store' });
+          let size = 0;
+          const chunks = [];
+          req.on('data', (chunk) => { size += chunk.length; if (size <= 6000) chunks.push(chunk); });
+          req.on('end', () => {
+            if (size > 6000) return send(res, 413, { status: 'error', code: 'GITHUB_AGENT_INPUT_TOO_LARGE', message: 'Instruksi terlalu panjang.' }, 'application/json', { 'cache-control': 'no-store' });
+            let body;
+            try { body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); }
+            catch { return send(res, 400, { status: 'error', code: 'INVALID_JSON', message: 'Format JSON tidak valid.' }, 'application/json', { 'cache-control': 'no-store' }); }
+            const instruction = typeof body.instruction === 'string' ? body.instruction.trim().slice(0, 2000) : '';
+            if (!instruction) return send(res, 400, { status: 'error', code: 'EMPTY_INSTRUCTION', message: 'Instruksi wajib diisi.' }, 'application/json', { 'cache-control': 'no-store' });
+            const runner = githubAgentRunner || runGithubReadAgent;
+            Promise.resolve().then(() => runner({
+              instruction, githubClient, apiKey: process.env.GEMINI_API_KEY,
+              model: process.env.GEMINI_MODEL
+            })).then((result) => {
+              send(res, 200, { status: 'success', result }, 'application/json', { 'cache-control': 'no-store' });
+            }).catch(() => {
+              send(res, 502, { status: 'error', code: 'GITHUB_AGENT_FAILED', message: 'Gemini GitHub Agent gagal menyelesaikan pemeriksaan. Periksa konfigurasi provider dan izin GitHub App.' }, 'application/json', { 'cache-control': 'no-store' });
+            });
           });
           return;
         }
