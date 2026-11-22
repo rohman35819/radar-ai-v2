@@ -1830,3 +1830,15 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Probe utility merged in PR #40 as `a21f3e86211ec5bcb5d3fc0a0e4c96f1f19fcfbd`; main CI #507 passed 90/90, security #49 passed. `npm run hostless-check` is available.
 - No production configuration was changed. Owner decision required between temporary ephemeral `/tmp` mode (data loss on restart) and persistent volume (possible cost).
 - NEXT TASK: wait for BOS choice before changing Hostless `DATA_DIR` or provisioning storage. After configuration, rerun `npm run hostless-check`; require `/api/ready` 200 and inspect `/api/snapshot` News health.
+
+---
+
+## 59. AI PROVIDER REGISTRY — CURRENT-MAIN REBUILD PR #42 — 22 NOVEMBER 2026
+- PR #41 branch became stale after main advanced with Hostless readiness/EROFS evidence; PR #42 is the current provider-registry candidate based on main `a475205e9d76e3ba27d8e5c4633b1c5c24aec05f`. PR #41 should remain closed/superseded; PR #28 remains historical proposal.
+- Dynamic provider discovery uses server-side env IDs; authenticated provider metadata endpoint and Command Center load action; server revalidates IDs. API keys are never returned to browser.
+- Custom providers require explicit enablement, compatible protocol, safe HTTPS endpoint, model and cost class. Custom providers are never default/background participants; they are per-session opt-in.
+- Rp0: custom cost class must be free; paid providers require AI_WORKSPACE_ALLOW_PAID=1, which remains 0 unless BOS changes budget policy. Paid OpenAI is not default.
+- Redirects blocked; local/IP/unsafe URL forms rejected; outbound context allowlisted and redacted; raw provider errors sanitized. DNS rebinding remains residual for admin-configured hostnames; only trusted vendor domains should be configured.
+- First adapter supports OpenAI-compatible chat completions; native APIs require adapters. No fixed provider brand roster.
+- Tests and README updated to 99 tests / 10 files. PR #42 draft, exact-head CI and independent Divisi 01/04/05 reviews pending. No provider secret/live API call/Hostless deploy.
+- NEXT TASK: run exact-head CI; review server/UI dynamic selection, cost gates, redirect/error/context protections; Divisi 01 security, Divisi 04 protocol compatibility, Divisi 05 QA. No paid call or auto-write.
