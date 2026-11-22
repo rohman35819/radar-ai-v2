@@ -1487,12 +1487,13 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 ### 37.2 Perubahan
 - `lib/exchanges.js`: menambahkan signed HTTP GET `/v5/user/query-api`; hanya mengembalikan UID, flag read-only, dan daftar permission kategori yang disanitasi. `apiKey`, `secret`, IP whitelist, dan metadata sensitif lain tidak diteruskan ke browser. Normalisasi saldo Bybit juga tidak lagi mengganti `availableToWithdraw` yang hilang dengan `availableToBorrow`; nilai withdrawable yang tidak tersedia dikirim sebagai null.
 - `public/trading.js`: menampilkan UID Bybit bila tersedia, daftar kategori permission aktual yang disanitasi, serta membedakan permission read-only, trading, withdrawal, transfer, dan status belum terverifikasi. Audit tambahan memastikan UI Binance juga memperingatkan withdrawal/transfer aktif, bukan hanya Spot/Futures trading; nilai withdrawable yang tidak tersedia ditampilkan sebagai tanda strip, bukan nol.
-- `test/exchanges.test.js`: memperluas mock Bybit untuk verifikasi HMAC, UID, permission read-only, redaksi API key, dan fallback ketika endpoint permission gagal; menambah tes pemisahan withdrawal/transfer Binance dari flag trading serta pencegahan fallback `availableToBorrow` menjadi withdrawable balance.
+- `test/exchanges.test.js`: memperluas mock Bybit untuk verifikasi HMAC, UID, permission read-only, redaksi API key, dan fallback ketika endpoint permission gagal; menambah tes pemisahan withdrawal/transfer Binance, pencegahan fallback `availableToBorrow`, serta normalisasi HTTP/Binance/Bybit rate-limit dan penerusan Retry-After.
 - `test/exchange-ui.test.js`: menambah assertion untuk kontrak permission Bybit.
 - `README.md`: mendokumentasikan endpoint dan batas verifikasi.
 
 ### 37.3 Keamanan dan batasan
 - Semua request akun Bybit tetap HTTP GET dan ditandatangani di server. Tidak ada endpoint update API key, order, transfer, atau withdrawal.
+- Rate limit: HTTP 429/418, Binance `-1003`, dan Bybit `10006`/`10429` dinormalisasi menjadi `EXCHANGE_RATE_LIMITED`; header `Retry-After` diteruskan ke client bila tersedia. Tidak ada retry otomatis setelah rate-limit agar tidak memperparah pembatasan/IP ban.
 - Jika metadata permission tidak tersedia atau kategori inti `Spot`, `ContractTrade`, dan `Wallet` tidak lengkap, UI wajib menyatakan belum terverifikasi; koneksi saldo tidak boleh dianggap bukti read-only.
 - UID hanya ditampilkan sebagai identitas teknis dari respons exchange, bukan nama/email pemilik.
 - Binance tetap memakai endpoint resmi `/sapi/v1/account/apiRestrictions`; tidak ada perubahan permission atau environment exchange.
