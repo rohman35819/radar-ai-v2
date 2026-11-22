@@ -278,3 +278,18 @@ test('Bybit does not claim read-only when API key permission endpoint is unavail
   assert.equal(result.account.api_permissions.error, 'BYBIT_API_PERMISSION_READ_UNAVAILABLE');
   assert.equal(result.account.identity.account_id, undefined);
 });
+
+
+test('Bybit treats incomplete core permission categories as unverified', async () => {
+  const service = createExchangeService({ env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' }, fetchImpl: async (url) => {
+    const pathname = new URL(url).pathname;
+    if (pathname === '/v5/account/wallet-balance') return response({ retCode: 0, result: { list: [{ accountType: 'UNIFIED', coin: [] }] } });
+    if (pathname === '/v5/position/list') return response({ retCode: 0, result: { list: [] } });
+    if (pathname === '/v5/user/query-api') return response({ retCode: 0, result: { userID: 123, readOnly: 1, permissions: { Spot: [], ContractTrade: [] } } });
+    throw new Error('unexpected endpoint');
+  } });
+  const result = await service.account('bybit');
+  assert.equal(result.account.identity.account_id, '123');
+  assert.equal(result.account.api_permissions.available, false);
+  assert.equal(result.account.api_permissions.error, 'BYBIT_API_PERMISSION_READ_UNAVAILABLE');
+});
