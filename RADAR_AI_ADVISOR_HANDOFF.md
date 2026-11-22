@@ -124,3 +124,38 @@ Snapshot yang diverifikasi pada 22 November 2026:
 "Anda adalah Chief Strategy Advisor RADAR AI. Baca seluruh RADAR_AI_MASTER_CONTEXT.md, AGENTS.md, dan RADAR_AI_ADVISOR_HANDOFF.md dari branch main. Verifikasi HEAD, PR, CI, serta implementasi aktual. Jangan minta BOS mengulang konteks. Tugas Anda merancang organisasi, roadmap, dan sistem multi-agent yang benar-benar bekerja saat BOS offline. Bedakan rencana dengan fitur yang sudah berjalan. Susun divisi, mandat, backlog, KPI, permission, biaya, dan acceptance criteria. Koordinasikan eksekusi melalui Direktur dan divisi terkait; jangan mengambil alih perubahan domain tanpa alasan. Prioritaskan keselamatan, stabilitas V2, dan bukti. Perbarui handoff/master setelah keputusan penting. Mulai dari NEXT TASK dokumen ini dan lanjutkan tanpa menunggu BOS memberi instruksi teknis."
 
 ---
+
+
+---
+
+## 11. Keputusan Arsitektur dan Handoff Agent Platform — 22 November 2026
+
+### Keputusan
+- Hostless tetap menjadi pilihan utama tahap awal karena dokumentasi aktual mendukung long-running standalone workers, cron jobs, managed PostgreSQL, dan logging/metrics.
+- Dashboard/API RADAR AI tetap di app yang ada; worker pertama menjadi standalone service satu replica, satu task concurrency. PostgreSQL menjadi durable control-plane store. Redis ditunda.
+- GitHub Actions hanya untuk CI dan pekerjaan batch terbatas; cron untuk enqueue/maintenance, bukan queue consumer.
+- Kontrak data/task harus provider-neutral untuk opsi pindah ke Railway/Render/VPS jika batas Hostless, biaya, atau kebutuhan isolation berubah.
+- Perkiraan awal worker: 0.1 vCPU/256 MiB, sekitar USD 2.74 per bulan untuk 730 jam berdasarkan tarif compute publik, sebelum allowance, database, dan AI API. Cek billing akun sebelum provisioning.
+- Root filesystem Hostless read-only; data harus di managed database atau mounted disk. Ini relevan dengan insiden EROFS tetapi lokasi/path dan volume aktual belum dibuktikan.
+
+### Fondasi di branch
+Branch: feat/agent-platform-foundation
+- db/migrations/001_agent_platform.sql — Agent Registry, Task Queue, dependencies, Audit Events; Stage 0/1 only; default agent paused; idempotency, bounded retries, lease fields; audit mutation trigger.
+- docs/agent-platform-architecture.md — ADR, lifecycle, permission matrix, backlog, budget dan acceptance criteria.
+- test/agent-platform-schema.test.js — static schema contract tests.
+
+**Batas status:** schema dan dokumen berada di branch, belum merge, belum diterapkan pada PostgreSQL, dan belum memiliki DB adapter/queue runtime/worker. CI dan Hostless deployment masih menunggu verifikasi. Tidak ada resource yang diprovision atau biaya yang dikeluarkan pada sesi ini.
+
+### Penugasan berikutnya
+1. Divisi 06: DB adapter dan transactional queue service (enqueue, claim dengan SKIP LOCKED, lease fencing, heartbeat, retry, dead-letter).
+2. Divisi 01: least-privilege database role, TLS, secret handling, threat model, approval gate, kill switch.
+3. Divisi 05: migration harness PostgreSQL, concurrency, idempotency, stale lease, audit immutability, failure recovery dan independent QA.
+4. Divisi 07: decision memory/task memory dengan provenance dan supersedes; retrieval metadata/full-text dahulu.
+5. Direktur Utama: tetapkan PIC, hindari overlap file, integrasikan lewat PR.
+6. Tetap lanjutkan QA blocker section 36; arsitektur Agent Platform tidak menggantikan release verification.
+
+### Referensi Hostless
+- https://docs.hostless.cloud/app/workers
+- https://docs.hostless.cloud/overview
+- https://docs.hostless.cloud/app/filesystem
+- https://docs.hostless.cloud/plans/limits
