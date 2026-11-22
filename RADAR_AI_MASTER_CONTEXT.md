@@ -1487,6 +1487,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 ### 37.2 Patch dan regresi
 - public/app.js: assignment nilai trend/sort dipindah tepat setelah v.append(...) memasang seluruh kontrol ke DOM. Event listener tetap di-bind setelah mount; state filter, reset, sorting, dan ekspor CSV dipertahankan.
 - test/frontend-ui.test.js (baru): dua tes source-level memeriksa urutan mount/query/listener serta memastikan 12 tujuan navigasi (10 tombol internal + Exchange Hub + Command Center) tetap tersedia.
+- README.md: inventaris test diperbarui dari 63 test/8 file menjadi 65 test/9 file sesuai dua test regresi baru.
 - Tidak ada menu, route, kontrak API, dependency, kredensial, atau fungsi Exchange Hub/Command Center yang diubah.
 
 ### 37.3 Branch, commit, dan pemeriksaan
