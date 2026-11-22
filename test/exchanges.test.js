@@ -126,12 +126,19 @@ test('Bybit signs V5 requests and returns wallet and open positions', async () =
       assert.equal(options.headers['X-BAPI-SIGN'], expected);
       if (parsed.pathname === '/v5/account/wallet-balance') return response({ retCode: 0, result: { list: [{ accountType: 'UNIFIED', totalEquity: '120', totalWalletBalance: '110', totalAvailableBalance: '90', coin: [{ coin: 'USDT', walletBalance: '110', equity: '120', availableToWithdraw: '90' }] }] } });
       if (parsed.pathname === '/v5/position/list') return response({ retCode: 0, result: { list: [{ symbol: 'BTCUSDT', side: 'Buy', size: '0.02', avgPrice: '50000', markPrice: '50500', unrealisedPnl: '10', leverage: '3' }] } });
+      if (parsed.pathname === '/v5/user/query-api') return response({ retCode: 0, result: { userID: 12345678, readOnly: 1, permissions: { Spot: [], ContractTrade: [], Wallet: [], Earn: [] }, apiKey: 'must-not-be-returned', secret: '' } });
       throw new Error('unexpected endpoint');
     },
   });
   const result = await service.account('bybit');
   assert.equal(result.account.wallet.total_equity, 120);
   assert.equal(result.account.wallet.coins[0].asset, 'USDT');
+  assert.equal(result.account.identity.account_id, '12345678');
+  assert.equal(result.account.identity.display_name, 'Akun Bybit · UID 12345678');
+  assert.equal(result.account.api_permissions.available, true);
+  assert.equal(result.account.api_permissions.read_only, true);
+  assert.equal(result.account.api_permissions.withdrawals, false);
+  assert.equal(JSON.stringify(result).includes('must-not-be-returned'), false);
   assert.equal(result.account.positions[0].side, 'BUY');
   assert.equal(JSON.stringify(result).includes(secret), false);
 });
@@ -254,4 +261,20 @@ test('simbol market invalid ditolak sebelum request keluar', async () => {
   const service = createExchangeService({ env: {}, fetchImpl: async () => { called = true; return response({}); } });
   await assert.rejects(service.market('binance', 'BTC/USDT'), (error) => error.code === 'INVALID_MARKET_SYMBOL');
   assert.equal(called, false);
+});
+
+
+test('Bybit does not claim read-only when API key permission endpoint is unavailable', async () => {
+  const service = createExchangeService({ env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' }, fetchImpl: async (url) => {
+    const pathname = new URL(url).pathname;
+    if (pathname === '/v5/account/wallet-balance') return response({ retCode: 0, result: { list: [{ accountType: 'UNIFIED', coin: [] }] } });
+    if (pathname === '/v5/position/list') return response({ retCode: 0, result: { list: [] } });
+    if (pathname === '/v5/user/query-api') return response({ retCode: 10001, retMsg: 'permission read unavailable' });
+    throw new Error('unexpected endpoint');
+  } });
+  const result = await service.account('bybit');
+  assert.equal(result.connected, true);
+  assert.equal(result.account.api_permissions.available, false);
+  assert.equal(result.account.api_permissions.error, 'BYBIT_API_PERMISSION_READ_UNAVAILABLE');
+  assert.equal(result.account.identity.account_id, undefined);
 });
