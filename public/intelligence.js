@@ -2,7 +2,7 @@
 (() => {
  const node=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=String(text);return e;};
  const fmt=v=>v==null||!Number.isFinite(Number(v))?'—':Number(v).toLocaleString('id-ID',{maximumFractionDigits:2});
- const validNum=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
+ const validNum=v=>(typeof v==='number'||(typeof v==='string'&&v.trim()!==''))&&Number.isFinite(Number(v));
  const money=v=>v==null||!Number.isFinite(Number(v))?'—':'$'+(Math.abs(Number(v))>=1e9?(Number(v)/1e9).toFixed(2)+'B':Math.abs(Number(v))>=1e6?(Number(v)/1e6).toFixed(2)+'M':Number(v).toLocaleString('en-US',{maximumFractionDigits:2}));
  const date=v=>v&&Number.isFinite(Date.parse(v))?new Date(v).toLocaleString('id-ID',{dateStyle:'short',timeStyle:'short'}):'Belum tersedia';
  const age=v=>{if(!v||!Number.isFinite(Date.parse(v)))return 'waktu observasi tidak tersedia';const ms=Date.now()-Date.parse(v);if(ms<0)return 'timestamp di masa depan — periksa jam sumber';const mins=Math.floor(ms/60000);return mins<1?'baru saja':mins<60?mins+' menit lalu':mins<1440?Math.floor(mins/60)+' jam '+(mins%60)+' menit lalu':Math.floor(mins/1440)+' hari lalu';};
@@ -27,6 +27,7 @@
   quality.append(node('span','',sourceLine('Snapshot RADAR',{at:snapshot?.last_ok,stale:Boolean(snapshot?.stale),ok:Boolean(snapshot?.last_ok)&&!snapshot?.stale})));
   quality.append(node('span','',sourceLine('Solscan',solscan?{observed_at:solscan.observed_at,ok:solscan.ok,stale:false,error:solscan.code}:null)));
   const marketSources=market?.sources||{};Object.entries(marketSources).forEach(([name,item])=>quality.append(node('span','',sourceLine('CoinGecko '+name,item))));
+  Object.entries(health).forEach(([name,item])=>quality.append(node('span','',sourceLine('RADAR ingest '+name,item))));
   foot.append(node('span','', 'Snapshot: '+date(snapshot?.last_ok)+' · Solscan: '+date(solscan?.observed_at)),node('span','', 'Market feed: '+date(market?.updated_at)+' · Polling dashboard ±120 detik'));root.append(quality,foot);return root;
  }
  window.RadarIntelligence={panel};
