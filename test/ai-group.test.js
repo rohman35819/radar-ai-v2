@@ -38,3 +38,43 @@ test('client chat-completions memakai JSON dan menolak key kosong', async () => 
   assert.equal(result.decision, 'LONG');
   assert.equal(result.provider, 'mock');
 });
+
+
+test('group analysis falls back to OpenRouter when the Groq moderator fails', async () => {
+  const { runGroup } = require('../lib/ai/group');
+  const analyzers = ['gemini', 'groq', 'openrouter', 'openai'].map((provider) => [
+    provider, async () => ({ provider, decision: 'WAIT', confidence_score: 40, reasons: [], risks: [], missing_data: [] })
+  ]);
+  const attempts = [];
+  const result = await runGroup({ stale: false, tokens: [{ symbol: 'BTC', price: 100 }] }, {
+    analyzers,
+    moderators: [
+      ['groq', async () => { attempts.push('groq'); throw new Error('rate limited'); }],
+      ['openrouter', async (_market, analyses) => {
+        attempts.push('openrouter');
+        assert.equal(analyses.length, 4);
+        return { decision: 'WAIT', confidence_score: 0, reasons: ['Bukti belum cukup'], risks: [], missing_data: [] };
+      }]
+    ]
+  });
+
+  assert.deepEqual(attempts, ['groq', 'openrouter']);
+  assert.equal(result.status, 'completed');
+  assert.equal(result.final.provider, 'openrouter-moderator');
+  assert.equal(result.final.decision, 'WAIT');
+});
+
+test('group analysis stays WAIT and reports unavailable moderator when all reviewers fail', async () => {
+  const { runGroup } = require('../lib/ai/group');
+  const analyzers = ['gemini', 'groq'].map((provider) => [
+    provider, async () => ({ provider, decision: 'LONG', confidence_score: 80, reasons: ['uji'], risks: [], missing_data: [] })
+  ]);
+  const result = await runGroup({ stale: false, tokens: [{ symbol: 'BTC', price: 100 }] }, {
+    analyzers,
+    moderators: [['groq', async () => { throw new Error('provider down'); }]]
+  });
+
+  assert.equal(result.status, 'moderator_unavailable');
+  assert.equal(result.final.decision, 'WAIT');
+  assert.ok(result.final.moderator_errors[0].includes('provider down'));
+});
