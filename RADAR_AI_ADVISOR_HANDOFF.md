@@ -131,3 +131,11 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - This is a scheduled ChatGPT task, not the RADAR AI application's own always-on agent runtime. It does not automatically wake or operate the six/seven separate folder chats, and daily scheduling is not continuous/hourly execution. Do not represent it as full offline autonomy.
 - True product-level offline operation still requires the Agent Platform architecture in sections 37 and this handoff: persistent scheduler/queue, orchestrator, worker runtime, shared memory, permissions, audit, budgets, approval queue, kill switch, and recovery.
 
+## 12. Division 08 — Procurement & Tools (added 22 Nov 2026)
+- Official folder name: `08 — PROCUREMENT & TOOLS` (28 characters, below the 50-character limit).
+- Permanent charter and new-chat prompt: `DIVISION_08_PROCUREMENT_TOOLS.md`.
+- Scope: proactive discovery and evaluation of free/open-source/free-tier tools for AI, news/economics, crypto market data, infrastructure, monitoring, security, QA, automation, and knowledge systems.
+- Division 08 researches and recommends; domain owners validate integration, Division 05 independently tests, and Executive Office prioritizes.
+- Paid purchases, payment details, paid service activation, and production provider replacement require the applicable explicit BOS approval.
+- First backlog: verified free news/economic data sources; crypto market-data APIs; free/local AI options; low-cost scheduler/queue; monitoring; security/testing tools.
+- This is an organizational charter and handoff, not proof that a separate autonomous worker has been deployed or that the folder chat runs in the background.
