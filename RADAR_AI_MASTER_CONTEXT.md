@@ -1521,7 +1521,7 @@ ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus 
 
 ## 38. DIVISI 08 — PROCUREMENT & TOOLS
 
-**Nama folder resmi:** `08 — PROCUREMENT & TOOLS` (28 karakter, di bawah batas 50 karakter).
+**Nama folder resmi:** `08 — PROCUREMENT & TOOLS` (24 karakter, di bawah batas 50 karakter).
 
 **Mandat:** Divisi pengadaan teknologi RADAR AI V2 yang proaktif menemukan, mengevaluasi, menguji kelayakan, dan menyiapkan rekomendasi tools untuk seluruh divisi. Fokus utama adalah solusi gratis, open-source, dan free tier yang benar-benar dapat digunakan; bukan sekadar free trial.
 
