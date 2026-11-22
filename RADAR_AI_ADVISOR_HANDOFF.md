@@ -169,3 +169,13 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - PR #29 remains draft pending independent Divisi 01 security review and Divisi 05 QA review. It is behind main by one commit and currently reports mergeable=false; sync/review conflicts before any merge.
 - No DB adapter, queue runtime, scheduler, worker, approval queue, kill switch, or persistent memory is active. Strict Rp0 and Hostless no-overage provisioning gate remain binding.
 - NEXT TASK: Direktur coordinates Divisi 01/05 reviews and branch sync; Divisi 06 plans runtime implementation only after schema acceptance; Divisi 07 builds provenance-first decision/task memory design.
+
+
+## 19. Divisi 07 memory/knowledge architecture — design only (22 November 2026)
+- Design proposal: `docs/division-07-memory-knowledge-architecture.md`.
+- Canonical records require provenance/source revision, scope, sensitivity, approval state, validity and supersedes relations. Unmerged PRs are proposals, not production facts.
+- Agents propose; Director, Divisi 01 and Divisi 05 review by domain; BOS retains reserved approval for policy/budget/provisioning/security boundaries.
+- Retrieval applies identity and scope filters before PostgreSQL full-text ranking. No vector DB, Redis or paid service.
+- Never store secrets, credentials, raw exchange payloads or unrelated sensitive personal data. Retention periods remain proposals pending approval.
+- No persistent memory tables/service/runtime are active. Strict Rp0 and no-provisioning gate remain binding.
+- NEXT: Divisi 07 curate sample decision/task records; Divisi 01 review privacy/access/retention; Divisi 05 define provenance and retrieval QA. Implementation only after schema acceptance and verified zero-cost capacity.
