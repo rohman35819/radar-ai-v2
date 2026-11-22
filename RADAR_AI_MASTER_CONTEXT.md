@@ -1588,3 +1588,16 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Status deployment: belum di-merge dan belum diverifikasi di Hostless. Live News tetap belum dinyatakan pulih sampai deployment dan permintaan RSS nyata berhasil diperiksa.
 - Risiko tersisa: feed eksternal dapat mengubah format, membatasi request, atau tidak dapat dijangkau dari region/runtime Hostless. Fallback menghilangkan kegagalan konfigurasi kosong, tetapi tidak menjamin ketersediaan upstream. Periksa `health.news` dan log setelah deploy.
 - NEXT TASK: minta review independen Divisi 05; setelah persetujuan BOS, merge/deploy; verifikasi `/api/snapshot` berisi berita dan `health.news.ok=true` di live.
+
+
+## 41. NEWS FEED FIX MERGED — 22 NOVEMBER 2026
+
+- BOS menyetujui integrasi PR #22; PR telah di-squash-merge ke `main`.
+- PR: https://github.com/rohman35819/radar-ai-v2/pull/22
+- Merge commit: `66eff5667715fd3138336bc3f2e6a5172ba1b5cf`.
+- Perubahan terintegrasi: fallback RSS default ketika `NEWS_FEEDS` kosong/tidak diset; UI menampilkan `summary` dengan fallback `description`; tes konfigurasi dan parser RSS/Atom.
+- Bukti CI: workflow `RADAR AI tests` run #409 / run ID `45019762920`, job `test`, langkah `npm test` sukses pada source PR sebelum merge. Tidak ada workflow PR-triggered run yang terlapor untuk merge commit saat audit pasca-merge.
+- Verifikasi repository: `lib/ingest.js` pada `main` telah dikonfirmasi memuat fallback feed. PR terkonfirmasi merged.
+- Verifikasi live: belum dapat dilakukan dari sesi ini; akses langsung ke `https://radar-ai-v2.hostless.app/api/snapshot` dan halaman root gagal melalui pemeriksa eksternal. Jangan klaim Hostless telah selesai deploy atau News live pulih. GitHub merge tidak sama dengan bukti deployment.
+- Risiko tersisa: dua feed upstream dapat rate-limit/berubah format atau tidak dapat dijangkau dari Hostless; feed default belum diverifikasi dengan request runtime live.
+- NEXT TASK: periksa Hostless deployment terbaru untuk merge commit, lalu jalankan `npm run live-check` atau validasi `/api/snapshot`; pastikan `health.news.ok=true` dan item berita berisi title/link/summary. Jika Hostless tidak auto-deploy, lakukan deployment melalui dashboard sesuai prosedur project dan verifikasi build/log. Jangan mengubah konfigurasi berbayar; kebijakan biaya tetap Rp0.
