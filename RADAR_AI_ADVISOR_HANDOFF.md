@@ -140,6 +140,7 @@ Snapshot yang diverifikasi pada 22 November 2026:
 
 ### Fondasi di branch
 Branch: feat/agent-platform-foundation
+Draft PR #18: https://github.com/rohman35819/radar-ai-v2/pull/18 (open, draft, not merged); head SHA 29564864eb348739fbab6e14748e155db5a56b62.
 - db/migrations/001_agent_platform.sql — Agent Registry, Task Queue, dependencies, Audit Events; Stage 0/1 only; default agent paused; idempotency, bounded retries, lease fields; audit mutation trigger.
 - docs/agent-platform-architecture.md — ADR, lifecycle, permission matrix, backlog, budget dan acceptance criteria.
 - test/agent-platform-schema.test.js — static schema contract tests.
