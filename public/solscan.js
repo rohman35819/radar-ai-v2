@@ -33,7 +33,7 @@ async function load(){
   const endpoints=payload.endpoints||{},chain=unwrap(endpoints.chain_info),tx=arr(endpoints.latest_transactions),blocks=arr(endpoints.latest_blocks),tokens=arr(endpoints.trending_tokens);
   const latest=(key)=>{const series=unwrap(endpoints[key])?.series;return Array.isArray(series)&&series.length?series[series.length-1]:null;};
   const txDay=latest('transaction_analytics'),stakeDay=latest('stake_analytics'),feeDay=latest('fee_analytics'),defiDay=latest('defi_analytics');
-  const lagValues=['transaction_analytics','stake_analytics','fee_analytics','defi_analytics','compute_analytics'].map(k=>unwrap(endpoints[k])?.lag_days).filter(v=>Number.isFinite(Number(v)));
+  const lagValues=['transaction_analytics','stake_analytics','fee_analytics','defi_analytics','compute_analytics'].map(k=>unwrap(endpoints[k])?.lag_days).filter(v=>v!=null&&Number.isFinite(Number(v)));
   const maxLag=lagValues.length?Math.max(...lagValues):null;
   const grid=$('#network-stats');grid.replaceChildren(
    stat('BLOCK TERAKHIR',fmt(chain?.blockHeight ?? blocks[0]?.slot ?? blocks[0]?.block_id),'Solscan indexed'),
