@@ -1499,7 +1499,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 
 ### 37.4 Verifikasi dan status
 - Branch implementasi awal: `feat/bybit-api-key-permission-verification`; dipindahkan ke branch sinkronisasi setelah `main` maju dua commit.
-- Tes otomatis: belum dijalankan pada working copy lokal; query workflow/status untuk PR #15 tidak mengembalikan run/status, sehingga hasil test tetap UNVERIFIED dan PR tidak boleh di-merge sebelum Actions hijau.
+- GitHub Actions run #44996644470 untuk commit kode `ac8e4933b5e822bf9528628c0936f6713919ad2c`: **PASS, 68/68 tests, 0 failures**; job `test` selesai sukses. Log mencakup tes permission Bybit unavailable/incomplete, UID, redaksi API key, serta permission withdrawal/transfer Binance.
 - Pemeriksaan sintaks JavaScript melalui parser V8 untuk `lib/exchanges.js`, `public/trading.js`, `test/exchanges.test.js`, dan `test/exchange-ui.test.js`: PASS. Audit statis juga memastikan method exchange yang didefinisikan hanya GET, endpoint order tidak ditemukan, dan UI memisahkan permission withdrawal/transfer dari status trading.
 - PR #15: https://github.com/rohman35819/radar-ai-v2/pull/15; status open, mergeable, belum merged.
 - CI HEAD main saat audit: commit terbaru `cc6d9af` tidak memiliki combined-status entries; workflow-run connector tidak mengembalikan run untuk HEAD tersebut. Master context QA Gate mencatat 63/63 PASS pada commit fitur sebelumnya, bukan pada HEAD terbaru. PR #15 workflow belum mengembalikan run.
@@ -1507,7 +1507,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 - Koneksi exchange nyata: belum diuji; tidak ada akses ke kredensial Hostless dan tidak ada permintaan secret kepada Owner.
 
 ### 37.5 NEXT TASK Divisi 03
-1. Jalankan seluruh `npm test` melalui GitHub Actions pada PR; perbaiki regresi bila ada.
+1. Minta review independen QA untuk PR #15; pertahankan merge gate dan gabungkan hanya setelah review menyetujui perubahan.
 2. QA hasil metadata permission Bybit dengan respons nyata setelah deploy yang disetujui, tanpa mengubah izin API.
 3. Verifikasi identitas, saldo, posisi, dan permission Binance read-only pada environment Hostless.
 4. Lanjutkan QA responsif Exchange Hub dan audit error/timeout/rate-limit.
