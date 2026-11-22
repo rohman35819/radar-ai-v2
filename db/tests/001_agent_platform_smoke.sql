@@ -30,6 +30,68 @@ INSERT INTO radar_agent.task_queue
 VALUES
   ('00000000-0000-4000-8000-000000000002', 'qa-smoke-task', 'smoke', 'Migration smoke test', 'ci');
 
+DO $body$
+BEGIN
+  BEGIN
+    INSERT INTO radar_agent.agent_registry
+      (agent_id, agent_key, display_name, division_code, role_title, created_by)
+    VALUES ('00000000-0000-4000-8000-000000000005', 'qa-invalid-division', 'Invalid Division', '09', 'CI', 'ci');
+    RAISE EXCEPTION 'Division 09 unexpectedly accepted';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  BEGIN
+    INSERT INTO radar_agent.agent_registry
+      (agent_id, agent_key, display_name, division_code, role_title, daily_budget_usd, created_by)
+    VALUES ('00000000-0000-4000-8000-000000000006', 'qa-invalid-budget', 'Invalid Budget', '06', 'CI', 0.01, 'ci');
+    RAISE EXCEPTION 'Non-zero budget unexpectedly accepted';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  BEGIN
+    INSERT INTO radar_agent.agent_registry
+      (agent_id, agent_key, display_name, division_code, role_title, max_concurrency, created_by)
+    VALUES ('00000000-0000-4000-8000-000000000007', 'qa-invalid-concurrency', 'Invalid Concurrency', '06', 'CI', 2, 'ci');
+    RAISE EXCEPTION 'Concurrency above one unexpectedly accepted';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  BEGIN
+    INSERT INTO radar_agent.task_queue
+      (task_id, task_key, task_type, title, max_attempts, created_by)
+    VALUES ('00000000-0000-4000-8000-000000000008', 'qa-invalid-retries', 'smoke', 'Invalid Retries', 4, 'ci');
+    RAISE EXCEPTION 'More than three attempts unexpectedly accepted';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  BEGIN
+    INSERT INTO radar_agent.task_queue
+      (task_id, task_key, task_type, title, attempt_count, max_attempts, created_by)
+    VALUES ('00000000-0000-4000-8000-000000000009', 'qa-invalid-attempt-count', 'smoke', 'Invalid Attempt Count', 4, 3, 'ci');
+    RAISE EXCEPTION 'attempt_count above max_attempts unexpectedly accepted';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  BEGIN
+    INSERT INTO radar_agent.task_queue
+      (task_id, task_key, task_type, title, input_payload, created_by)
+    VALUES ('00000000-0000-4000-8000-000000000010', 'qa-invalid-payload', 'smoke', 'Oversized Payload',
+      jsonb_build_object('data', repeat('x', 65537)), 'ci');
+    RAISE EXCEPTION 'Oversized task payload unexpectedly accepted';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+
+  BEGIN
+    INSERT INTO radar_agent.audit_events
+      (event_id, actor_type, actor_id, event_type, entity_type, entity_id, metadata)
+    VALUES ('00000000-0000-4000-8000-000000000011', 'system', 'ci', 'oversized', 'test', 'oversized',
+      jsonb_build_object('data', repeat('x', 16385)));
+    RAISE EXCEPTION 'Oversized audit metadata unexpectedly accepted';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+END;
+$body$;
+
 SET ROLE radar_agent_runtime;
 
 DO $body$
