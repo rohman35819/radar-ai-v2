@@ -256,7 +256,9 @@ function renderEarlyGems(){
      el('div',{},el('small',{},'LIKUIDITAS'),el('b',{},money(x.liquidity_usd))),
      el('div',{},el('small',{},'VOLUME 24J'),el('b',{},money(x.volume_24h_usd))),
      el('div',{},el('small',{},'HARGA'),el('b',{},x.price_usd==null?'—':Number(x.price_usd).toPrecision(6)+' USD')),
-     el('div',{},el('small',{},'FDV / MCAP'),el('b',{},money(x.market_cap_usd)+' / '+money(x.fdv_usd)))),
+     el('div',{},el('small',{},'FDV / MCAP'),el('b',{},money(x.market_cap_usd)+' / '+money(x.fdv_usd))),
+     el('div',{},el('small',{},'PERUBAHAN 24J'),el('b',{},pct(x.price_change_24h_pct))),
+     el('div',{},el('small',{},'BUY / SELL 24J'),el('b',{},(x.buys_24h??'—')+' / '+(x.sells_24h??'—')))),
     flags.length?el('div',{class:'gem-flags'},...flags.map(flag=>el('span',{class:'flag'},flag))):el('div',{class:'gem-flags'},el('span',{class:'gem-clean'},'Tidak ada flag kualitas data')),
     el('div',{class:'gem-footer'},el('small',{},'Pool: '+(x.pool_address?String(x.pool_address).slice(0,8)+'…'+String(x.pool_address).slice(-6):'N/A')),link?el('a',{href:link,target:'_blank',rel:'noopener noreferrer'},'Buka di GeckoTerminal ↗'):null));
    results.append(item);
