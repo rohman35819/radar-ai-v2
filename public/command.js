@@ -5,7 +5,7 @@ const names={gemini:'Gemini',groq:'Groq',openrouter:'OpenRouter',openai:'OpenAI'
 function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined&&text!==null)n.textContent=String(text);return n;}
 function setStatus(label,state='ready'){statusNode.className='cmd-status is-'+state;statusNode.replaceChildren(node('i'),document.createTextNode(' '+label));}
 function selected(){return $$('.participant-card input:checked').map(x=>x.value);}
-function updateParticipants(){const n=selected().length;$('#meeting-count').textContent=n;$('#participant-help').textContent=n===4?'Semua analis dipilih untuk rapat lengkap.':n===0?'Pilih minimal satu analis sebelum memulai.':n+' analis dipilih untuk rapat ini.';}
+function updateParticipants(){const n=selected().length;const total=$('.participant-card input').length;$('#meeting-count').textContent=n;$('#participant-help').textContent=total===0?'Belum ada provider yang tersedia. Muat daftar dari server.':n===0?'Pilih minimal satu provider sebelum memulai.':n+' dari '+total+' provider dipilih untuk rapat ini.';}
 function updateComposer(){$('#char-count').textContent=instruction.value.length.toLocaleString('id-ID')+' / 2.000';instruction.style.height='auto';instruction.style.height=Math.min(instruction.scrollHeight,125)+'px';}
 function showError(message){log.append(node('div','error-card',message));log.setAttribute('aria-busy','false');setStatus('PERLU DIPERIKSA','error');}
 function progress(message,detail){const c=node('div','progress-card');c.append(node('span','progress-spinner'));const copy=node('div','progress-copy');copy.append(node('b','',message),node('span','',detail));c.append(copy);log.append(c);log.setAttribute('aria-busy','true');}
@@ -15,6 +15,28 @@ if(Array.isArray(a.proposals)&&a.proposals.length){const wrap=node('div','propos
 if(a.reply_to_others)c.append(node('div','ai-extra','Tanggapan silang\n'+a.reply_to_others));if(a.challenge)c.append(node('div','ai-extra','Tantangan untuk tim\n'+a.challenge));return c;}
 function minutesCard(m){if(!m)return null;const c=node('article','minutes-card');c.append(node('h3','','NOTULEN SEKRETARIS · '+(names[m.provider]||m.provider||'STATUS')),node('p','minutes-summary',m.error||m.summary||'Notulen belum tersedia.'));const grid=node('div','minutes-grid');listPart(grid,'KESEPAKATAN',m.agreements);listPart(grid,'PERBEDAAN',m.disagreements);listPart(grid,'RISIKO',m.risks);if(grid.childNodes.length)c.append(grid);if(m.action_items?.length){const actions=node('div','action-list');actions.append(node('b','','TINDAK LANJUT'));m.action_items.forEach(a=>actions.append(node('div','action-line',a.task+' — '+(a.owner||'Belum ditentukan')+' · '+(a.priority||'medium').toUpperCase())));c.append(actions);}if(m.chairman_question)c.append(node('p','chair-note','Keputusan ketua: '+m.chairman_question));return c;}
 function showResult(r){log.replaceChildren();log.setAttribute('aria-busy','false');const user=node('div','meeting-user');user.append(node('small','','INSTRUKSI KETUA'),node('p','',r.instruction||'Perintah terkirim'));log.append(user);(r.rounds||[]).forEach(round=>{if(!round.agents?.length)return;const block=node('section','round-block'),title=node('div','round-title'),labels={1:'PENDAPAT AWAL',2:'DISKUSI SILANG',3:'EVALUASI AKHIR'};title.append(node('span','round-number',round.number),node('span','','PUTARAN '+round.number+' · '+(labels[round.number]||'DISKUSI')));const grid=node('div','ai-grid');round.agents.forEach(a=>grid.append(agentCard(a)));block.append(title,grid);log.append(block);});const m=minutesCard(r.minutes);if(m)log.append(m);const ok=r.status==='completed';log.append(node('div','result-foot','Ketua rapat: Kamu · '+(r.agent_count||0)+' peserta pada putaran akhir. '+(ok?'Hasil siap dievaluasi.':'Respons provider belum mencukupi; periksa konfigurasi API.')));$('#clear-chat').disabled=false;log.scrollIntoView({behavior:'smooth',block:'start'});setStatus(ok?'RAPAT SELESAI':'HASIL TERBATAS',ok?'ready':'error');}
+async function loadProviders(){
+ const token=tokenInput.value.trim(),button=$('#load-providers');
+ if(!token){tokenInput.focus();showError('Masukkan ADMIN_TOKEN sebelum memuat daftar provider.');return;}
+ button.disabled=true;
+ try{
+  const response=await fetch('/api/ai/workspace/providers',{cache:'no-store',headers:{accept:'application/json','x-admin-token':token}});
+  const payload=await readJson(response);
+  if(!response.ok)throw new Error(payload.message||'Gagal mengambil daftar provider.');
+  const providers=Array.isArray(payload.providers)?payload.providers:[];
+  const seats=$('#seats');seats.replaceChildren();
+  providers.forEach(p=>{
+   const label=node('label','participant-card'),input=node('input');
+   input.type='checkbox';input.value=p.id;input.checked=Boolean(p.defaultSelected);input.addEventListener('change',updateParticipants);
+   const mark=node('span','check','✓'),icon=node('span','provider-mark',String(p.label||p.id).slice(0,1).toUpperCase());
+   const detail=node('span');detail.append(node('b','',p.label||p.id),node('small','',(p.model||'Model belum diatur')+' · '+(p.costClass||'cost unknown')));
+   label.append(input,mark,icon,detail);seats.append(label);names[p.id]=p.label||p.id;
+  });
+  updateParticipants();
+  if(!providers.length)$('#participant-help').textContent='Tidak ada provider yang lolos konfigurasi dan kebijakan biaya Rp0.';
+ }catch(error){showError('Gagal memuat provider: '+(error.message||'periksa konfigurasi server.'));}
+ finally{button.disabled=false;}
+}
 async function readJson(r){try{return await r.json();}catch{return {};}}
 const delay=ms=>new Promise(resolve=>window.setTimeout(resolve,ms));
 async function waitForResult(id){const max=90;for(let i=0;i<max;i++){if(i)await delay(3000);const response=await fetch('/api/ai/workspace',{cache:'no-store',headers:{accept:'application/json'}});if(response.ok){const d=await readJson(response),result=d.workspace?.last;if(result?.command_id===id)return result;}const stage=i<12?'Mengumpulkan pendapat awal…':i<45?'Diskusi silang dan evaluasi jawaban…':'Menyusun evaluasi akhir dan notulen…';const detail=$('.progress-copy span',log);if(detail)detail.textContent=stage+' ('+Math.min(96,Math.round((i+1)/max*100))+'%)';}throw new Error('Waktu tunggu habis. Perintah mungkin masih diproses server; periksa AI Workspace beberapa saat lagi.');}
@@ -22,7 +44,8 @@ async function submitCommand(text){if(busy)return;const participants=selected(),
 try{const response=await fetch('/api/ai/command',{method:'POST',headers:{'content-type':'application/json','x-admin-token':token},body:JSON.stringify({instruction:text,participants})});const payload=await readJson(response);if(!response.ok){if(response.status===409)throw new Error('Rapat sebelumnya masih berjalan. Tunggu sampai selesai sebelum memulai rapat baru.');if(response.status===403)throw new Error('Akses ditolak. Periksa ADMIN_TOKEN dan konfigurasi server.');throw new Error(payload.message||'Server gagal menerima perintah (HTTP '+response.status+').');}if(!payload.command_id)throw new Error('Server tidak mengembalikan ID rapat.');tokenInput.value='';instruction.value='';updateComposer();const result=await waitForResult(payload.command_id);showResult(result);$('#composer-status').textContent='Rapat selesai. Kamu dapat memulai diskusi berikutnya.';}
 catch(e){showError(e.message||'Terjadi kesalahan saat menjalankan rapat.');$('#composer-status').textContent='Periksa akses dan koneksi, lalu coba lagi.';}
 finally{tokenInput.value='';busy=false;sendButton.disabled=false;sendButton.querySelector('.send-label').textContent='Mulai rapat';updateComposer();}}
-$$('.participant-card input').forEach(x=>x.addEventListener('change',updateParticipants));
+$('#load-providers').addEventListener('click',loadProviders);
+$('.participant-card input').forEach(x=>x.addEventListener('change',updateParticipants));
 $('#select-all').addEventListener('click',()=>{$$('.participant-card input').forEach(x=>x.checked=true);updateParticipants();});
 $('#select-none').addEventListener('click',()=>{$$('.participant-card input').forEach(x=>x.checked=false);updateParticipants();});
 $$('[data-prompt]').forEach(b=>b.addEventListener('click',()=>{instruction.value=b.dataset.prompt||'';updateComposer();instruction.focus();}));
