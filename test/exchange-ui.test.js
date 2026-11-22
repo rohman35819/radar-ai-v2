@@ -63,3 +63,15 @@ test('Exchange Hub memakai status izin API Key khusus Binance, bukan canTrade ak
   assert.doesNotMatch(exchangeService, /method: '(POST|PUT|PATCH|DELETE)'/);
   assert.doesNotMatch(js, /\/api\/v[13]\/order|\/fapi\/v1\/order|\/fapi\/v2\/order/);
 });
+
+
+test('Exchange Hub verifies Bybit API key read-only state, account UID and wallet/trade permissions', () => {
+  assert.ok(exchangeService.includes('/v5/user/query-api'));
+  assert.ok(exchangeService.includes('read_only: rawApiKeyInfo.readOnly === 1'));
+  assert.ok(exchangeService.includes('userID'));
+  assert.ok(exchangeService.includes("withdrawals: walletPermissions.includes('Withdraw')"));
+  assert.ok(js.includes('apiPermissions.read_only'));
+  assert.ok(js.includes('apiPermissions.withdrawals'));
+  assert.ok(js.includes('identity.account_id'));
+  assert.ok(exchangeService.includes('BYBIT_API_PERMISSION_READ_UNAVAILABLE'));
+});
