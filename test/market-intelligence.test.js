@@ -7,13 +7,13 @@ function response(data, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: async () => data };
 }
 
-test('market intelligence fetches five CoinGecko datasets with server-side demo header', async () => {
+test('market intelligence fetches six CoinGecko datasets with server-side demo header', async () => {
   const calls = [];
   const service = createMarketIntelligenceService({
     apiKey: 'test-secret',
     fetchImpl: async (url, options) => {
       calls.push({ url, options });
-      if (url.includes('/global?')) return response({ data: { total_market_cap: { usd: 1000 }, market_cap_change_percentage_24h_usd: 2 } });
+      if (url.includes('/global')) return response({ data: { total_market_cap: { usd: 1000 }, market_cap_change_percentage_24h_usd: 2 } });
       if (url.includes('/coins/markets?vs_currency=usd')) return response([{ id: 'bitcoin', symbol: 'btc', current_price: 50000 }]);
       if (url.includes('/coins/markets?vs_currency=idr')) return response([{ id: 'bitcoin', symbol: 'btc', current_price: 800000000 }]);
       if (url.includes('/search/trending')) return response({ coins: [{ item: { id: 'bitcoin' } }] });
@@ -47,7 +47,7 @@ test('market intelligence caches datasets and avoids duplicate upstream requests
   await service.dashboard();
   const firstCount = calls;
   await service.dashboard();
-  assert.equal(firstCount, 5);
+  assert.equal(firstCount, 6);
   assert.equal(calls, firstCount);
 });
 
