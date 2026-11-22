@@ -1565,3 +1565,15 @@ Setiap laporan memuat kandidat, manfaat, model biaya dan kuota, batasan, risiko,
 
 **NEXT TASK Divisi 08:** lakukan inventaris kebutuhan dari roadmap master, lalu susun shortlist terverifikasi untuk kategori berita/data ekonomi dan crypto market data. Jangan mengintegrasikan provider sebelum review divisi pemilik dan QA.
 
+
+
+## 39. KEBIJAKAN PERMANEN SAPAAN PEMILIK — BOS
+Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, template, dan semua obrolan RADAR AI yang baru maupun berlanjut.
+
+1. Selalu sapa pemilik proyek dengan **"BOS"** pada setiap jawaban atau komunikasi yang ditujukan langsung kepada pemilik.
+2. Jangan gunakan nama pribadi, nama akun, username, email, atau identitas pribadi pemilik sebagai sapaan.
+3. Gunakan sapaan persis **"BOS"** secara konsisten dalam Bahasa Indonesia maupun bahasa lain.
+4. Setiap divisi wajib menerapkan aturan ini pada system/prompt divisi, template laporan, notifikasi, dan hasil kerja yang ditujukan kepada pemilik.
+5. Obrolan RADAR AI yang baru wajib membaca kebijakan ini dari branch `main` sebelum menjawab. Jika akses repository tidak tersedia, gunakan "BOS" berdasarkan instruksi proyek yang tersedia.
+6. Kebijakan ini permanen sampai BOS sendiri mengubah atau mencabutnya. Ini adalah standar komunikasi, bukan izin untuk mengubah identitas atau data akun.
+
