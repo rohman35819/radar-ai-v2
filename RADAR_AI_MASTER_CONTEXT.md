@@ -1489,7 +1489,8 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 - `public/trading.js`: menampilkan UID Bybit bila tersedia, daftar kategori permission aktual yang disanitasi, serta membedakan permission read-only, trading, withdrawal, transfer, dan status belum terverifikasi. Audit tambahan memastikan UI Binance juga memperingatkan withdrawal/transfer aktif, bukan hanya Spot/Futures trading; nilai withdrawable yang tidak tersedia ditampilkan sebagai tanda strip, bukan nol.
 - `test/exchanges.test.js`: memperluas mock Bybit untuk verifikasi HMAC, UID, permission read-only, redaksi API key, dan fallback ketika endpoint permission gagal; menambah tes pemisahan withdrawal/transfer Binance, pencegahan fallback `availableToBorrow`, serta normalisasi HTTP/Binance/Bybit rate-limit dan penerusan Retry-After.
 - `test/exchange-ui.test.js`: menambah assertion untuk kontrak permission Bybit.
-- `README.md`: mendokumentasikan endpoint dan batas verifikasi.
+- `server.js`: memetakan rate limit ke HTTP 429 dan meneruskan header `Retry-After` secara aman untuk route akun privat dan market.
+- `README.md`: mendokumentasikan endpoint, batas verifikasi, dan perilaku rate limit.
 
 ### 37.3 Keamanan dan batasan
 - Semua request akun Bybit tetap HTTP GET dan ditandatangani di server. Tidak ada endpoint update API key, order, transfer, atau withdrawal.
@@ -1501,7 +1502,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 ### 37.4 Verifikasi dan status
 - Branch implementasi awal: `feat/bybit-api-key-permission-verification`; dipindahkan ke branch sinkronisasi setelah `main` maju dua commit.
 - GitHub Actions run #44996875227 untuk commit kode `613cb669b46b25da7da4e1f68f9462c5f00b0eb1`: **PASS, 73/73 tests, 0 failures**; job `test` selesai sukses. Log mencakup tes permission Bybit unavailable/incomplete, UID, redaksi API key, permission withdrawal/transfer Binance, withdrawable balance, serta normalisasi rate-limit Binance/Bybit dan penerusan Retry-After.
-- Pemeriksaan sintaks JavaScript melalui parser V8 untuk `lib/exchanges.js`, `public/trading.js`, `test/exchanges.test.js`, dan `test/exchange-ui.test.js`: PASS. Audit statis juga memastikan method exchange yang didefinisikan hanya GET, endpoint order tidak ditemukan, dan UI memisahkan permission withdrawal/transfer dari status trading.
+- Pemeriksaan sintaks JavaScript melalui parser V8 untuk `lib/exchanges.js`, `server.js`, `public/trading.js`, `test/exchanges.test.js`, dan `test/exchange-ui.test.js`: PASS. Audit statis juga memastikan method exchange yang didefinisikan hanya GET, endpoint order tidak ditemukan, dan UI memisahkan permission withdrawal/transfer dari status trading.
 - PR #15: https://github.com/rohman35819/radar-ai-v2/pull/15; status open, mergeable, belum merged.
 - CI HEAD main saat audit: commit terbaru `cc6d9af` tidak memiliki combined-status entries; workflow-run connector tidak mengembalikan run untuk HEAD tersebut. Master context QA Gate mencatat 63/63 PASS pada commit fitur sebelumnya, bukan pada HEAD terbaru. PR #15 workflow belum mengembalikan run.
 - Hostless Build dan Hostless LIVE: belum diverifikasi.
