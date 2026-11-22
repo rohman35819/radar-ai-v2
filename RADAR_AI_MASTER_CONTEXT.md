@@ -1743,3 +1743,18 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - No Hostless configuration, runtime dependency, secret, exchange permission, or paid service added.
 - PR #21 old branch is superseded by #27 and will be closed after integration. PR #27 remains draft until Divisi 01/05 review and then can merge.
 - NEXT TASK tunggal: Divisi 06 audit Agent Platform PR #18 for actual persistence semantics, retry/claim locking, worker execution boundaries, audit integrity, and explicit human approval; do not claim background autonomy.
+
+## 51. EXTENSIBLE AI WORKSPACE PROVIDER REGISTRY — 22 NOVEMBER 2026
+
+- BOS requested that RADAR AI must not restrict AI Workspace participation to the four built-in providers.
+- Decision: preserve Gemini, Groq, OpenRouter, and OpenAI; add an environment-discovered provider registry for additional OpenAI-compatible AI services. No fixed provider-name roster is hardcoded.
+- Additional provider configuration (server-side only): `AI_PROVIDER_<ID>_API_KEY`, `AI_PROVIDER_<ID>_BASE_URL`, `AI_PROVIDER_<ID>_MODEL`, optional `AI_PROVIDER_<ID>_PROTOCOL=openai-compatible`, and optional `AI_PROVIDER_<ID>_ROLE`. Provider IDs normalize to lowercase kebab-case. Configured providers join by default and can be selected by ID.
+- Custom endpoint guard: HTTPS required; reject embedded URL credentials, localhost/local/internal hostnames, and obvious literal private/loopback/link-local IPs. Do not treat this as a substitute for a trusted provider allowlist; configure only endpoints approved by BOS.
+- Compatibility boundary: this first registry adapter supports OpenAI-compatible chat-completions APIs. A provider using a different native protocol needs a dedicated adapter; this is a protocol integration boundary, not a fixed provider-name roster.
+- AI outputs remain untrusted proposals. No code-write, GitHub write, merge, deployment, financial, trading, or production permissions are granted.
+- Branch: `feat/open-ai-provider-registry`; PR #28 (draft, open): https://github.com/rohman35819/radar-ai-v2/pull/28.
+- Files: `lib/ai/workspace.js`, `test/ai-workspace.test.js`, `.env.example`, `docs/extensible-ai-provider-registry.md`, `RADAR_AI_ADVISOR_HANDOFF.md`.
+- Exact tested head: `4d17d763f11cc8e25a878173d3bb592713917960`. GitHub Actions test job passed; Gitleaks passed; Trivy passed. This is CI evidence only; no local execution was performed in this GitHub-only workflow.
+- PR diff: 5 files, 136 additions, 5 deletions; branch is 6 commits ahead of main at base `979935ce2b876a6c461b29dc636246a8fb2b4a19`.
+- Hostless deployment and live Workspace runtime remain unverified. No new API secret has been added to Git or Hostless by this change. Existing Gemini variables remain separate; BOS must complete redeploy and runtime test for Gemini activation.
+- NEXT TASK: Divisi 04 review provider adapter compatibility and participant routing; Divisi 01 review endpoint/secret boundaries; Divisi 05 independently verify provider registration, failures, unknown participant selection, and full regression suite. Keep PR #28 draft until reviews pass. After merge, configure additional provider secrets only in Hostless and test each provider before marking active.
