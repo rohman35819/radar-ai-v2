@@ -1499,8 +1499,8 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 
 ### 37.3 Validasi dan deployment
 - Main HEAD saat sinkronisasi: `cc6d9af9b9dd96989898db4058771211a712be7e` (QA documentation); workflow Actions telah diperbarui pada `67e8ab0004feddbe1267440d3c63b8ff91b7960d`.
-- HEAD branch dokumentasi sebelum pencatatan CI final: `6aadce82ad36c31f72dc5bff51c442adf0f3ce9b`; commit tes: `a078127533b3afb2c9280506f9b6eaee38fde1e5`; commit kode: `972fc29e12d8b5cdc450129e7308db00b43361aa`.
-- GitHub Actions run #327 / run ID `44996660243` untuk HEAD PR `6aadce82ad36c31f72dc5bff51c442adf0f3ce9b`: completed / success. Job `test` berhasil; log menunjukkan `npm test` menjalankan **65 tests, 65 pass, 0 fail, 0 skipped** pada Node `v24.22.3`. Dua tes baru fallback moderator dan fail-safe ikut berjalan dan lulus. Workflow checkout menggunakan `actions/checkout@v7` dan `actions/setup-node@v7`; log tidak menunjukkan peringatan deprecation Node.js 20 dari Actions.
+- HEAD branch dokumentasi sebelum pencatatan CI final: `7d2a331bdf796eb65930e1ff44924ac8e2c9c1c0`; commit tes: `a078127533b3afb2c9280506f9b6eaee38fde1e5`; commit kode: `972fc29e12d8b5cdc450129e7308db00b43361aa`.
+- GitHub Actions run #330 / run ID `44996712948` untuk HEAD PR `7d2a331bdf796eb65930e1ff44924ac8e2c9c1c0`: completed / success. Job `test` berhasil; log menunjukkan `npm test` menjalankan **65 tests, 65 pass, 0 fail, 0 skipped** pada Node `v24.22.3`. Dua tes baru fallback moderator dan fail-safe ikut berjalan dan lulus. Workflow checkout menggunakan `actions/checkout@v7` dan `actions/setup-node@v7`; log tidak menunjukkan peringatan deprecation Node.js 20 dari Actions.
 - Tes lokal tidak dijalankan karena sesi tidak memiliki working copy Node.js. Jangan menyatakan tes lulus sebelum CI memberikan bukti.
 - Hostless Build dan SHA LIVE tidak diperiksa/terverifikasi pada task ini.
 
