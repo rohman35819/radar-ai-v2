@@ -9,6 +9,7 @@ const sources = require('./lib/sources');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
+const { createGithubAppClient } = require('./lib/github/app-client');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
@@ -45,8 +46,20 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, githubAppClient } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
+  const githubAppSettings = {
+    appId: process.env.GITHUB_APP_ID,
+    privateKey: process.env.GITHUB_APP_PRIVATE_KEY || process.env.GITHUB_PRIVATE_KEY,
+    installationId: process.env.GITHUB_APP_INSTALLATION_ID || process.env.GITHUB_INSTALLATION_ID,
+    repository: process.env.GITHUB_REPOSITORY || 'rohman35819/radar-ai-v2'
+  };
+  const githubAppConfigured = Boolean(githubAppSettings.appId && githubAppSettings.privateKey && githubAppSettings.installationId && githubAppSettings.repository);
+  let githubClient = githubAppClient || null;
+  if (!githubClient && githubAppConfigured) {
+    try { githubClient = createGithubAppClient(githubAppSettings); }
+    catch { githubClient = null; }
+  }
   const matchesToken = (expectedValue, provided) => {
     if (!expectedValue || typeof provided !== 'string') return false;
     const expected = Buffer.from(String(expectedValue));
@@ -150,6 +163,31 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const headers = { 'cache-control': 'no-store' };
             if (known && error.retryAfterSeconds) headers['retry-after'] = String(error.retryAfterSeconds);
             send(res, status, { status: 'error', code, message }, 'application/json', headers);
+          });
+          return;
+        }
+        if (url.pathname === '/api/github/status' && req.method === 'GET') {
+          if (!hasValidAdminToken(req.headers['x-admin-token'])) return send(res, 403, { status: 'error', code: 'ADMIN_ACCESS_DENIED', message: 'Akses ditolak.' }, 'application/json', { 'cache-control': 'no-store' });
+          if (!githubClient) return send(res, 503, { status: 'error', code: 'GITHUB_APP_NOT_CONFIGURED', message: 'GitHub App belum dikonfigurasi lengkap di server.' }, 'application/json', { 'cache-control': 'no-store' });
+          Promise.resolve().then(() => githubClient.checkConnection()).then((result) => {
+            send(res, 200, { status: 'success', github_app: { connected: true, ...result } }, 'application/json', { 'cache-control': 'no-store' });
+          }).catch(() => {
+            send(res, 502, { status: 'error', code: 'GITHUB_APP_CONNECTION_FAILED', message: 'Autentikasi atau akses repository GitHub gagal. Periksa App ID, Installation ID, private key, dan izin instalasi.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/github/file' && req.method === 'GET') {
+          if (!hasValidAdminToken(req.headers['x-admin-token'])) return send(res, 403, { status: 'error', code: 'ADMIN_ACCESS_DENIED', message: 'Akses ditolak.' }, 'application/json', { 'cache-control': 'no-store' });
+          if (!githubClient) return send(res, 503, { status: 'error', code: 'GITHUB_APP_NOT_CONFIGURED', message: 'GitHub App belum dikonfigurasi lengkap di server.' }, 'application/json', { 'cache-control': 'no-store' });
+          const requestedPath = url.searchParams.get('path') || '';
+          if (!requestedPath || requestedPath.length > 240) return send(res, 400, { status: 'error', code: 'INVALID_GITHUB_PATH', message: 'Path file tidak valid.' }, 'application/json', { 'cache-control': 'no-store' });
+          Promise.resolve().then(() => githubClient.getFile(requestedPath)).then((file) => {
+            if (!file || file.type !== 'file' || file.encoding !== 'base64' || typeof file.content !== 'string') return send(res, 404, { status: 'error', code: 'GITHUB_FILE_NOT_FOUND', message: 'File tidak ditemukan atau format tidak didukung.' }, 'application/json', { 'cache-control': 'no-store' });
+            const decoded = Buffer.from(file.content.replace(/\\s/g, ''), 'base64');
+            if (decoded.length > 65536) return send(res, 413, { status: 'error', code: 'GITHUB_FILE_TOO_LARGE', message: 'File melebihi batas baca 64 KiB.' }, 'application/json', { 'cache-control': 'no-store' });
+            send(res, 200, { status: 'success', file: { path: file.path, sha: file.sha, size: decoded.length, content: decoded.toString('utf8') } }, 'application/json', { 'cache-control': 'no-store' });
+          }).catch(() => {
+            send(res, 502, { status: 'error', code: 'GITHUB_FILE_READ_FAILED', message: 'Gagal membaca file dalam ruang lingkup yang diizinkan.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
