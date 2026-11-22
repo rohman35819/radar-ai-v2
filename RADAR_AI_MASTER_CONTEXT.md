@@ -1841,25 +1841,32 @@ Melengkapi Market Screener CoinGecko kategori AI dengan feed on-chain untuk mene
 ### Keputusan sumber dan batas cakupan
 - Menggunakan CoinGecko Onchain API yang ditenagai GeckoTerminal: `GET /api/v3/onchain/networks/new_pools` (pool baru sekitar 48 jam) dan `GET /api/v3/onchain/networks/trending_pools` (ranking trending 24 jam), dengan `include=base_token,quote_token,dex,network`.
 - API mengembalikan maksimum 20 pool per halaman; default RADAR 3 halaman new pools (maksimum 60 pool) plus 1 halaman trending per refresh. Halaman new pools dipanggil berurutan dengan jeda 500 ms.
-- Dengan `REFRESH_MIN=10`, default maksimal empat panggilan on-chain per 10 menit. Memakai `COINGECKO_DEMO_KEY` yang sudah ada; tidak menambah dependency runtime, key baru, atau biaya provider.
+- Feed on-chain memiliki cadence terpisah `ONCHAIN_REFRESH_MIN=60` (default, rentang 10–1440 menit), tidak ikut setiap refresh dashboard 10 menit. Default 3 halaman new pools + 1 trending = maksimal 4 panggilan/jam atau sekitar 2.880 panggilan/30 hari bila berjalan terus. Kuota bulanan Demo dipakai bersama seluruh endpoint CoinGecko lain, jadi total penggunaan harus dipantau. Menggunakan `COINGECKO_DEMO_KEY` yang sudah ada; tidak menambah dependency runtime, key baru, atau biaya provider.
 - Istilah UI memakai **NEW POOL**, bukan klaim "token baru diluncurkan": tanggal pool tidak sama dengan tanggal token dibuat. Token tanpa pool, pool tanpa likuiditas, jaringan yang belum didukung/terindeks, atau pool yang belum terindeks tidak terdeteksi.
 - Pools Megafilter, honeypot checks, GT Score, holder concentration, mint/freeze authority dan contract audit tidak diklaim tersedia pada implementasi Demo. TRENDING adalah ranking provider, bukan jaminan keamanan.
 
 ### Implementasi
 - `lib/onchain.js`: timeout, error code tersanitasi, batas halaman 1–10, parsing relasi token/network/DEX, deduplikasi network+pool, gabungan new pools dan trending pools, normalisasi harga, likuiditas, volume 24 jam, FDV, market cap, transaksi, umur pool, URL GeckoTerminal, dan data-quality flags. Trending endpoint bersifat tambahan; kegagalannya tidak membuang new-pool feed.
 - `lib/sources.js`: ekspor fetchEarlyGems.
-- `lib/ingest.js`: konfigurasi `EARLY_GEMS_ENABLED` dan `ONCHAIN_PAGES`; source on-chain independen dari CoinGecko AI screener. Cache pool lama dipertahankan saat new-pool source gagal; `health.onchain_trending` menandai kegagalan parsial.
-- `server.js`: snapshot menambahkan `early_gems`, metadata, dan boolean config status; API key tidak dikirim ke browser.
+- `lib/ingest.js`: konfigurasi `EARLY_GEMS_ENABLED`, `ONCHAIN_PAGES`, dan `ONCHAIN_REFRESH_MIN`; source on-chain independen dari CoinGecko AI screener. Percobaan on-chain dicadence-kan menggunakan `health.onchain.at` sehingga kegagalan juga tidak memicu retry pada setiap refresh dashboard. Cache pool lama dipertahankan saat new-pool source gagal; `health.onchain_trending` menandai kegagalan parsial.
+- `server.js`: snapshot menambahkan `early_gems`, metadata, boolean config status, dan interval refresh; API key tidak dikirim ke browser. UI menghitung stale threshold dari cadence konfigurasi (1,5× interval, minimum 30 menit).
 - `public/index.html`, `public/app.js`, `public/style.css`: menu Early Gem Scanner, pencarian/filter liquidity, label NEW POOL/TRENDING/NEW + TRENDING, metrik harga/perubahan/buy-sell/liquidity/volume/FDV/market cap, flags, link GeckoTerminal, dan status stale/disabled/error. Rendering memakai DOM nodes/textContent, bukan HTML upstream.
 - `public/sw.js`: cache shell dinaikkan.
-- `test/onchain.test.js`, `test/early-gem-ui.test.js`: normalisasi, null values, signed price change, dedupe, demo-key header, page limit, trending merge/partial failure, ingest cache retention, snapshot contract, UI navigation/safety copy.
+- `test/onchain.test.js`, `test/early-gem-ui.test.js`: normalisasi, null values, signed price change, dedupe, demo-key header, page limit, trending merge/partial failure, ingest cache retention, snapshot contract, quota-aware refresh cadence, UI navigation/safety copy.
 - `.env.example`, `README.md`, dan master context diperbarui.
 
 ### Konfigurasi
 - `EARLY_GEMS_ENABLED=1` default; set `0` untuk menonaktifkan.
 - `ONCHAIN_PAGES=3` default, rentang 1–10; hingga 20 pool per halaman.
-- Refresh mengikuti `REFRESH_MIN` (default 10 menit).
+- `ONCHAIN_REFRESH_MIN=60` default, rentang 10–1440 menit; jadwal on-chain terpisah dari `REFRESH_MIN` Market Screener.
+- Dengan default, scanner memakai maksimal 2.880 panggilan on-chain per 30 hari; kuota Demo bulanan tetap dibagi dengan request CoinGecko lainnya.
 - Tidak ada order, transfer, withdrawal, atau tindakan finansial.
+
+### 58.1 Penyesuaian kuota setelah audit
+- Audit menemukan konfigurasi awal 4 panggilan on-chain setiap 10 menit berpotensi memakai 17.280 panggilan/30 hari, sebelum menghitung endpoint Market Screener.
+- Perbaikan pada branch PR #46: tambah `ONCHAIN_REFRESH_MIN=60`; `lib/ingest.js` hanya meminta feed ketika interval berlalu, dan tetap mencatat waktu percobaan saat gagal agar tidak retry tiap 10 menit. Snapshot mengirim cadence sebagai metadata publik non-rahasia; UI menggunakan interval tersebut untuk menentukan status stale.
+- `test/onchain.test.js` menambahkan pengujian bahwa refresh dalam interval memakai cache dan refresh setelah interval melakukan request baru. Konfigurasi uji cache-failure dibuat eksplisit dengan cadence 0 hanya untuk menguji fallback/partial failure.
+- Default scanner kini 4 panggilan/jam = 2.880/30 hari; angka ini hanya scanner dan tidak termasuk endpoint CoinGecko lain. Kuota total tetap harus dipantau.
 
 ### Status verifikasi
 - Branch: `feat/early-gem-scanner-v1`, berbasis main HEAD `a475205e9d76e3ba27d8e5c4633b1c5c24aec05f`. PR #46 https://github.com/rohman35819/radar-ai-v2/pull/46 status open/ready-for-review, belum merged.
