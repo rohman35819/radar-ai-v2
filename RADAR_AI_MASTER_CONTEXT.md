@@ -1474,3 +1474,41 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 4. Complete Dashboard and Command Center desktop/mobile QA: all 12 navigation destinations, sidebar independent scroll, mobile drawer, data loading/error states, console and network.
 5. Continue EROFS investigation with actual Hostless mount and runtime logs; coordinate storage code changes with Divisi 01.
 6. Trace the `punycode` deprecation warning to its source; add a regression check only if a meaningful behavior risk is identified.
+
+
+---
+
+## 37. AUDIT DAN PENINGKATAN DIVISI 04 — 22 NOVEMBER 2026
+
+### 37.1 Audit awal AI Intelligence & Research
+- Lead: Divisi 04 — AI Intelligence & Research.
+- Area yang diperiksa: `server.js`, `lib/ai/gemini.js`, `lib/ai/group.js`, `lib/ai/groq.js`, `lib/ai/openrouter.js`, `lib/ai/openai.js`, `lib/ai/chat-completions.js`, `lib/ai/workspace.js`, `public/command.js`, `test/ai-group.test.js`, `test/ai-workspace.test.js`, `README.md`, dan `package.json`.
+- AI Council mengirim analisis independen ke Gemini, Groq, OpenRouter, dan OpenAI; hasil harus memiliki minimal dua analisis valid dan snapshot tidak stale sebelum review moderator.
+- Temuan prioritas: Groq menjadi satu-satunya moderator akhir. Kegagalan/kuota Groq membuat hasil akhir WAIT walaupun provider analis lain tersedia. Modul OpenRouter sebenarnya sudah memiliki fungsi `reviewGroup`, tetapi belum digunakan sebagai fallback.
+- AI Workspace berpotensi melakukan hingga 13 request provider per siklus penuh (empat provider × tiga putaran ditambah satu sekretaris). Pengurangan biaya harus mempertahankan diskusi silang dan kualitas; belum ada perubahan jumlah putaran/provider pada task ini.
+- Normalisasi output chat-completions membatasi daftar dan panjang teks, sedangkan jalur Gemini khusus pada `lib/ai/gemini.js` belum menerapkan batas yang sepenuhnya seragam. Ini menjadi audit lanjutan; belum diubah pada task ini.
+- Tidak ada bukti pada audit ini yang membenarkan penambahan feed berita, sentimen, atau data pasar makro baru. Validitas sumber harus diaudit sebelum memperluas cakupan analisis.
+
+### 37.2 Perubahan moderator fallback
+- Branch kerja: `ai-intelligence/moderator-fallback-2`.
+- PR pengganti: menunggu pembuatan setelah sinkronisasi dengan main; PR lama #13 berbasis HEAD sebelum pembaruan CI/QA terbaru dan tidak boleh di-merge.
+- `lib/ai/group.js`: moderator Groq dicoba terlebih dahulu; jika gagal, OpenRouter dicoba sebagai moderator kedua. Jika semua moderator gagal, hasil tetap WAIT dan status eksplisit menjadi `moderator_unavailable`; tidak ada klaim rapat berhasil.
+- `test/ai-group.test.js`: menambahkan tes fallback Groq → OpenRouter dan tes fail-safe ketika seluruh moderator gagal.
+- Dependency injection untuk analyzer dan moderator hanya menjadi seam pengujian; tidak mengubah konfigurasi runtime default.
+- Perubahan tidak menyentuh kredensial, sumber data, route, frontend, trading, maupun dependency npm.
+
+### 37.3 Validasi dan deployment
+- Main HEAD saat sinkronisasi: `cc6d9af9b9dd96989898db4058771211a712be7e` (QA documentation); workflow Actions telah diperbarui pada `67e8ab0004feddbe1267440d3c63b8ff91b7960d`.
+- HEAD branch implementasi terakhir yang diketahui saat pencatatan: `a078127533b3afb2c9280506f9b6eaee38fde1e5` (commit tes); commit kode: `972fc29e12d8b5cdc450129e7308db00b43361aa`.
+- Pemeriksaan workflow pada commit PR sebelumnya mengembalikan daftar run/status kosong. Workflow `.github/workflows/test.yml` dikonfigurasi untuk pull request ke main, tetapi hasil CI untuk perubahan ini belum diverifikasi.
+- Tes lokal tidak dijalankan karena sesi tidak memiliki working copy Node.js. Jangan menyatakan tes lulus sebelum CI memberikan bukti.
+- Hostless Build dan SHA LIVE tidak diperiksa/terverifikasi pada task ini.
+
+### 37.4 Risiko dan NEXT TASK Divisi 04
+1. Buat PR baru dari branch ini dan dapatkan hasil GitHub Actions; perbaiki jika ada kegagalan. Jangan merge sebelum pemeriksaan independen/QA dan CI sukses.
+2. Audit dan seragamkan normalisasi output Gemini dengan `chat-completions.js`; tambahkan tes malformed JSON, field tidak valid, batas array/teks, dan fallback WAIT.
+3. Ukur biaya/latensi Workspace dari log metrik yang aman (tanpa prompt sensitif/secret). Rancang mode hemat biaya yang tetap mempertahankan minimal dua analis dan fail-safe; jangan mengubah jadwal atau jumlah provider tanpa evaluasi.
+4. Audit freshness, provenance, timestamp, dan cakupan sumber berita sebelum mengembangkan sentiment/news intelligence.
+5. Buat benchmark analisis dengan snapshot historis berlabel; ukur konsistensi keputusan, kalibrasi confidence (bukan probabilitas profit), false positive/negative, dan performa WAIT saat data tidak lengkap.
+6. Koordinasikan kontrak UI untuk status `moderator_unavailable` dengan Divisi 02 hanya jika tampilan status yang ada belum mampu menjelaskan kegagalan moderator. Koordinasikan gate QA dengan Divisi 05.
+7. Setelah PR selesai, lanjutkan NEXT TASK lintas proyek sesuai bagian 35.12; jangan mengklaim Hostless LIVE tanpa bukti.
