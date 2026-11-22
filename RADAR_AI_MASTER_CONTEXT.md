@@ -1730,5 +1730,5 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Patch dibuat ulang dari main HEAD 9ccdb25c9234596a599ec34bcb09b2eb912dbc99 pada branch ci/security-scans-delivery-v2. Tidak mengubah source aplikasi, secret, dependency runtime, atau konfigurasi Hostless.
 - Workflow permissions least-privilege: contents:read saja; Gitleaks comments/upload disabled. Trivy hanya filesystem scan HIGH/CRITICAL dan gagal jika ada finding; jangan suppress temuan secara luas.
 - File: .github/workflows/security.yml, .github/dependabot.yml, RADAR_AI_MASTER_CONTEXT.md.
-- Test status: menunggu workflow PR baru. Local npm test tidak diperlukan karena tidak ada source runtime yang berubah; tetap pantau workflow scan terpisah.
+- Workflow juga berjalan pada push semua branch agar scanner baru dapat divalidasi sebelum merge; PR/push main tetap tercakup. Test status: menunggu GitHub Actions pada exact head. Local npm test tidak diperlukan karena tidak ada source runtime yang berubah.
 - NEXT TASK: buka PR, verifikasi Gitleaks/Trivy run pada exact head, triage semua finding dengan bukti; pertahankan draft sampai scan berhasil dan Divisi 01/05 menyetujui. Setelahnya audit Agent Platform PR #18.
