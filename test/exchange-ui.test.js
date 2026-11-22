@@ -79,3 +79,10 @@ test('Exchange Hub verifies Bybit API key read-only state, account UID and walle
   assert.ok(js.includes('Rincian permission Bybit'));
   assert.ok(exchangeService.includes('BYBIT_API_PERMISSION_READ_UNAVAILABLE'));
 });
+
+
+test('Exchange Hub never labels an unverified API key as read-only', () => {
+  assert.ok(js.includes('TERHUBUNG / IZIN BELUM TERVERIFIKASI'));
+  assert.ok(!js.includes('READ-ONLY / IZIN BELUM TERVERIFIKASI'));
+  assert.ok(js.includes('PERINGATAN / PERMISSION API AKTIF'));
+});
