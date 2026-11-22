@@ -129,3 +129,11 @@ The Owner approved a strict **Rp0** infrastructure policy. This supersedes the e
 - Provisioning requires visible remaining quota, no-card/no-upgrade confirmation, overage prevention, rollback plan, least-privilege secrets, and explicit Owner approval for account-changing actions.
 
 See docs/free-first-infrastructure-policy.md for the binding provisioning gate and service allocation.
+
+
+## PostgreSQL CI harness — 2026-11-22
+
+- GitHub Actions now starts a disposable PostgreSQL 16 service container for tests; no external account, persistent DB, or paid resource is provisioned.
+- Migration 001 was applied successfully in CI. The smoke test verifies required tables and a NOLOGIN runtime role that can INSERT audit events but cannot UPDATE/DELETE them.
+- Successful proof: run #381 / ID 44998478751, commit 8a7b7e9f0c6d1c7425aac111b25c49496d16d534; npm test 68/68 passed; migration and audit-role smoke test passed.
+- This is not yet a transactional queue/lease/concurrency test and does not validate Hostless or production deployment.
