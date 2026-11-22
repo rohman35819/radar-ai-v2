@@ -2156,3 +2156,10 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Hostless LIVE readiness diagnostic steps were skipped by workflow conditions. Hostless Build, deployed SHA, and actual LIVE visual behavior remain unverified. No production deployment is claimed.
 - PR #55 remains Draft, open, and unmerged. It is 16 commits ahead of the current main baseline and 0 commits behind at last comparison; GitHub reported mergeable=true. No independent review is recorded yet.
 - NEXT TASK: independent Divisi 01/05 review, add focused regression coverage for missing/stale source metadata, then browser QA at desktop/mobile and verify Hostless Build/LIVE SHA before any merge or release decision.
+
+
+### 65.4 Focused frontend regression tests — 23 November 2026
+- Added `test/intelligence.test.js` using Node's built-in test runner and a minimal DOM stub; no runtime or test dependency was added.
+- Test cases cover: null/empty values excluded from volume ranking and breadth denominator; zero remains a valid numeric observation; missing 24h changes are counted separately; missing TVL is not ranked as zero; stale source metadata, upstream errors, and missing timestamps remain visible.
+- Test implementation commit: `506ad688c4daa55c828190720c66ff08f8a91cf2`. Exact-head GitHub Actions is pending. The previous 106/106 green run is for code head `ed45b98`, not this new test commit.
+- NEXT TASK: verify test and security workflow results on the new head; fix any fixture or rendering failures before considering independent QA.
