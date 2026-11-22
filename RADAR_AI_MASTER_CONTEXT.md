@@ -1940,3 +1940,11 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Ketiganya merupakan heuristic/proxy dari data agregat Top 100. Tidak boleh disebut sebagai deteksi volume anomaly intraday, honeypot/security scanner, audit likuiditas, atau risk model terkalibrasi.
 - Follow-on P2 yang belum termasuk PR #48: strategy backtesting yang dapat dikonfigurasi, portfolio tracking manual, dan integrasi On-chain DEX/Early Gem ke halaman Market Intelligence.
 - Early Gem Scanner/GeckoTerminal sudah memiliki pekerjaan terpisah di Draft PR #46; jangan menganggap telah terintegrasi/merged atau memindahkan kodenya tanpa QA independen. Setelah PR #46 lolos review, rancang entry point ke dashboard Market Intelligence.
+
+### 59.10 Final signal-module validation
+- Code head before this documentation-only handoff: `a164776f908bd212c60c20a09c3eaf80021006d4`.
+- Added Momentum Detector (all 1h/24h/7d changes positive), High Turnover Watch (24h volume / market cap proxy), and Risk Monitor (large daily decline or negative return plus low turnover). README and master context now explicitly document heuristic limitations.
+- GitHub Actions test run #580 / ID `45043477962` on exact code head `a164776`: **completed / success; 98 tests pass, 0 fail**.
+- GitHub Actions security run #122 / ID `45043477978` on exact code head: **completed / success**. Gitleaks: no leaks found. Trivy secret scan: no issues. Trivy vulnerability scanner: no supported manifest files; dependency vulnerability coverage unavailable.
+- Current delivery remains Draft PR #48. Hostless Build/LIVE and real CoinGecko provider responses remain unverified; browser/device visual QA and independent Divisi 01/05 review are still required.
+- Follow-on P2 items are not included: manual portfolio tracking, strategy backtesting, and On-chain DEX/Early Gem dashboard integration. Early Gem remains separate Draft PR #46.
