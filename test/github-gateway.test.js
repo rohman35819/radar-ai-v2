@@ -43,18 +43,21 @@ test('GitHub gateway restricts file reads to approved paths and enforces 64 KiB'
       async getFile(path) {
         if (!['public/', 'lib/ai/', 'test/'].some((prefix) => path.startsWith(prefix)) || path.split('/').includes('..')) throw new Error('Path not allowed');
         reads.push(path);
-        return { type: 'file', encoding: 'base64', path, sha: 'blob-sha', content: Buffer.from('safe source').toString('base64') };
+        const value = path === 'test/large.js' ? 'x'.repeat(65537) : 'safe source';
+        return { type: 'file', encoding: 'base64', path, sha: 'blob-sha', content: Buffer.from(value).toString('base64') };
       }
     }
   });
   await withServer(app, async (base) => {
     const headers = { 'x-admin-token': 'test-admin-token' };
     const denied = await fetch(base + '/api/github/file?path=server.js', { headers });
-    assert.equal(denied.status, 502);
+    assert.equal(denied.status, 400);
     const allowed = await fetch(base + '/api/github/file?path=lib%2Fai%2Fworkspace.js', { headers });
     assert.equal(allowed.status, 200);
     const body = await allowed.json();
     assert.equal(body.file.content, 'safe source');
-    assert.deepEqual(reads, ['lib/ai/workspace.js']);
+    const tooLarge = await fetch(base + '/api/github/file?path=test%2Flarge.js', { headers });
+    assert.equal(tooLarge.status, 413);
+    assert.deepEqual(reads, ['lib/ai/workspace.js', 'test/large.js']);
   });
 });
