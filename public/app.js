@@ -96,8 +96,6 @@ function renderScreener(){
   el('select',{id:'filter-sort'},el('option',{value:'market_cap'},'Market cap'),el('option',{value:'volume_24h'},'Volume 24 jam'),el('option',{value:'vol_mcap'},'Vol / MCap'),el('option',{value:'change_24h'},'Perubahan 24 jam'),el('option',{value:'change_7d'},'Perubahan 7 hari')),
   el('button',{class:'secondary-btn',onclick:()=>{screenerFilters={q:'',trend:'all',sort:'market_cap'};renderScreener();}},'Reset')
  );
- $('#filter-trend').value=screenerFilters.trend;
- $('#filter-sort').value=screenerFilters.sort;
  const results=el('div',{id:'screener-results'});
  const update=()=>{
   screenerFilters={q:$('#filter-q').value,trend:$('#filter-trend').value,sort:$('#filter-sort').value};
@@ -113,6 +111,8 @@ function renderScreener(){
   results.replaceChildren(tokenTable(list));
  };
  v.append(sectionHead('Temukan aset','Cari dan saring token berdasarkan aktivitas pasar.',el('button',{class:'secondary-btn',onclick:exportCSV},'↓ Ekspor hasil CSV')),controls,el('div',{class:'result-meta'},el('b',{id:'result-count'},'Memuat…'),el('span',{class:'muted'},'Filter tetap tersimpan saat data diperbarui')),results);
+ $('#filter-trend').value=screenerFilters.trend;
+ $('#filter-sort').value=screenerFilters.sort;
  ['filter-q','filter-trend','filter-sort'].forEach(id=>$('#'+id).addEventListener(id==='filter-q'?'input':'change',update));
  update();
 }
