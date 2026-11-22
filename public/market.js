@@ -184,7 +184,7 @@ function renderMomentum() {
     h1: Number(coin.price_change_percentage_1h_in_currency),
     h24: Number(coin.price_change_percentage_24h),
     d7: Number(coin.price_change_percentage_7d_in_currency)
-  })).filter((item) => Number.isFinite(item.h24) && item.h24 > 0)
+  })).filter((item) => Number.isFinite(item.h1) && item.h1 > 0 && Number.isFinite(item.h24) && item.h24 > 0 && Number.isFinite(item.d7) && item.d7 > 0)
     .sort((a, b) => (b.h1 + b.h24 + (Number.isFinite(b.d7) ? b.d7 : 0)) - (a.h1 + a.h24 + (Number.isFinite(a.d7) ? a.d7 : 0))).slice(0, 8);
   renderCompact($('#momentum-list'), rows, (item) => {
     const row = node('div', 'compact-row');
