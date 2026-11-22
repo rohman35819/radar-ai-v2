@@ -1500,6 +1500,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 ### 37.4 Verifikasi dan status
 - Branch implementasi awal: `feat/bybit-api-key-permission-verification`; dipindahkan ke branch sinkronisasi setelah `main` maju dua commit.
 - Tes otomatis: belum dijalankan pada working copy lokal; query workflow/status untuk PR #15 tidak mengembalikan run/status, sehingga hasil test tetap UNVERIFIED dan PR tidak boleh di-merge sebelum Actions hijau.
+- Pemeriksaan sintaks JavaScript melalui parser V8 untuk `lib/exchanges.js`, `public/trading.js`, `test/exchanges.test.js`, dan `test/exchange-ui.test.js`: PASS. Audit statis juga memastikan method exchange yang didefinisikan hanya GET, endpoint order tidak ditemukan, dan UI memisahkan permission withdrawal/transfer dari status trading.
 - PR #15: https://github.com/rohman35819/radar-ai-v2/pull/15; status open, mergeable, belum merged.
 - CI HEAD main saat audit: commit terbaru `cc6d9af` tidak memiliki combined-status entries; workflow-run connector tidak mengembalikan run untuk HEAD tersebut. Master context QA Gate mencatat 63/63 PASS pada commit fitur sebelumnya, bukan pada HEAD terbaru. PR #15 workflow belum mengembalikan run.
 - Hostless Build dan Hostless LIVE: belum diverifikasi.
