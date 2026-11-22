@@ -187,3 +187,11 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Custom base URL fetch follows redirects while carrying bearer authorization; reject redirects, normalize/validate URL and IP forms, and address DNS rebinding.
 - Sanitize raw upstream provider errors and redact/allowlist context before forwarding to external providers.
 - Require tests for opt-in, free-cost guard, redirects/private IPv6, error redaction, and secret-bearing context. No credentials or real provider API calls used.
+
+## 17. PR #34 current status — observer-only audit boundary (22 November 2026)
+- Current candidate: PR #34, branch `feat/agent-platform-schema-hardening-v4`; prior #18/#29/#32 are superseded.
+- Exact code head before test matcher fix: `c33a5efb788b7001a28a9f6eaf49f0f4f98ed3f4`; Test #479 / ID `45023420021` and Security #28 / ID `45023420025` completed/success.
+- Observer-only CI role can SELECT registry only. It cannot insert audit events, access task_queue/dependencies, mutate/truncate audit, or inherit table-owner membership. Trusted actor-bound audit writer is intentionally deferred.
+- The double-escaped negative GRANT matcher was corrected on the branch at commit `afd6ce5143d06ebb7076d9e0dd0d0af97e554ada`; verify new exact-head CI.
+- PR remains draft pending independent Divisi 01 security review and Divisi 05 QA. No DB adapter, queue runtime, scheduler, worker, approval queue, kill switch or memory is active.
+- Stage 0/1, default paused, Rp0, no Hostless provisioning. Continue runtime queue gates only after schema sign-off.
