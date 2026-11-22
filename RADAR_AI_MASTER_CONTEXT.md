@@ -1491,7 +1491,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 
 ### 37.2 Perubahan moderator fallback
 - Branch kerja: `ai-intelligence/moderator-fallback-2`.
-- PR pengganti: menunggu pembuatan setelah sinkronisasi dengan main; PR lama #13 berbasis HEAD sebelum pembaruan CI/QA terbaru dan tidak boleh di-merge.
+- PR aktif: #16 https://github.com/rohman35819/radar-ai-v2/pull/16 (terbuka; belum merge). PR lama #13 ditutup setelah branch-nya tertinggal dari pembaruan CI/QA main.
 - `lib/ai/group.js`: moderator Groq dicoba terlebih dahulu; jika gagal, OpenRouter dicoba sebagai moderator kedua. Jika semua moderator gagal, hasil tetap WAIT dan status eksplisit menjadi `moderator_unavailable`; tidak ada klaim rapat berhasil.
 - `test/ai-group.test.js`: menambahkan tes fallback Groq → OpenRouter dan tes fail-safe ketika seluruh moderator gagal.
 - Dependency injection untuk analyzer dan moderator hanya menjadi seam pengujian; tidak mengubah konfigurasi runtime default.
