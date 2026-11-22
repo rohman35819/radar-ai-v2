@@ -165,6 +165,16 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           });
           return;
         }
+        if (url.pathname === '/api/market-intelligence/exchange-tickers' && req.method === 'GET') {
+          marketIntelligence.exchangeTickers(url.searchParams.get('exchange')).then((payload) => {
+            send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=300' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'COINGECKO_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            send(res, status, { status: 'error', code, message: code.startsWith('INVALID_') ? 'ID exchange tidak valid.' : 'Data trading pairs exchange tidak tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
         if (url.pathname === '/api/market-intelligence/chart' && req.method === 'GET') {
           marketIntelligence.chart(url.searchParams.get('coin'), url.searchParams.get('days') || '7').then((payload) => {
             send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=300' });
