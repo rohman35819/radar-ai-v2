@@ -1871,7 +1871,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
   - `GET /api/market-intelligence/chart?coin=bitcoin&days=7`
   - `GET /api/market-intelligence/exchange-tickers?exchange=binance`
 - API key `COINGECKO_DEMO_KEY` hanya dipakai backend melalui header `x-cg-demo-api-key`; tidak dikirim ke browser, URL, atau response.
-- Cache server 60 menit untuk dashboard feed, historical chart, dan exchange tickers. UI polling 5 menit hanya membaca cache aktif; data stale ditandai.
+- Cache server 60 menit untuk dashboard feed, historical chart, dan exchange tickers. Kegagalan upstream tanpa cache mendapat cooldown 5 menit; UI polling 5 menit tidak terus mengulang request ke sumber yang gagal. Data stale ditandai.
 - Service Worker dinaikkan ke `radar-shell-v12` dan menambahkan halaman/aset Market Intelligence ke precache.
 - Tidak ada dependency runtime baru, pembelian, perubahan secret Hostless, atau fitur transaksi.
 
@@ -1956,3 +1956,9 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - PR #48 is open, Draft, and GitHub reports mergeable; it is not merged. No Hostless configuration or deployment was changed.
 - Hostless Build/LIVE, real CoinGecko provider responses using the deployed Demo key, and browser/device visual QA remain unverified. Independent Divisi 01/05 review is still required.
 - Follow-on P2 items remain outside this PR: manual portfolio tracking, strategy backtesting, and On-chain DEX/Early Gem dashboard integration. Early Gem remains separate Draft PR #46.
+
+### 59.12 Quota protection refinement
+- Feed yang gagal tanpa data cache kini mendapat negative-cache cooldown 5 menit. Tujuan: polling UI tidak mengulang request upstream setiap 5 menit ketika CoinGecko sedang rate-limit/down atau key ditolak.
+- Added test for failed-feed cooldown/retry-after-window; test suite expected to increase by one.
+- Changed files: `lib/market-intelligence.js`, `test/market-intelligence.test.js`, README, master context.
+- New source change is isolated in PR #48; wait for exact-head Actions before review/merge.
