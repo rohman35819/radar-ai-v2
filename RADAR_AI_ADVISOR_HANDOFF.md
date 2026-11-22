@@ -169,3 +169,11 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - PostgreSQL 16 integration tests run only in ephemeral GitHub Actions. No production DB, Hostless worker, or external infrastructure is provisioned.
 - P2 runtime correctness (status transitions, deadlines, dependency cycles, atomic claim/lease fencing, double-claim, idempotency, retries/dead-letter, rollback/restart) remains deferred until a worker is designed and independently tested.
 - Issue #30 remains open until Divisi 01/05 independently review the P1 controls and agree P2 is blocked behind worker activation. Keep Rp0, Stage 0/1, default paused, no background autonomy claims.
+
+## 16. PR #32 exact-head update — 22 November 2026
+- Current Agent Platform candidate: PR #32, branch `feat/agent-platform-schema-hardening-v3`; prior PR #18 and #29 are superseded/closed.
+- Latest branch commit after fixing the negative GRANT matcher: `d077194e28f6626fd18553d1d2fd51704dfbbf5d`. Earlier exact head `45b2750` passed test workflow #461 and security workflow #23; Trivy secret scan reported no issues, but vuln scanner found no supported manifest/lockfile, so dependency vulnerability coverage is unavailable.
+- Fixed double-escaped regex in `test/agent-platform-schema.test.js`; new exact-head CI must be checked.
+- Branch was one documentation commit behind main `6b30a57a630d830ba84fba76410696cd616a60a9`; sync and reconcile the master/handoff changes before merge. Independent Divisi 01 security and Divisi 05 QA reviews are still missing.
+- Schema only: no DB adapter, queue runtime, scheduler, worker, approval queue, kill switch, or persistent memory. Stage 0/1, paused, Rp0. No Hostless provisioning.
+- NEXT: verify CI on `d077194`, sync with main, obtain Divisi 01/05 reviews; only then consider schema-only merge. Keep all runtime features OFF.
