@@ -1577,3 +1577,14 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 5. Obrolan RADAR AI yang baru wajib membaca kebijakan ini dari branch `main` sebelum menjawab. Jika akses repository tidak tersedia, gunakan "BOS" berdasarkan instruksi proyek yang tersedia.
 6. Kebijakan ini permanen sampai BOS sendiri mengubah atau mencabutnya. Ini adalah standar komunikasi, bukan izin untuk mengubah identitas atau data akun.
 
+
+## 40. PERBAIKAN NEWS FEED — 22 NOVEMBER 2026
+
+- Temuan audit pada branch `main`: bila environment Hostless tidak mengisi `NEWS_FEEDS` (atau nilainya kosong), `loadConfig()` menghasilkan daftar feed kosong; `refresh()` kemudian menandai sumber `news` gagal dengan error `NEWS_FEEDS kosong`. File `.env.example` sudah mencantumkan dua feed default, tetapi backend sebelumnya tidak memakai default tersebut.
+- Temuan UI: parser RSS mengirim field `summary`, sedangkan `public/app.js` hanya membaca `description`, sehingga ringkasan artikel tidak tampil.
+- Perbaikan pada branch `fix/news-feed-defaults-and-rendering`: fallback dua feed saat `NEWS_FEEDS` tidak diset/kosong; UI membaca `summary` dengan fallback kompatibilitas ke `description`; menambahkan `test/news.test.js` untuk fallback feed, override konfigurasi, RSS, dan Atom.
+- Commit branch: `e7cdc001694130452284493a0f3350de96ca1f7d` (backend), `936bc24f911e234b101a513a6d87e096741ace2c` (UI), `d1bfd391d5f2e29eeeaca1e13998331dc267b236` (tes awal), `da6401c528727fccca889148d070bdeb34c7223f` (koreksi hari pada fixture tes). HEAD branch saat pembaruan ini: `da6401c528727fccca889148d070bdeb34c7223f`.
+- Status tes: GitHub Actions workflow `RADAR AI tests` run `45019762920` (#409) selesai dengan conclusion `success`; job `test` dan langkah `npm test` sukses pada HEAD `cb3f09515ec01782899837300e25ff793c375775`. Ini adalah bukti CI untuk kode sebelum pembaruan dokumentasi status ini; perubahan dokumentasi berikutnya tidak mengubah kode aplikasi.
+- Status deployment: belum di-merge dan belum diverifikasi di Hostless. Live News tetap belum dinyatakan pulih sampai deployment dan permintaan RSS nyata berhasil diperiksa.
+- Risiko tersisa: feed eksternal dapat mengubah format, membatasi request, atau tidak dapat dijangkau dari region/runtime Hostless. Fallback menghilangkan kegagalan konfigurasi kosong, tetapi tidak menjamin ketersediaan upstream. Periksa `health.news` dan log setelah deploy.
+- NEXT TASK: minta review independen Divisi 05; setelah persetujuan BOS, merge/deploy; verifikasi `/api/snapshot` berisi berita dan `health.news.ok=true` di live.

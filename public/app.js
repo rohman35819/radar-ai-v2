@@ -136,7 +136,7 @@ function renderNews(){
  const v=$('#view');v.replaceChildren();const news=Array.isArray(data?.news)?data.news:[];
  v.append(sectionHead('News Intelligence','Berita dari sumber RSS yang dikonfigurasi.'));
  if(!news.length)return v.append(empty('Belum ada berita','Sumber berita belum terhubung atau belum mengirim artikel. Konfigurasi NEWS_FEEDS di server.'));
- news.forEach(n=>v.append(el('article',{class:'news-card'},el('div',{class:'news-meta'},el('span',{},esc(n.source)),el('time',{},dateTime(n.published_at))),el('a',{href:n.link,target:'_blank',rel:'noopener noreferrer'},esc(n.title)),el('p',{},esc(n.description||'Buka sumber untuk membaca detail artikel.')))));
+ news.forEach(n=>v.append(el('article',{class:'news-card'},el('div',{class:'news-meta'},el('span',{},esc(n.source)),el('time',{},dateTime(n.published_at))),el('a',{href:n.link,target:'_blank',rel:'noopener noreferrer'},esc(n.title)),el('p',{},esc(n.summary||n.description||'Buka sumber untuk membaca detail artikel.')))));
 }
 function renderUnlock(){
  const v=$('#view');v.replaceChildren();const items=[...(data?.unlocks||[])].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
