@@ -1565,3 +1565,47 @@ Setiap laporan memuat kandidat, manfaat, model biaya dan kuota, batasan, risiko,
 
 **NEXT TASK Divisi 08:** lakukan inventaris kebutuhan dari roadmap master, lalu susun shortlist terverifikasi untuk kategori berita/data ekonomi dan crypto market data. Jangan mengintegrasikan provider sebelum review divisi pemilik dan QA.
 
+
+
+---
+
+## 39. DIVISI 08 — FREE SECURITY TOOLING PILOT — 22 NOVEMBER 2026
+
+### 39.1 Scope and repository baseline
+- Lead: Divisi 08 procurement; implementation touches CI/security automation, with Divisi 01 as security owner and Divisi 05 as independent QA.
+- Re-verified `main` HEAD before work: `5a8a5b9e0bd74f776da6a59279dd71c4be9d8c9b`.
+- Runtime remains Node.js >=20 with no declared runtime npm dependencies; existing `.github/workflows/test.yml` already runs the project test suite on PRs and pushes to `main`.
+- Existing open PR #18 (Agent Registry/Task Queue/Audit schema), #17 (Bybit read-only identity), #16 (AI moderator fallback), #14 (Screener UI), and #12 (storage readiness) remain separate workstreams. This tooling patch does not merge or modify them.
+
+### 39.2 Tools selected and applied to an isolated branch
+- **Gitleaks** — https://github.com/gitleaks/gitleaks-action — open-source secret detection; workflow uses released `v3.0.0` (immutable release) and scans full Git history. It requires no paid subscription or API key; GitHub's workflow token is supplied by Actions. Finding a secret in history must be treated as an incident; do not print or copy secret values into logs/issues.
+- **Trivy** — https://github.com/aquasecurity/trivy-action — open-source filesystem vulnerability and misconfiguration scanner; workflow uses released `0.36.0` (immutable release). It checks HIGH/CRITICAL findings and fails the job when findings are reported. It does not provision a hosted service or require an API key.
+- **Dependabot** — https://docs.github.com/code-security/dependabot — GitHub-native dependency/action update PRs; configured weekly for GitHub Actions and npm manifests. Public repository usage is available without a separate vendor account or secret. npm has no runtime dependencies declared today, so npm update PRs may be absent unless dependencies are introduced.
+- All three are repository automation, not Hostless runtime dependencies. No application package, runtime dependency, environment variable, API key, account, billing method, or production setting was changed.
+
+### 39.3 Files and commit evidence
+- Added `.github/workflows/security.yml`: PR/push-to-main plus weekly scheduled Gitleaks and Trivy scans; read-only repository permission; concurrency cancellation; HIGH/CRITICAL Trivy gate.
+- Added `.github/dependabot.yml`: weekly GitHub Actions and npm update checks.
+- Working branch: `feat/div08-free-security-scanning`.
+- Latest known branch commit after tool configuration: `6bcdc55d0b6b69409b1c329c19dd19a6790fad3c`.
+- This is an isolated proposal branch; it is not merged to `main` and therefore is not yet active on the production/default branch.
+
+### 39.4 Validation and deployment status
+- Configuration files were committed through GitHub repository APIs and will be read back for content verification.
+- GitHub Actions scan execution: **PENDING** until a pull request is opened and CI runs. Do not claim Gitleaks or Trivy have passed before the workflow reports success.
+- Local `npm test`: **NOT RUN** in this GitHub-only session.
+- Hostless Build/LIVE: **UNKNOWN / NOT VERIFIED**. These CI-only tools do not alter Hostless or the deployed application.
+- Gitleaks/Trivy action versions are pinned to immutable release tags; a future hardening task may pin verified full commit SHAs after confirming the upstream release refs.
+
+### 39.5 Risks and operational notes
+- Gitleaks may detect historical test/example tokens or real secrets. Review findings securely; if a real credential is exposed, revoke/rotate it at its source. Never paste it into chat, issue comments, or logs.
+- Trivy HIGH/CRITICAL gates may identify pre-existing vulnerabilities or configuration findings. Do not suppress findings broadly; triage by package/path and only add a narrow documented ignore when justified.
+- Dependabot may propose updates that require compatibility testing. Do not auto-merge dependency updates; retain the existing QA gate.
+- Workflow actions execute third-party code in GitHub-hosted runners. Release tags used here are marked immutable upstream; still review future updates and consider full-SHA pinning.
+- No external database, Redis, worker, monitoring account, or AI provider was provisioned in this change.
+
+### 39.6 Handoff / NEXT TASK
+1. Open a PR from `feat/div08-free-security-scanning` to `main`; inspect the generated workflow run and triage any findings. Divisi 01 reviews security semantics; Divisi 05 verifies CI behavior.
+2. If Gitleaks/Trivy pass and Divisi 01/05 accept, merge only through the repository's normal review gate; do not bypass existing branch protections.
+3. Continue procurement shortlist for free crypto/news/economic data sources, but route integration decisions to Divisi 03/04 and QA to Divisi 05.
+4. Revisit Hostless/Neon/Cloudflare/UptimeRobot only after free quota, no-overage behavior, and account permissions can be inspected. No resource should be created while those conditions remain unknown.
