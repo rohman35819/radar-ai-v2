@@ -132,7 +132,7 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - True product-level offline operation still requires the Agent Platform architecture in sections 37 and this handoff: persistent scheduler/queue, orchestrator, worker runtime, shared memory, permissions, audit, budgets, approval queue, kill switch, and recovery.
 
 ## 12. Division 08 — Procurement & Tools (added 22 Nov 2026)
-- Official folder name: `08 — PROCUREMENT & TOOLS` (28 characters, below the 50-character limit).
+- Official folder name: `08 — PROCUREMENT & TOOLS` (24 characters, below the 50-character limit).
 - Permanent charter and new-chat prompt: `DIVISION_08_PROCUREMENT_TOOLS.md`.
 - Scope: proactive discovery and evaluation of free/open-source/free-tier tools for AI, news/economics, crypto market data, infrastructure, monitoring, security, QA, automation, and knowledge systems.
 - Division 08 researches and recommends; domain owners validate integration, Division 05 independently tests, and Executive Office prioritizes.
