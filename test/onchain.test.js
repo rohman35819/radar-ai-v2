@@ -89,7 +89,7 @@ test('onchain: fetch membatasi halaman dan memakai demo key hanya di server', as
 
 test('onchain ingest: cache pool baru, pertahankan cache lama saat sumber gagal, dan snapshot menyajikan metadata', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'radar-onchain-'));
-  const cfg = { ...ingest.loadConfig(), dataDir: dir, feeds: [], tgToken: '', tgChat: '', exchEnabled: false, earlyGemsEnabled: true };
+  const cfg = { ...ingest.loadConfig(), dataDir: dir, feeds: [], tgToken: '', tgChat: '', exchEnabled: false, earlyGemsEnabled: true, onchainRefreshMs: 0 };
   const state = ingest.emptyState();
   const pool = normalizeNewPools(payload(), now)[0];
   const src = {
@@ -113,6 +113,7 @@ test('onchain ingest: cache pool baru, pertahankan cache lama saat sumber gagal,
     assert.equal(snapshot.early_gems.length, 1);
     assert.equal(snapshot.early_gems_meta.source, 'test');
     assert.equal(snapshot.config_needed.early_gems_enabled, true);
+    assert.equal(snapshot.config_needed.onchain_refresh_min, cfg.onchainRefreshMin);
     assert.equal(snapshot.config_needed.onchain_key, !cfg.cgKey);
   } finally { app.stop(); }
   src.fetchEarlyGems = async () => { const error = new Error('rate limited'); error.code = 'ONCHAIN_RATE_LIMITED'; throw error; };
@@ -134,3 +135,27 @@ test('onchain: trending failure is partial and does not discard newly discovered
   assert.equal(result.trending_error, 'ONCHAIN_RATE_LIMITED');
   assert.equal(result.items[0].is_trending, false);
 });
+
+test('onchain ingest: refresh cadence suppresses repeat requests and retries after interval', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'radar-onchain-cadence-'));
+  const cfg = { ...ingest.loadConfig(), dataDir: dir, feeds: [], tgToken: '', tgChat: '', exchEnabled: false, earlyGemsEnabled: true, onchainRefreshMs: 60 * 60000 };
+  const state = ingest.emptyState();
+  state.health.onchain = { ok: true, at: new Date().toISOString(), error: null };
+  let calls = 0;
+  const src = {
+    fetchAiCoins: async () => [],
+    fetchLlama: async () => ({ protocols: [], fees: [], revenue: [] }),
+    fetchNews: async () => [],
+    fetchUnlocks: async () => [],
+    fetchEarlyGems: async () => { calls++; return { items: [], fetched_at: new Date().toISOString(), source: 'test', pages_requested: 1, trending_pool_count: 0 }; }
+  };
+  try {
+    await ingest.refresh(state, cfg, src);
+    assert.equal(calls, 0, 'must reuse the recent attempt inside the refresh window');
+    state.health.onchain.at = new Date(Date.now() - 61 * 60000).toISOString();
+    await ingest.refresh(state, cfg, src);
+    assert.equal(calls, 1, 'must refresh once the interval has elapsed');
+    assert.equal(state.health.onchain.ok, true);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
