@@ -131,6 +131,52 @@ function renderExchanges() {
     return row;
   }, 'Data exchange belum tersedia.');
 }
+function renderExchangeSelector() {
+  const select = $('#exchange-select');
+  if (!select) return;
+  const rows = market?.data?.exchanges || [];
+  const current = select.value || 'binance';
+  select.replaceChildren();
+  rows.slice(0, 30).forEach((exchange) => {
+    const option = node('option', '', safeText(exchange.name));
+    option.value = exchange.id;
+    select.append(option);
+  });
+  if ([...select.options].some((option) => option.value === current)) select.value = current;
+  else if ([...select.options].some((option) => option.value === 'binance')) select.value = 'binance';
+  if (select.value && select.dataset.loaded !== select.value) loadExchangeTickers();
+}
+async function loadExchangeTickers() {
+  const id = $('#exchange-select').value;
+  const body = $('#exchange-tickers');
+  if (!id || !body) return;
+  body.replaceChildren();
+  const loading = node('td', 'muted', 'Memuat trading pairs…'); loading.colSpan = 6;
+  const row = node('tr'); row.append(loading); body.append(row);
+  try {
+    const response = await fetch('/api/market-intelligence/exchange-tickers?exchange=' + encodeURIComponent(id), { cache: 'no-store' });
+    const result = await response.json();
+    if (!response.ok || result.status !== 'success') throw new Error(result.message || result.code || 'Ticker unavailable');
+    const tickers = (result.data?.tickers || []).slice(0, 20);
+    body.replaceChildren();
+    tickers.forEach((ticker) => {
+      const tr = node('tr');
+      tr.append(node('td', '', safeText(ticker.base) + '/' + safeText(ticker.target)));
+      tr.append(node('td', '', safeText(ticker.market?.name || ticker.market?.identifier)));
+      tr.append(node('td', 'number-cell', fmtMoney(ticker.converted_last?.usd ?? ticker.last)));
+      tr.append(node('td', 'number-cell', fmtMoney(ticker.converted_volume?.usd ?? ticker.volume)));
+      tr.append(node('td', 'number-cell', ticker.bid_ask_spread_percentage == null ? '—' : Number(ticker.bid_ask_spread_percentage).toFixed(3) + '%'));
+      tr.append(node('td', '', safeText(ticker.trust_score || ticker.market?.trust_score || '—')));
+      body.append(tr);
+    });
+    if (!tickers.length) { const tr = node('tr'); const td = node('td', 'muted', 'Tidak ada pair tersedia.'); td.colSpan = 6; tr.append(td); body.append(tr); }
+    $('#exchange-ticker-status').textContent = tickers.length + ' pair ditampilkan · diperbarui ' + new Date(result.updated_at).toLocaleString('id-ID');
+    $('#exchange-select').dataset.loaded = id;
+  } catch (error) {
+    body.replaceChildren(); const tr = node('tr'); const td = node('td', 'negative', safeText(error.message)); td.colSpan = 6; tr.append(td); body.append(tr);
+    $('#exchange-ticker-status').textContent = 'Data pair belum tersedia; periksa kuota dan akses CoinGecko.';
+  }
+}
 function renderSummary() {
   const g = market?.data?.global?.data || {};
   const rows = market?.data?.markets || [];
@@ -206,7 +252,8 @@ async function loadChart() {
     const response = await fetch('/api/market-intelligence/chart?coin=' + encodeURIComponent(coin) + '&days=' + encodeURIComponent(days), { cache: 'no-store' });
     const result = await response.json();
     if (!response.ok || result.status !== 'success') throw new Error(result.message || result.code || 'Chart unavailable');
-    drawChart(result.data?.prices || []);
+    const metric = $('#chart-metric').value || 'prices';
+    drawChart(result.data?.[metric] || []);
   } catch (error) {
     $('#price-chart').replaceChildren(node('div', 'negative', 'Grafik tidak tersedia: ' + safeText(error.message)));
   } finally { chartBusy = false; }
@@ -220,6 +267,7 @@ function renderAll() {
   renderSectors();
   renderExchanges();
   renderSummary();
+  renderExchangeSelector();
   updateStatus();
 }
 async function loadMarket(force = false) {
@@ -248,5 +296,7 @@ $('#refresh').addEventListener('click', () => loadMarket(true));
 $('#coin-search').addEventListener('input', (event) => { search = event.target.value.trim().toLowerCase(); marketRows(); });
 $('#chart-coin').addEventListener('change', loadChart);
 $('#chart-days').addEventListener('change', loadChart);
+$('#chart-metric').addEventListener('change', loadChart);
+$('#exchange-select').addEventListener('change', () => { $('#exchange-select').dataset.loaded = ''; loadExchangeTickers(); });
 loadMarket();
 setInterval(() => loadMarket(false), 5 * 60 * 1000);
