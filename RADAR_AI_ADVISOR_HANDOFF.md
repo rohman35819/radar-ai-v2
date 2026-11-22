@@ -159,3 +159,13 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - No independent Divisi 01/05 review exists yet. Do not merge PR #18 until P1 findings are closed and both gates independently review. Do not activate/provision a worker; strict Rp0 and Hostless overage gate remain binding.
 - Branch for documentation update: `docs/agent-platform-pr18-audit-handoff`. See master context section 51 and issue https://github.com/rohman35819/radar-ai-v2/issues/30.
 - NEXT TASK: Direktur coordinates Divisi 06/01/05 to close P1 and deliver PostgreSQL queue integration evidence; Divisi 07 defines provenance-based memory records without vector infrastructure.
+
+
+## 15. Status terkini Agent Platform — PR #29 (22 November 2026)
+- PR #18 ditutup sebagai superseded; jangan dibuka kembali. PR #29 adalah jalur schema foundation aktif: https://github.com/rohman35819/radar-ai-v2/pull/29.
+- PR #29 exact head `e96b8664532634dce7b6638605dfdfec69ec4283`; Test workflow #453 / ID `45022798012` passed npm tests + PostgreSQL 16 migration + least-privilege smoke. Security workflow #20 / ID `45022798002` passed Gitleaks + Trivy.
+- PR #29 corrects the earlier P1 schema findings: division 01–08, hard Rp0 budget, one concurrency, bounded retries/payloads, CI role has no task_queue access, no unused hash-chain claim, trigger-level audit UPDATE/DELETE test.
+- Remaining before any worker: cycle-safe dependencies, legal transitions/deadlines, transactional claim/lease fencing, idempotency, retry/dead-letter, task+audit atomicity, restart recovery, trusted audit attribution, and table-owner/TRUNCATE threat boundary. Track in issue #30.
+- PR #29 remains draft pending independent Divisi 01 security review and Divisi 05 QA review. It is behind main by one commit and currently reports mergeable=false; sync/review conflicts before any merge.
+- No DB adapter, queue runtime, scheduler, worker, approval queue, kill switch, or persistent memory is active. Strict Rp0 and Hostless no-overage provisioning gate remain binding.
+- NEXT TASK: Direktur coordinates Divisi 01/05 reviews and branch sync; Divisi 06 plans runtime implementation only after schema acceptance; Divisi 07 builds provenance-first decision/task memory design.
