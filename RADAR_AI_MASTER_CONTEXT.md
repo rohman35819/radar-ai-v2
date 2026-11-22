@@ -1977,3 +1977,19 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - The cache review fixed stale data being accidentally relabeled fresh within the 60-second fallback cache window. Failed feeds without cache receive a 5-minute cooldown.
 - PR #48 remains Draft and unmerged. No Hostless environment, production deployment, paid service, or CoinGecko key value was changed/read.
 - Hostless Build/LIVE, actual upstream Demo-key response, and desktop/mobile browser QA remain pending. Portfolio tracker, strategy backtesting, and On-chain DEX/Early Gem dashboard integration remain follow-on scope; Early Gem work is separately tracked in Draft PR #46.
+
+---
+
+## 60. MARKET INTELLIGENCE & EXPLAINABLE TRADE SETUPS — MAIN SPEC SYNC — 22 NOVEMBER 2026
+
+- Main advanced after PR #48 was opened with two documentation commits. Latest main baseline at sync: `5850594a9b60f9da709ca965aad876cc144e6308`; the new approved-direction spec is `docs/market-intelligence-trade-setup-spec.md`.
+- The spec is product/engineering direction and staged backlog, not a claim that all features are implemented.
+- Product target: global scanner candidates open canonical asset detail with identity including chain/contract, exchange, spot/perpetual, base/quote; never join assets by symbol alone.
+- Future detail panels: overview/tokenomics, OHLCV candles and interval volume, spot quality/spread/depth, derivatives OI/funding/basis where reliable, DEX liquidity, fundamentals, unlocks, on-chain activity, catalysts/news, signal history.
+- Every metric must carry provider/source, observed/received timestamps, interval/units, raw vs normalized values, freshness, quality, coverage and transformation method. Missing/stale/conflicting values must remain unavailable/partial, never silently zero.
+- Conditional trade setups are future scope only: directional bias, timeframe, entry zone, invalidation/stop, TP1/TP2/TP3, R:R, calibrated confidence only after out-of-sample validation, rationale/counter-evidence, expiry/cancel conditions, immutable snapshot and model version. Deterministic rules must derive levels; LLM may explain but may not invent levels.
+- Required validation: walk-forward/out-of-sample, realistic fees/spread/slippage/funding/latency/fills, signal journal including losses/expired setups, expectancy/profit factor/max drawdown/MAE/MFE/sample size/calibration, then forward paper trading.
+- Current PR #48 implements the initial CoinGecko market dashboard only. It does NOT yet implement canonical asset drill-down, per-field provenance contract, OHLCV candle intervals, OI/funding, reproducible entry/stop/TP setup, immutable signal journal, or backtesting.
+- No order execution, live trading, paid data, paid quota, or production mutation is authorized. Historical persistence waits for verified durable storage; EROFS means ephemeral filesystem is not a database.
+- Stage routing: Divisi 08 provider matrix; Divisi 03 exchange/derivatives semantics; Divisi 04 features/anti-look-ahead; Divisi 01 security; Divisi 05 fixtures and QA; Divisi 02 asset detail UI.
+- NEXT TASK after PR #48 QA: start Stage 0 provider/source matrix and data contract, then implement canonical identities and freshness/quality metadata before adding trade setups. Do not add entry/TP/SL until data quality and out-of-sample methodology are ready.
