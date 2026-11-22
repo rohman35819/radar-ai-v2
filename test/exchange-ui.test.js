@@ -56,10 +56,33 @@ test('Exchange Hub memakai status izin API Key khusus Binance, bukan canTrade ak
   assert.match(exchangeService, /enableSpotAndMarginTrading/);
   assert.match(exchangeService, /enableFutures/);
   assert.match(js, /account\.api_permissions/);
+  assert.ok(js.includes('binanceWithdrawalsEnabled'));
+  assert.ok(js.includes('binanceTransferEnabled'));
   assert.match(js, /permissionUnknown/);
   assert.doesNotMatch(js, /Boolean\(account\.spot\?\.can_trade\)/);
   assert.doesNotMatch(js, /Boolean\(account\.futures\?\.can_trade\)/);
   assert.match(exchangeService, /method: 'GET'/);
   assert.doesNotMatch(exchangeService, /method: '(POST|PUT|PATCH|DELETE)'/);
   assert.doesNotMatch(js, /\/api\/v[13]\/order|\/fapi\/v1\/order|\/fapi\/v2\/order/);
+});
+
+
+test('Exchange Hub verifies Bybit API key read-only state, account UID and wallet/trade permissions', () => {
+  assert.ok(exchangeService.includes('/v5/user/query-api'));
+  assert.ok(exchangeService.includes('read_only: rawApiKeyInfo.readOnly === 1'));
+  assert.ok(exchangeService.includes('userID'));
+  assert.ok(exchangeService.includes("withdrawals: walletPermissions.includes('Withdraw')"));
+  assert.ok(js.includes('apiPermissions.read_only'));
+  assert.ok(js.includes('apiPermissions.withdrawals'));
+  assert.ok(js.includes('identity.account_id'));
+  assert.ok(js.includes('apiPermissions.categories'));
+  assert.ok(js.includes('Rincian permission Bybit'));
+  assert.ok(exchangeService.includes('BYBIT_API_PERMISSION_READ_UNAVAILABLE'));
+});
+
+
+test('Exchange Hub never labels an unverified API key as read-only', () => {
+  assert.ok(js.includes('TERHUBUNG / IZIN BELUM TERVERIFIKASI'));
+  assert.ok(!js.includes('READ-ONLY / IZIN BELUM TERVERIFIKASI'));
+  assert.ok(js.includes('PERINGATAN / PERMISSION API AKTIF'));
 });
