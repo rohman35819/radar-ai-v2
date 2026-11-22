@@ -1521,6 +1521,7 @@ ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus 
 - Branch utama: main.
 - HEAD yang diverifikasi: b6c005ed4a217e8425652ecf6e26986e6cefcee2 — "docs(agents): define advisor role and offline autonomy guardrails".
 - Branch kerja fondasi: feat/agent-platform-foundation.
+- Draft PR: #18 — https://github.com/rohman35819/radar-ai-v2/pull/18; head SHA: 29564864eb348739fbab6e14748e155db5a56b62; belum merge. GitHub connector belum mengembalikan workflow run/status untuk head PR ini.
 - File yang diperiksa: package.json, server.js, README.md, lib/ingest.js, .env.example, test/radar.test.js, AGENTS.md, RADAR_AI_ADVISOR_HANDOFF.md, dan bagian akhir master context.
 - PR terbuka saat audit: #17 Bybit API key identity/permissions; #16 AI moderator fallback; #14 Screener/membership preview; #12 storage persistence health; #7 Trading Terminal foundation; #6 live deployment/visual verification. PR bukan fitur main sampai merge.
 - GitHub combined status untuk HEAD tidak memberikan status entries; pemeriksaan workflow-run yang tersedia tidak mengembalikan run untuk push HEAD. CI HEAD saat ini tidak dapat dinyatakan lulus atau gagal.
@@ -1560,10 +1561,10 @@ ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus 
 - Setiap perubahan status task harus menulis audit event dalam transaksi yang sama pada implementasi runtime kelak.
 
 ### 38.6 Validasi dan status
-- Pemeriksaan file/diff via GitHub dilakukan setelah penulisan. Working copy lokal tidak tersedia.
+- Pemeriksaan file/diff via GitHub dilakukan setelah penulisan. Working copy repository tidak tersedia. Static contract test untuk lima assertion dijalankan secara terisolasi pada salinan migration dan test: 5/5 lulus; ini bukan npm test penuh atau eksekusi PostgreSQL.
 - npm test lokal: tidak dijalankan.
 - Migration PostgreSQL: belum dijalankan; belum ada disposable DB test harness pada sesi ini.
-- GitHub Actions untuk branch/PR: menunggu hasil setelah PR dibuat.
+- GitHub Actions untuk branch/PR: belum dapat diverifikasi; pemeriksaan run dan combined status untuk head PR mengembalikan daftar kosong. Draft PR #18 terbuka untuk review.
 - Hostless worker/database belum dibuat; belum ada resource provisioning atau biaya yang dikeluarkan.
 - Hostless Build dan Live: belum diverifikasi.
 - Tidak ada perubahan pada aplikasi Live, exchange permission, secret, atau trading.
