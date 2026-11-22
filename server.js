@@ -142,7 +142,11 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
         }
         if (url.pathname === '/api/health') {
           const storage = { status: storageErrorCode ? 'error' : storageChecked ? 'ok' : 'unchecked', code: storageErrorCode };
-          return send(res, storageErrorCode ? 503 : 200, { status: storageErrorCode ? 'degraded' : 'ok', storage }, 'application/json', { 'cache-control': 'no-store' });
+          return send(res, 200, { status: 'ok', storage }, 'application/json', { 'cache-control': 'no-store' });
+        }
+        if (url.pathname === '/api/ready') {
+          const storage = { status: storageErrorCode ? 'error' : storageChecked ? 'ok' : 'unchecked', code: storageErrorCode };
+          return send(res, storageErrorCode ? 503 : 200, { status: storageErrorCode ? 'degraded' : storageChecked ? 'ready' : 'starting', storage }, 'application/json', { 'cache-control': 'no-store' });
         }
         if (url.pathname === '/api/snapshot' && req.method === 'GET') {
           const age = st.lastOk ? Date.now() - Date.parse(st.lastOk) : null;
