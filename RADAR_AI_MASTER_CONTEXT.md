@@ -1844,3 +1844,67 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - NEXT TASK: Direktur menugaskan Divisi 02/03 memulai Stage 1 (page shell + Phantom connect/disconnect, read-only address identity) pada branch/PR terisolasi; Divisi 08 membandingkan sumber RPC/indexer/DEX berdasarkan free quota, ToS dan limit; Divisi 01/05 menyiapkan security/QA acceptance. Jangan mengaktifkan durable history sebelum storage blocker selesai.
 - Riset sumber resmi pada sesi ini: Phantom injected provider mendukung connect/disconnect dan membagikan public address; signing merupakan kemampuan terpisah yang tidak dipakai MVP. Phantom mobile hanya mendukung koneksi melalui Phantom in-app browser; Chrome/Safari Android biasa tidak dapat menghubungkan wallet melalui flow tersebut. UI harus mendeteksi kondisi ini dan memberi instruksi membuka URL RADAR dari Phantom browser. Solana public RPC shared/rate-limited dan bukan untuk produksi. GeckoTerminal API beta; dokumentasi API menyebut sekitar 10 request/menit yang dapat berubah, sedangkan artikel support menyebut 30/menit; gunakan batas konservatif 10/menit sampai diverifikasi. Referensi resmi ditambahkan di dokumen arsitektur.
 - Commit riset/constraint: 1d8622b8bcddaf82eef4b60d79bd7599a71f7bf1. Belum ada kode koneksi Phantom atau UI yang dibangun.
+
+---
+
+## 59. COINGECKO MARKET INTELLIGENCE DASHBOARD — 22 NOVEMBER 2026
+
+### 59.1 Routing and scope
+- Lead: **Divisi 02 — UI/UX & Frontend** untuk dashboard dan navigasi.
+- Supporting: Divisi 08 untuk verifikasi paket/kuota CoinGecko; Divisi 04 untuk konteks market intelligence; Divisi 01 untuk keamanan API key/cache; Divisi 05 untuk pengujian independen.
+- Owner meminta seluruh rekomendasi CoinGecko sebelumnya ditampilkan di dashboard RADAR AI V2.
+- Main baseline saat branch dibuat: `518caf76a37f00dd51f4bef081ce02f20f7de453`.
+- Isolasi implementasi: branch `feat/coingecko-market-intelligence-dashboard`; tidak ada perubahan langsung ke main atau deployment produksi.
+
+### 59.2 Implementasi pada branch
+- Halaman baru `/market.html` dengan navigasi dari dashboard utama.
+- Modul Global Market: total market cap, volume 24 jam, BTC/ETH dominance, active crypto, dan jumlah markets.
+- Global Coin Scanner Top 100: harga USD dan IDR, perubahan 1h/24h/7d, market cap, volume, pencarian, gainers, losers.
+- Trending coins dari CoinGecko Search Trending.
+- Sector Rotation berdasarkan perubahan market cap kategori.
+- Exchange Intelligence: ranking exchange, volume BTC, trust score, dan tabel trading pairs on-demand berisi harga, volume, serta bid/ask spread.
+- Historical charts untuk harga, market cap, dan volume pada rentang 1/7/30/90 hari.
+- Market Regime berbasis heuristik statistik RADAR; panel AI Council menampilkan laporan terakhir yang tersimpan secara terpisah. Heuristik tidak boleh disebut sebagai output model AI.
+- Backend baru `lib/market-intelligence.js`; endpoint:
+  - `GET /api/market-intelligence`
+  - `GET /api/market-intelligence/chart?coin=bitcoin&days=7`
+  - `GET /api/market-intelligence/exchange-tickers?exchange=binance`
+- API key `COINGECKO_DEMO_KEY` hanya dipakai backend melalui header `x-cg-demo-api-key`; tidak dikirim ke browser, URL, atau response.
+- Cache server 60 menit untuk dashboard feed, historical chart, dan exchange tickers. UI polling 5 menit hanya membaca cache aktif; data stale ditandai.
+- Service Worker dinaikkan ke `radar-shell-v12` dan menambahkan halaman/aset Market Intelligence ke precache.
+- Tidak ada dependency runtime baru, pembelian, perubahan secret Hostless, atau fitur transaksi.
+
+### 59.3 Files
+- Added: `lib/market-intelligence.js`, `public/market.html`, `public/market.js`, `public/market.css`, `test/market-intelligence.test.js`, `test/market-ui.test.js`.
+- Updated: `server.js`, `public/index.html`, `public/sw.js`, `test/service-worker.test.js`, `package.json`, `README.md`, dan dokumen master ini.
+- Existing Market Screener kategori AI, Exchange Hub, Command Center, dan menu dashboard lain dipertahankan.
+
+### 59.4 Procurement and quota guardrails
+- Menggunakan `COINGECKO_DEMO_KEY` yang sudah menjadi variabel konfigurasi proyek; nilai aktual tidak dibaca atau ditampilkan.
+- Dashboard utama meminta enam dataset: global, Top 100 USD, Top 100 IDR, trending, categories, exchanges. Cache 60 menit; chart dan ticker hanya dipanggil saat dibutuhkan dan juga cache 60 menit.
+- Kuota CoinGecko Demo adalah shared quota untuk seluruh pemakaian CoinGecko RADAR. Pantau Developer Dashboard; jangan menganggap polling UI 5 menit sama dengan lima menit request upstream.
+- CoinGecko Demo menyediakan 100 calls/min dan 10.000 monthly calls menurut halaman resmi; endpoint/history availability dapat berbeda menurut paket. Tidak ada layanan berbayar diaktifkan.
+- Attributions: UI dan README menampilkan “Powered by CoinGecko”.
+- Exchange spread/trust score bukan audit likuiditas, solvabilitas, atau keamanan exchange.
+- Top gainers/losers hanya dari Top 100; bukan keseluruhan pasar.
+- Historical chart menggunakan data market_chart; bukan OHLC/candlestick.
+- Market Regime merupakan rule-based heuristic, bukan model AI atau rekomendasi finansial. AI Council Summary adalah laporan terakhir yang telah tersimpan, bukan jaminan analisis realtime dari seluruh dataset global.
+
+### 59.5 Tests and release status
+- Unit tests baru meliputi enam dataset dan server-side header, cache hit, stale fallback/partial failure, validasi coin/rentang chart, validasi exchange ID/cache ticker, UI navigation/assets, dan rendering aman sebagai teks.
+- Service Worker test diperbarui untuk memastikan Market Intelligence di-precache pada v12.
+- `package.json` menambahkan syntax checks untuk `public/market.js` dan `lib/market-intelligence.js`.
+- Local `npm test`: belum dijalankan pada saat catatan dibuat.
+- GitHub Actions exact-head: menunggu workflow PR.
+- Hostless Build: UNKNOWN / belum diverifikasi.
+- Hostless LIVE/SHA: UNKNOWN / belum diverifikasi.
+- Browser visual QA desktop/mobile, response nyata CoinGecko melalui secret Hostless, dan penggunaan kuota produksi: belum diverifikasi.
+
+### 59.6 Risks and NEXT TASK
+1. Periksa exact branch diff dan jalankan GitHub Actions `npm test`; perbaiki setiap kegagalan sebelum menyatakan siap.
+2. Minta review independen Divisi 01 (API key/cache/security) dan Divisi 05 (test, API failure, PWA, mobile).
+3. Setelah PR diterima dan BOS menyetujui integrasi, verifikasi Hostless build dan SHA Live secara terpisah; jangan mengklaim live dari CI.
+4. QA browser desktop/Android: semua modul, loading/error/stale, filter/search, chart selector, exchange pair selector, PWA cache, Console/Network, serta tidak ada request API key dari browser.
+5. Verifikasi API response nyata dan kuota melalui deployment yang sah; jangan meminta key dikirim melalui chat.
+6. Jika CoinGecko Demo membatasi endpoint tertentu, pertahankan partial UI dan cari fallback gratis sebelum mengusulkan paket berbayar.
+7. NEXT TASK setelah QA: review independent; lalu integrasi ke main hanya setelah semua checks sukses dan approval sesuai kebijakan BOS.
