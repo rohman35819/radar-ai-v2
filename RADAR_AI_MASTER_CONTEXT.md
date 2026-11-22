@@ -1202,3 +1202,37 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Run awal #44991867504 dan #44991871567 gagal karena assertion tes memeriksa method GET pada frontend, padahal method request didefinisikan di lib/exchanges.js. Implementasi aplikasi tidak gagal; tes diarahkan ke modul backend yang benar.
 - test/exchange-ui.test.js diperbaiki untuk memastikan request exchange memakai GET dan tidak menggunakan POST/PUT/PATCH/DELETE. Commit koreksi: 9b95b257660793aa5a1f8803476e1ac44244ac0b.
 - GitHub Actions run #44991933604 untuk commit koreksi sedang berjalan pada saat catatan ini diperbarui. Status 60/60 belum boleh diklaim sampai run selesai.
+
+## 33. KOREKSI FALSE POSITIVE IZIN API KEY BINANCE — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 33.1 Temuan dan akar masalah
+- Pemilik melaporkan Exchange Hub masih menampilkan peringatan izin Spot Trading meskipun API Key dikonfigurasi read-only.
+- Audit menemukan frontend memakai `account.spot.can_trade` dari `GET /api/v3/account` dan `account.futures.can_trade` dari `GET /fapi/v2/account` sebagai izin trading API Key. Kedua field itu menggambarkan kemampuan trading akun, bukan permission khusus API Key. Ini dapat menimbulkan false positive.
+- Endpoint resmi untuk memeriksa permission Key adalah signed `GET /sapi/v1/account/apiRestrictions`, dengan field `enableSpotAndMarginTrading`, `enableFutures`, `enableWithdrawals`, `enableInternalTransfer`, dan `permitsUniversalTransfer`. Referensi: https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/account dan https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/rest-api/account.
+
+### 33.2 Perbaikan
+- `lib/exchanges.js`: pemeriksaan permission API Key ditambahkan melalui endpoint khusus Binance, tetap signed HTTP GET server-side. Permission dikembalikan terpisah dari metadata kemampuan trading akun.
+- `public/trading.js`: warning hanya dipicu field permission API Key yang benar. Jika endpoint permission gagal atau field boolean tidak tersedia, UI menyatakan izin belum terverifikasi, bukan false positive atau klaim aman.
+- `test/exchanges.test.js`: cakupan permission nonaktif, permission aktif, dan endpoint permission tidak tersedia; skenario account `canTrade=true` tetapi izin API Key nonaktif juga diverifikasi.
+- `test/exchange-ui.test.js`: frontend harus membaca `account.api_permissions`, bukan `can_trade` akun; pemeriksaan memastikan tidak ada endpoint order.
+- `README.md`: dokumentasi diperbarui untuk endpoint permission yang benar.
+
+### 33.3 File dan commit
+- `lib/exchanges.js`: 491fff481b92a3d3b78b39aaf01dcdd16f22f252.
+- `public/trading.js`: c8c7757a098c73841255bacf8f3042b05ad07ee8.
+- `test/exchanges.test.js`: f9ce5b83e1975f130459e372937ca2b7bb61a7de dan 7ae0ad6f9680c70cb19b661885162f46aede6c67.
+- `test/exchange-ui.test.js`: 9ba5805bc299cb63c08183eb8e580f55feb59c05.
+- `README.md`: a4e8b17d1609fb0aed969b98c034446bba937e0e.
+- Tidak ada perubahan API Secret, environment Hostless, permission akun, endpoint order, trading live, withdrawal, atau dependency.
+
+### 33.4 Verifikasi dan status
+- GitHub Actions pada HEAD terbaru perlu diperiksa. Tes lokal tidak dijalankan pada sesi ini karena tidak tersedia working copy Node.js.
+- Hostless Build dan SHA LIVE belum diverifikasi. Perubahan GitHub tidak membuktikan halaman Live sudah menerima perbaikan.
+- Koneksi akun nyata belum diuji; hasil permission aktual baru dapat diketahui setelah versi ini dideploy dan tombol refresh akun dijalankan.
+- Batas keamanan tetap: tidak ada POST/PUT/PATCH/DELETE exchange; tidak ada order, transfer, atau withdrawal dari RADAR.
+
+### 33.5 NEXT TASK
+1. Verifikasi GitHub Actions pada HEAD terbaru; perbaiki regresi jika ditemukan.
+2. Verifikasi Hostless Build dan SHA Live secara terpisah.
+3. Setelah deploy, refresh akun Exchange Hub dan cocokkan UI dengan permission API Key yang sebenarnya.
+4. Lanjutkan QA Exchange Hub desktop/mobile, lalu audit DATA_DIR/EROFS dan QA Dashboard.
