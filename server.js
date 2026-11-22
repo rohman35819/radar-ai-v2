@@ -124,10 +124,13 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const message = code.endsWith('_CREDENTIALS_NOT_CONFIGURED') ? 'API Key dan API Secret belum lengkap di server.' :
               code === 'EXCHANGE_TIMEOUT' ? 'Exchange tidak merespons tepat waktu.' :
               code === 'EXCHANGE_NETWORK_ERROR' ? 'Tidak dapat menjangkau exchange.' :
+              code === 'EXCHANGE_RATE_LIMITED' ? 'Batas permintaan exchange tercapai. Tunggu sebelum mencoba lagi.' :
               code.startsWith('EXCHANGE_UPSTREAM_HTTP_') ? 'Exchange menolak permintaan. Periksa izin API dan konfigurasi IP.' :
               code.includes('API_ERROR_') ? 'Exchange menolak permintaan. Periksa izin read-only dan jenis akun.' :
               'Koneksi exchange gagal. Periksa konfigurasi server.';
-            send(res, status, { status: 'error', exchange: exchangeAccount[1], code, message }, 'application/json', { 'cache-control': 'no-store' });
+            const headers = { 'cache-control': 'no-store' };
+            if (known && error.retryAfterSeconds) headers['retry-after'] = String(error.retryAfterSeconds);
+            send(res, status, { status: 'error', exchange: exchangeAccount[1], code, message }, 'application/json', headers);
           });
           return;
         }
@@ -141,9 +144,12 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const message = code === 'INVALID_MARKET_SYMBOL' ? 'Format pair tidak valid.' :
               code === 'EXCHANGE_TIMEOUT' ? 'Exchange tidak merespons tepat waktu.' :
               code === 'EXCHANGE_NETWORK_ERROR' ? 'Tidak dapat menjangkau exchange.' :
+              code === 'EXCHANGE_RATE_LIMITED' ? 'Batas permintaan exchange tercapai. Tunggu sebelum mencoba lagi.' :
               code.startsWith('EXCHANGE_UPSTREAM_HTTP_') ? 'Data market tidak tersedia dari exchange.' :
               'Gagal mengambil data market.';
-            send(res, status, { status: 'error', code, message }, 'application/json', { 'cache-control': 'no-store' });
+            const headers = { 'cache-control': 'no-store' };
+            if (known && error.retryAfterSeconds) headers['retry-after'] = String(error.retryAfterSeconds);
+            send(res, status, { status: 'error', code, message }, 'application/json', headers);
           });
           return;
         }

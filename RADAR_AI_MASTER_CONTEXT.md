@@ -1626,7 +1626,7 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 ### 41.3 Backlog terurut lintas divisi setelah News
 1. Divisi 02 — UI/UX: selesai melalui PR #23, merge commit 97d28214d883e1f5fc6ce8964ffcb0acf7ff02d9; CI main run #417 success, 70/70 tests. PR #14 lama ditutup sebagai superseded. Browser/Hostless QA tetap diperlukan.
 2. Divisi 01 — Security & Reliability: selesai melalui PR #24, merge commit d300076dd1d3ec15bd8315f925bc7cd2334ed959; CI PR #418 success, 71/71 tests. PR #12 lama ditutup sebagai superseded. DATA_DIR/volume Hostless masih butuh log dan konfigurasi aktual.
-3. Divisi 03 — Exchange: PR #17 Bybit identity/permission. Latest head 576856a85d477fac5b31912858704ddddc5573f0; CI run #369 success. Rebase/update, cek diff keamanan, uji hanya read-only, dan pastikan tidak ada withdrawal/trading.
+3. Divisi 03 — Exchange: patch Bybit dipindahkan ke branch feat/bybit-permission-delivery-v2 berbasis main terbaru; verifikasi permission read-only, redaksi kredensial, serta rate-limit/retry-after; CI baru menunggu.
 4. Divisi 04 — AI Intelligence: PR #16 moderator fallback Groq/OpenRouter dan fail-safe WAIT. Latest head b74e677298470b973d5528fe07f48cabb42c1d13; CI run #334 success. Rebase/update dan verifikasi fail-safe serta biaya/kuota sebelum merge.
 5. Divisi 08 — Procurement/Security support: PR #21 Gitleaks, Trivy, Dependabot. Latest head 017d475b255ab2427d158274005d573d67da70ed; workflow test run #403 success; scanner workflow run #2 gagal karena action reference aquasecurity/trivy-action@0.36.0 tidak ditemukan (setup job). Tetap draft sampai tag resmi yang valid dipilih, false positive/permissions/kuota diverifikasi, dan rerun sukses.
 6. Divisi 06 — Agent Platform (proposal/pilot): PR #18 registry/task queue/audit schema. Latest head 18c37f63cb9b5176a724d2c43b1eb1b8ee33b5d5; CI run #392 success. Tetap draft; audit persistence, schema, permission boundaries, retention, dan larangan klaim worker background sebelum pilot.
@@ -1674,3 +1674,16 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Tidak ada fallback ke filesystem ephemeral dan tidak ada penghapusan/reset state.
 - Hostless Build, LIVE SHA, DATA_DIR mount dan runtime logs tetap NOT VERIFIED; endpoint baru belum diuji pada deployment Hostless.
 - NEXT TASK tunggal: Divisi 03 memindahkan Bybit identity/permission PR ke branch berbasis main terbaru, memeriksa permission read-only dan jalur error, lalu menguji CI. Setelahnya Divisi 04 moderator fallback.
+
+## 45. BYBIT API KEY PERMISSION DAN RATE-LIMIT HARDENING — 22 NOVEMBER 2026
+
+- Lead: Divisi 03 Exchange & Trading Systems; QA Gate: Divisi 05; dukungan Divisi 01 untuk keamanan secret dan status error.
+- PR #17 lama berbasis main sebelum News/UI/Storage delivery. Patch dipindahkan ke branch feat/bybit-permission-delivery-v2 dari main HEAD e3dd647b2327b6dd4240d2fd9f8b19042fe0eeb0 agar tidak menimpa readiness changes.
+- Endpoint resmi Bybit GET /v5/user/query-api mengembalikan readOnly, permissions, userID; dokumentasi resmi menyatakan endpoint dapat diakses dengan permission apa pun dan key yang dipakai adalah key yang diperiksa. Referensi: https://bybit-exchange.github.io/docs/v5/user/apikey-info.
+- Patch backend: signed GET query-api; hanya UID, readOnly, kategori permission terpilih yang disanitasi dikirim ke browser; apiKey/secret/IP whitelist dan metadata lain tidak diteruskan. Jika endpoint permission gagal atau kategori inti tidak lengkap, status izin wajib belum terverifikasi.
+- Patch UI: tampilkan UID dan kategori permission; bedakan read-only/trading/withdrawal/transfer; Binance juga memperingatkan withdrawal/transfer aktif. Nilai withdrawable yang tidak tersedia tetap null/tanda strip, tidak diganti dengan availableToBorrow.
+- Rate limit: HTTP 429/418, Binance -1003, Bybit 10006/10429 dan HTTP 403 access-too-frequent dipetakan ke EXCHANGE_RATE_LIMITED; Retry-After / X-Bapi-Limit-Reset-Timestamp diteruskan secara aman; cooldown 600 detik hanya fallback konservatif untuk Bybit IP rate limit. Tidak ada retry otomatis.
+- Semua exchange request tetap GET. Tidak ada endpoint order, update key, transfer, atau withdrawal. Tidak ada izin exchange yang diubah dan tidak ada secret diminta.
+- File: lib/exchanges.js, public/trading.js, server.js, test/exchanges.test.js, test/exchange-ui.test.js, README.md, RADAR_AI_MASTER_CONTEXT.md.
+- Test status: CI baru menunggu; CI lama PR #17 run #369 success pada snapshot lama dan tidak dianggap bukti untuk branch baru. Hostless Build/LIVE dan koneksi akun nyata belum diverifikasi.
+- NEXT TASK: jalankan CI exact-head, review keamanan redaksi permission, error/rate-limit dan header Retry-After; merge hanya jika seluruh test lulus. Setelahnya Divisi 04 AI moderator fallback.

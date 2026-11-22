@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const crypto = require('crypto');
 const { createExchangeService, ExchangeError } = require('../lib/exchanges');
 
-const response = (body, ok = true, status = 200) => ({ ok, status, json: async () => body });
+const response = (body, ok = true, status = 200, headers = {}) => ({ ok, status, headers: { get: (name) => headers[String(name).toLowerCase()] || null }, json: async () => body });
 
 test('status hanya mengungkap keberadaan konfigurasi, bukan nilai kredensial', () => {
   const service = createExchangeService({ env: { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' }, fetchImpl: async () => response({}) });
@@ -126,12 +126,20 @@ test('Bybit signs V5 requests and returns wallet and open positions', async () =
       assert.equal(options.headers['X-BAPI-SIGN'], expected);
       if (parsed.pathname === '/v5/account/wallet-balance') return response({ retCode: 0, result: { list: [{ accountType: 'UNIFIED', totalEquity: '120', totalWalletBalance: '110', totalAvailableBalance: '90', coin: [{ coin: 'USDT', walletBalance: '110', equity: '120', availableToWithdraw: '90' }] }] } });
       if (parsed.pathname === '/v5/position/list') return response({ retCode: 0, result: { list: [{ symbol: 'BTCUSDT', side: 'Buy', size: '0.02', avgPrice: '50000', markPrice: '50500', unrealisedPnl: '10', leverage: '3' }] } });
+      if (parsed.pathname === '/v5/user/query-api') return response({ retCode: 0, result: { userID: 12345678, readOnly: 1, permissions: { Spot: [], ContractTrade: [], Wallet: [], Earn: [] }, apiKey: 'must-not-be-returned', secret: '' } });
       throw new Error('unexpected endpoint');
     },
   });
   const result = await service.account('bybit');
   assert.equal(result.account.wallet.total_equity, 120);
   assert.equal(result.account.wallet.coins[0].asset, 'USDT');
+  assert.equal(result.account.wallet.coins[0].withdrawable_balance, 90);
+  assert.equal(result.account.identity.account_id, '12345678');
+  assert.equal(result.account.identity.display_name, 'Akun Bybit · UID 12345678');
+  assert.equal(result.account.api_permissions.available, true);
+  assert.equal(result.account.api_permissions.read_only, true);
+  assert.equal(result.account.api_permissions.withdrawals, false);
+  assert.equal(JSON.stringify(result).includes('must-not-be-returned'), false);
   assert.equal(result.account.positions[0].side, 'BUY');
   assert.equal(JSON.stringify(result).includes(secret), false);
 });
@@ -254,4 +262,132 @@ test('simbol market invalid ditolak sebelum request keluar', async () => {
   const service = createExchangeService({ env: {}, fetchImpl: async () => { called = true; return response({}); } });
   await assert.rejects(service.market('binance', 'BTC/USDT'), (error) => error.code === 'INVALID_MARKET_SYMBOL');
   assert.equal(called, false);
+});
+
+
+test('Bybit does not claim read-only when API key permission endpoint is unavailable', async () => {
+  const service = createExchangeService({ env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' }, fetchImpl: async (url) => {
+    const pathname = new URL(url).pathname;
+    if (pathname === '/v5/account/wallet-balance') return response({ retCode: 0, result: { list: [{ accountType: 'UNIFIED', coin: [] }] } });
+    if (pathname === '/v5/position/list') return response({ retCode: 0, result: { list: [] } });
+    if (pathname === '/v5/user/query-api') return response({ retCode: 10001, retMsg: 'permission read unavailable' });
+    throw new Error('unexpected endpoint');
+  } });
+  const result = await service.account('bybit');
+  assert.equal(result.connected, true);
+  assert.equal(result.account.api_permissions.available, false);
+  assert.equal(result.account.api_permissions.error, 'BYBIT_API_PERMISSION_READ_UNAVAILABLE');
+  assert.equal(result.account.identity.account_id, undefined);
+});
+
+
+test('Bybit treats incomplete core permission categories as unverified', async () => {
+  const service = createExchangeService({ env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' }, fetchImpl: async (url) => {
+    const pathname = new URL(url).pathname;
+    if (pathname === '/v5/account/wallet-balance') return response({ retCode: 0, result: { list: [{ accountType: 'UNIFIED', coin: [] }] } });
+    if (pathname === '/v5/position/list') return response({ retCode: 0, result: { list: [] } });
+    if (pathname === '/v5/user/query-api') return response({ retCode: 0, result: { userID: 123, readOnly: 1, permissions: { Spot: [], ContractTrade: [] } } });
+    throw new Error('unexpected endpoint');
+  } });
+  const result = await service.account('bybit');
+  assert.equal(result.account.identity.account_id, '123');
+  assert.equal(result.account.api_permissions.available, false);
+  assert.equal(result.account.api_permissions.error, 'BYBIT_API_PERMISSION_READ_UNAVAILABLE');
+});
+
+
+test('Binance exposes withdrawal and transfer API key permissions independently from trading flags', async () => {
+  const service = createExchangeService({ env: { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' }, fetchImpl: async (url) => {
+    const pathname = new URL(url).pathname;
+    if (pathname === '/api/v3/account') return response({ balances: [] });
+    if (pathname === '/fapi/v2/account') return response({});
+    if (pathname === '/fapi/v2/positionRisk') return response([]);
+    if (pathname === '/sapi/v1/account/apiRestrictions') return response({ enableSpotAndMarginTrading: false, enableFutures: false, enableWithdrawals: true, enableInternalTransfer: true, permitsUniversalTransfer: false });
+    throw new Error('unexpected endpoint');
+  } });
+  const result = await service.account('binance');
+  assert.equal(result.account.api_permissions.spot_trading, false);
+  assert.equal(result.account.api_permissions.futures_trading, false);
+  assert.equal(result.account.api_permissions.withdrawals, true);
+  assert.equal(result.account.api_permissions.internal_transfer, true);
+});
+
+
+test('Bybit never substitutes availableToBorrow for a missing withdrawable balance', async () => {
+  const service = createExchangeService({ env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' }, fetchImpl: async (url) => {
+    const pathname = new URL(url).pathname;
+    if (pathname === '/v5/account/wallet-balance') return response({ retCode: 0, result: { list: [{ accountType: 'UNIFIED', coin: [{ coin: 'USDT', walletBalance: '10', equity: '10', availableToBorrow: '999' }] }] } });
+    if (pathname === '/v5/position/list') return response({ retCode: 0, result: { list: [] } });
+    if (pathname === '/v5/user/query-api') return response({ retCode: 0, result: { userID: 1, readOnly: 1, permissions: { Spot: [], ContractTrade: [], Wallet: [] } } });
+    throw new Error('unexpected endpoint');
+  } });
+  const result = await service.account('bybit');
+  assert.equal(result.account.wallet.coins[0].withdrawable_balance, null);
+});
+
+
+test('HTTP 429 exposes rate-limit status and Retry-After without retrying', async () => {
+  const service = createExchangeService({ env: {}, fetchImpl: async () => response({}, false, 429, { 'retry-after': '12' }) });
+  await assert.rejects(service.market('binance', 'BTCUSDT'), (error) =>
+    error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429 && error.retryAfterSeconds === 12);
+});
+
+test('Binance -1003 API response is normalized as rate-limited', async () => {
+  const service = createExchangeService({
+    env: { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' },
+    fetchImpl: async () => response({ code: -1003, msg: 'Too many requests' }),
+  });
+  await assert.rejects(service.account('binance'), (error) => error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429);
+});
+
+test('Bybit retCode 10006 is normalized as rate-limited', async () => {
+  const service = createExchangeService({
+    env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' },
+    now: () => 1700000000000,
+    fetchImpl: async () => response({ retCode: 10006, retMsg: 'Too many visits!' }, true, 200, { 'x-bapi-limit-reset-timestamp': '1700000005000' }),
+  });
+  await assert.rejects(service.account('bybit'), (error) =>
+    error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429 && error.retryAfterSeconds === 5);
+});
+
+test('private Exchange Hub forwards safe Retry-After for rate-limited exchange responses', async () => {
+  const { createApp } = require('../server');
+  const state = { tokens: [], fundamentals: {}, vol10m: {}, health: {}, news: [], unlocks: [], alerts: [], lastOk: null, lastRefresh: null };
+  const service = {
+    status: () => ({ binance: { configured: true, mode: 'read-only' } }),
+    account: async () => { throw new ExchangeError('EXCHANGE_RATE_LIMITED', 429, 15); },
+    market: async () => ({}),
+  };
+  const app = createApp({ state, exchangeService: service, exchangeAccessToken: 'owner-session-test-token' });
+  await new Promise((resolve) => app.server.listen(0, resolve));
+  try {
+    const base = 'http://127.0.0.1:' + app.server.address().port;
+    const result = await fetch(base + '/api/exchanges/binance/account', { headers: { 'x-exchange-access-token': 'owner-session-test-token' } });
+    const body = await result.json();
+    assert.equal(result.status, 429);
+    assert.equal(result.headers.get('retry-after'), '15');
+    assert.equal(body.code, 'EXCHANGE_RATE_LIMITED');
+  } finally { app.stop(); }
+});
+
+
+test('Bybit HTTP 403 access-too-frequent response is normalized as rate-limited', async () => {
+  const service = createExchangeService({ env: {}, fetchImpl: async () => response({ retMsg: 'access too frequent' }, false, 403) });
+  await assert.rejects(service.market('bybit', 'BTCUSDT'), (error) =>
+    error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429 && error.retryAfterSeconds === 600);
+});
+
+
+test('Bybit read-only SubMemberTransferList permission is not misclassified as transfer capability', async () => {
+  const service = createExchangeService({ env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' }, fetchImpl: async (url) => {
+    const pathname = new URL(url).pathname;
+    if (pathname === '/v5/account/wallet-balance') return response({ retCode: 0, result: { list: [{ accountType: 'UNIFIED', coin: [] }] } });
+    if (pathname === '/v5/position/list') return response({ retCode: 0, result: { list: [] } });
+    if (pathname === '/v5/user/query-api') return response({ retCode: 0, result: { userID: 42, readOnly: 1, permissions: { Spot: [], ContractTrade: [], Wallet: ['SubMemberTransferList'] } } });
+    throw new Error('unexpected endpoint');
+  } });
+  const result = await service.account('bybit');
+  assert.equal(result.account.api_permissions.available, true);
+  assert.equal(result.account.api_permissions.read_only, true);
+  assert.equal(result.account.api_permissions.transfers, false);
 });
