@@ -189,3 +189,14 @@ BOS menetapkan status Hostless **existing** dan anggaran **Rp0**. Keputusan ini 
 
 ### Next task
 Divisi 06 mengimplementasikan adapter/queue di belakang feature flag OFF; Divisi 01 dan 05 menjalankan review security/QA secara independen. Database integration test hanya dijalankan pada PostgreSQL disposable yang terbukti gratis dan overage-safe. Worker tetap tidak boleh diaktifkan sebelum seluruh acceptance criteria PR #18 terpenuhi.
+
+
+## 13. Implementasi validasi PostgreSQL tanpa biaya — 22 November 2026
+
+- GitHub Actions kini memakai PostgreSQL 16 ephemeral service container untuk PR/branch CI; tidak ada external DB atau Hostless resource provisioning.
+- Added db/tests/001_agent_platform_smoke.sql: verifies migration tables and runtime NOLOGIN role privileges; audit_events INSERT allowed, UPDATE/DELETE denied.
+- Workflow run #381 / ID 44998478751 on commit 8a7b7e9f0c6d1c7425aac111b25c49496d16d534: completed/success. npm test: 68 passed, 0 failed. PostgreSQL migration and smoke permission test both completed successfully.
+- Earlier CI attempts #376–#380 failed while iterating on the smoke SQL delimiter; corrected version passed on #381. Preserve this history.
+- PR #18 remains draft/unmerged. This is schema/migration/role smoke evidence only, not queue engine, concurrency, scheduler, worker runtime, Hostless deployment or Live proof.
+- Strict Rp0 policy unchanged; no external service was provisioned and no expense incurred.
+- Next: Divisi 06 DB adapter/transactional queue with feature flag OFF; Divisi 05 independent concurrency/recovery QA; Divisi 01 least-privilege/security review; Divisi 07 decision/task memory records.
