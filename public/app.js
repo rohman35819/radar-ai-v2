@@ -222,10 +222,10 @@ function renderEarlyGems(){
   statCard('POOL TERDETEKSI',all.length,'Maksimal '+(meta?.pool_count||all.length)+' pool dalam feed','✧'),
   statCard('JARINGAN',chains.size,'Network berbeda pada hasil','◈'),
   statCard('VOLUME 24 JAM',money(totalVolume),'Agregat pool yang tampil','⇅'),
-  statCard('LIKUIDITAS ≥ $5K',liquid,fresh+' pool berumur ≤ 24 jam','⌁')));
+  statCard('TRENDING POOL',all.filter(x=>x.is_trending).length,'Likuiditas ≥ $5K: '+liquid+' · umur ≤ 24j: '+fresh,'⌁')));
  const status=el('div',{class:'gem-status '+(health?.ok&&!feedStale?'good':health?'bad':'muted')},
   el('b',{},health?.ok&&!feedStale?'● ON-CHAIN FEED ONLINE':health?.ok?'● FEED STALE':health?'● ON-CHAIN FEED ERROR':'● MENUNGGU SINKRONISASI'),
-  el('span',{},health?.error?'Kode: '+health.error:feedStale&&meta?'Data on-chain lebih dari 30 menit; cek jadwal refresh server.':(meta?'Sumber: '+(meta.source||'CoinGecko Onchain / GeckoTerminal')+' · Jendela data hingga 48 jam':'Pastikan CoinGecko Demo API key tersedia dan refresh server berhasil.')));
+  el('span',{},health?.error?'Kode: '+health.error:meta?.trending_error?'Pool baru aktif; trending feed gagal ('+meta.trending_error+').':feedStale&&meta?'Data on-chain lebih dari 30 menit; cek jadwal refresh server.':(meta?'Sumber: '+(meta.source||'CoinGecko Onchain / GeckoTerminal')+' · Jendela pool baru hingga 48 jam':'Pastikan CoinGecko Demo API key tersedia dan refresh server berhasil.')));
  v.append(status);
  const controls=el('div',{class:'filter-panel gem-filters'},
   el('input',{id:'gem-q',type:'search',placeholder:'Cari token, simbol, chain, atau DEX…',value:earlyGemFilters.q}),
@@ -250,7 +250,7 @@ function renderEarlyGems(){
    const item=el('article',{class:'gem-card'},
     el('div',{class:'gem-card-top'},
      el('div',{class:'gem-identity'},el('span',{class:'coin-avatar'},esc(x.symbol).slice(0,3)),el('div',{},el('b',{},esc(x.symbol)),el('small',{},esc(x.token_name)))),
-     el('span',{class:'gem-label'},esc(x.discovery_label||'RECENT POOL'))),
+     el('span',{class:'gem-label'},esc(x.is_trending&&x.discovery_label!=='TRENDING'?'NEW + TRENDING':x.discovery_label||'RECENT POOL'))),
     el('div',{class:'gem-chain'},esc(x.network)+' · '+esc(x.dex)+' · '+age),
     el('div',{class:'gem-metrics'},
      el('div',{},el('small',{},'LIKUIDITAS'),el('b',{},money(x.liquidity_usd))),
