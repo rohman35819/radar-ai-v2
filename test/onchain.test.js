@@ -70,13 +70,19 @@ test('onchain: fetch membatasi halaman dan memakai demo key hanya di server', as
   const calls = [];
   const request = async (url, options) => {
     calls.push({ url, options });
-    return calls.length === 1 ? payload() : { data: [], included: [] };
+    return payload();
   };
   const result = await fetchEarlyGems({ cgKey: 'demo-secret-not-logged', onchainPages: 5 }, request);
   assert.equal(result.items.length, 1);
-  assert.equal(calls.length, 1); // berhenti saat halaman tidak penuh
+  assert.equal(calls.length, 2); // satu halaman new pools + satu halaman trending
   assert.match(calls[0].url, /include=base_token%2Cquote_token%2Cdex%2Cnetwork/);
+  assert.match(calls[1].url, /trending_pools/);
+  assert.match(calls[1].url, /duration=24h/);
+  assert.equal(result.trending_pool_count, 1);
+  assert.equal(result.items[0].is_trending, true);
+  assert.equal(result.items[0].discovery_label, 'NEW POOL');
   assert.equal(calls[0].options.headers['x-cg-demo-api-key'], 'demo-secret-not-logged');
+  assert.equal(calls[1].options.headers['x-cg-demo-api-key'], 'demo-secret-not-logged');
 });
 
 test('onchain ingest: cache pool baru, pertahankan cache lama saat sumber gagal, dan snapshot menyajikan metadata', async () => {
@@ -109,4 +115,16 @@ test('onchain ingest: cache pool baru, pertahankan cache lama saat sumber gagal,
   assert.equal(state.health.onchain.ok, false);
   assert.equal(state.health.onchain.error, 'ONCHAIN_RATE_LIMITED');
   assert.equal(state.earlyGemsMeta.pool_count, 1);
+});
+
+test('onchain: trending failure is partial and does not discard newly discovered pools', async () => {
+  const request = async (url) => {
+    if (url.includes('/trending_pools')) { const error = new Error('rate limited'); error.code = 'ONCHAIN_RATE_LIMITED'; throw error; }
+    return payload();
+  };
+  const result = await fetchEarlyGems({ cgKey: '', onchainPages: 1 }, request);
+  assert.equal(result.items.length, 1);
+  assert.equal(result.trending_pool_count, 0);
+  assert.equal(result.trending_error, 'ONCHAIN_RATE_LIMITED');
+  assert.equal(result.items[0].is_trending, false);
 });
