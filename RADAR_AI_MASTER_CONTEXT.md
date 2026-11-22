@@ -1538,15 +1538,15 @@ ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus 
 
 ### 38.4 Verifikasi dan status
 - Branch implementasi: `feature/bybit-api-key-permission-verification-final`, dibuat ulang dari main HEAD terbaru setelah tiga commit dokumentasi masuk.
-- GitHub Actions run #44997021692 untuk commit kode `d7228f2d6c049c9e72b3f4f0870453444fe203fa`: **PASS, 74/74 tests, 0 failures**; job `test` selesai sukses. Log mencakup tes permission Bybit unavailable/incomplete, UID, redaksi API key, permission withdrawal/transfer Binance, withdrawable balance, pembedaan scope transfer Bybit, serta normalisasi HTTP 429/418, Binance `-1003`, Bybit `10006`/`10429`/HTTP 403 access-too-frequent dan penerusan Retry-After.
+- GitHub Actions run #44997239777 untuk commit `d50baa050d9a9c119d07ecdd017808288e9e24ce`: **PASS, 75/75 tests, 0 failures**; job `test` selesai sukses. Termasuk regresi agar `SubMemberTransferList` Bybit tidak salah dianggap izin transfer.
 - Pemeriksaan sintaks JavaScript melalui parser V8 untuk `lib/exchanges.js`, `server.js`, `public/trading.js`, `test/exchanges.test.js`, dan `test/exchange-ui.test.js`: PASS. Audit statis juga memastikan method exchange yang didefinisikan hanya GET, endpoint order tidak ditemukan, dan UI memisahkan permission withdrawal/transfer dari status trading.
-- PR baru akan dibuat dari branch sinkron terbaru; PR #15 lama ditutup setelah sinkronisasi dan verifikasi selesai.
+- PR #17: https://github.com/rohman35819/radar-ai-v2/pull/17; status open, mergeable, belum merged. PR #15 ditutup karena branch tertinggal dari main; perubahan dipindahkan ke branch baru yang sinkron.
 - Main HEAD saat sinkronisasi: `b6c005ed4a217e8425652ecf6e26986e6cefcee2`; tiga commit terbaru hanya mengubah dokumentasi organisasi/advisor, dan branch ini dibuat langsung dari HEAD tersebut.
 - Hostless Build dan Hostless LIVE: belum diverifikasi.
 - Koneksi exchange nyata: belum diuji; tidak ada akses ke kredensial Hostless dan tidak ada permintaan secret kepada Owner.
 
 ### 38.5 NEXT TASK Divisi 03
-1. Minta review independen QA untuk PR #15; pertahankan merge gate dan gabungkan hanya setelah review menyetujui perubahan.
+1. Minta review independen QA untuk PR #17; pertahankan merge gate dan gabungkan hanya setelah review menyetujui perubahan.
 2. QA hasil metadata permission Bybit dengan respons nyata setelah deploy yang disetujui, tanpa mengubah izin API.
 3. Verifikasi identitas, saldo, posisi, dan permission Binance read-only pada environment Hostless.
 4. Lanjutkan QA responsif Exchange Hub dan audit error/timeout/rate-limit.
