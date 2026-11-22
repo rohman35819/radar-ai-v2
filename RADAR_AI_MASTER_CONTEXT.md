@@ -1236,3 +1236,9 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 2. Verifikasi Hostless Build dan SHA Live secara terpisah.
 3. Setelah deploy, refresh akun Exchange Hub dan cocokkan UI dengan permission API Key yang sebenarnya.
 4. Lanjutkan QA Exchange Hub desktop/mobile, lalu audit DATA_DIR/EROFS dan QA Dashboard.
+
+### 33.6 Hasil CI final dan deployment
+- GitHub Actions run #44992363868 untuk HEAD `9427a7f53e1f58ffe4a1cfec74657ce9b7f9ea25`: completed / success. Pipeline menjalankan `node --check` untuk server, modul exchange, frontend Exchange Hub, dashboard, service worker, Command Center, dan modul AI OpenAI; `npm test`: 61 tests, 61 pass, 0 fail.
+- Run awal pada commit bertahap gagal karena tes belum diselaraskan dengan endpoint keempat dan assertion UI lama; penyebab tercatat dari log Actions. Tes diperbarui dan run final pada HEAD dokumentasi sukses.
+- Hostless: pemeriksaan URL publik masih gagal diakses dari sesi ini (cache miss/Internal Error). Build Hostless dan SHA Live tetap tidak diketahui; jangan mengklaim perubahan sudah LIVE.
+- HEAD yang diverifikasi saat pencatatan ini: `9427a7f53e1f58ffe4a1cfec74657ce9b7f9ea25`. Commit dokumentasi status final akan menghasilkan HEAD berikutnya dan perlu CI baru.
