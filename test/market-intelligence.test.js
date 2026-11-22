@@ -54,11 +54,13 @@ test('market intelligence caches datasets and avoids duplicate upstream requests
 
 test('market intelligence preserves stale cache and reports partial upstream failure', async () => {
   let fail = false;
+  let globalCalls = 0;
   let clock = 0;
   const service = createMarketIntelligenceService({
     now: () => clock,
     fetchImpl: async (url) => {
       if (url.includes('/global')) {
+        globalCalls += 1;
         if (fail) return response({}, 429);
         return response({ data: { market_cap_change_percentage_24h_usd: 1 } });
       }
@@ -76,6 +78,10 @@ test('market intelligence preserves stale cache and reports partial upstream fai
   assert.equal(result.sources.global.ok, false);
   assert.equal(result.sources.global.stale, true);
   assert.equal(result.data.global.data.market_cap_change_percentage_24h_usd, 1);
+  const cachedStale = await service.dashboard();
+  assert.equal(cachedStale.sources.global.stale, true);
+  assert.equal(cachedStale.sources.global.error, 'COINGECKO_RATE_LIMITED');
+  assert.equal(globalCalls, 2, 'stale fallback must not be relabeled fresh or re-requested during its cache window');
 });
 
 test('chart endpoint validates coin IDs and periods and uses chart cache', async () => {
