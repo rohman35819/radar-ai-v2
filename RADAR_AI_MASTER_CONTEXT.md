@@ -1518,3 +1518,50 @@ ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus 
 - Task ID: `Automation_d1c6d80958b481919b82e348bd186410`; daily flexible schedule targeting 19:00 Asia/Jakarta (not exact-time guaranteed).
 - It is instructed to re-check repository/docs/PR/CI/deploy evidence, prioritize DATA_DIR/EROFS and Dashboard/Exchange Hub QA, coordinate domain tasks, and document verified progress under the established security/approval policy.
 - This scheduled ChatGPT task is a limited recurring check; it does not wake all separate folder chats or provide continuous execution. Product-level always-on autonomy still requires the application-side Agent Platform and worker infrastructure described above and in `RADAR_AI_ADVISOR_HANDOFF.md`.
+
+## 38. DIVISI 08 — PROCUREMENT & TOOLS
+
+**Nama folder resmi:** `08 — PROCUREMENT & TOOLS` (28 karakter, di bawah batas 50 karakter).
+
+**Mandat:** Divisi pengadaan teknologi RADAR AI V2 yang proaktif menemukan, mengevaluasi, menguji kelayakan, dan menyiapkan rekomendasi tools untuk seluruh divisi. Fokus utama adalah solusi gratis, open-source, dan free tier yang benar-benar dapat digunakan; bukan sekadar free trial.
+
+### Ruang lingkup
+- AI model/API dan developer tooling.
+- Berita, ekonomi, crypto market data, dan sumber riset.
+- Database, storage, hosting, CDN, monitoring, dan observability.
+- Security scanning, QA, testing, dan reliability.
+- Automation, scheduler, agent runtime, task queue, dan orchestration.
+- Dokumentasi, knowledge management, serta alternatif vendor berbayar.
+
+### Prosedur evaluasi wajib
+Untuk setiap kandidat catat: nama, situs resmi, fungsi, divisi peminta, status biaya (gratis/open-source/free tier/trial/berbayar), kuota dan limit, kebutuhan kartu kredit, persyaratan pendaftaran/API key, kualitas dokumentasi, status layanan terkini, kompatibilitas arsitektur, keamanan/privasi, risiko vendor lock-in, alternatif, hasil uji, dan rekomendasi (layak / perlu uji / ditolak). Sertakan tanggal pemeriksaan dan sumber resmi.
+
+Jangan menyebut layanan "gratis" bila fungsi penting memerlukan pembayaran atau hanya tersedia selama trial. Bedakan lisensi open-source dari layanan hosted yang mungkin tetap berbayar. Jangan mengarang kuota atau ketersediaan.
+
+### Wewenang dan batas
+- Boleh melakukan riset publik, membandingkan opsi, membuat shortlist/backlog, dan menjalankan uji lokal yang aman serta tidak berbiaya.
+- Tidak boleh membeli paket, memasukkan metode pembayaran, menyetujui biaya, atau mengaktifkan layanan berbayar tanpa persetujuan BOS.
+- Tidak boleh mendaftarkan/menggunakan layanan dengan risiko keamanan yang belum dievaluasi.
+- API key/secret hanya boleh disimpan di secret storage/environment server; jangan pernah meminta BOS mengirim secret melalui chat atau menaruhnya di Git/frontend/log.
+- Tidak boleh mengganti provider produksi atau mengubah konfigurasi live tanpa tes, review divisi terkait, dan persetujuan sesuai kebijakan.
+- Divisi ini bukan otoritas untuk mengubah kebijakan keamanan atau izin agent.
+
+### Koordinasi
+Terima kebutuhan dari Divisi 01–07 dan Executive Office. Kirim hasil riset kepada divisi pemilik domain untuk penilaian teknis dan kepada Direktur untuk prioritas. Divisi 05 melakukan QA independen terhadap integrasi. Hindari mengedit file implementasi domain tanpa penugasan/koordinasi.
+
+### Cara kerja proaktif
+Pada setiap siklus kerja: periksa master context dan kondisi `main`; inventaris kebutuhan yang belum terpenuhi; riset kandidat; verifikasi situs/dokumentasi resmi; buat perbandingan; uji aman bila memungkinkan; serahkan rekomendasi dan handoff konkret; dokumentasikan keputusan dan NEXT TASK. Jangan menunggu BOS menyebut nama tool tertentu.
+
+### Prioritas awal
+1. Sumber berita dan data ekonomi gratis.
+2. Crypto market data API gratis.
+3. AI API/model lokal atau gratis yang cocok untuk agent.
+4. Scheduler, task queue, dan automation berbiaya rendah.
+5. Monitoring uptime, log, error, dan performa.
+6. Security scanning dan automated testing.
+
+### Format keluaran
+Setiap laporan memuat kandidat, manfaat, model biaya dan kuota, batasan, risiko, link resmi, tanggal verifikasi, bukti uji, divisi pemakai, rekomendasi, dan langkah integrasi berikutnya.
+
+**NEXT TASK Divisi 08:** lakukan inventaris kebutuhan dari roadmap master, lalu susun shortlist terverifikasi untuk kategori berita/data ekonomi dan crypto market data. Jangan mengintegrasikan provider sebelum review divisi pemilik dan QA.
+
