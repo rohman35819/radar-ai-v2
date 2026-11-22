@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const ingest = require('./lib/ingest');
 const { createExchangeService, ExchangeError } = require('./lib/exchanges');
 const sources = require('./lib/sources');
+const { createSolscanService, SolscanError } = require('./lib/solscan');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
@@ -45,8 +46,9 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
+  const solscanApi = solscanService || createSolscanService();
   const matchesToken = (expectedValue, provided) => {
     if (!expectedValue || typeof provided !== 'string') return false;
     const expected = Buffer.from(String(expectedValue));
@@ -71,6 +73,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const workspaceHour = Math.max(0, Math.min(23, Number(process.env.AI_WORKSPACE_HOUR || 10)));
   const reportHour = Math.max(0, Math.min(23, Number(process.env.AI_REPORT_HOUR || 9)));
   const limited = createRateLimiter({ limit: 60, windowMs: 60000, maxKeys: 5000 });
+  const solscanLimited = createRateLimiter({ limit: 10, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
     .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
     .catch((error) => {
@@ -108,6 +111,36 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
       const url = new URL(req.url, 'http://x');
       if (url.pathname.startsWith('/api/')) {
         if (limited(ip)) return send(res, 429, { status: 'error', message: 'Terlalu banyak permintaan' }, 'application/json', { 'retry-after': '60' });
+        if (url.pathname.startsWith('/api/solscan/')) {
+          if (solscanLimited(ip)) return send(res, 429, { status: 'error', code: 'SOLSCAN_LOCAL_RATE_LIMITED', message: 'Terlalu banyak permintaan Solscan. Tunggu sebentar.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          if (url.pathname === '/api/solscan/overview' && req.method === 'GET') {
+            solscanApi.overview().then((overview) => {
+              send(res, overview.configured ? 200 : 503, overview, 'application/json', { 'cache-control': 'no-store' });
+            }).catch(() => send(res, 502, { configured: true, ok: false, code: 'SOLSCAN_UNAVAILABLE' }, 'application/json', { 'cache-control': 'no-store' }));
+            return;
+          }
+          if (url.pathname === '/api/solscan/wallet' && req.method === 'GET') {
+            solscanApi.wallet(url.searchParams.get('address')).then((wallet) => {
+              send(res, 200, wallet, 'application/json', { 'cache-control': 'no-store' });
+            }).catch((error) => {
+              const known = error instanceof SolscanError;
+              const code = known ? error.code : 'SOLSCAN_REQUEST_FAILED';
+              const status = known ? error.status : 502;
+              const messages = {
+                INVALID_SOLANA_ADDRESS: 'Alamat Solana tidak valid. Periksa format base58.',
+                SOLSCAN_API_KEY_NOT_CONFIGURED: 'SOLSCAN_API_KEY belum dikonfigurasi di server.',
+                SOLSCAN_AUTH_FAILED: 'Solscan menolak API key. Periksa key dan status aktivasi.',
+                SOLSCAN_PLAN_ACCESS_DENIED: 'Paket Solscan tidak memiliki akses ke endpoint ini.',
+                SOLSCAN_RATE_LIMITED: 'Batas permintaan Solscan tercapai.',
+                SOLSCAN_TIMEOUT: 'Solscan tidak merespons tepat waktu.',
+                SOLSCAN_NETWORK_ERROR: 'Server tidak dapat menjangkau Solscan.'
+              };
+              send(res, status, { status: 'error', code, message: messages[code] || 'Permintaan wallet ke Solscan gagal.' }, 'application/json', { 'cache-control': 'no-store' });
+            });
+            return;
+          }
+          return send(res, 404, { status: 'error', code: 'SOLSCAN_ROUTE_NOT_FOUND' }, 'application/json', { 'cache-control': 'no-store' });
+        }
         if (url.pathname === '/api/exchanges/status' && req.method === 'GET') {
           return send(res, 200, { status: 'success', exchanges: exchangeApi.status(), access_configured: Boolean(privateExchangeToken) }, 'application/json', { 'cache-control': 'no-store' });
         }
