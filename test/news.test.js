@@ -31,7 +31,7 @@ test('NEWS_FEEDS kustom tetap dipakai', () => {
 });
 
 test('parser RSS membaca title, link, tanggal, dan summary', () => {
-  const xml = `<?xml version="1.0"?><rss><channel><item><title>AI &amp; Crypto Update</title><link>https://example.com/story</link><pubDate>Sat, 22 Nov 2026 08:00:00 GMT</pubDate><description><![CDATA[<p>Ringkasan <b>artikel</b>.</p>]]></description></item></channel></rss>`;
+  const xml = `<?xml version="1.0"?><rss><channel><item><title>AI &amp; Crypto Update</title><link>https://example.com/story</link><pubDate>Sun, 22 Nov 2026 08:00:00 GMT</pubDate><description><![CDATA[<p>Ringkasan <b>artikel</b>.</p>]]></description></item></channel></rss>`;
   const [item] = parseFeed(xml, 'example.com');
   assert.equal(item.title, 'AI & Crypto Update');
   assert.equal(item.link, 'https://example.com/story');
