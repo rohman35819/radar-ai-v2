@@ -21,7 +21,7 @@ const dateTime = (v) => v ? new Date(v).toLocaleString('id-ID',{dateStyle:'mediu
 const esc = (v) => String(v ?? '—');
 const FLAG = {fdv_unknown:'FDV tidak diketahui',fdv_gt_5x_mcap:'FDV > 5x MCap',volume_gt_mcap:'Volume > MCap',stale:'Data basi'};
 const TITLES = {solscan:'Solana Intelligence',overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
-let data=null, aiGroup=null, aiWorkspace=null, solscanOverview=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false;
+let data=null, aiGroup=null, aiWorkspace=null, solscanOverview=null, marketIntel=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false;
 let screenerFilters={q:'',trend:'all',sort:'market_cap'},screenerVisible=[];
 try {
  const stored=JSON.parse(localStorage.getItem('radar-watch')||'[]');
@@ -94,7 +94,7 @@ function renderOverview(){
    el('div',{},el('small',{},'JARINGAN'),el('b',{},'Solana Mainnet')),
    el('div',{},el('small',{},'OBSERVASI'),el('b',{},dateTime(solscanOverview?.observed_at)))
   ));
- v.append(movers,market,bottom,solscanPanel);
+ v.append(movers,market,bottom,solscanPanel,window.RadarIntelligence?.panel(data,solscanOverview,marketIntel));
 }
 function renderScreener(){
  const v=$('#view');v.replaceChildren();
@@ -225,7 +225,7 @@ function renderSystem(){
 function render(){
  $('#page-title').textContent=TITLES[tab]||'RADAR AI';$('#crumb').textContent=(tab||'overview').toUpperCase();
  document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
- if(tab==='overview')renderOverview();else if(tab==='screener')renderScreener();else if(tab==='watch')renderWatch();else if(tab==='analytics')renderAnalytics();else if(tab==='news')renderNews();else if(tab==='unlock')renderUnlock();else if(tab==='alerts')renderAlerts();else if(tab==='ai')renderAI();else if(tab==='workspace')renderWorkspace();else renderSystem();
+ if(tab==='overview')renderOverview();else if(tab==='screener')renderScreener();else if(tab==='watch')renderWatch();else if(tab==='analytics')renderAnalytics();else if(tab==='news')renderNews();else if(tab==='unlock')renderUnlock();else if(tab==='alerts')renderAlerts();else if(tab==='ai')renderAI();else if(tab==='workspace')renderWorkspace();else if(tab==='intelligence')renderTradingIntelligence();else renderSystem();
 }
 function setSidebarOpen(open){
  const sidebar=$('#sidebar'),toggle=$('#menu-toggle');
@@ -244,6 +244,7 @@ function updateStatus(){
  $('#banner').hidden=!stale;
  $('#banner').textContent=stale?'Sebagian data mungkin sudah lama atau belum tersedia. Periksa System Health sebelum mengambil keputusan.':'';
 }
+function renderTradingIntelligence(){const v=$('#view');v.replaceChildren();v.append(window.RadarIntelligence?.panel(data,solscanOverview,marketIntel)||empty('Trading Intelligence belum tersedia','Muat ulang dashboard.'));}
 async function load(){
  let snapshotOk=false;
  try{
@@ -257,6 +258,7 @@ async function load(){
  }
  try{const r=await fetch('/api/ai/group',{cache:'no-store'});if(r.ok)aiGroup=(await r.json()).group;}catch{}
  try{const r=await fetch('/api/solscan/overview',{cache:'no-store'});solscanOverview=await r.json();}catch{solscanOverview={ok:false,code:'SOLSCAN_UNAVAILABLE'};}
+ try{const r=await fetch('/api/market-intelligence',{cache:'no-store'});if(r.ok)marketIntel=await r.json();}catch{marketIntel=null;}
  try{const r=await fetch('/api/ai/workspace',{cache:'no-store'});if(r.ok)aiWorkspace=(await r.json()).workspace;}catch{}
  if(snapshotOk)updateStatus();
  render();
