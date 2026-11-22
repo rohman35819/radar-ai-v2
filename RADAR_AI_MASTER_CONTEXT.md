@@ -1496,6 +1496,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 - Semua request akun Bybit tetap HTTP GET dan ditandatangani di server. Tidak ada endpoint update API key, order, transfer, atau withdrawal.
 - Rate limit: HTTP 429/418, Bybit HTTP 403 `access too frequent`, Binance `-1003`, dan Bybit `10006`/`10429` dinormalisasi menjadi `EXCHANGE_RATE_LIMITED`; header `Retry-After` diteruskan ke client bila tersedia. Tidak ada retry otomatis setelah rate-limit agar tidak memperparah pembatasan/IP ban.
 - Jika metadata permission tidak tersedia atau kategori inti `Spot`, `ContractTrade`, dan `Wallet` tidak lengkap, UI wajib menyatakan belum terverifikasi; koneksi saldo tidak boleh dianggap bukti read-only.
+- Scope `Wallet.SubMemberTransferList` hanya memberi akses daftar transfer; tidak dihitung sebagai izin untuk melakukan transfer. Hanya `AccountTransfer` dan `SubMemberTransfer` yang memicu peringatan kemampuan transfer.
 - UID hanya ditampilkan sebagai identitas teknis dari respons exchange, bukan nama/email pemilik.
 - Binance tetap memakai endpoint resmi `/sapi/v1/account/apiRestrictions`; tidak ada perubahan permission atau environment exchange.
 
