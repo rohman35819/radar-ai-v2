@@ -35,9 +35,10 @@ Dashboard memiliki menu **Early Gem Scanner** yang melengkapi Market Screener Co
 
 Environment:
 - `EARLY_GEMS_ENABLED=1` (default): aktifkan feed on-chain; set `0` untuk menonaktifkan.
-- `ONCHAIN_PAGES=3` (default, rentang 1–10): jumlah halaman yang diminta tiap refresh; default maksimal 60 pool per refresh.
+- `ONCHAIN_PAGES=3` (default, rentang 1–10): jumlah halaman new pools; maksimal 60 pool baru per siklus.
+- `ONCHAIN_REFRESH_MIN=60` (default, rentang 10–1440): jadwal feed on-chain terpisah dari refresh Market Screener. Cache dipakai pada refresh dashboard berikutnya sampai interval ini lewat; percobaan gagal juga dicatat agar rate-limit tidak memicu request berulang setiap 10 menit.
 - Menggunakan `COINGECKO_DEMO_KEY` yang sama dengan feed CoinGecko utama. Key hanya dikirim dari server ke CoinGecko, tidak pernah dikirim ke browser.
-- Dengan `REFRESH_MIN=10` dan 3 halaman, RADAR membuat maksimal empat permintaan on-chain per 10 menit (tiga new pools + satu trending). Demo API mendokumentasikan kuota 30 permintaan/menit; jangan menaikkan halaman/refresh agresif.
+- Dengan default 3 halaman + 1 trending setiap 60 menit, pemakaian maksimum scanner sekitar **2.880 request per 30 hari** bila berjalan terus. Kuota bulanan CoinGecko Demo dipakai bersama endpoint CoinGecko lain (termasuk Market Screener), jadi pantau total usage; jangan menaikkan halaman atau memperpendek interval tanpa menghitung anggaran request.
 
 Scanner menggabungkan feed new pools (48 jam) dengan trending pools (24 jam) dan menormalisasi network, DEX, alamat token/pool, harga, likuiditas, volume 24 jam, transaksi, umur pool, FDV dan market cap. Jika trending endpoint gagal, new-pool feed tetap dipakai dan health `onchain_trending` menandai kegagalan parsial. Label TRENDING berasal dari ranking provider dan bukan jaminan keamanan. Nilai yang tidak disediakan tetap `null`/N/A; market cap yang belum diverifikasi diberi flag. Filter likuiditas di dashboard hanya filter data, bukan sinyal beli.
 
