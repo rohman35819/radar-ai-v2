@@ -1746,11 +1746,11 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 
 ## 51. AGENT PLATFORM SCHEMA HARDENING — 22 NOVEMBER 2026
 
-- Divisi 06 memindahkan schema foundation dari PR #18 lama ke branch feat/agent-platform-schema-hardening-v2 berbasis main terbaru; belum ada PR baru/merge pada saat catatan ini dibuat.
+- Divisi 06 memindahkan schema foundation dari PR #18 lama ke branch feat/agent-platform-schema-hardening-v2 berbasis main terbaru; PR #29 dibuat sebagai draft, belum merge. PR #18 lama ditutup sebagai superseded.
 - Audit menemukan division_code lama hanya menerima 01–07, padahal organisasi memiliki Divisi 08. Patch mengubahnya menjadi 01–08.
 - Kebijakan Rp0 dipaksakan di schema: daily_budget_usd = 0, max_concurrency = 1, max_attempts maksimum 3, attempt_count tidak boleh melebihi max_attempts; input/result payload 64 KiB, audit metadata 16 KiB, policy metadata 16 KiB.
 - Kolom previous_hash/event_hash yang belum memiliki implementasi hash chain dihapus agar schema tidak memberi kesan audit sudah tamper-evident. Audit hanya append-only via trigger dan role privileges.
 - Smoke role CI dipersempit: SELECT registry dan INSERT audit_events saja; tidak mendapat SELECT/UPDATE task_queue maupun UPDATE/DELETE audit. Tidak ada worker runtime/claim API.
 - PostgreSQL 16 hanya ephemeral service container GitHub Actions; tidak ada Hostless DB/worker, Neon, Redis, atau resource eksternal yang diprovision.
-- Test suite README diperbarui menjadi 93 test case di 11 file; CI migration/permission smoke akan memverifikasi schema baru.
-- NEXT TASK: review migration, least-privilege role, CI PostgreSQL smoke, dan docs; merge hanya sebagai schema foundation bila exact-head CI lulus. Runtime adapter/worker tetap backlog dan OFF.
+- Test suite README diperbarui menjadi 93 test case di 11 file. GitHub Actions run #447 (45022705177) pada exact head b260f36d27e6b13b423f2315243adbf89302b84d5 completed/success: 93/93, 0 fail, PostgreSQL migration success, least-privilege smoke success.
+- NEXT TASK: Divisi 01/05 menyelesaikan review security/QA PR #29; jika diterima, merge schema foundation saja. DB adapter, queue runtime, scheduler, worker, approval queue dan kill switch tetap backlog/OFF.
