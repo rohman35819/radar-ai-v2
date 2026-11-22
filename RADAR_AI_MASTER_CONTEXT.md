@@ -1493,7 +1493,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 
 ### 36.3 Keamanan dan batasan
 - Semua request akun Bybit tetap HTTP GET dan ditandatangani di server. Tidak ada endpoint update API key, order, transfer, atau withdrawal.
-- Jika metadata permission tidak tersedia, UI wajib menyatakan belum terverifikasi; koneksi saldo tidak boleh dianggap bukti read-only.
+- Jika metadata permission tidak tersedia atau kategori inti `Spot`, `ContractTrade`, dan `Wallet` tidak lengkap, UI wajib menyatakan belum terverifikasi; koneksi saldo tidak boleh dianggap bukti read-only.
 - UID hanya ditampilkan sebagai identitas teknis dari respons exchange, bukan nama/email pemilik.
 - Binance tetap memakai endpoint resmi `/sapi/v1/account/apiRestrictions`; tidak ada perubahan permission atau environment exchange.
 
