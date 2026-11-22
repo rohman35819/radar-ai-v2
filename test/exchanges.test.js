@@ -374,3 +374,18 @@ test('Bybit HTTP 403 access-too-frequent response is normalized as rate-limited'
   await assert.rejects(service.market('bybit', 'BTCUSDT'), (error) =>
     error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429 && error.retryAfterSeconds === 600);
 });
+
+
+test('Bybit read-only SubMemberTransferList permission is not misclassified as transfer capability', async () => {
+  const service = createExchangeService({ env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' }, fetchImpl: async (url) => {
+    const pathname = new URL(url).pathname;
+    if (pathname === '/v5/account/wallet-balance') return response({ retCode: 0, result: { list: [{ accountType: 'UNIFIED', coin: [] }] } });
+    if (pathname === '/v5/position/list') return response({ retCode: 0, result: { list: [] } });
+    if (pathname === '/v5/user/query-api') return response({ retCode: 0, result: { userID: 42, readOnly: 1, permissions: { Spot: [], ContractTrade: [], Wallet: ['SubMemberTransferList'] } } });
+    throw new Error('unexpected endpoint');
+  } });
+  const result = await service.account('bybit');
+  assert.equal(result.account.api_permissions.available, true);
+  assert.equal(result.account.api_permissions.read_only, true);
+  assert.equal(result.account.api_permissions.transfers, false);
+});
