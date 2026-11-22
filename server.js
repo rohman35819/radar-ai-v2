@@ -71,7 +71,16 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const workspaceHour = Math.max(0, Math.min(23, Number(process.env.AI_WORKSPACE_HOUR || 10)));
   const reportHour = Math.max(0, Math.min(23, Number(process.env.AI_REPORT_HOUR || 9)));
   const limited = createRateLimiter({ limit: 60, windowMs: 60000, maxKeys: 5000 });
-  const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src).catch((e) => console.error('refresh error', e.message)).finally(() => { busy = null; }));
+  const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
+    .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
+    .catch((error) => {
+      if (['EROFS', 'EACCES', 'EPERM', 'ENOSPC', 'EIO', 'EDQUOT', 'EMFILE', 'ENFILE'].includes(error.code)) {
+        storageChecked = true;
+        storageErrorCode = error.code;
+      }
+      console.error('refresh error', String(error.message || error).slice(0, 160));
+    })
+    .finally(() => { busy = null; }));
 
   const workspaceContext = () => ({
     market: { token_count: st.tokens.length, symbols: st.tokens.slice(0, 12).map((t) => t.symbol), stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 },
