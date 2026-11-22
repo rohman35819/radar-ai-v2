@@ -2129,3 +2129,13 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Validation on PR head `45fd1731601e8a288ce88578aebc41e22d8c649f`: `npm test` passed in GitHub Actions run `45052880414`; Gitleaks and Trivy security jobs passed in run `45052880357`. Local syntax checks and script-order check also passed. Hostless LIVE diagnostic steps were skipped by workflow conditions; no Hostless Build or LIVE success is claimed.
 - Draft PR: https://github.com/rohman35819/radar-ai-v2/pull/55. The PR remains unmerged pending independent QA and Hostless visual verification.
 - NEXT TASK: run test suite, inspect diffs, open draft PR for independent QA. Then add verified wallet cohorts, DEX liquidity/holder distribution, and derivatives/order-book feeds; backtest signals before any probability score is shown.
+
+
+### 65.1 Source provenance and freshness visibility — 23 November 2026
+- Extended the Trading Intelligence footer with per-source provenance: RADAR snapshot, Solscan overview, and each CoinGecko dashboard feed expose the source status, observed/update age, and exact timestamp when present.
+- Stale CoinGecko cache is labeled STALE from the backend-provided flag; upstream errors remain visible. Missing timestamps are shown as unavailable, and future timestamps are explicitly flagged for clock/source review. No arbitrary freshness threshold is invented in the UI.
+- This is source-age transparency, not proof of real-time streaming. Existing browser refresh remains approximately 120 seconds; CoinGecko backend cache TTL remains one hour. Solscan freshness is tied to its observed_at timestamp and endpoint-level availability.
+- Files additionally changed: `public/intelligence.js`, `public/style.css`. The provenance panel is responsive and uses text-safe DOM nodes.
+- Code commits: provenance implementation `1736776853cc5e3b8eab857c4480b7ab8d6990c5`; syntax correction `7a42a6a93f204f09c201f083847b3e7154641ae4`; provenance styling `e1dd351725fa7bf9b6c9bc4a336c81dfba7a9163`.
+- Validation for these latest commits is pending exact-head GitHub Actions; prior green CI on the earlier code SHA does not validate these changes. Hostless Build/LIVE and browser visual QA remain unverified.
+- NEXT TASK: validate the exact updated PR head with npm tests, syntax checks, Gitleaks/Trivy; then audit the data contracts and source timestamps in the underlying API responses. Do not merge or claim LIVE until independent review and deployment verification pass.
