@@ -1638,3 +1638,16 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Tidak ada Hostless connector/log/deployment SHA yang tersedia; Build/LIVE = NOT VERIFIED.
 - Tidak ada worker runtime teruji yang berjalan di background. Divisi 06/07 tetap tahap desain/draft.
 - NEXT TASK tunggal: Divisi 02 memperbarui PR #14 terhadap main terbaru, menjalankan ulang CI, dan menutup regression Screener. Setelah selesai, lanjutkan PR #12; jangan mengerjakan implementasi domain paralel.
+
+## 42. PERBAIKAN SCREENER DAN MEMBERSHIP — 22 NOVEMBER 2026
+
+- Divisi lead: 02 UI/UX & Frontend; QA pendukung: 05.
+- PR lama #14 berbasis main lama dan README-nya menimpa inventaris News terbaru. Untuk menghindari konflik dan menjaga perbaikan News, patch kode diisolasi ulang pada branch fix/ui-screener-delivery-v2 dari main HEAD 12e101f846a76171d771eeaf4c9d3c648d61ea48.
+- Root cause Screener: filter trend/sort di-query sebelum kontrol dipasang ke DOM; query menghasilkan null. Perbaikan memindahkan assignment sesudah v.append().
+- Root cause Membership: aturan label display:grid menimpa atribut hidden pada field nama registrasi saat login; ditambahkan selector #name-field[hidden]{display:none}.
+- PWA shell cache dinaikkan v10 ke v11 agar klien terpasang mengambil app.js terbaru; fixture service worker diselaraskan.
+- File: public/app.js, public/membership.css, public/sw.js, test/frontend-ui.test.js (baru), test/service-worker.test.js, README.md, RADAR_AI_MASTER_CONTEXT.md.
+- Commit implementasi: 20e335a628ed2fc1a71758770ae230c1e27670b0 (Screener), 0f236565f045a23c673c3241e9a3c9bf495c7242 (Membership), c8f5ac8fa19118e42ebdedd3e0683c2026148171 (PWA), eca5f635e348ea118848ef75646042293db98d8c (service-worker test), 7643fb17ca8a25c9006255b497dcaca5f73a9a87 (frontend tests), 1ec59670fb3dd4baa6719fa018b2ec9ed78ee91b (README).
+- Static inspection confirms News renderer summary fallback remains present, Screener controls are restored after mount, and shell cache is v11.
+- Test status: awaiting GitHub Actions on PR head; no local npm test claim. Browser desktop/mobile and Hostless Build/LIVE remain unverified.
+- NEXT TASK: complete CI and independent QA on this isolated branch; after merge, verify Hostless deployment and run Screener interaction checks (search/trend/sort/reset/refresh/CSV) plus Membership login/register visibility on desktop/mobile.
