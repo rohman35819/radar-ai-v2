@@ -90,7 +90,7 @@ function renderOverview(){
  const solscanPanel=card(sectionHead('Solana On-Chain Intelligence','Data indeks Solscan untuk aktivitas jaringan, token trending, transaksi dan block.',el('button',{class:'text-btn',onclick:()=>{window.location.href='/solscan.html';}},'Buka Solscan →')),
   el('div',{class:'detail-grid'},
    el('div',{},el('small',{},'STATUS SOLSCAN'),el('b',{class:solscanOverview?.ok?'positive':'muted'},solscanStatus)),
-   el('div',{},el('small',{},'ENDPOINT TERSEDIA'),el('b',{},(solscanOverview?.endpoint_count??0)+' / '+(solscanOverview?.endpoint_total??3))),
+   el('div',{},el('small',{},'ENDPOINT TERSEDIA'),el('b',{},(solscanOverview?.endpoint_count??0)+' / '+(solscanOverview?.endpoint_total??9))),
    el('div',{},el('small',{},'JARINGAN'),el('b',{},'Solana Mainnet')),
    el('div',{},el('small',{},'OBSERVASI'),el('b',{},dateTime(solscanOverview?.observed_at)))
   ));
