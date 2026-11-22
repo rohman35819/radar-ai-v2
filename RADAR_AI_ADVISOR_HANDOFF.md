@@ -149,3 +149,14 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Obrolan baru harus membaca `RADAR_AI_MASTER_CONTEXT.md` dan `AGENTS.md` dari branch `main`; jika repository tidak dapat diakses, ikuti instruksi proyek yang tersedia.
 - Berlaku permanen sampai BOS mengubah atau mencabut kebijakan ini.
 
+## 14. Extensible AI Workspace Provider Registry (22 Nov 2026)
+- BOS requested that RADAR AI not restrict participation to the four built-in providers.
+- Implementation branch: `feat/open-ai-provider-registry`.
+- The existing Gemini, Groq, OpenRouter, and OpenAI adapters are preserved. Additional OpenAI-compatible providers are discovered from server environment variables: `AI_PROVIDER_<ID>_API_KEY`, `_BASE_URL`, `_MODEL`, optional `_PROTOCOL`, and optional `_ROLE`.
+- Configured custom providers join Workspace sessions by default; a session can select them by normalized provider ID. There is no fixed provider roster.
+- Custom endpoints require HTTPS and reject obvious local/private literal hosts and embedded credentials. Provider keys remain server-side.
+- Native non-OpenAI-compatible APIs need a provider-specific adapter; the orchestration layer is no longer limited to the four hardcoded provider names.
+- All AI outputs remain untrusted proposals. This change does not grant code-write, merge, deployment, financial, or production permissions.
+- Tests added for an additional provider joining Gemini and for unsafe endpoint rejection. CI still needs to run on the latest branch head.
+- Hostless deployment and live runtime are not verified. Do not add real provider secrets to Git; configure approved providers only in Hostless environment.
+- Next: run CI, review dynamic registry/security, merge only after QA; then add the additional provider environment values in Hostless and redeploy before runtime testing.
