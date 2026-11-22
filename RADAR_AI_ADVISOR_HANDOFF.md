@@ -169,3 +169,13 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - PR #29 remains draft pending independent Divisi 01 security review and Divisi 05 QA review. It is behind main by one commit and currently reports mergeable=false; sync/review conflicts before any merge.
 - No DB adapter, queue runtime, scheduler, worker, approval queue, kill switch, or persistent memory is active. Strict Rp0 and Hostless no-overage provisioning gate remain binding.
 - NEXT TASK: Direktur coordinates Divisi 01/05 reviews and branch sync; Divisi 06 plans runtime implementation only after schema acceptance; Divisi 07 builds provenance-first decision/task memory design.
+
+
+## 16. Agent Platform — trusted audit writer boundary (22 November 2026)
+
+- PR #18, #29, #32 were closed as superseded; PR #33 is the current schema-only hardening branch based on main 6b30a57a630d830ba84fba76410696cd616a60a9.
+- Runtime role is observer-only: SELECT registry, no task queue/dependency access, no audit INSERT/UPDATE/DELETE/TRUNCATE, no owner membership. This prevents untrusted worker actor spoofing until a trusted SECURITY DEFINER audit writer is designed.
+- Owner-context audit trigger still rejects UPDATE/DELETE. No hash-chain is claimed.
+- Rp0, concurrency=1, divisions 01–08, max attempts=3, bounded payloads. PostgreSQL 16 tests are ephemeral CI only.
+- P2 worker queue semantics, approval queue, kill switch, memory provenance/retention and Hostless deployment remain unimplemented. No worker runtime is active.
+- PR #33 remains draft pending exact-head CI and independent Divisi 01/05 review. Issue #30 stays open.
