@@ -41,3 +41,12 @@ Every new RADAR conversation must:
 6. Keep implementation isolated, run relevant tests, and require independent QA before integration.
 7. Respect autonomy levels: observation/proposals and isolated low-risk patches may be automated; production, secrets, permission, migration, deployment-risk, and all financial actions require explicit owner approval.
 8. Do not claim background autonomy exists until scheduler, task queue, workers, durable state, audit logging, and approval gates are implemented and verified. Ordinary chat sessions do not run continuously between messages.
+
+
+## Chief Strategy Advisor and offline autonomy
+- The dedicated strategy/advisor handoff is `RADAR_AI_ADVISOR_HANDOFF.md`; read it together with the complete master context before strategic/organization work.
+- The Advisor designs organization, roadmap, autonomy architecture, capability boundaries, KPIs, and division backlogs. The Executive Office Director owns operational coordination; domain divisions own implementation.
+- Proposed Divisions 06 (Agent Platform & Automation) and 07 (Knowledge & Memory Systems) are proposals until implemented and verified. QA Gate and Security Gate remain cross-functional controls.
+- Never claim ChatGPT folders/chats run continuously or coordinate automatically. Offline autonomy requires deployed scheduler, durable queue/state, worker runtime, shared memory, permission gateway, audit/observability, budget limits, approval gates, and kill switch.
+- Begin with observe/propose and one isolated low-risk pilot. Workers cannot grant themselves permissions, merge/deploy without policy gates, or perform financial/production-sensitive actions without explicit Owner approval.
+- Re-verify current `main`, PRs, CI, implementation, and Hostless status; handoff snapshots are historical evidence, not current truth.
