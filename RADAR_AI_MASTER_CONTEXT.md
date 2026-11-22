@@ -1624,7 +1624,7 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Hostless Build dan LIVE belum diverifikasi. News fix tersedia di main, belum boleh disebut pulih di production.
 
 ### 41.3 Backlog terurut lintas divisi setelah News
-1. Divisi 02 — UI/UX: PR #14 Screener mount/render + Membership hidden-field. Latest head b408bcbd64efc059ac9da5c3a9eccd85fd9b98b5; CI run #340 success (66 tests pada snapshot PR). Base PR masih tertinggal dari main; update/rebase dan rerun CI sebelum merge. Browser/Hostless QA tetap diperlukan.
+1. Divisi 02 — UI/UX: selesai melalui PR #23, merge commit 97d28214d883e1f5fc6ce8964ffcb0acf7ff02d9; CI main run #417 success, 70/70 tests. PR #14 lama ditutup sebagai superseded. Browser/Hostless QA tetap diperlukan.
 2. Divisi 01 — Security & Reliability: PR #12 storage readiness /api/ready dan sanitasi error EROFS. Latest head 881434f5d8b50a72ec8d596adc4e76180102198a; CI run #304 success. Base lama; update/rebase, review ulang health/readiness semantik, lalu rerun CI. DATA_DIR/volume Hostless masih butuh log dan konfigurasi aktual.
 3. Divisi 03 — Exchange: PR #17 Bybit identity/permission. Latest head 576856a85d477fac5b31912858704ddddc5573f0; CI run #369 success. Rebase/update, cek diff keamanan, uji hanya read-only, dan pastikan tidak ada withdrawal/trading.
 4. Divisi 04 — AI Intelligence: PR #16 moderator fallback Groq/OpenRouter dan fail-safe WAIT. Latest head b74e677298470b973d5528fe07f48cabb42c1d13; CI run #334 success. Rebase/update dan verifikasi fail-safe serta biaya/kuota sebelum merge.
@@ -1637,7 +1637,7 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Main HEAD setelah News merge: 66eff5667715fd3138336bc3f2e6a5172ba1b5cf; GitHub Actions main run #411 completed/success; 67/67 tests.
 - Tidak ada Hostless connector/log/deployment SHA yang tersedia; Build/LIVE = NOT VERIFIED.
 - Tidak ada worker runtime teruji yang berjalan di background. Divisi 06/07 tetap tahap desain/draft.
-- NEXT TASK tunggal: Divisi 02 memperbarui PR #14 terhadap main terbaru, menjalankan ulang CI, dan menutup regression Screener. Setelah selesai, lanjutkan PR #12; jangan mengerjakan implementasi domain paralel.
+- NEXT TASK tunggal: Divisi 01 memperbarui storage health observability melalui patch baru berbasis main, menjalankan CI, dan meninjau semantik liveness/readiness. Setelah selesai, lanjutkan PR #17; jangan mengerjakan implementasi domain paralel.
 
 ## 42. PERBAIKAN SCREENER DAN MEMBERSHIP — 22 NOVEMBER 2026
 
@@ -1651,3 +1651,15 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Static inspection confirms News renderer summary fallback remains present, Screener controls are restored after mount, and shell cache is v11.
 - Test status: awaiting GitHub Actions on PR head; no local npm test claim. Browser desktop/mobile and Hostless Build/LIVE remain unverified.
 - NEXT TASK: complete CI and independent QA on this isolated branch; after merge, verify Hostless deployment and run Screener interaction checks (search/trend/sort/reset/refresh/CSV) plus Membership login/register visibility on desktop/mobile.
+
+## 43. STORAGE READINESS DAN OBSERVABILITY — 22 NOVEMBER 2026
+
+- Lead: Divisi 01 Security & Reliability; QA Gate: Divisi 05.
+- PR lama #12 berbasis main lama dan tidak boleh di-merge langsung. Patch storage dipindahkan secara terisolasi ke branch fix/storage-readiness-delivery-v2 berbasis main setelah News dan UI delivery.
+- Root cause: /api/health selalu mengembalikan status ok walaupun refresh gagal menyimpan state; platform tidak bisa membedakan proses hidup dari storage yang siap. Perbaikan mempertahankan /api/health sebagai liveness HTTP 200, menambahkan /api/ready sebagai readiness (503/degraded ketika write gagal), dan hanya mengekspos kode error filesystem yang disanitasi.
+- Semua jalur save AI memakai helper persistState agar health/readiness merefleksikan kegagalan persistensi. Error tanpa kode filesystem dipetakan ke STORAGE_WRITE_FAILED; tidak ada path/isi state/credential yang dikirim di response.
+- Tes mensimulasikan EROFS saat atomic rename, memastikan /api/health tetap 200, /api/ready 503/degraded, lalu pulih ke 200/ready setelah save sukses.
+- File: server.js, test/radar.test.js, README.md, RADAR_AI_MASTER_CONTEXT.md.
+- Test status dan commit: menunggu GitHub Actions untuk PR baru. Local npm test tidak dijalankan.
+- Hostless Build/LIVE dan konfigurasi volume DATA_DIR masih NOT VERIFIED; tes filesystem lokal tidak membuktikan volume Hostless writable/persistent.
+- NEXT TASK: jalankan CI PR, lakukan QA independen atas sanitasi dan transisi status; kemudian integrasikan jika exact-head CI lulus. Verifikasi Hostless /api/health dan /api/ready setelah akses deployment tersedia.
