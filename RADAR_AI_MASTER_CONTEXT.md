@@ -2098,3 +2098,8 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
   3. Merge the monitoring workflow after CI/review, then run it manually once. Verify API parsing, latest deployment commit/status, and public `/api/ready`.
   4. If Hostless API returns a different response envelope/status enum, adjust the parser from actual evidence. Do not claim the monitor is operational until a successful real run appears in GitHub Actions.
   5. Consider a signed Hostless alert webhook bridge only if event-driven notification is later needed; do not expose a GitHub PAT or Hostless API key in a public URL.
+
+
+### 64.4 Review refinement
+- The LIVE readiness probe uses `if: always()` so it still runs and reports its independent result when the Hostless deployment API reports a failed deployment.
+- Latest branch code commit after this refinement: `64ad1e24ed63ebf822bfd3ca29abc12c40095ddd`.
