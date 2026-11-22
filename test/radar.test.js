@@ -61,16 +61,21 @@ test('health: kegagalan persistensi menurunkan status dan pemulihan mengembalika
     assert.strictEqual(health.storage.status, 'unchecked');
     fs.renameSync = () => { const error = new Error('read-only filesystem'); error.code = 'EROFS'; throw error; };
     await app.refresh();
-    const failed = await fetch(base + '/api/health');
+    const live = await fetch(base + '/api/health');
+    assert.strictEqual(live.status, 200); // liveness tidak memicu restart saat storage bermasalah
+    health = await live.json();
+    assert.strictEqual(health.status, 'ok');
+    assert.deepStrictEqual(health.storage, { status: 'error', code: 'EROFS' });
+    const failed = await fetch(base + '/api/ready');
     assert.strictEqual(failed.status, 503);
     health = await failed.json();
     assert.strictEqual(health.status, 'degraded');
-    assert.deepStrictEqual(health.storage, { status: 'error', code: 'EROFS' });
     fs.renameSync = originalRename;
     await app.refresh();
-    const recovered = await fetch(base + '/api/health');
+    const recovered = await fetch(base + '/api/ready');
     assert.strictEqual(recovered.status, 200);
     health = await recovered.json();
+    assert.strictEqual(health.status, 'ready');
     assert.strictEqual(health.storage.status, 'ok');
     assert.strictEqual(health.storage.code, null);
   } finally {
