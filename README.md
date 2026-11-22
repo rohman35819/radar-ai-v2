@@ -28,6 +28,35 @@ PWA menyimpan shell halaman agar dapat dibuka kembali saat offline. Respons API 
 | CoinGecko Demo key | Disarankan (`COINGECKO_DEMO_KEY`); cek ToS jika komersial |
 | Makro/ekonomi global | **Belum ada** modul khusus; hanya lewat `NEWS_FEEDS` |
 
+## Market Intelligence (CoinGecko)
+
+Halaman `/market.html` menambahkan dashboard pasar global terpisah dari Market Screener kategori AI yang sudah ada.
+
+Modul yang tersedia:
+- Global market cap, volume 24 jam, BTC/ETH dominance, jumlah aset dan pasar.
+- Global Coin Scanner Top 100 dengan harga USD dan IDR, perubahan 1 jam/24 jam/7 hari, market cap, volume, pencarian, Top Gainers dan Top Losers.
+- Trending search coins dari CoinGecko.
+- Sector Rotation dari perubahan market cap kategori.
+- Exchange Intelligence: ranking exchange, volume BTC, trust score, dan trading pairs on-demand dengan harga, volume, serta bid/ask spread.
+- Historical line charts untuk harga, market cap, dan volume pada rentang 1/7/30/90 hari.
+- Market Regime berbasis aturan statistik RADAR; panel terpisah menampilkan laporan terakhir AI Council bila tersedia.
+
+Backend:
+- `GET /api/market-intelligence`: global, top markets USD/IDR, trending, categories, exchanges.
+- `GET /api/market-intelligence/chart?coin=bitcoin&days=7`: historical market chart; coin ID dan rentang divalidasi.
+- `GET /api/market-intelligence/exchange-tickers?exchange=binance`: trading pairs exchange; ID divalidasi.
+- API key `COINGECKO_DEMO_KEY` hanya dikirim dari backend melalui header `x-cg-demo-api-key`; tidak pernah dikirim ke browser atau log.
+- Cache server 60 menit untuk feed utama, chart, dan exchange tickers. Polling UI 5 menit hanya membaca cache server selama TTL aktif; ini mengurangi pemakaian kuota Demo.
+- Jika salah satu endpoint gagal, feed lain tetap ditampilkan dan status sumber menunjukkan error/stale. Data cache lama tidak diberi label fresh.
+- Tidak ada dependency npm runtime baru.
+
+Batasan:
+- Market Regime adalah heuristik statistik, bukan output model AI, bukan sinyal trading, dan bukan jaminan hasil. AI Council Summary adalah laporan AI terakhir yang tersimpan dan dapat berasal dari siklus analisis sebelumnya.
+- Gainers/losers hanya dibandingkan di dalam Top 100 yang diminta dashboard, bukan seluruh pasar.
+- CoinGecko Demo memiliki batas request dan histori menurut paket; kuota dipakai bersama oleh seluruh fitur CoinGecko RADAR. Pantau Developer Dashboard dan jangan menganggap refresh paksa bebas kuota.
+- Data exchange adalah data agregat provider; spread dan trust score bukan audit likuiditas atau keamanan exchange.
+- Tampilkan atribusi **Powered by CoinGecko** saat menggunakan data. Dokumentasi dan paket: https://docs.coingecko.com/ dan https://www.coingecko.com/en/api/pricing.
+
 ## Exchange Hub (read-only)
 
 Halaman `/trading.html` menyediakan satu antarmuka untuk Binance, Bybit, dan integrasi berikutnya. Koneksi akun berjalan di backend; API key dan secret tidak pernah dikirim ke browser.
