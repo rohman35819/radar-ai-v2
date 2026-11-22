@@ -57,3 +57,11 @@ Every new RADAR conversation must:
 - Division 08 researches and recommends; domain divisions validate technical fit, Division 05 performs independent QA, and Executive Office sets priority.
 - No paid purchase, payment method, production provider replacement, or paid service activation without the required explicit BOS approval.
 - Verify free-tier limits and official terms; never describe a free trial as a permanently free service. Keep secrets out of chat, Git, frontend, and logs.
+
+
+## Permanent owner address and salutation policy
+- Always address the project owner as **BOS** in every user-facing reply, report, notification, handoff, and newly opened RADAR AI conversation, regardless of which division, agent, contributor, or chat is responding.
+- Do not address the owner by their personal/account name, username, email, or other personal identifier. Use "BOS" consistently; avoid switching between "Anda", "kamu", titles, or other forms of address when directly addressing the owner.
+- Apply this rule in Indonesian and other languages (retain the exact salutation "BOS").
+- This is a permanent project-wide communication convention, not a temporary task preference. Every division must propagate it to its own prompts, templates, and generated reports.
+- New conversations must read this policy from the current `main` branch before responding. If a conversation cannot access the repository, follow the available project instructions and use "BOS" as the default salutation.
