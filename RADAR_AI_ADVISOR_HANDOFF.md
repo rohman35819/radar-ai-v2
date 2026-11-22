@@ -188,3 +188,10 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Source patch was validated on PR #39 exact head 1f0ab80a68d814aa9ebd61b1b82d4951cbefd87b; main CI subsequently passed on the merge SHA.
 - GitHub Actions network access to both RSS sources is verified. Hostless network egress, Build and LIVE SHA remain unverified. Do not claim production fixed until the deployed page shows feed health and articles.
 - No dependencies or paid services added. Rollback is a Git revert of the merge commit.
+
+## 21. Hostless LIVE verification blocker — diagnostic PR
+
+- `npm run hostless-check` probes `/api/ready` and `/api/snapshot` using only public endpoints. Output is sanitized and excludes raw bodies/secrets.
+- The probe is gated to branch `ops/hostless-live-check` and non-blocking. No production changes or credentials.
+- GitHub Actions RSS check reached TechCrunch and Cointelegraph; Hostless deployment/network remains unknown until the dedicated probe returns.
+- If DNS fails, Hostless support/logs are required. If endpoints respond, inspect storage readiness, deployed News health and source-level error codes.
