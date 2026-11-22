@@ -139,3 +139,13 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Paid purchases, payment details, paid service activation, and production provider replacement require the applicable explicit BOS approval.
 - First backlog: verified free news/economic data sources; crypto market-data APIs; free/local AI options; low-cost scheduler/queue; monitoring; security/testing tools.
 - This is an organizational charter and handoff, not proof that a separate autonomous worker has been deployed or that the folder chat runs in the background.
+
+
+## 13. Kebijakan Sapaan Permanen untuk Pemilik
+- Sapa pemilik dengan **BOS** di semua komunikasi, laporan, notifikasi, handoff, dan obrolan RADAR AI baru maupun berlanjut.
+- Jangan gunakan nama pribadi, nama akun, username, atau email pemilik sebagai sapaan.
+- Pertahankan sapaan persis "BOS" dalam Bahasa Indonesia maupun bahasa lain.
+- Setiap divisi wajib memasukkan aturan ini ke prompt, template, dan outputnya.
+- Obrolan baru harus membaca `RADAR_AI_MASTER_CONTEXT.md` dan `AGENTS.md` dari branch `main`; jika repository tidak dapat diakses, ikuti instruksi proyek yang tersedia.
+- Berlaku permanen sampai BOS mengubah atau mencabut kebijakan ini.
+
