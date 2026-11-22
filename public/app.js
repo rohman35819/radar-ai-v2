@@ -134,8 +134,15 @@ function renderAnalytics(){
 }
 function renderNews(){
  const v=$('#view');v.replaceChildren();const news=Array.isArray(data?.news)?data.news:[];
+ const health=data?.health?.news;
+ const sources=Array.isArray(data?.health?.news_sources)?data.health.news_sources:[];
  v.append(sectionHead('News Intelligence','Berita dari sumber RSS yang dikonfigurasi.'));
- if(!news.length)return v.append(empty('Belum ada berita','Sumber berita belum terhubung atau belum mengirim artikel. Konfigurasi NEWS_FEEDS di server.'));
+ const status=el('div',{class:'panel news-health'},
+  el('div',{class:'health-line'},el('span',{},'Koneksi RSS'),el('b',{class:health?.ok?'positive':health?'negative':'muted'},health?.ok?'● ONLINE':health?'● ERROR':'● BELUM DICEK')));
+ sources.forEach(source=>status.append(el('div',{class:'health-line'},el('span',{},esc(source.host)),el('b',{class:source.ok?'positive':'negative'},source.ok?'● ONLINE · '+source.count+' artikel':'● '+esc(source.error||'ERROR'))));
+ if(health?.error)status.append(el('p',{class:'muted news-health-error'},'Kode diagnostik: '+esc(health.error)));
+ v.append(status);
+ if(!news.length)return v.append(empty(health&&!health.ok?'Sumber RSS bermasalah':'Belum ada berita',health?.error?'Status: '+health.error+' — periksa NEWS_FEEDS dan akses jaringan server.':'Feed terhubung tetapi belum mengirim artikel, atau refresh berikutnya belum berjalan.'));
  news.forEach(n=>v.append(el('article',{class:'news-card'},el('div',{class:'news-meta'},el('span',{},esc(n.source)),el('time',{},dateTime(n.published_at))),el('a',{href:n.link,target:'_blank',rel:'noopener noreferrer'},esc(n.title)),el('p',{},esc(n.summary||n.description||'Buka sumber untuk membaca detail artikel.')))));
 }
 function renderUnlock(){
