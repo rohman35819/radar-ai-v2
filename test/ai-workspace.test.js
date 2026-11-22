@@ -107,6 +107,15 @@ test('custom providers require explicit enablement and free cost class', () => {
   assert.deepEqual(listWorkspaceProviders(disabled).map((p) => p.id), ['gemini']);
 });
 
+test('paid custom providers require the explicit paid policy gate', () => {
+  const paid = customEnv({ AI_PROVIDER_DEEPSEEK_COST_CLASS: 'paid' });
+  assert.deepEqual(listWorkspaceProviders(paid).map((p) => p.id), ['gemini']);
+  const explicitlyApproved = customEnv({ AI_PROVIDER_DEEPSEEK_COST_CLASS: 'paid', AI_WORKSPACE_ALLOW_PAID: '1' });
+  const provider = listWorkspaceProviders(explicitlyApproved).find((p) => p.id === 'deepseek');
+  assert.equal(provider.costClass, 'paid');
+  assert.equal(provider.defaultSelected, false);
+});
+
 test('provider metadata never exposes API keys', () => {
   const providers = listWorkspaceProviders(customEnv());
   const serialized = JSON.stringify(providers);
@@ -167,4 +176,17 @@ test('provider error payloads are sanitized before being returned', async () => 
   const result = await runWorkspaceReview({ participants: ['deepseek'] }, { env, fetchImpl });
   assert.equal(result.agents[0].error, 'deepseek: HTTP_401');
   assert.ok(!JSON.stringify(result).includes('deepseek-secret-token'));
+});
+
+test('Command Center loads the authenticated dynamic provider registry and server validates IDs', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const server = fs.readFileSync(path.join(__dirname, '../server.js'), 'utf8');
+  const ui = fs.readFileSync(path.join(__dirname, '../public/command.js'), 'utf8');
+  assert.ok(server.includes("url.pathname === '/api/ai/workspace/providers'"));
+  assert.ok(server.includes('listWorkspaceProviders(process.env)'));
+  assert.ok(server.includes('new Set(availableProviders.map((provider) => provider.id))'));
+  assert.ok(ui.includes("fetch('/api/ai/workspace/providers'"));
+  assert.ok(ui.includes("'x-admin-token':token"));
+  assert.ok(ui.includes("$('#load-providers').addEventListener('click',loadProviders)"));
 });
