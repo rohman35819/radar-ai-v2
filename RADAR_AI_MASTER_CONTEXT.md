@@ -1860,3 +1860,13 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Kondisi kode yang diperiksa pada 22 Nov 2026: `lib/sources.js` sudah mengambil CoinGecko AI category markets (maksimum konfigurasi 4 halaman x 250), DeFiLlama protocols/fees/revenue dan RSS; `lib/ingest.js` menyimpan snapshot `tokens/fundamentals/news/unlocks/alerts/history/vol10m` ke state JSON. `vol10m` yang ada adalah estimasi berbasis selisih rolling 24h antar refresh, bukan native 10m candle volume. Detail data candle multi-timeframe/OI/funding per asset dan setup engine belum terbukti ada di kode yang diperiksa.
 - Latest main saat audit perencanaan: `518caf76a37f00dd51f4bef081ce02f20f7de453`; GitHub Actions run #569 pada SHA tersebut completed/success. Ini bukan bukti Hostless deployment atau LIVE.
 - NEXT TASK: Divisi 08 menyusun source/provider matrix resmi (endpoint, field, history, quota, ToS, latency, attribution, free-tier/cost); Divisi 03 memvalidasi exchange OHLCV/derivatives definitions; Divisi 04 merancang feature/score dan anti-look-ahead; Divisi 01 security review; Divisi 05 data contract/fixtures. Setelah audit, mulai Stage 1 secara terisolasi. Jangan lompat ke rekomendasi entry/TP sampai data provenance dan validasi out-of-sample siap.
+
+
+## 60. AGENT PLATFORM PHASE 0 CONTRACT + DIVISI 07 MEMORY FIXTURES — 22 NOVEMBER 2026
+
+- Chief Strategy Advisor menyiapkan ADR Phase 0: `docs/agent-platform-phase0-adr.md` berisi task/event contract, state transition, division permission matrix, approval matrix, transaction/worker invariants, delivery sequence dan E2E acceptance plan.
+- Divisi 07 menyiapkan fixture sintetis dan retrieval QA: `docs/division-07-memory-record-examples.md`; meliputi decision, task handoff, execution evidence, supersession, scope isolation, conflict, provenance dan retention test cases.
+- Perubahan ini dokumentasi/proposal saja. Tidak ada schema/runtime/API/database/memory service/scheduler/worker yang dibuat atau diaktifkan.
+- Dasar audit: main HEAD yang dipakai untuk branch ini `5850594a9b60f9da709ca965aad876cc144e6308`; PR #34 masih draft dan menunggu independent Divisi 01/05 review serta sync terhadap main. Issue #30 tetap menjadi tracking schema/runtime gates; issue #20 menjadi arsitektur orkestrasi induk.
+- Guardrails: Rp0, no paid fallback, no unverified Hostless overage, no production migration/provisioning, no worker activation. Hostless EROFS/persistent mount remains unresolved; jangan simpan durable memory/queue pada filesystem ephemeral.
+- NEXT TASK: Direktur meminta Divisi 06, 07, 01 dan 05 meninjau ADR/fixtures pada PR; setelah review, sinkronkan PR #34 terhadap main dan minta Divisi 01/05 memberi review independen exact-head. Implementasi queue API tetap terpisah setelah schema sign-off.
