@@ -51,7 +51,7 @@ Backend:
 - Tidak ada dependency npm runtime baru.
 
 Batasan:
-- Market Regime adalah heuristik statistik, bukan output model AI, bukan sinyal trading, dan bukan jaminan hasil. AI Council Summary adalah laporan AI terakhir yang tersimpan dan dapat berasal dari siklus analisis sebelumnya.
+- Market Regime, Momentum Detector, turnover watch, dan Risk Monitor adalah heuristik statistik/proxy, bukan output model AI, bukan deteksi anomali intraday, bukan audit keamanan token/likuiditas, bukan sinyal trading, dan bukan jaminan hasil. AI Council Summary adalah laporan AI terakhir yang tersimpan dan dapat berasal dari siklus analisis sebelumnya.
 - Gainers/losers hanya dibandingkan di dalam Top 100 yang diminta dashboard, bukan seluruh pasar.
 - CoinGecko Demo memiliki batas request dan histori menurut paket; kuota dipakai bersama oleh seluruh fitur CoinGecko RADAR. Pantau Developer Dashboard dan jangan menganggap refresh paksa bebas kuota.
 - Data exchange adalah data agregat provider; spread dan trust score bukan audit likuiditas atau keamanan exchange.
