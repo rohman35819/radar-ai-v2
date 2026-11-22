@@ -1962,3 +1962,10 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Added test for failed-feed cooldown/retry-after-window; test suite expected to increase by one.
 - Changed files: `lib/market-intelligence.js`, `test/market-intelligence.test.js`, README, master context.
 - New source change is isolated in PR #48; wait for exact-head Actions before review/merge.
+
+### 59.13 Stale-cache correctness fix
+- Code review found that stale fallback data was cached for 60 seconds but a subsequent request in that window could incorrectly report it as fresh. Corrected cache metadata to preserve `stale=true` and the upstream error until the fallback TTL expires.
+- Regression test verifies stale flag/error remain visible and no repeat upstream request occurs inside the fallback window.
+- Negative-cache cooldown remains 5 minutes for failures without any prior data.
+- Files: `lib/market-intelligence.js`, `test/market-intelligence.test.js`; source changes are part of PR #48.
+- Re-run Actions on the latest branch head before considering review-ready.
