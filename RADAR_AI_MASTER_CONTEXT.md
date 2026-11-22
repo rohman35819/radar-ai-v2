@@ -1538,7 +1538,7 @@ ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus 
 
 ### 38.4 Verifikasi dan status
 - Branch implementasi: `feature/bybit-api-key-permission-verification-final`, dibuat ulang dari main HEAD terbaru setelah tiga commit dokumentasi masuk.
-- GitHub Actions run #44997239777 untuk commit `d50baa050d9a9c119d07ecdd017808288e9e24ce`: **PASS, 75/75 tests, 0 failures**; job `test` selesai sukses. Termasuk regresi agar `SubMemberTransferList` Bybit tidak salah dianggap izin transfer.
+- GitHub Actions run #44997382391 untuk commit `96ecbe1c678a94f05abcab44902ee7fc386f68c3`: **PASS, 75/75 tests, 0 failures**; job `test` selesai sukses. Termasuk regresi agar `SubMemberTransferList` Bybit tidak salah dianggap izin transfer, serta perhitungan Retry-After dari `X-Bapi-Limit-Reset-Timestamp` dan cooldown HTTP 403 Bybit.
 - Pemeriksaan sintaks JavaScript melalui parser V8 untuk `lib/exchanges.js`, `server.js`, `public/trading.js`, `test/exchanges.test.js`, dan `test/exchange-ui.test.js`: PASS. Audit statis juga memastikan method exchange yang didefinisikan hanya GET, endpoint order tidak ditemukan, dan UI memisahkan permission withdrawal/transfer dari status trading.
 - PR #17: https://github.com/rohman35819/radar-ai-v2/pull/17; status open, mergeable, belum merged. PR #15 ditutup karena branch tertinggal dari main; perubahan dipindahkan ke branch baru yang sinkron.
 - Main HEAD saat sinkronisasi: `b6c005ed4a217e8425652ecf6e26986e6cefcee2`; tiga commit terbaru hanya mengubah dokumentasi organisasi/advisor, dan branch ini dibuat langsung dari HEAD tersebut.
