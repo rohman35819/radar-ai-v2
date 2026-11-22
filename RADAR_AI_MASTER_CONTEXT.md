@@ -1847,16 +1847,32 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 
 ---
 
-## 59. COINGECKO MARKET INTELLIGENCE DASHBOARD — 22 NOVEMBER 2026
+## 59. MARKET INTELLIGENCE & EXPLAINABLE TRADE SETUPS — 22 NOVEMBER 2026
 
-### 59.1 Routing and scope
+- BOS menetapkan prioritas produk: kumpulkan data pasar dan analisis yang luas, akurat, tervalidasi sebelum ditampilkan di dashboard. Kandidat Top Scanner harus dapat dibuka menjadi halaman detail aset dengan candle/OHLCV, volume, open interest, funding, likuiditas, fundamentals, unlock, berita/katalis, on-chain dan provenance jika tersedia.
+- Detail aset harus memiliki canonical identity (chain/contract, exchange, spot/perpetual, base/quote); jangan join berdasarkan symbol saja.
+- Rencana trade setup harus mencakup bias, timeframe, entry zone, invalidation/stop, TP1/TP2/TP3, R:R, confidence terkalibrasi, alasan pro/kontra, expiry dan kondisi pembatalan. Level harga harus reproducible dari market snapshot dan aturan deterministik; LLM hanya menjelaskan, tidak mengarang level.
+- Setiap field wajib menyertakan source, observed_at, timeframe/interval, freshness, quality dan units. Volume rolling 24h, volume candle, OI dan funding adalah metrik berbeda. Missing/stale/conflicting data tidak boleh ditampilkan sebagai nol atau dianggap valid.
+- Issue implementasi utama: https://github.com/rohman35819/radar-ai-v2/issues/49. Spesifikasi: docs/market-intelligence-trade-setup-spec.md.
+- Tahapan: (0) audit sumber & data contract oleh Divisi 08/03/04/01/05; (1) canonical data foundation; (2) clickable asset drill-down; (3) explainable setup generator; (4) walk-forward/out-of-sample backtest + forward paper trading; (5) dashboard daily scanner dan signal journal.
+- Evaluasi mencakup fee, spread, slippage, funding, latency, look-ahead/survivorship bias dan overfit. Catat semua sinyal termasuk loss, invalidation, expiry, MAE/MFE, expectancy, profit factor, max drawdown, sample size dan calibration.
+- Guardrails: ini decision support, bukan jaminan profit. Tidak ada sistem yang memastikan koin akan profit. Tidak ada order execution; live trading tetap OFF. Tidak ada paid provider/quota/infrastructure tanpa persetujuan BOS. Historical persistence menunggu penyelesaian EROFS/storage Hostless; jangan memakai filesystem ephemeral sebagai database.
+- Kondisi kode yang diperiksa pada 22 Nov 2026: `lib/sources.js` sudah mengambil CoinGecko AI category markets (maksimum konfigurasi 4 halaman x 250), DeFiLlama protocols/fees/revenue dan RSS; `lib/ingest.js` menyimpan snapshot `tokens/fundamentals/news/unlocks/alerts/history/vol10m` ke state JSON. `vol10m` yang ada adalah estimasi berbasis selisih rolling 24h antar refresh, bukan native 10m candle volume. Detail data candle multi-timeframe/OI/funding per asset dan setup engine belum terbukti ada di kode yang diperiksa.
+- Latest main saat audit perencanaan: `518caf76a37f00dd51f4bef081ce02f20f7de453`; GitHub Actions run #569 pada SHA tersebut completed/success. Ini bukan bukti Hostless deployment atau LIVE.
+- NEXT TASK: Divisi 08 menyusun source/provider matrix resmi (endpoint, field, history, quota, ToS, latency, attribution, free-tier/cost); Divisi 03 memvalidasi exchange OHLCV/derivatives definitions; Divisi 04 merancang feature/score dan anti-look-ahead; Divisi 01 security review; Divisi 05 data contract/fixtures. Setelah audit, mulai Stage 1 secara terisolasi. Jangan lompat ke rekomendasi entry/TP sampai data provenance dan validasi out-of-sample siap.
+
+---
+
+## 60. COINGECKO MARKET INTELLIGENCE DASHBOARD — 22 NOVEMBER 2026
+
+### 60.1 Routing and scope
 - Lead: **Divisi 02 — UI/UX & Frontend** untuk dashboard dan navigasi.
 - Supporting: Divisi 08 untuk verifikasi paket/kuota CoinGecko; Divisi 04 untuk konteks market intelligence; Divisi 01 untuk keamanan API key/cache; Divisi 05 untuk pengujian independen.
 - Owner meminta seluruh rekomendasi CoinGecko sebelumnya ditampilkan di dashboard RADAR AI V2.
 - Main baseline saat branch dibuat: `518caf76a37f00dd51f4bef081ce02f20f7de453`.
 - Isolasi implementasi: branch `feat/coingecko-market-intelligence-dashboard`; tidak ada perubahan langsung ke main atau deployment produksi.
 
-### 59.2 Implementasi pada branch
+### 60.2 Implementasi pada branch
 - Halaman baru `/market.html` dengan navigasi dari dashboard utama.
 - Modul Global Market: total market cap, volume 24 jam, BTC/ETH dominance, active crypto, dan jumlah markets.
 - Global Coin Scanner Top 100: harga USD dan IDR, perubahan 1h/24h/7d, market cap, volume, pencarian, gainers, losers.
@@ -1875,12 +1891,12 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Service Worker dinaikkan ke `radar-shell-v12` dan menambahkan halaman/aset Market Intelligence ke precache.
 - Tidak ada dependency runtime baru, pembelian, perubahan secret Hostless, atau fitur transaksi.
 
-### 59.3 Files
+### 60.3 Files
 - Added: `lib/market-intelligence.js`, `public/market.html`, `public/market.js`, `public/market.css`, `test/market-intelligence.test.js`, `test/market-ui.test.js`.
 - Updated: `server.js`, `public/index.html`, `public/sw.js`, `test/service-worker.test.js`, `package.json`, `README.md`, dan dokumen master ini.
 - Existing Market Screener kategori AI, Exchange Hub, Command Center, dan menu dashboard lain dipertahankan.
 
-### 59.4 Procurement and quota guardrails
+### 60.4 Procurement and quota guardrails
 - Menggunakan `COINGECKO_DEMO_KEY` yang sudah menjadi variabel konfigurasi proyek; nilai aktual tidak dibaca atau ditampilkan.
 - Dashboard utama meminta enam dataset: global, Top 100 USD, Top 100 IDR, trending, categories, exchanges. Cache 60 menit; chart dan ticker hanya dipanggil saat dibutuhkan dan juga cache 60 menit.
 - Kuota CoinGecko Demo adalah shared quota untuk seluruh pemakaian CoinGecko RADAR. Pantau Developer Dashboard; jangan menganggap polling UI 5 menit sama dengan lima menit request upstream.
@@ -1891,7 +1907,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Historical chart menggunakan data market_chart; bukan OHLC/candlestick.
 - Market Regime merupakan rule-based heuristic, bukan model AI atau rekomendasi finansial. AI Council Summary adalah laporan terakhir yang telah tersimpan, bukan jaminan analisis realtime dari seluruh dataset global.
 
-### 59.5 Tests and release status
+### 60.5 Tests and release status
 - Unit tests baru meliputi enam dataset dan server-side header, cache hit, stale fallback/partial failure, validasi coin/rentang chart, validasi exchange ID/cache ticker, UI navigation/assets, dan rendering aman sebagai teks.
 - Service Worker test diperbarui untuk memastikan Market Intelligence di-precache pada v12.
 - `package.json` menambahkan syntax checks untuk `public/market.js` dan `lib/market-intelligence.js`.
@@ -1901,7 +1917,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Hostless LIVE/SHA: UNKNOWN / belum diverifikasi.
 - Browser visual QA desktop/mobile, response nyata CoinGecko melalui secret Hostless, dan penggunaan kuota produksi: belum diverifikasi.
 
-### 59.6 Risks and NEXT TASK
+### 60.6 Risks and NEXT TASK
 1. Periksa exact branch diff dan jalankan GitHub Actions `npm test`; perbaiki setiap kegagalan sebelum menyatakan siap.
 2. Minta review independen Divisi 01 (API key/cache/security) dan Divisi 05 (test, API failure, PWA, mobile).
 3. Setelah PR diterima dan BOS menyetujui integrasi, verifikasi Hostless build dan SHA Live secara terpisah; jangan mengklaim live dari CI.
@@ -1910,7 +1926,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 6. Jika CoinGecko Demo membatasi endpoint tertentu, pertahankan partial UI dan cari fallback gratis sebelum mengusulkan paket berbayar.
 7. NEXT TASK setelah QA: review independent; lalu integrasi ke main hanya setelah semua checks sukses dan approval sesuai kebijakan BOS.
 
-### 59.7 Exact-head CI and final handoff update
+### 60.7 Exact-head CI and final handoff update
 - Final branch head at this verification: `3b78b60176af70d000bc252e32f602d9b5426058`.
 - Draft PR: #48 — https://github.com/rohman35819/radar-ai-v2/pull/48. Base main `518caf76a37f00dd51f4bef081ce02f20f7de453`; compare reports ahead 31 / behind 0 at the time checked.
 - GitHub Actions RADAR AI tests run #572 / ID `45043182075` on exact head `3b78b60`: **completed / success; 98 tests pass, 0 fail**. Job steps confirm `npm test` completed successfully, including syntax checks and Node test suite.
@@ -1924,7 +1940,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Responsive mobile drawer controls were added to `/market.html` and covered by UI static tests. Device/browser QA is still required.
 - PR remains **Draft** pending independent Divisi 01/05 review and BOS release decision. Do not merge or claim dashboard is live yet.
 
-### 59.8 Final exact-head CI after documentation update
+### 60.8 Final exact-head CI after documentation update
 - Current branch / PR #48 head: `09fbc531252fa860e90fdc9dd0e516d05de593f9`.
 - GitHub Actions test run #573 / ID `45043255278` on this exact head: **completed / success; 98 tests pass, 0 fail**. The job completed `npm test`, including all syntax checks and Node tests.
 - GitHub Actions security run #115 / ID `45043255340` on this exact head: **completed / success**.
@@ -1932,16 +1948,16 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
   - Trivy secret scan: **no issues detected**.
   - Trivy vulnerability scanner: **no supported manifest files found**; dependency vulnerability coverage is unavailable, not a clean vulnerability result.
 - The test log includes `refresh error read-only filesystem` from the existing intentional storage-health EROFS test; suite still passed 98/98. This is test fixture output, not evidence of a new live Hostless failure.
-- Previous 59.7 test/security evidence for code head `3b78b60` is superseded by the exact-current-head evidence above.
+- Previous 60.7 test/security evidence for code head `3b78b60` is superseded by the exact-current-head evidence above.
 - PR #48 remains Draft; merge not performed. Hostless Build/LIVE, actual CoinGecko credential entitlement, and browser/device visual QA remain unverified.
 
-### 59.9 Extended market signals and scope boundary
+### 60.9 Extended market signals and scope boundary
 - Dashboard ditambah Momentum Detector yang hanya menampilkan aset dengan return positif terkonfirmasi pada 1h, 24h, dan 7d; High Turnover Watch memakai rasio volume 24 jam / market cap; Risk Monitor menandai penurunan 24 jam besar atau return negatif dengan turnover rendah.
 - Ketiganya merupakan heuristic/proxy dari data agregat Top 100. Tidak boleh disebut sebagai deteksi volume anomaly intraday, honeypot/security scanner, audit likuiditas, atau risk model terkalibrasi.
 - Follow-on P2 yang belum termasuk PR #48: strategy backtesting yang dapat dikonfigurasi, portfolio tracking manual, dan integrasi On-chain DEX/Early Gem ke halaman Market Intelligence.
 - Early Gem Scanner/GeckoTerminal sudah memiliki pekerjaan terpisah di Draft PR #46; jangan menganggap telah terintegrasi/merged atau memindahkan kodenya tanpa QA independen. Setelah PR #46 lolos review, rancang entry point ke dashboard Market Intelligence.
 
-### 59.10 Final signal-module validation
+### 60.10 Final signal-module validation
 - Code head before this documentation-only handoff: `a164776f908bd212c60c20a09c3eaf80021006d4`.
 - Added Momentum Detector (all 1h/24h/7d changes positive), High Turnover Watch (24h volume / market cap proxy), and Risk Monitor (large daily decline or negative return plus low turnover). README and master context now explicitly document heuristic limitations.
 - GitHub Actions test run #580 / ID `45043477962` on exact code head `a164776`: **completed / success; 98 tests pass, 0 fail**.
@@ -1949,7 +1965,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Current delivery remains Draft PR #48. Hostless Build/LIVE and real CoinGecko provider responses remain unverified; browser/device visual QA and independent Divisi 01/05 review are still required.
 - Follow-on P2 items are not included: manual portfolio tracking, strategy backtesting, and On-chain DEX/Early Gem dashboard integration. Early Gem remains separate Draft PR #46.
 
-### 59.11 Current PR head validation
+### 60.11 Current PR head validation
 - Current branch / PR #48 head at this verification: `28366eb9719e3fb9e6fb81f74e37d9f4e6b90d10`.
 - GitHub Actions test run #582 / ID `45043611722` on this exact head: **completed / success; 98 pass, 0 fail**.
 - GitHub Actions security run #124 / ID `45043611743` on this exact head: **completed / success**. Gitleaks: no leaks found. Trivy secret scan: no issues. Trivy vulnerability scanner: no supported manifest files, so dependency vulnerability coverage unavailable.
@@ -1957,20 +1973,20 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Hostless Build/LIVE, real CoinGecko provider responses using the deployed Demo key, and browser/device visual QA remain unverified. Independent Divisi 01/05 review is still required.
 - Follow-on P2 items remain outside this PR: manual portfolio tracking, strategy backtesting, and On-chain DEX/Early Gem dashboard integration. Early Gem remains separate Draft PR #46.
 
-### 59.12 Quota protection refinement
+### 60.12 Quota protection refinement
 - Feed yang gagal tanpa data cache kini mendapat negative-cache cooldown 5 menit. Tujuan: polling UI tidak mengulang request upstream setiap 5 menit ketika CoinGecko sedang rate-limit/down atau key ditolak.
 - Added test for failed-feed cooldown/retry-after-window; test suite expected to increase by one.
 - Changed files: `lib/market-intelligence.js`, `test/market-intelligence.test.js`, README, master context.
 - New source change is isolated in PR #48; wait for exact-head Actions before review/merge.
 
-### 59.13 Stale-cache correctness fix
+### 60.13 Stale-cache correctness fix
 - Code review found that stale fallback data was cached for 60 seconds but a subsequent request in that window could incorrectly report it as fresh. Corrected cache metadata to preserve `stale=true` and the upstream error until the fallback TTL expires.
 - Regression test verifies stale flag/error remain visible and no repeat upstream request occurs inside the fallback window.
 - Negative-cache cooldown remains 5 minutes for failures without any prior data.
 - Files: `lib/market-intelligence.js`, `test/market-intelligence.test.js`; source changes are part of PR #48.
 - Re-run Actions on the latest branch head before considering review-ready.
 
-### 59.14 Final cache-safety validation
+### 60.14 Final cache-safety validation
 - Current code head before this documentation update: `4b7b4b493771e8de4128e3d0c1c6844335ec58eb`.
 - GitHub Actions test run #588 / ID `45043777552`: **completed / success; 99 tests pass, 0 fail**. Includes negative-cache cooldown and stale-label persistence regression tests.
 - GitHub Actions security run #130 / ID `45043777565`: **completed / success**. Gitleaks: no leaks found. Trivy secret scan: no issues. Trivy vulnerability scanner: no supported manifest files, so dependency CVE coverage unavailable.
@@ -1980,7 +1996,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 
 ---
 
-## 60. MARKET INTELLIGENCE & EXPLAINABLE TRADE SETUPS — MAIN SPEC SYNC — 22 NOVEMBER 2026
+## 61. MARKET INTELLIGENCE & EXPLAINABLE TRADE SETUPS — MAIN SPEC SYNC — 22 NOVEMBER 2026
 
 - Main advanced after PR #48 was opened with two documentation commits. Latest main baseline at sync: `5850594a9b60f9da709ca965aad876cc144e6308`; the new approved-direction spec is `docs/market-intelligence-trade-setup-spec.md`.
 - The spec is product/engineering direction and staged backlog, not a claim that all features are implemented.
