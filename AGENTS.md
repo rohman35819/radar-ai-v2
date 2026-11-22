@@ -65,3 +65,12 @@ Every new RADAR conversation must:
 - Apply this rule in Indonesian and other languages (retain the exact salutation "BOS").
 - This is a permanent project-wide communication convention, not a temporary task preference. Every division must propagate it to its own prompts, templates, and generated reports.
 - New conversations must read this policy from the current `main` branch before responding. If a conversation cannot access the repository, follow the available project instructions and use "BOS" as the default salutation.
+
+
+## Delivery discipline for all divisions
+- Follow the current master context backlog and work on one primary implementation task at a time, with one lead division and narrowly scoped supporting review.
+- Fix user-visible P1/P2 bugs before starting new features or broad refactors.
+- Before merging an old PR, verify its current head, base against latest main, diff, mergeability, and successful Actions run on the exact head after rebasing/updating.
+- Every delivery must include root cause, changed files, acceptance criteria, exact test results, commit SHA, CI result, Hostless Build state, verified LIVE state, unresolved blocker, and one actionable NEXT TASK.
+- Do not treat a review, plan, or green CI on an obsolete SHA as completion. Do not claim Hostless LIVE from GitHub CI.
+- Keep production credentials, exchange trading/withdrawal, financial actions, risky migrations, and production data deletion behind explicit BOS approval.
