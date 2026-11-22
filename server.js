@@ -183,7 +183,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           if (!requestedPath || requestedPath.length > 240) return send(res, 400, { status: 'error', code: 'INVALID_GITHUB_PATH', message: 'Path file tidak valid.' }, 'application/json', { 'cache-control': 'no-store' });
           Promise.resolve().then(() => githubClient.getFile(requestedPath)).then((file) => {
             if (!file || file.type !== 'file' || file.encoding !== 'base64' || typeof file.content !== 'string') return send(res, 404, { status: 'error', code: 'GITHUB_FILE_NOT_FOUND', message: 'File tidak ditemukan atau format tidak didukung.' }, 'application/json', { 'cache-control': 'no-store' });
-            const decoded = Buffer.from(file.content.replace(/\\s/g, ''), 'base64');
+            const decoded = Buffer.from(file.content.replace(/\s/g, ''), 'base64');
             if (decoded.length > 65536) return send(res, 413, { status: 'error', code: 'GITHUB_FILE_TOO_LARGE', message: 'File melebihi batas baca 64 KiB.' }, 'application/json', { 'cache-control': 'no-store' });
             send(res, 200, { status: 'success', file: { path: file.path, sha: file.sha, size: decoded.length, content: decoded.toString('utf8') } }, 'application/json', { 'cache-control': 'no-store' });
           }).catch(() => {
