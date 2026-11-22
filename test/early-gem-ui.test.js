@@ -12,6 +12,9 @@ test('Early Gem Scanner tersedia di navigasi dan menampilkan batas data on-chain
   assert.match(app, /else if\(tab==='early-gems'\)renderEarlyGems\(\)/);
   assert.match(app, /pool baru bukan bukti token baru dibuat/i);
   assert.match(app, /bukan audit kontrak/i);
+  assert.match(app, /x\.token_address/);
+  assert.match(app, /x\.token_url/);
+  assert.match(app, /Token ↗/);
   assert.match(css, /\.gem-grid/);
   assert.doesNotMatch(app, /innerHTML\s*=/);
 });
