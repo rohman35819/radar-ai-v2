@@ -60,6 +60,8 @@ test('onchain: data hilang tidak dipalsukan menjadi nol dan duplikat dihapus', (
   assert.ok(rows[0].risk_flags.includes('liquidity_unknown'));
   assert.ok(rows[0].risk_flags.includes('volume_unknown'));
   assert.equal(rows[0].price_change_24h_pct, 12.5);
+  p.data[0].attributes.price_change_percentage.h24 = '-8.25';
+  assert.equal(normalizeNewPools(p, now)[0].price_change_24h_pct, -8.25);
 });
 
 test('onchain: invalid payload ditolak', () => {
