@@ -31,7 +31,7 @@ PWA menyimpan shell halaman agar dapat dibuka kembali saat offline. Respons API 
 
 ## Early Gem Scanner (on-chain discovery)
 
-Dashboard memiliki menu **Early Gem Scanner** yang melengkapi Market Screener CoinGecko kategori AI. Feed ini memakai CoinGecko Onchain API (data GeckoTerminal) melalui endpoint `/onchain/networks/new_pools` untuk mengambil pool DEX terbaru lintas jaringan. Sumber mengembalikan pool baru dalam jendela sekitar 48 jam; tiap halaman berisi hingga 20 pool.
+Dashboard memiliki menu **Early Gem Scanner** yang melengkapi Market Screener CoinGecko kategori AI. Feed ini memakai CoinGecko Onchain API (data GeckoTerminal) melalui endpoint `/onchain/networks/new_pools` dan `/onchain/networks/trending_pools` untuk mengambil pool DEX terbaru serta pool yang sedang trending lintas jaringan. Sumber mengembalikan pool baru dalam jendela sekitar 48 jam; tiap halaman berisi hingga 20 pool.
 
 Environment:
 - `EARLY_GEMS_ENABLED=1` (default): aktifkan feed on-chain; set `0` untuk menonaktifkan.
@@ -43,7 +43,7 @@ Scanner menggabungkan feed new pools (48 jam) dengan trending pools (24 jam) dan
 
 **Batas penting:** pool baru tidak sama dengan token yang baru dibuat. Token tanpa pool likuid, jaringan yang belum didukung/terindeks, atau pool yang belum masuk indeks tidak akan terlihat. Feed bukan daftar seluruh token/kontrak blockchain. Flag likuiditas/volume/market cap adalah pemeriksaan kualitas data sederhana, bukan honeypot detector, audit kontrak, analisis holder, atau jaminan keamanan. RADAR tidak mengirim transaksi atau order.
 
-Referensi endpoint: https://docs.coingecko.com/reference/latest-pools-list
+Referensi endpoint: https://docs.coingecko.com/reference/latest-pools-list dan https://docs.coingecko.com/reference/trending-pools-list
 
 ## Exchange Hub (read-only)
 
