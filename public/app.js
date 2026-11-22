@@ -20,8 +20,8 @@ const ratio = (v) => v == null || !Number.isFinite(Number(v)) ? '—' : Number(v
 const dateTime = (v) => v ? new Date(v).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}) : 'Belum tersedia';
 const esc = (v) => String(v ?? '—');
 const FLAG = {fdv_unknown:'FDV tidak diketahui',fdv_gt_5x_mcap:'FDV > 5x MCap',volume_gt_mcap:'Volume > MCap',stale:'Data basi'};
-const TITLES = {overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
-let data=null, aiGroup=null, aiWorkspace=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false;
+const TITLES = {solscan:'Solana Intelligence',overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
+let data=null, aiGroup=null, aiWorkspace=null, solscanOverview=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false;
 let screenerFilters={q:'',trend:'all',sort:'market_cap'},screenerVisible=[];
 try {
  const stored=JSON.parse(localStorage.getItem('radar-watch')||'[]');
@@ -86,7 +86,15 @@ function renderOverview(){
  const market=card(sectionHead('Market Watch','Token dengan aktivitas volume tertinggi',el('button',{class:'text-btn',onclick:()=>navigate('analytics')},'Analitik →')),tokenTable(topTokens('volume_24h',-1,6),6));
  const bottom=el('div',{class:'two-col'},card(sectionHead('AI Council','Ringkasan rapat analisis terakhir'),aiGroup?.last?el('div',{class:'ai-summary'},el('div',{class:'row-between'},el('b',{},'Keputusan grup'),el('span',{class:'decision '+String(aiGroup.last.final?.decision||'WAIT').toLowerCase()},aiGroup.last.final?.decision||'WAIT')),el('p',{},aiGroup.last.final?.summary||'Belum ada ringkasan.'),el('small',{class:'muted'},dateTime(aiGroup.last.created_at)),el('button',{class:'text-btn',onclick:()=>navigate('ai')},'Lihat analisis →')):empty('Belum ada analisis','Laporan AI muncul setelah proses terjadwal berhasil.')),
  card(sectionHead('Kesehatan Sumber','Koneksi data yang digunakan RADAR'),el('div',{class:'health-summary'},...Object.entries(data?.health||{}).slice(0,5).map(([k,x])=>el('div',{class:'health-line'},el('span',{},k),el('b',{class:x.ok?'positive':'negative'},x.ok?'● ONLINE':'● ERROR'))),el('div',{class:'muted'},healthy+'/'+health.length+' sumber sehat'))));
- v.append(movers,market,bottom);
+ const solscanStatus=solscanOverview?.ok?(solscanOverview.partial?'PARTIAL':'ONLINE'):(solscanOverview?.code||'BELUM TERHUBUNG');
+ const solscanPanel=card(sectionHead('Solana On-Chain Intelligence','Data indeks Solscan untuk aktivitas jaringan, token trending, transaksi dan block.',el('button',{class:'text-btn',onclick:()=>{window.location.href='/solscan.html';}},'Buka Solscan →')),
+  el('div',{class:'detail-grid'},
+   el('div',{},el('small',{},'STATUS SOLSCAN'),el('b',{class:solscanOverview?.ok?'positive':'muted'},solscanStatus)),
+   el('div',{},el('small',{},'ENDPOINT TERSEDIA'),el('b',{},(solscanOverview?.endpoint_count??0)+' / '+(solscanOverview?.endpoint_total??3))),
+   el('div',{},el('small',{},'JARINGAN'),el('b',{},'Solana Mainnet')),
+   el('div',{},el('small',{},'OBSERVASI'),el('b',{},dateTime(solscanOverview?.observed_at)))
+  ));
+ v.append(movers,market,bottom,solscanPanel);
 }
 function renderScreener(){
  const v=$('#view');v.replaceChildren();
@@ -248,6 +256,7 @@ async function load(){
   $('#banner').textContent='Tidak dapat mengambil snapshot terbaru. Data yang terlihat mungkin merupakan data sebelumnya; coba muat ulang kembali.';
  }
  try{const r=await fetch('/api/ai/group',{cache:'no-store'});if(r.ok)aiGroup=(await r.json()).group;}catch{}
+ try{const r=await fetch('/api/solscan/overview',{cache:'no-store'});solscanOverview=await r.json();}catch{solscanOverview={ok:false,code:'SOLSCAN_UNAVAILABLE'};}
  try{const r=await fetch('/api/ai/workspace',{cache:'no-store'});if(r.ok)aiWorkspace=(await r.json()).workspace;}catch{}
  if(snapshotOk)updateStatus();
  render();
