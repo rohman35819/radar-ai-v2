@@ -1802,12 +1802,12 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Budget Rp0; no external infrastructure provisioned. NEXT TASK: Divisi 07 review taxonomy and sample records with Divisi 01 privacy/access review and Divisi 05 QA; implementation waits for accepted schema and no-cost capacity.
 
 
-## 55. NEWS FEED RESILIENCE AND LIVE SOURCE DIAGNOSTICS — PR #38 — 22 NOVEMBER 2026
+## 55. NEWS FEED RESILIENCE AND LIVE SOURCE DIAGNOSTICS — PR #39 — 22 NOVEMBER 2026
 
-- PR #22's earlier fix (default RSS feed + article summaries) is already merged, but BOS continued to report News errors. PR #38 adds source-level diagnostics and resilience rather than repeating that earlier patch.
+- PR #22's earlier fix (default RSS feed + article summaries) is already merged, but BOS continued to report News errors. PR #39 adds source-level diagnostics and resilience rather than repeating that earlier patch.
 - Changes: NEWS_FEEDS whitespace fallback and comma/semicolon/newline parsing (max 8); explicit RSS/Atom Accept and User-Agent; 15s timeout and 2 MiB body limit; RSS/Atom parsing for numeric entities, CDATA, Atom alternate links, relative links and content:encoded; deduplication.
 - One failed source no longer blocks a healthy feed. All-failed/empty responses produce sanitized diagnostic codes. /api/snapshot now carries health.news_sources and News Intelligence shows per-source status and error code.
-- CI run #501 (45024388078) on PR #38 head 0cee779b6ae36df0f160a724f3770905f780ba06: npm test 90/90, 0 failed; diagnostic live RSS smoke success with 50 articles total (TechCrunch 20, Cointelegraph 30). Security scan run #43 (45024388073) success.
+- PR #39 merged to main with merge commit 6664030a102c8c46d387c139b7cfeede66f588b0. Main CI run #503 (45024834548) on exact merge SHA passed 90/90 tests; main security scan #45 (45024834510) passed. PR CI #502 (45024762955) also ran the live RSS smoke: 50 articles total (TechCrunch 20, Cointelegraph 30), both sources healthy.
 - Live feed access from GitHub Actions is verified; this does NOT prove Hostless outbound network or current LIVE deployment. Hostless internal_error / DNS issue remains NOT VERIFIED until Hostless logs/Build/LIVE are accessible.
 - No new dependency, API key, paid service, DB migration or production data mutation. Rollback: revert PR #38 merge commit.
-- NEXT TASK: merge the safe News code after QA review, then verify Hostless Build and News page. If Hostless still fails while GitHub Actions feeds pass, investigate Hostless outbound DNS/egress, NEWS_FEEDS environment value and deployed SHA; do not claim live resolution.
+- NEXT TASK: verify Hostless Build, deployed SHA and News page's per-source status. If Hostless still fails while GitHub Actions feeds pass, investigate Hostless outbound DNS/egress, NEWS_FEEDS environment value and deployed SHA; do not claim live resolution.
