@@ -210,8 +210,9 @@ function renderEarlyGems(){
  const v=$('#view');v.replaceChildren();
  const all=Array.isArray(data?.early_gems)?data.early_gems:[];
  const health=data?.health?.onchain||null,meta=data?.early_gems_meta||null;
+ const enabled=data?.config_needed?.early_gems_enabled!==false;
  const feedAgeMs=meta?.fetched_at?Date.now()-Date.parse(meta.fetched_at):Infinity;
- const feedStale=!Number.isFinite(feedAgeMs)||feedAgeMs>30*60*1000;
+ const feedStale=!enabled||!Number.isFinite(feedAgeMs)||feedAgeMs>30*60*1000;
  const chains=new Set(all.map(x=>x.network_id).filter(Boolean));
  const totalVolume=all.reduce((sum,x)=>sum+(Number(x.volume_24h_usd)||0),0);
  const liquid=all.filter(x=>Number(x.liquidity_usd)>=5000).length;
@@ -224,8 +225,8 @@ function renderEarlyGems(){
   statCard('VOLUME 24 JAM',money(totalVolume),'Agregat pool yang tampil','⇅'),
   statCard('TRENDING POOL',all.filter(x=>x.is_trending).length,'Likuiditas ≥ $5K: '+liquid+' · umur ≤ 24j: '+fresh,'⌁')));
  const status=el('div',{class:'gem-status '+(health?.ok&&!feedStale?'good':health?'bad':'muted')},
-  el('b',{},health?.ok&&!feedStale?'● ON-CHAIN FEED ONLINE':health?.ok?'● FEED STALE':health?'● ON-CHAIN FEED ERROR':'● MENUNGGU SINKRONISASI'),
-  el('span',{},health?.error?'Kode: '+health.error:meta?.trending_error?'Pool baru aktif; trending feed gagal ('+meta.trending_error+').':feedStale&&meta?'Data on-chain lebih dari 30 menit; cek jadwal refresh server.':(meta?'Sumber: '+(meta.source||'CoinGecko Onchain / GeckoTerminal')+' · Jendela pool baru hingga 48 jam':'Pastikan CoinGecko Demo API key tersedia dan refresh server berhasil.')));
+  el('b',{},!enabled?'● FEED DISABLED':health?.ok&&!feedStale?'● ON-CHAIN FEED ONLINE':health?.ok?'● FEED STALE':health?'● ON-CHAIN FEED ERROR':'● MENUNGGU SINKRONISASI'),
+  el('span',{},!enabled?'EARLY_GEMS_ENABLED=0; feed on-chain dinonaktifkan.':health?.error?'Kode: '+health.error:meta?.trending_error?'Pool baru aktif; trending feed gagal ('+meta.trending_error+').':feedStale&&meta?'Data on-chain lebih dari 30 menit; cek jadwal refresh server.':(meta?'Sumber: '+(meta.source||'CoinGecko Onchain / GeckoTerminal')+' · Jendela pool baru hingga 48 jam':'Pastikan CoinGecko Demo API key tersedia dan refresh server berhasil.')));
  v.append(status);
  const controls=el('div',{class:'filter-panel gem-filters'},
   el('input',{id:'gem-q',type:'search',placeholder:'Cari token, simbol, chain, atau DEX…',value:earlyGemFilters.q}),
