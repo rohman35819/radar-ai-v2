@@ -18,7 +18,7 @@ PWA menyimpan shell halaman agar dapat dibuka kembali saat offline. Respons API 
 ## Status fitur (hanya yang diuji = tercantum)
 | Fitur | Status |
 |---|---|
-| Logika screener, FDV, filter kategori, join gecko_id, parser RSS, validasi unlock, aturan alert + cooldown, server + rate limit + path traversal, kegagalan sumber, signature Binance/Bybit, normalisasi saldo/posisi, route Exchange Hub | **Diuji otomatis** (60 test case di delapan file; exchange memakai respons API mock, belum membuktikan koneksi akun Hostless/live) |
+| Screener, on-chain pool normalization, parser RSS, alert, server, Exchange Hub dan UI | Diuji otomatis melalui `npm test`; exchange account tests memakai respons mock dan tidak membuktikan koneksi akun Hostless/live |
 | Panggilan nyata ke CoinGecko, DeFiLlama, RSS | Jalankan `npm run live-check` di mesin ber-internet (tes API nyata). Telegram: belum diuji |
 | Early Gem Scanner | Feed pool DEX baru lintas-chain dari CoinGecko Onchain / GeckoTerminal; default 3 halaman (maks. 60 pool) per refresh. Pool baru bukan bukti token baru dibuat; bukan seluruh kontrak token dan bukan audit keamanan. |
 | Lonjakan volume | Estimasi dari selisih volume 24j bergulir antar refresh (~10 mnt) vs median selisih token itu sendiri; CoinGecko gratis tidak punya volume per-10-menit asli. Butuh ~1 jam riwayat sebelum aktif |
