@@ -167,3 +167,25 @@ Draft PR #18: https://github.com/rohman35819/radar-ai-v2/pull/18 (open, draft, n
 - npm test: 68 passed, 0 failed, 0 skipped. Syntax checks and all test steps completed.
 - CI validates the code/schema contract on that commit, not a real PostgreSQL migration run, worker runtime, Hostless deployment or Live behavior.
 - PR #18 remains draft and unmerged pending Divisi 01 security review and Divisi 05 independent PostgreSQL validation.
+
+
+## 12. Kebijakan Free-First dan audit lanjutan — 22 November 2026
+
+BOS menetapkan status Hostless **existing** dan anggaran **Rp0**. Keputusan ini mengikat seluruh divisi:
+- Gunakan Hostless existing hanya jika remaining free quota dan overage guard dapat dibuktikan. Jangan asumsikan free pool tersedia.
+- GitHub Actions existing untuk CI/batch bounded, bukan worker permanen.
+- PostgreSQL gratis (contoh kandidat Neon Free) hanya untuk database disposable/integration test, bukan production.
+- Cloudflare Workers Free hanya opsi trigger stateless ringan, bukan Node long-running worker.
+- Free LLM tier hanya untuk eksperimen non-sensitif; jangan kirim private RADAR data, credentials, atau exchange payload.
+- Tidak boleh membuat resource yang dapat menimbulkan tagihan. Tidak ada paid fallback. Jika kapasitas gratis aman tidak tersedia, berhenti pada code + tests.
+- Estimasi USD 2.74/bulan pada ADR lama superseded; bukan budget yang disetujui.
+
+### Audit repository terbaru
+- main HEAD: b6c005ed4a217e8425652ecf6e26986e6cefcee2; main CI run #349 success.
+- PR #18: open/draft/not merged; branch head 80ae75a78d9204b1110e8358811d667eeff0933a.
+- PR #18 CI run #371: 68 passed, 0 failed, 0 skipped pada commit 3fa8660dbc750b1f9940c1221eb6e5ae5dabe41f; dokumen sesudahnya memajukan branch head.
+- Tidak ada bukti PostgreSQL migration test, DB adapter, queue runtime, worker deployment, atau Hostless Live.
+- Koneksi GitHub tidak dapat membaca kuota/billing Hostless. Tidak ada resource diprovision dan tidak ada biaya dikeluarkan.
+
+### Next task
+Divisi 06 mengimplementasikan adapter/queue di belakang feature flag OFF; Divisi 01 dan 05 menjalankan review security/QA secara independen. Database integration test hanya dijalankan pada PostgreSQL disposable yang terbukti gratis dan overage-safe. Worker tetap tidak boleh diaktifkan sebelum seluruh acceptance criteria PR #18 terpenuhi.
