@@ -57,6 +57,12 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const hasValidExchangeToken = (provided) => matchesToken(privateExchangeToken, provided);
   const hasValidAdminToken = (provided) => matchesToken(cfg.adminToken, provided);
   const st = state || ingest.load(cfg);
+  let storageChecked = false;
+  let storageErrorCode = null;
+  const persistState = () => {
+    try { ingest.save(cfg, st); storageChecked = true; storageErrorCode = null; }
+    catch (error) { storageChecked = true; storageErrorCode = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'STORAGE_WRITE_FAILED'; throw error; }
+  };
   let busy = null;
   let aiBusy = null;
   let aiTimer = null;
@@ -76,7 +82,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const runWorkspace = () => {
     if (workspaceBusy) return workspaceBusy;
     workspaceBusy = runWorkspaceReview(workspaceContext())
-      .then((result) => { st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result }; ingest.save(cfg, st); return result; })
+      .then((result) => { st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result }; persistState(); return result; })
       .catch((e) => { console.error('AI workspace error', String(e.message || e).slice(0, 160)); return null; })
       .finally(() => { workspaceBusy = null; });
     return workspaceBusy;
@@ -134,7 +140,10 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           });
           return;
         }
-        if (url.pathname === '/api/health') return send(res, 200, { status: 'ok' });
+        if (url.pathname === '/api/health') {
+          const storage = { status: storageErrorCode ? 'error' : storageChecked ? 'ok' : 'unchecked', code: storageErrorCode };
+          return send(res, storageErrorCode ? 503 : 200, { status: storageErrorCode ? 'degraded' : 'ok', storage }, 'application/json', { 'cache-control': 'no-store' });
+        }
         if (url.pathname === '/api/snapshot' && req.method === 'GET') {
           const age = st.lastOk ? Date.now() - Date.parse(st.lastOk) : null;
           return send(res, 200, { status: 'success', server_time: new Date().toISOString(), last_refresh: st.lastRefresh, last_ok: st.lastOk,
@@ -164,7 +173,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             if (workspaceBusy) return send(res, 409, { status: 'running', message: 'Rapat sebelumnya masih berlangsung' });
             const commandId = 'meeting-' + Date.now();
             workspaceBusy = runWorkspaceReview({ ...workspaceContext(), instruction, participants })
-              .then((result) => { result.command_id = commandId; result.instruction = instruction; st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result }; ingest.save(cfg, st); return result; })
+              .then((result) => { result.command_id = commandId; result.instruction = instruction; st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result }; persistState(); return result; })
               .catch((e) => { console.error('AI command error', String(e.message || e).slice(0, 160)); return null; })
               .finally(() => { workspaceBusy = null; });
             return send(res, 202, { status: 'started', command_id: commandId }, 'application/json', { 'cache-control': 'no-store' });
@@ -181,7 +190,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           if (!hasValidAdminToken(req.headers['x-admin-token'])) return send(res, 403, { status: 'error', message: 'Dilarang' });
           if (aiBusy) return send(res, 202, { status: 'running' });
           aiBusy = runGroup({ tokens: st.tokens, stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 })
-            .then((result) => { st.aiGroup = { ...(st.aiGroup || {}), last: result }; ingest.save(cfg, st); return result; })
+            .then((result) => { st.aiGroup = { ...(st.aiGroup || {}), last: result }; persistState(); return result; })
             .catch((e) => { console.error('AI group error', e.message); return null; })
             .finally(() => { aiBusy = null; });
           return send(res, 202, { status: 'started' }, 'application/json', { 'cache-control': 'no-store' });
@@ -227,7 +236,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
     aiBusy = runGroup({ tokens: st.tokens, stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 })
       .then((result) => {
         st.aiGroup = { ...(st.aiGroup || {}), last: result, dailyReportDate: day };
-        ingest.save(cfg, st);
+        persistState();
       })
       .catch((e) => console.error('AI daily report error', e.message))
       .finally(() => { aiBusy = null; });
@@ -240,7 +249,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
     const day = [jakarta.getFullYear(), String(jakarta.getMonth() + 1).padStart(2, '0'), String(jakarta.getDate()).padStart(2, '0')].join('-');
     if (jakarta.getHours() < workspaceHour || st.aiWorkspace?.dailyReviewDate === day || workspaceBusy) return;
     workspaceBusy = runWorkspaceReview(workspaceContext())
-      .then((result) => { st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result, dailyReviewDate: day }; ingest.save(cfg, st); })
+      .then((result) => { st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result, dailyReviewDate: day }; persistState(); })
       .catch((e) => console.error('AI daily workspace error', String(e.message || e).slice(0, 160)))
       .finally(() => { workspaceBusy = null; });
     await workspaceBusy;
