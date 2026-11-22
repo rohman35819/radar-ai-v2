@@ -1173,4 +1173,28 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - GitHub Actions #274 (SHA 2f2829d), #275 (SHA 6da9958), #277 (SHA edb1a1a), dan #278 (SHA 9e79b97) seluruhnya completed/success. Ini memverifikasi tes source, tes baru, dokumentasi README, dan master context; #278 adalah CI sukses untuk HEAD master context sebelum catatan penutupan ini.
 - HEAD branch main yang diperiksa: 9e79b97da3736eea8d58c1c6cf20220497d98ab6. Perubahan dokumentasi penutupan ini akan menghasilkan commit berikutnya.
 - Hostless Build/Live tetap belum diverifikasi. CI GitHub tidak membuktikan deployment Hostless.
+## 32. STANDAR MONITORING BINANCE DENGAN PERINGATAN IZIN TRADING — 22 NOVEMBER 2026 (ASIA/JAKARTA)
 
+### 32.1 Keputusan operasional
+- Pemilik melaporkan API Key Binance yang saat ini dipakai tidak dapat diedit. RADAR tidak memaksa perubahan izin pada key tersebut dan tidak memblokir koneksi monitoring hanya karena flag canTrade aktif.
+- Peringatan izin trading tetap terlihat dan secara eksplisit menyatakan bahwa izin pada kredensial masih berisiko. Ini bukan penetapan bahwa API Key sudah aman.
+- Batas keamanan aplikasi tidak berubah: Exchange Hub hanya melakukan pembacaan melalui request HTTP GET. Tidak ada endpoint pembuatan/pembatalan order, transfer, atau withdrawal. Kalkulator tetap simulasi.
+- Standar yang direkomendasikan tetap membuat API Key baru terpisah dengan izin baca saja dan withdrawal/trading/transfer dinonaktifkan ketika memungkinkan. Jangan meminta API Secret melalui chat.
+
+### 32.2 File dan commit
+- public/trading.js: pesan peringatan dan feedback dibuat lebih jelas; status koneksi monitoring tetap tersedia tanpa menyembunyikan risiko. Commit 2f86454ac2aadd95cc73255aa4685b87f242b36a.
+- test/exchange-ui.test.js: tambah regresi untuk memastikan peringatan tidak mengubah standar read-only dan tidak ada route order. Commit 8b42b33220096befe0582cdfabb07a57fc2ff9be.
+- README.md: dokumentasi membedakan izin kredensial dari kemampuan aplikasi; jumlah tes diperbarui menjadi 60. Commit af0d6665f77134e6717e4e71828adccbd1b670dc.
+- Tidak ada perubahan API key/secret, environment Hostless, backend signing, route, permission exchange, atau dependency.
+
+### 32.3 Verifikasi dan status
+- Test baru ditambahkan untuk status warning, pernyataan read-only, request GET, dan ketiadaan route order. Hasil CI untuk rangkaian commit ini masih menunggu pemeriksaan; jangan menyatakan 60/60 lulus sebelum run selesai.
+- Hostless Build dan SHA LIVE belum diverifikasi. Perubahan GitHub tidak membuktikan aplikasi sudah diperbarui.
+- Koneksi monitoring pada akun nyata belum diuji ulang setelah perubahan pesan UI. Peringatan tetap perlu diperhatikan karena izin trading pada key tetap aktif.
+
+### 32.4 NEXT TASK
+1. Verifikasi GitHub Actions untuk commit tes dan HEAD dokumentasi; pastikan seluruh 60 tes lulus.
+2. Setelah CI, verifikasi Hostless Build dan SHA LIVE secara terpisah.
+3. QA Exchange Hub desktop/mobile dan uji refresh akun tanpa menampilkan data privat kedaluwarsa.
+4. Lanjutkan audit DATA_DIR/EROFS berdasarkan konfigurasi volume/log Hostless, lalu QA Dashboard.
+5. Jika pemilik nanti dapat membuat API Key baru, gunakan izin baca saja; jangan meminta secret dikirim lewat chat.
