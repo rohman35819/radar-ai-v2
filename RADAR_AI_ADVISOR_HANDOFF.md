@@ -203,3 +203,10 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Durable option: attach an existing persistent volume at `/data` and set `DATA_DIR=/data`. A new volume may incur cost: Hostless free pool is shared (512 MiB persistent storage) while the minimum new disk is 1 GiB. Check the cost estimate and obtain owner approval before creating one.
 - No DATA_DIR change or volume provisioning has been executed. Wait for BOS to choose the ephemeral tradeoff or approve a durable storage plan.
 - After the owner-approved change, redeploy and run `npm run hostless-check`; expected `/api/ready` 200 and News health/source status visible.
+
+## 16. Agent Platform Phase 0 contract and Divisi 07 fixtures — 22 November 2026
+- New proposal documents: `docs/agent-platform-phase0-adr.md` and `docs/division-07-memory-record-examples.md`.
+- ADR defines task/event contracts, state transitions, division permissions, reserved approvals, transaction/lease/idempotency invariants and E2E acceptance scenarios.
+- Divisi 07 fixtures define provenance envelope, synthetic decision/task/evidence/supersession records, scope-aware retrieval tests and retention QA.
+- Documentation only; no DB schema, adapter, API, memory service, scheduler, worker or Hostless resource was activated.
+- NEXT: Direktur coordinates Divisi 06/07 to review the contracts, Divisi 01 for threat/privacy review, Divisi 05 for independent QA. Keep PR #34 draft until synchronized to current main and independently reviewed.
