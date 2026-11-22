@@ -17,7 +17,7 @@ test('Market Intelligence memakai aset eksternal dan menampilkan semua modul dat
   const html = read('../public/market.html');
   assert.match(html, /href="\/market\.css"/);
   assert.match(html, /src="\/market\.js"/);
-  for (const id of ['global-stats', 'market-summary', 'trending-list', 'market-table', 'gainers', 'losers', 'price-chart', 'sector-list', 'exchange-list', 'exchange-tickers', 'ai-market-summary']) {
+  for (const id of ['global-stats', 'market-summary', 'trending-list', 'market-table', 'gainers', 'losers', 'price-chart', 'sector-list', 'exchange-list', 'exchange-tickers', 'ai-market-summary', 'momentum-list', 'volume-activity', 'risk-list']) {
     assert.match(html, new RegExp('id="' + id + '"'));
   }
   assert.match(html, /Powered by CoinGecko/);
