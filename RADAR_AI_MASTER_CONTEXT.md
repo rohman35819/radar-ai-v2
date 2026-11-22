@@ -1807,3 +1807,14 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Raw upstream error messages and arbitrary context/discussion transcript are returned/forwarded without sanitization/redaction. Add provider error sanitization and explicit outbound field allowlist/secret redaction.
 - Tests required: custom provider not called by default, explicit opt-in, cost policy, redirects/IPv4-mapped IPv6/private host, sanitized errors, context secret redaction. No provider secrets or real API calls used in review.
 - NEXT TASK after PR #34 independent review: Divisi 04/01 rebase and remediate PR #28 cost, SSRF and secret-handling blockers; keep draft until exact-head CI and QA.
+
+## 55. PR #34 — observer-only audit boundary dan exact-head follow-up — 22 NOVEMBER 2026
+- PR #34 adalah kandidat Agent Platform schema-only terbaru; PR #18/#29/#32 ditutup sebagai superseded. Branch `feat/agent-platform-schema-hardening-v4`.
+- Exact code head sebelum test matcher correction: `c33a5efb788b7001a28a9f6eaf49f0f4f98ed3f4`. Test workflow #479 / ID `45023420021` completed/success; Security workflow #28 / ID `45023420025` completed/success.
+- PR #34 memperketat actor attribution: CI runtime role hanya SELECT registry; tidak dapat INSERT audit, UPDATE/DELETE/TRUNCATE audit, membaca/mengubah queue/dependencies, atau menjadi anggota table-owner role. Audit insert ditahan sampai trusted actor-bound writer tersedia. Owner-context trigger UPDATE/DELETE tetap diuji.
+- Trivy security job success tidak berarti dependency vulnerability coverage tersedia jika scanner tidak menemukan manifest/lockfile; pertahankan caveat berdasarkan log run.
+- Audit menemukan negative GRANT matcher di `test/agent-platform-schema.test.js` kembali double-escaped pada branch v4; diperbaiki pada commit `afd6ce5143d06ebb7076d9e0dd0d0af97e554ada`. CI exact-head setelah fix wajib diverifikasi.
+- PR #34 tetap draft dan mergeable true pada saat pemeriksaan awal. Independent Divisi 01/05 review belum tercatat. Schema-only: belum ada DB adapter, queue runtime, scheduler, worker, approval queue, kill switch atau persistent memory.
+- P2 sebelum worker: transactional claim/lease fencing, cycle-safe dependency, state transitions/deadline, idempotency/retry/dead-letter, atomic task+audit, restart recovery, trusted audit writer, monitoring/recovery.
+- Budget Rp0; Stage 0/1; default paused; tidak ada Hostless resource atau production migration.
+- NEXT TASK: verifikasi CI Test/Security exact head setelah matcher fix; Divisi 01/05 lakukan review independen; sinkronkan docs/branch dan hanya merge schema setelah sign-off. Worker tetap OFF.
