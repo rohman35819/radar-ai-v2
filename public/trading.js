@@ -115,14 +115,14 @@ function renderAccount(data){
  const futuresTradingEnabled=data.exchange==='binance'&&Boolean(account.futures?.can_trade);
  const tradingPermissionEnabled=spotTradingEnabled||futuresTradingEnabled;
  const permissionWarning=spotTradingEnabled&&futuresTradingEnabled?'izin Spot dan Futures Trading':spotTradingEnabled?'izin Spot Trading':'izin Futures Trading';
- document.getElementById('account-checked-at').textContent=(tradingPermissionEnabled?'PERINGATAN: API Key Binance memiliki '+permissionWarning+' aktif. Nonaktifkan izin trading pada pengaturan API exchange. ':'')+'Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · Data hanya dibaca dan tidak disimpan.';
+ document.getElementById('account-checked-at').textContent=(tradingPermissionEnabled?'PERINGATAN KEAMANAN: API Key Binance masih memiliki '+permissionWarning+' aktif. RADAR tetap berjalan dalam mode baca-saja dan tidak mengirim order, tetapi izin pada key tetap berisiko. ':'')+'Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · RADAR hanya membaca data; tidak ada order, transfer, atau withdrawal.';
  document.getElementById('account-checked-at').classList.toggle('account-warning',tradingPermissionEnabled||!positionsAvailable);
  accountConnected=true;
  refreshAccountButton.disabled=false;
  document.getElementById('exchange-status').textContent=tradingPermissionEnabled?'TERHUBUNG · PERIKSA IZIN API':positionsAvailable?'TERHUBUNG · READ-ONLY':'TERHUBUNG · DATA PARSIAL';
  document.getElementById('hub-status').textContent=tradingPermissionEnabled?'PERINGATAN / IZIN TRADING AKTIF':positionsAvailable?'READ-ONLY / TERHUBUNG':'READ-ONLY / DATA PARSIAL';
  document.getElementById('api-state').textContent=tradingPermissionEnabled?'Izin trading aktif':positionsAvailable?'Permintaan akun berhasil':'Sebagian data akun tidak tersedia';
- feedback.textContent=tradingPermissionEnabled?'Saldo terbaca, tetapi API Key memiliki '+permissionWarning+'. Nonaktifkan izin tersebut untuk keamanan.':positionsAvailable?'Data akun berhasil dibaca dari '+activeExchange+'. Tidak ada order yang dikirim.':'Saldo terbaca; data posisi belum lengkap.';
+ feedback.textContent=tradingPermissionEnabled?'Koneksi berhasil. RADAR tetap read-only dan tidak mengirim order. Namun '+permissionWarning+' pada API Key masih aktif; gunakan key baru read-only saat memungkinkan.':positionsAvailable?'Data akun berhasil dibaca dari '+activeExchange+'. Tidak ada order yang dikirim.':'Saldo terbaca; data posisi belum lengkap.';
 }
 async function loadExchangeStatus(){
  try{
