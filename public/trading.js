@@ -158,8 +158,8 @@ function renderAccount(data){
  document.getElementById('account-checked-at').classList.toggle('account-warning',tradingPermissionEnabled||permissionUnknown||!positionsAvailable);
  accountConnected=true;
  refreshAccountButton.disabled=false;
- document.getElementById('exchange-status').textContent=tradingPermissionEnabled?'TERHUBUNG · PERIKSA IZIN API':permissionUnknown?'TERHUBUNG · IZIN BELUM TERVERIFIKASI':positionsAvailable?'TERHUBUNG · READ-ONLY':'TERHUBUNG · DATA PARSIAL';
- document.getElementById('hub-status').textContent=tradingPermissionEnabled?'PERINGATAN / IZIN TRADING AKTIF':permissionUnknown?'READ-ONLY / IZIN BELUM TERVERIFIKASI':positionsAvailable?'READ-ONLY / TERHUBUNG':'READ-ONLY / DATA PARSIAL';
+ document.getElementById('exchange-status').textContent=tradingPermissionEnabled?'TERHUBUNG · PERIKSA PERMISSION API':permissionUnknown?'TERHUBUNG · IZIN BELUM TERVERIFIKASI':positionsAvailable?'TERHUBUNG · READ-ONLY':'TERHUBUNG · DATA PARSIAL';
+ document.getElementById('hub-status').textContent=tradingPermissionEnabled?'PERINGATAN / PERMISSION API AKTIF':permissionUnknown?'TERHUBUNG / IZIN BELUM TERVERIFIKASI':positionsAvailable?'READ-ONLY / TERHUBUNG':'READ-ONLY / DATA PARSIAL';
  document.getElementById('api-state').textContent=tradingPermissionEnabled?'Izin trading aktif':permissionUnknown?'Izin API belum terverifikasi':positionsAvailable?'Permintaan akun berhasil':'Sebagian data akun tidak tersedia';
  feedback.textContent=tradingPermissionEnabled?'Koneksi berhasil, tetapi '+permissionWarning+' perlu ditinjau di pengaturan API Key. RADAR tidak mengirim order.':permissionUnknown?'Koneksi berhasil, tetapi permission API Key belum dapat diverifikasi. Periksa izin langsung di '+activeExchange+'.':positionsAvailable?'Data akun berhasil dibaca dari '+activeExchange+'. Permission API Key sudah diperiksa; tidak ada order yang dikirim.':'Saldo terbaca; data posisi belum lengkap.';
 }
