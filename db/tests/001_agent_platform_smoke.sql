@@ -1,8 +1,17 @@
 -- Disposable PostgreSQL integration smoke test for migration 001.
 -- Runs only inside the ephemeral GitHub Actions PostgreSQL service.
+CREATE ROLE radar_agent_runtime NOLOGIN;
+GRANT USAGE ON SCHEMA radar_agent TO radar_agent_runtime;
+GRANT SELECT ON radar_agent.agent_registry,
+                radar_agent.task_queue,
+                radar_agent.task_dependencies,
+                radar_agent.audit_events TO radar_agent_runtime;
+GRANT INSERT, UPDATE ON radar_agent.task_queue TO radar_agent_runtime;
+GRANT INSERT ON radar_agent.audit_events TO radar_agent_runtime;
+
 BEGIN;
 
-DO $$
+DO $
 BEGIN
   IF to_regclass('radar_agent.agent_registry') IS NULL
      OR to_regclass('radar_agent.task_queue') IS NULL
@@ -12,15 +21,6 @@ BEGIN
   END IF;
 END;
 $$;
-
-CREATE ROLE radar_agent_runtime NOLOGIN;
-GRANT USAGE ON SCHEMA radar_agent TO radar_agent_runtime;
-GRANT SELECT ON radar_agent.agent_registry,
-                radar_agent.task_queue,
-                radar_agent.task_dependencies,
-                radar_agent.audit_events TO radar_agent_runtime;
-GRANT INSERT, UPDATE ON radar_agent.task_queue TO radar_agent_runtime;
-GRANT INSERT ON radar_agent.audit_events TO radar_agent_runtime;
 
 INSERT INTO radar_agent.agent_registry
   (agent_id, agent_key, display_name, division_code, role_title, created_by)
