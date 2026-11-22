@@ -56,6 +56,8 @@ test('Exchange Hub memakai status izin API Key khusus Binance, bukan canTrade ak
   assert.match(exchangeService, /enableSpotAndMarginTrading/);
   assert.match(exchangeService, /enableFutures/);
   assert.match(js, /account\.api_permissions/);
+  assert.ok(js.includes('binanceWithdrawalsEnabled'));
+  assert.ok(js.includes('binanceTransferEnabled'));
   assert.match(js, /permissionUnknown/);
   assert.doesNotMatch(js, /Boolean\(account\.spot\?\.can_trade\)/);
   assert.doesNotMatch(js, /Boolean\(account\.futures\?\.can_trade\)/);
