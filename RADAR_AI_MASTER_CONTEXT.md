@@ -1761,7 +1761,7 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 
 ## 52. AGENT PLATFORM P1 REMEDIATION — PR #31 DRAFT — 22 NOVEMBER 2026
 
-- PR #18 lama ditutup sebagai superseded; PR #31 feat(agents): add zero-budget Agent Platform schema foundation dibangun ulang dari main HEAD dd6c2db2cdc0c3a9c6479341209e017fb14a151d untuk mempertahankan audit findings dan issue #30.
+- PR #18 lama ditutup sebagai superseded; PR #32 feat(agents): add zero-budget Agent Platform schema foundation dibangun ulang dari main HEAD dd6c2db2cdc0c3a9c6479341209e017fb14a151d untuk mempertahankan audit findings dan issue #30.
 - P1 runtime privilege: smoke role radar_agent_runtime hanya mendapat USAGE schema, SELECT agent_registry, INSERT audit_events; tidak mendapat akses task_queue/dependencies, tidak dapat TRUNCATE audit, dan bukan anggota role pemilik. Belum ada worker/claim API.
 - P1 audit: UPDATE/DELETE diuji dua lapis—ditolak oleh privilege runtime dan ditolak oleh trigger saat dicoba sebagai table owner. TRUNCATE runtime ditolak. Kolom previous_hash/event_hash yang tidak dihitung/validasi dihapus; tidak mengklaim hash-chain/tamper-evident.
 - P1 zero-budget: daily_budget_usd wajib 0; max_concurrency wajib 1; agent default paused; autonomy stage 0–1.
@@ -1769,5 +1769,5 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - SQL smoke menguji penolakan division 09, budget >0, concurrency >1, attempts >3, attempt_count overflow, payload/audit metadata terlalu besar, task_queue privilege, audit UPDATE/DELETE/TRUNCATE dan owner membership.
 - P2 worker semantics tetap deferred: legal status transitions, deadline enforcement at claim, dependency completion/cycle prevention, atomic claim/lease fencing, double-claim, stale lease, idempotency race, retry/dead-letter, task+audit rollback, restart recovery. Tidak ada worker runtime; tidak boleh mengklaim otonomi background.
 - P2 approval queue, kill switch, persistent memory provenance/retention, and Hostless runtime remain unimplemented. Infrastructure stays Rp0; PostgreSQL 16 only in disposable GitHub Actions.
-- README test inventory: 94 tests / 11 files. PR #31 CI exact-head pending; independent Divisi 01/05 review required. Issue #30 remains open until reviewer confirms P1 closure and P2 runtime gates are explicitly deferred.
+- README test inventory: 94 tests / 11 files. PR #32 CI run #458 (45023021852) pada exact head af2cc8c88a1710c1b874f31584e20546636d8e77 completed/success: 94/94 tests, PostgreSQL migration dan least-privilege smoke success. Security workflow run #22 juga success. Independent Divisi 01/05 review required. Issue #30 remains open until reviewer confirms P1 closure and P2 runtime gates are explicitly deferred.
 - NEXT TASK tunggal: QA Gate 05 verify PostgreSQL integration and test count; Divisi 01 review runtime-role and audit boundaries. Merge only schema foundation after independent review; worker remains OFF.
