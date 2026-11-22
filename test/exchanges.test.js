@@ -133,6 +133,7 @@ test('Bybit signs V5 requests and returns wallet and open positions', async () =
   const result = await service.account('bybit');
   assert.equal(result.account.wallet.total_equity, 120);
   assert.equal(result.account.wallet.coins[0].asset, 'USDT');
+  assert.equal(result.account.wallet.coins[0].withdrawable_balance, 90);
   assert.equal(result.account.identity.account_id, '12345678');
   assert.equal(result.account.identity.display_name, 'Akun Bybit · UID 12345678');
   assert.equal(result.account.api_permissions.available, true);
@@ -309,4 +310,17 @@ test('Binance exposes withdrawal and transfer API key permissions independently 
   assert.equal(result.account.api_permissions.futures_trading, false);
   assert.equal(result.account.api_permissions.withdrawals, true);
   assert.equal(result.account.api_permissions.internal_transfer, true);
+});
+
+
+test('Bybit never substitutes availableToBorrow for a missing withdrawable balance', async () => {
+  const service = createExchangeService({ env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' }, fetchImpl: async (url) => {
+    const pathname = new URL(url).pathname;
+    if (pathname === '/v5/account/wallet-balance') return response({ retCode: 0, result: { list: [{ accountType: 'UNIFIED', coin: [{ coin: 'USDT', walletBalance: '10', equity: '10', availableToBorrow: '999' }] }] } });
+    if (pathname === '/v5/position/list') return response({ retCode: 0, result: { list: [] } });
+    if (pathname === '/v5/user/query-api') return response({ retCode: 0, result: { userID: 1, readOnly: 1, permissions: { Spot: [], ContractTrade: [], Wallet: [] } } });
+    throw new Error('unexpected endpoint');
+  } });
+  const result = await service.account('bybit');
+  assert.equal(result.account.wallet.coins[0].withdrawable_balance, null);
 });
