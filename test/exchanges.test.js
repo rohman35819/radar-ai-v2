@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const crypto = require('crypto');
 const { createExchangeService, ExchangeError } = require('../lib/exchanges');
 
-const response = (body, ok = true, status = 200) => ({ ok, status, json: async () => body });
+const response = (body, ok = true, status = 200, headers = {}) => ({ ok, status, headers: { get: (name) => headers[String(name).toLowerCase()] || null }, json: async () => body });
 
 test('status hanya mengungkap keberadaan konfigurasi, bukan nilai kredensial', () => {
   const service = createExchangeService({ env: { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' }, fetchImpl: async () => response({}) });
@@ -323,4 +323,47 @@ test('Bybit never substitutes availableToBorrow for a missing withdrawable balan
   } });
   const result = await service.account('bybit');
   assert.equal(result.account.wallet.coins[0].withdrawable_balance, null);
+});
+
+
+test('HTTP 429 exposes rate-limit status and Retry-After without retrying', async () => {
+  const service = createExchangeService({ env: {}, fetchImpl: async () => response({}, false, 429, { 'retry-after': '12' }) });
+  await assert.rejects(service.market('binance', 'BTCUSDT'), (error) =>
+    error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429 && error.retryAfterSeconds === 12);
+});
+
+test('Binance -1003 API response is normalized as rate-limited', async () => {
+  const service = createExchangeService({
+    env: { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' },
+    fetchImpl: async () => response({ code: -1003, msg: 'Too many requests' }),
+  });
+  await assert.rejects(service.account('binance'), (error) => error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429);
+});
+
+test('Bybit retCode 10006 is normalized as rate-limited', async () => {
+  const service = createExchangeService({
+    env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' },
+    fetchImpl: async () => response({ retCode: 10006, retMsg: 'Too many visits!' }),
+  });
+  await assert.rejects(service.account('bybit'), (error) => error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429);
+});
+
+test('private Exchange Hub forwards safe Retry-After for rate-limited exchange responses', async () => {
+  const { createApp } = require('../server');
+  const state = { tokens: [], fundamentals: {}, vol10m: {}, health: {}, news: [], unlocks: [], alerts: [], lastOk: null, lastRefresh: null };
+  const service = {
+    status: () => ({ binance: { configured: true, mode: 'read-only' } }),
+    account: async () => { throw new ExchangeError('EXCHANGE_RATE_LIMITED', 429, 15); },
+    market: async () => ({}),
+  };
+  const app = createApp({ state, exchangeService: service, exchangeAccessToken: 'owner-session-test-token' });
+  await new Promise((resolve) => app.server.listen(0, resolve));
+  try {
+    const base = 'http://127.0.0.1:' + app.server.address().port;
+    const result = await fetch(base + '/api/exchanges/binance/account', { headers: { 'x-exchange-access-token': 'owner-session-test-token' } });
+    const body = await result.json();
+    assert.equal(result.status, 429);
+    assert.equal(result.headers.get('retry-after'), '15');
+    assert.equal(body.code, 'EXCHANGE_RATE_LIMITED');
+  } finally { app.stop(); }
 });
