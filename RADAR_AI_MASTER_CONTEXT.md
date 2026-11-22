@@ -1198,3 +1198,7 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 3. QA Exchange Hub desktop/mobile dan uji refresh akun tanpa menampilkan data privat kedaluwarsa.
 4. Lanjutkan audit DATA_DIR/EROFS berdasarkan konfigurasi volume/log Hostless, lalu QA Dashboard.
 5. Jika pemilik nanti dapat membuat API Key baru, gunakan izin baca saja; jangan meminta secret dikirim lewat chat.
+### 32.5 Koreksi regresi tes dan status CI
+- Run awal #44991867504 dan #44991871567 gagal karena assertion tes memeriksa method GET pada frontend, padahal method request didefinisikan di lib/exchanges.js. Implementasi aplikasi tidak gagal; tes diarahkan ke modul backend yang benar.
+- test/exchange-ui.test.js diperbaiki untuk memastikan request exchange memakai GET dan tidak menggunakan POST/PUT/PATCH/DELETE. Commit koreksi: 9b95b257660793aa5a1f8803476e1ac44244ac0b.
+- GitHub Actions run #44991933604 untuk commit koreksi sedang berjalan pada saat catatan ini diperbarui. Status 60/60 belum boleh diklaim sampai run selesai.
