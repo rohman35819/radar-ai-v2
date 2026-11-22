@@ -173,9 +173,17 @@ Snapshot yang diverifikasi pada 22 November 2026:
 
 ## 16. Agent Platform — trusted audit writer boundary (22 November 2026)
 
-- PR #18, #29, #32 were closed as superseded; PR #33 is the current schema-only hardening branch based on main 6b30a57a630d830ba84fba76410696cd616a60a9.
+- PR #18, #29, #32 were closed as superseded; PR #34 is the current schema-only hardening branch based on main 6b30a57a630d830ba84fba76410696cd616a60a9.
 - Runtime role is observer-only: SELECT registry, no task queue/dependency access, no audit INSERT/UPDATE/DELETE/TRUNCATE, no owner membership. This prevents untrusted worker actor spoofing until a trusted SECURITY DEFINER audit writer is designed.
 - Owner-context audit trigger still rejects UPDATE/DELETE. No hash-chain is claimed.
 - Rp0, concurrency=1, divisions 01–08, max attempts=3, bounded payloads. PostgreSQL 16 tests are ephemeral CI only.
 - P2 worker queue semantics, approval queue, kill switch, memory provenance/retention and Hostless deployment remain unimplemented. No worker runtime is active.
-- PR #33 remains draft pending exact-head CI and independent Divisi 01/05 review. Issue #30 stays open.
+- PR #34 remains draft; CI run #471 passed 94/94 + PostgreSQL smoke and security run #26 passed. Independent Divisi 01/05 review is still pending. Issue #30 stays open.
+
+## 17. AI Workspace provider registry review — PR #28 (22 November 2026)
+
+- PR #28 remains draft and stale-base; static review comment #6012276684 lists cost/SSRF/privacy blockers.
+- Custom providers auto-join by default, risking unapproved paid calls; require explicit participant opt-in and zero-cost/approved cost policy.
+- Custom base URL fetch follows redirects while carrying bearer authorization; reject redirects, normalize/validate URL and IP forms, and address DNS rebinding.
+- Sanitize raw upstream provider errors and redact/allowlist context before forwarding to external providers.
+- Require tests for opt-in, free-cost guard, redirects/private IPv6, error redaction, and secret-bearing context. No credentials or real provider API calls used.
