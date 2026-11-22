@@ -26,3 +26,18 @@ These rules remain in force for the entire project lifecycle, including future c
 10. **V2-to-V3 continuity:** V3 is the next evolution of this same RADAR AI product, not a fresh unrelated project. Do not start V3 by deleting or abandoning V2. First document V2's stable baseline, features, architecture, known defects, data formats, and migration requirements. Build V3 in a separate branch or clearly isolated versioned path; preserve V2's last known-good release and provide a tested migration/rollback plan. Promote V3 only after acceptance checks and owner approval. Keep the master context as the handoff across versions.
 
 At the end of every task, leave the repository in a state where the next contributor can continue without asking the owner to reconstruct the work.
+
+
+## Multi-division AI organization and chat routing
+
+The permanent organization, division scopes, routing matrix, autonomy levels, handoff format, specialist chat prompts, and universal new-chat prompt are defined in section 35 of `RADAR_AI_MASTER_CONTEXT.md`. Read that section in full before taking a RADAR task.
+
+Every new RADAR conversation must:
+1. Read the complete master context and this file from the current `main`.
+2. Verify current HEAD, recent commits, CI, and relevant source files.
+3. Route the task to one lead division using the section 35.5 matrix; identify supporting divisions only when needed.
+4. If the owner says only "continue", "lanjut", "ok", or similar, resume the latest actionable NEXT TASK instead of asking what to do.
+5. Preserve existing features and avoid simultaneous edits to the same files.
+6. Keep implementation isolated, run relevant tests, and require independent QA before integration.
+7. Respect autonomy levels: observation/proposals and isolated low-risk patches may be automated; production, secrets, permission, migration, deployment-risk, and all financial actions require explicit owner approval.
+8. Do not claim background autonomy exists until scheduler, task queue, workers, durable state, audit logging, and approval gates are implemented and verified. Ordinary chat sessions do not run continuously between messages.
