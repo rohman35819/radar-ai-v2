@@ -1428,7 +1428,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 ### 36.1 Temuan dan perubahan
 - Audit aktual mengonfirmasi `lib/ingest.js` sudah mempertahankan state lama saat atomic rename gagal, menghapus file sementara, dan melempar error `EROFS`; `load()` juga hanya menganggap `ENOENT` sebagai instalasi baru. Jangan menambahkan fallback ke filesystem ephemeral.
 - Celah reliability yang masih ada: `server.js` menangkap kegagalan refresh untuk menjaga proses tetap hidup, tetapi `GET /api/health` selalu menjawab sehat. Hostless/orchestrator tidak dapat membedakan server yang hidup tetapi gagal menyimpan state.
-- Perubahan: health endpoint kini melaporkan storage `unchecked` sebelum persistensi pertama, `ok` setelah save berhasil, dan `error` dengan kode filesystem saja setelah save gagal. Kegagalan storage menghasilkan HTTP 503 dan status `degraded`; pemulihan save berikutnya mengembalikan HTTP 200. Tidak ada path file, isi state, atau kredensial yang diekspos.
+- Perubahan: health endpoint kini melaporkan storage `unchecked` sebelum persistensi pertama, `ok` setelah save berhasil, dan `error` dengan kode filesystem saja setelah save gagal. `/api/health` tetap menjadi liveness check HTTP 200 agar platform tidak me-restart proses yang masih hidup; `/api/ready` menjadi readiness check yang mengembalikan HTTP 503/status `degraded` saat persistensi gagal. Pemulihan save berikutnya mengembalikan readiness HTTP 200. Tidak ada path file, isi state, atau kredensial yang diekspos.
 - Divisi lead: 01 Security & Reliability. Divisi pendukung: 05 QA, Testing & DevOps untuk validasi CI; tidak ada perubahan kontrak data dashboard selain detail health internal.
 
 ### 36.2 File dan pengujian
@@ -1445,6 +1445,6 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 
 ### 36.4 NEXT TASK
 1. Jalankan dan periksa GitHub Actions untuk patch health-storage; jangan integrasikan jika gagal.
-2. Verifikasi Hostless menggunakan `GET /api/health`: storage harus berubah dari `unchecked` menjadi `ok` setelah refresh/persistensi; bila `degraded`/503, periksa mount DATA_DIR dan log runtime Hostless.
+2. Verifikasi Hostless: `GET /api/health` harus tetap menunjukkan liveness; `GET /api/ready` harus berubah menjadi `ready` setelah persistensi berhasil dan `degraded`/503 saat write gagal. Bila storage gagal, periksa mount DATA_DIR dan log runtime Hostless.
 3. Minta Divisi 05 melakukan review independen pada semantik health check dan readiness sebelum perubahan dipromosikan ke main.
 4. Lanjutkan audit DATA_DIR volume Hostless berdasarkan konfigurasi/log aktual; jangan menebak lokasi mount.
