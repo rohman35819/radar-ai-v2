@@ -29,6 +29,7 @@ test('market intelligence fetches six CoinGecko datasets with server-side demo h
   assert.equal(calls.length, 6);
   assert.ok(calls.every((call) => call.options.headers['x-cg-demo-api-key'] === 'test-secret'));
   assert.ok(calls.every((call) => !call.url.includes('test-secret')));
+  assert.equal(JSON.stringify(result).includes('test-secret'), false);
 });
 
 test('market intelligence caches datasets and avoids duplicate upstream requests', async () => {
@@ -36,7 +37,7 @@ test('market intelligence caches datasets and avoids duplicate upstream requests
   const service = createMarketIntelligenceService({
     fetchImpl: async (url) => {
       calls += 1;
-      if (url.includes('/global?')) return response({ data: {} });
+      if (url.includes('/global')) return response({ data: {} });
       if (url.includes('/coins/markets?vs_currency=usd')) return response([]);
       if (url.includes('/coins/markets?vs_currency=idr')) return response([]);
       if (url.includes('/search/trending')) return response({ coins: [] });
@@ -57,7 +58,7 @@ test('market intelligence preserves stale cache and reports partial upstream fai
   const service = createMarketIntelligenceService({
     now: () => clock,
     fetchImpl: async (url) => {
-      if (url.includes('/global?')) {
+      if (url.includes('/global')) {
         if (fail) return response({}, 429);
         return response({ data: { market_cap_change_percentage_24h_usd: 1 } });
       }
