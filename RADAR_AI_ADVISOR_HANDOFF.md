@@ -154,8 +154,8 @@ Snapshot yang diverifikasi pada 22 November 2026:
 ## 14. Handoff Agent Platform — schema-only hardening (22 November 2026)
 
 - Current owner-approved infrastructure budget is Rp0. Do not provision Hostless worker/database, Neon, Redis, or other external resources unless no-cost allowance and no-overage protection are evidenced and BOS approves.
-- New branch feat/agent-platform-schema-hardening-v2 ports PR #18's schema foundation onto current main while correcting division 01–08, zero budget, single concurrency, max attempts 3, bounded payloads, and least-privilege smoke role.
+- Draft PR #29 (head b260f36d27e6b13b423f2315243adbf89302b84d5) ports PR #18's schema foundation onto current main while correcting division 01–08, zero budget, single concurrency, max attempts 3, bounded payloads, and least-privilege smoke role. Old PR #18 is closed as superseded.
 - Runtime role used in CI can SELECT registry and INSERT audit only; it cannot read or modify task_queue. This is intentionally not a functioning worker role.
 - PostgreSQL migration and smoke tests execute only in ephemeral GitHub Actions PostgreSQL 16. No production DB or Hostless resource has been created.
 - No DB adapter, queue claim API, scheduler, orchestrator, worker process, approval queue, kill switch, or persistent memory is active. Never describe the platform as autonomous/background-operational.
-- NEXT: complete exact-head PostgreSQL CI and independent Divisi 01/05 review; only then integrate schema foundation. Keep worker/runtime behind disabled feature flag and zero-budget gates.
+- CI push run #447 passed 93/93 plus PostgreSQL migration and least-privilege smoke. PR #29 remains draft pending independent Divisi 01/05 review; merge only the schema foundation. Keep worker/runtime OFF behind zero-budget gates.
