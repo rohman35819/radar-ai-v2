@@ -1800,3 +1800,17 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Never store secrets, auth material, raw exchange payloads or unrelated sensitive personal data. Retention classes in the document are proposals pending Divisi 01/BOS approval.
 - PR #34 remains current schema-only candidate; independent Divisi 01/05 reviews pending. No memory tables, DB adapter, worker, scheduler or persistent memory runtime exists.
 - Budget Rp0; no external infrastructure provisioned. NEXT TASK: Divisi 07 review taxonomy and sample records with Divisi 01 privacy/access review and Divisi 05 QA; implementation waits for accepted schema and no-cost capacity.
+
+
+---
+
+## 58. EXTENSIBLE AI PROVIDER REGISTRY — SECURE INTEGRATION CANDIDATE — 22 NOVEMBER 2026
+- BOS requested that additional AI providers can join RADAR AI without a fixed provider-name roster. A new hardening branch `feat/ai-provider-registry-secure` builds on the previous PR #28 proposal while reconciling current main.
+- Adds environment-discovered provider IDs, an authenticated provider metadata endpoint, and dynamic Command Center participant loading. Server validates selected IDs against configured providers; API keys are never returned to the browser.
+- Custom providers require ENABLED=1, a verified COST_CLASS=free under current Rp0, model, HTTPS base URL and OpenAI-compatible protocol. They are never auto-selected in background/default sessions; explicit participant selection is required. Paid custom providers require the separate AI_WORKSPACE_ALLOW_PAID=1 policy gate, which must remain 0 under the current Rp0 ceiling.
+- Paid OpenAI built-in is not included by default; paid gate is explicit. Gemini/Groq/OpenRouter free-tier behavior still depends on provider quota/overage; no free quota is guaranteed by this code.
+- Security hardening: redirect:error, HTTPS-only URL validation, no userinfo/query/fragment/non-443 ports/IP literals/local hostnames, sanitized upstream errors, outbound context allowlist, secret/JWT redaction, authenticated provider metadata endpoint.
+- Compatibility boundary: first adapter supports OpenAI-compatible chat-completions; native protocols require a dedicated adapter. This is not a fixed brand roster.
+- Added tests for explicit opt-in, cost gate, dynamic UI/API, URL validation, redirects, redaction and error sanitization. README test inventory updated to 95 tests / 10 files.
+- No provider secrets added to Hostless; no real provider API calls; no deployment. Branch/PR pending exact-head CI and Divisi 01/04/05 review. Hostless Live remains unverified.
+- NEXT TASK: exact-head CI, security review for SSRF/cost/privacy, QA for provider selection and regression. Do not merge until these gates pass; keep AI outputs proposal-only and Rp0.
