@@ -42,6 +42,7 @@ test('onchain: normalisasi pool menyertakan chain, alamat, umur, volume dan flag
   assert.equal(rows[0].liquidity_usd, 25000);
   assert.equal(rows[0].volume_24h_usd, 12000);
   assert.equal(rows[0].age_hours, 2);
+  assert.equal(rows[0].price_change_24h_pct, 12.5);
   assert.equal(rows[0].discovery_label, 'NEW POOL');
   assert.ok(rows[0].risk_flags.includes('market_cap_unverified'));
   assert.match(rows[0].pool_url, /^https:\/\/www\.geckoterminal\.com\/solana\/pools\//);
@@ -58,6 +59,7 @@ test('onchain: data hilang tidak dipalsukan menjadi nol dan duplikat dihapus', (
   assert.equal(rows[0].volume_24h_usd, null);
   assert.ok(rows[0].risk_flags.includes('liquidity_unknown'));
   assert.ok(rows[0].risk_flags.includes('volume_unknown'));
+  assert.equal(rows[0].price_change_24h_pct, 12.5);
 });
 
 test('onchain: invalid payload ditolak', () => {
