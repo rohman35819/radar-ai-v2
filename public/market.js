@@ -170,11 +170,12 @@ async function loadExchangeTickers() {
       body.append(tr);
     });
     if (!tickers.length) { const tr = node('tr'); const td = node('td', 'muted', 'Tidak ada pair tersedia.'); td.colSpan = 6; tr.append(td); body.append(tr); }
-    $('#exchange-ticker-status').textContent = tickers.length + ' pair ditampilkan · diperbarui ' + new Date(result.updated_at).toLocaleString('id-ID');
+    $('#exchange-ticker-status').textContent = tickers.length + ' pair ditampilkan · diperbarui ' + new Date(result.updated_at).toLocaleString('id-ID') + (result.stale ? ' · DATA CACHE LAMA' : '');
     $('#exchange-select').dataset.loaded = id;
   } catch (error) {
     body.replaceChildren(); const tr = node('tr'); const td = node('td', 'negative', safeText(error.message)); td.colSpan = 6; tr.append(td); body.append(tr);
     $('#exchange-ticker-status').textContent = 'Data pair belum tersedia; periksa kuota dan akses CoinGecko.';
+    $('#exchange-select').dataset.loaded = id;
   }
 }
 function renderSummary() {
@@ -254,6 +255,7 @@ async function loadChart() {
     if (!response.ok || result.status !== 'success') throw new Error(result.message || result.code || 'Chart unavailable');
     const metric = $('#chart-metric').value || 'prices';
     drawChart(result.data?.[metric] || []);
+    if (result.stale) $('#chart-meta').textContent += ' · DATA CACHE LAMA';
   } catch (error) {
     $('#price-chart').replaceChildren(node('div', 'negative', 'Grafik tidak tersedia: ' + safeText(error.message)));
   } finally { chartBusy = false; }
