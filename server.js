@@ -47,14 +47,18 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
+function readGithubAppSettings(env = process.env) {
+  return {
+    appId: env.GITHUB_APP_ID,
+    privateKey: env.GITHUB_APP_PRIVATE_KEY || env.GITHUB_PRIVATE_KEY,
+    installationId: env.GITHUB_APP_INSTALLATION_ID || env.GITHUB_INSTALLATION_ID,
+    repository: env.GITHUB_REPOSITORY || 'rohman35819/radar-ai-v2'
+  };
+}
+
 function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, githubAppClient, githubAgentRunner } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
-  const githubAppSettings = {
-    appId: process.env.GITHUB_APP_ID,
-    privateKey: process.env.GITHUB_APP_PRIVATE_KEY || process.env.GITHUB_PRIVATE_KEY,
-    installationId: process.env.GITHUB_APP_INSTALLATION_ID || process.env.GITHUB_INSTALLATION_ID,
-    repository: process.env.GITHUB_REPOSITORY || 'rohman35819/radar-ai-v2'
-  };
+  const githubAppSettings = readGithubAppSettings();
   const githubAppConfigured = Boolean(githubAppSettings.appId && githubAppSettings.privateKey && githubAppSettings.installationId && githubAppSettings.repository);
   let githubClient = githubAppClient || null;
   if (!githubClient && githubAppConfigured) {
@@ -356,4 +360,4 @@ if (require.main === module) {
   app.start().listen(cfg.port, () => console.log(`RADAR AI V2 di port ${cfg.port}`));
   process.on('SIGTERM', () => { app.stop(); process.exit(0); });
 }
-module.exports = { createApp, resolveClientIp, createRateLimiter };
+module.exports = { createApp, resolveClientIp, createRateLimiter, readGithubAppSettings };
