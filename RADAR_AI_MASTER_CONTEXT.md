@@ -1584,10 +1584,11 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Temuan UI: parser RSS mengirim field `summary`, sedangkan `public/app.js` hanya membaca `description`, sehingga ringkasan artikel tidak tampil.
 - Perbaikan pada branch `fix/news-feed-defaults-and-rendering`: fallback dua feed saat `NEWS_FEEDS` tidak diset/kosong; UI membaca `summary` dengan fallback kompatibilitas ke `description`; menambahkan `test/news.test.js` untuk fallback feed, override konfigurasi, RSS, dan Atom.
 - Commit branch: `e7cdc001694130452284493a0f3350de96ca1f7d` (backend), `936bc24f911e234b101a513a6d87e096741ace2c` (UI), `d1bfd391d5f2e29eeeaca1e13998331dc267b236` (tes awal), `da6401c528727fccca889148d070bdeb34c7223f` (koreksi hari pada fixture tes). HEAD branch saat pembaruan ini: `da6401c528727fccca889148d070bdeb34c7223f`.
-- Status tes: GitHub Actions workflow `RADAR AI tests` run `45019762920` (#409) selesai dengan conclusion `success`; job `test` dan langkah `npm test` sukses pada HEAD `cb3f09515ec01782899837300e25ff793c375775`. Ini adalah bukti CI untuk kode sebelum pembaruan dokumentasi status ini; perubahan dokumentasi berikutnya tidak mengubah kode aplikasi.
-- Status deployment: belum di-merge dan belum diverifikasi di Hostless. Live News tetap belum dinyatakan pulih sampai deployment dan permintaan RSS nyata berhasil diperiksa.
+- Status tes PR: GitHub Actions run #410 (45019799881) pada HEAD 8ad10d71b794c50c892aeee92ca52e9e443d13fd completed/success. Setelah merge, main run #411 (45020499626) pada merge commit 66eff5667715fd3138336bc3f2e6a5172ba1b5cf completed/success; log mengonfirmasi 67 tests, 67 pass, 0 fail, 0 skipped. Actions menggunakan checkout@v7 dan setup-node@v7. Ini bukti CI GitHub, bukan tes lokal.
+- Integrasi: PR #22 telah di-squash merge ke main pada 22 November 2026, merge commit 66eff5667715fd3138336bc3f2e6a5172ba1b5cf. HEAD PR yang diuji 8ad10d71b794c50c892aeee92ca52e9e443d13fd.
 - Risiko tersisa: feed eksternal dapat mengubah format, membatasi request, atau tidak dapat dijangkau dari region/runtime Hostless. Fallback menghilangkan kegagalan konfigurasi kosong, tetapi tidak menjamin ketersediaan upstream. Periksa `health.news` dan log setelah deploy.
-- NEXT TASK: minta review independen Divisi 05; setelah persetujuan BOS, merge/deploy; verifikasi `/api/snapshot` berisi berita dan `health.news.ok=true` di live.
+- QA: review source dan hasil CI diperiksa oleh Executive Office. GitHub menolak event APPROVE karena pemanggil adalah author PR sendiri; merge dilakukan setelah status CI sukses dan mergeability clean. Tidak ada klaim browser/production QA.
+- NEXT TASK: verifikasi Hostless deployment dan endpoint /api/snapshot serta health.news.ok=true; kemudian Divisi 02 mengambil perbaikan Screener sebagai task integrasi berikutnya. Jangan menyatakan News pulih di LIVE sebelum pemeriksaan runtime.
 
 
 ## 41. NEWS FEED FIX MERGED — 22 NOVEMBER 2026
@@ -1601,3 +1602,39 @@ Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, 
 - Verifikasi live: belum dapat dilakukan dari sesi ini; akses langsung ke `https://radar-ai-v2.hostless.app/api/snapshot` dan halaman root gagal melalui pemeriksa eksternal. Jangan klaim Hostless telah selesai deploy atau News live pulih. GitHub merge tidak sama dengan bukti deployment.
 - Risiko tersisa: dua feed upstream dapat rate-limit/berubah format atau tidak dapat dijangkau dari Hostless; feed default belum diverifikasi dengan request runtime live.
 - NEXT TASK: periksa Hostless deployment terbaru untuk merge commit, lalu jalankan `npm run live-check` atau validasi `/api/snapshot`; pastikan `health.news.ok=true` dan item berita berisi title/link/summary. Jika Hostless tidak auto-deploy, lakukan deployment melalui dashboard sesuai prosedur project dan verifikasi build/log. Jangan mengubah konfigurasi berbayar; kebijakan biaya tetap Rp0.
+
+
+## 41. STANDAR EKSEKUSI SATU PRIORITAS — SATU DELIVERY (22 NOVEMBER 2026)
+
+### 41.1 Berlaku untuk seluruh divisi
+- Setiap siklus hanya memiliki satu task implementasi utama dengan satu lead division; supporting divisions diberi scope review yang spesifik. Tidak ada dua task yang mengedit file sama secara paralel.
+- Prioritas pertama adalah bug/regresi yang menghambat penggunaan. Fitur baru, ekspansi agent, dan refactor ditahan bila ada bug P1/P2 yang belum selesai.
+- Setiap task wajib memiliki gejala/temuan, root cause yang dibuktikan, file scope, acceptance criteria, tes yang dijalankan, diff/commit, status CI, status Hostless Build, status LIVE, blocker, dan NEXT TASK.
+- Task tidak dianggap selesai karena review, komentar, atau rencana. Selesai ketika patch teruji, CI diverifikasi, dokumentasi disinkronkan, dan deployment/live diverifikasi bila akses tersedia. Jika akses eksternal tidak tersedia, tandai repository-complete / deployment-unverified.
+- PR lama tidak boleh digabung hanya karena pernah lulus CI: periksa HEAD, base SHA, konflik, status Actions terkini, dan diff terhadap main terbaru. Update/rebase branch sebelum merge; jangan force-push atau menimpa pekerjaan pemilik.
+- PR duplikat/superseded ditutup dengan alasan dan tautan pengganti; draft tetap draft sampai acceptance criteria terpenuhi.
+- Setiap divisi melaporkan blocker yang dapat ditindaklanjuti dan satu NEXT TASK, bukan daftar status tanpa pemilik.
+
+### 41.2 Hasil delivery pertama — News Feed
+- Divisi lead: 04 AI Intelligence & Research (News) dengan QA Gate 05.
+- PR #22 fix(news): restore default RSS feed and article summaries merged; merge commit 66eff5667715fd3138336bc3f2e6a5172ba1b5cf.
+- Root cause: NEWS_FEEDS kosong tidak memakai default backend; renderer tidak membaca field summary.
+- File: lib/ingest.js, public/app.js, test/news.test.js, RADAR_AI_MASTER_CONTEXT.md.
+- CI PR #410 success; main #411 success; npm test 67/67.
+- Hostless Build dan LIVE belum diverifikasi. News fix tersedia di main, belum boleh disebut pulih di production.
+
+### 41.3 Backlog terurut lintas divisi setelah News
+1. Divisi 02 — UI/UX: PR #14 Screener mount/render + Membership hidden-field. Latest head b408bcbd64efc059ac9da5c3a9eccd85fd9b98b5; CI run #340 success (66 tests pada snapshot PR). Base PR masih tertinggal dari main; update/rebase dan rerun CI sebelum merge. Browser/Hostless QA tetap diperlukan.
+2. Divisi 01 — Security & Reliability: PR #12 storage readiness /api/ready dan sanitasi error EROFS. Latest head 881434f5d8b50a72ec8d596adc4e76180102198a; CI run #304 success. Base lama; update/rebase, review ulang health/readiness semantik, lalu rerun CI. DATA_DIR/volume Hostless masih butuh log dan konfigurasi aktual.
+3. Divisi 03 — Exchange: PR #17 Bybit identity/permission. Latest head 576856a85d477fac5b31912858704ddddc5573f0; CI run #369 success. Rebase/update, cek diff keamanan, uji hanya read-only, dan pastikan tidak ada withdrawal/trading.
+4. Divisi 04 — AI Intelligence: PR #16 moderator fallback Groq/OpenRouter dan fail-safe WAIT. Latest head b74e677298470b973d5528fe07f48cabb42c1d13; CI run #334 success. Rebase/update dan verifikasi fail-safe serta biaya/kuota sebelum merge.
+5. Divisi 08 — Procurement/Security support: PR #21 Gitleaks, Trivy, Dependabot. Latest head 017d475b255ab2427d158274005d573d67da70ed; workflow test run #403 success; scanner workflow run #2 failure pada snapshot yang sama. Tetap draft sampai failure scanner ditelusuri, false positive/permissions/kuota diverifikasi, dan rerun sukses.
+6. Divisi 06 — Agent Platform (proposal/pilot): PR #18 registry/task queue/audit schema. Latest head 18c37f63cb9b5176a724d2c43b1eb1b8ee33b5d5; CI run #392 success. Tetap draft; audit persistence, schema, permission boundaries, retention, dan larangan klaim worker background sebelum pilot.
+7. Divisi 05 — QA/DevOps: PR #6 live deployment/visual verification remains draft; update workflow to current Actions versions, pin browser test dependencies, and make smoke test validate deployed SHA. Hostless access is a separate blocker.
+8. Exchange legacy: PR #7 Trading Terminal foundation remains draft/hold because current Exchange Hub /trading.html supersedes the legacy scope. Close as superseded only after confirming no unique needed change remains.
+
+### 41.4 Operasional dan status saat catatan ini dibuat
+- Main HEAD setelah News merge: 66eff5667715fd3138336bc3f2e6a5172ba1b5cf; GitHub Actions main run #411 completed/success; 67/67 tests.
+- Tidak ada Hostless connector/log/deployment SHA yang tersedia; Build/LIVE = NOT VERIFIED.
+- Tidak ada worker runtime teruji yang berjalan di background. Divisi 06/07 tetap tahap desain/draft.
+- NEXT TASK tunggal: Divisi 02 memperbarui PR #14 terhadap main terbaru, menjalankan ulang CI, dan menutup regression Screener. Setelah selesai, lanjutkan PR #12; jangan mengerjakan implementasi domain paralel.
