@@ -1421,3 +1421,30 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 4. Implementasikan fondasi organisasi terlebih dahulu dalam mode observe/propose; jangan langsung memberi worker hak merge/deploy.
 5. Setelah audit DATA_DIR/EROFS dan QA prioritas saat ini, mulai pilot satu worker dengan ruang lingkup kecil, lalu ukur sebelum memperluas ke lima divisi.
 6. Tetap lanjutkan roadmap yang sudah berjalan: Hostless verification bila akses tersedia, audit DATA_DIR/EROFS, QA Exchange Hub, dan QA Dashboard. Organisasi baru tidak boleh menjadi alasan menunda bug/stabilitas yang sudah tercatat.
+
+
+## 36. STORAGE HEALTH OBSERVABILITY — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 36.1 Temuan dan perubahan
+- Audit aktual mengonfirmasi `lib/ingest.js` sudah mempertahankan state lama saat atomic rename gagal, menghapus file sementara, dan melempar error `EROFS`; `load()` juga hanya menganggap `ENOENT` sebagai instalasi baru. Jangan menambahkan fallback ke filesystem ephemeral.
+- Celah reliability yang masih ada: `server.js` menangkap kegagalan refresh untuk menjaga proses tetap hidup, tetapi `GET /api/health` selalu menjawab sehat. Hostless/orchestrator tidak dapat membedakan server yang hidup tetapi gagal menyimpan state.
+- Perubahan: health endpoint kini melaporkan storage `unchecked` sebelum persistensi pertama, `ok` setelah save berhasil, dan `error` dengan kode filesystem saja setelah save gagal. Kegagalan storage menghasilkan HTTP 503 dan status `degraded`; pemulihan save berikutnya mengembalikan HTTP 200. Tidak ada path file, isi state, atau kredensial yang diekspos.
+- Divisi lead: 01 Security & Reliability. Divisi pendukung: 05 QA, Testing & DevOps untuk validasi CI; tidak ada perubahan kontrak data dashboard selain detail health internal.
+
+### 36.2 File dan pengujian
+- `server.js`: pencatatan status persistensi terlokalisasi dan health response yang tidak membocorkan detail sensitif.
+- `test/radar.test.js`: simulasi EROFS pada atomic rename, verifikasi 503/degraded, lalu pemulihan 200/ok.
+- Tes yang ditambahkan memakai filesystem sementara dan monkeypatch terbatas yang selalu dipulihkan pada blok `finally`.
+
+### 36.3 Verifikasi dan status
+- HEAD sebelum perubahan: `6a52a4a0fe89dd6b309a65cd5c58ad100ddf841a`.
+- CI HEAD sebelum perubahan: workflow #299 completed / success. Ada tiga run sebelumnya (#288–#290) yang gagal, tetapi perbaikan sesudahnya dan HEAD terbaru memiliki run sukses.
+- Tes lokal tidak dapat dijalankan dari konektor GitHub; validasi tes perubahan diserahkan ke GitHub Actions setelah branch/PR dibuat.
+- Hostless Build dan LIVE tetap tidak diketahui; akses deployment Hostless tidak tersedia dalam sesi ini.
+- Tidak ada perubahan `lib/ingest.js`, format state, konfigurasi volume, secret, permission exchange, atau fitur UI.
+
+### 36.4 NEXT TASK
+1. Jalankan dan periksa GitHub Actions untuk patch health-storage; jangan integrasikan jika gagal.
+2. Verifikasi Hostless menggunakan `GET /api/health`: storage harus berubah dari `unchecked` menjadi `ok` setelah refresh/persistensi; bila `degraded`/503, periksa mount DATA_DIR dan log runtime Hostless.
+3. Minta Divisi 05 melakukan review independen pada semantik health check dan readiness sebelum perubahan dipromosikan ke main.
+4. Lanjutkan audit DATA_DIR volume Hostless berdasarkan konfigurasi/log aktual; jangan menebak lokasi mount.
