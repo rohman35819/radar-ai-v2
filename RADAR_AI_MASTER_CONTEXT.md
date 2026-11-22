@@ -1421,3 +1421,33 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 4. Implementasikan fondasi organisasi terlebih dahulu dalam mode observe/propose; jangan langsung memberi worker hak merge/deploy.
 5. Setelah audit DATA_DIR/EROFS dan QA prioritas saat ini, mulai pilot satu worker dengan ruang lingkup kecil, lalu ukur sebelum memperluas ke lima divisi.
 6. Tetap lanjutkan roadmap yang sudah berjalan: Hostless verification bila akses tersedia, audit DATA_DIR/EROFS, QA Exchange Hub, dan QA Dashboard. Organisasi baru tidak boleh menjadi alasan menunda bug/stabilitas yang sudah tercatat.
+
+---
+
+## 36. PERBAIKAN FRONTEND SCREENER — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 36.1 Temuan prioritas
+- Lead: Divisi 02 — UI/UX & Frontend. QA pendukung: Divisi 05 — QA, Testing & DevOps.
+- Audit source public/app.js menemukan bug runtime pada renderScreener(): elemen filter dibuat melalui helper DOM el(), tetapi nilai #filter-trend dan #filter-sort dibaca sebelum controls dimasukkan ke DOM (#view). Selector global mengembalikan null; assignment .value melempar TypeError sehingga halaman Market Screener gagal dirender saat dibuka.
+- Ini adalah bug fungsional yang lebih prioritas daripada perubahan kosmetik. Menu/route lain tidak perlu diubah.
+
+### 36.2 Perbaikan yang dibuat
+- public/app.js: memindahkan assignment nilai filter ke setelah v.append(...) memasang kontrol ke DOM. Listener input tetap dipasang setelah elemen tersedia. State filter, reset, sorting, dan export CSV dipertahankan.
+- test/frontend-ui.test.js (baru): dua regresi source-level memeriksa urutan mount sebelum query/listener dan memastikan seluruh 12 tujuan navigasi Dashboard tetap tersedia.
+- Tidak ada perubahan API/backend, dependency, menu, route, atau fitur Exchange Hub/Command Center.
+
+### 36.3 Commit dan verifikasi
+- Branch kerja terisolasi: uiux/fix-screener-control-mount, dibuat dari main HEAD 6a52a4a0fe89dd6b309a65cd5c58ad100ddf841a.
+- Implementasi public/app.js: commit 1dbbfedb3e4bd4da808646c84c73c1f1b3643b8d.
+- Tes regresi test/frontend-ui.test.js: commit 10f21c9f89e80772f070e9d74ead5bfcaddf0854.
+- Tes lokal dan browser belum dijalankan pada sesi ini; working copy/runtime browser tidak tersedia. GitHub Actions untuk PR/branch harus diperiksa sebelum menyatakan suite lulus.
+- Hostless Build dan SHA LIVE: belum diketahui / belum diverifikasi. Commit branch bukan bukti deployment.
+- Perubahan belum digabung ke main; menunggu review independen QA dan hasil CI.
+
+### 36.4 Risiko dan NEXT TASK
+1. Periksa diff kedua commit dan buka PR untuk review independen.
+2. Verifikasi GitHub Actions npm test pada branch/PR; pastikan syntax check dan seluruh test suite lulus.
+3. Setelah merge/deploy disetujui, uji Market Screener: buka halaman, ubah query/trend/sort, reset filter, pertahankan filter saat refresh, dan ekspor CSV.
+4. QA browser desktop dan mobile untuk seluruh 12 menu, sidebar scroll/drawer, Dashboard, Exchange Hub, dan Command Center; periksa console/network.
+5. Audit tombol tema: implementasi toggle tersedia, tetapi sebagian panel pada stylesheet memakai warna hard-coded sehingga konsistensi tema terang perlu diverifikasi dan diperbaiki secara terisolasi.
+6. Hostless deployment, DATA_DIR/EROFS, serta koneksi akun exchange nyata tetap menunggu akses runtime/log yang sah. Tidak ada perubahan kredensial atau transaksi.
