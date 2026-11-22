@@ -87,3 +87,8 @@ Setelah koneksi akun berhasil, Exchange Hub menampilkan identitas akun, label op
 ### News feed diagnostics
 
 Run `npm run news-check` to test configured RSS/Atom sources and print sanitized per-source status without exposing feed query strings or credentials. GitHub Actions runs this as a non-blocking diagnostic only for the News fix PR.
+
+
+### Hostless deployment diagnostics
+
+Run `npm run hostless-check` to probe the public `/api/ready` and `/api/snapshot` endpoints. The report contains only HTTP/readiness, storage state, News count and sanitized source health; it never prints response bodies or environment values. Set `RADAR_LIVE_URL` to probe a different public deployment.
