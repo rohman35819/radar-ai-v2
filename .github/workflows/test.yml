@@ -15,3 +15,7 @@ jobs:
         with:
           node-version: 24
       - run: npm test
+      - name: Diagnostic live RSS smoke (non-blocking, News fix branch only)
+        if: github.head_ref == 'fix/news-feed-resilience'
+        run: npm run news-check
+        continue-on-error: true
