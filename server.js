@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const ingest = require('./lib/ingest');
 const { createExchangeService, ExchangeError } = require('./lib/exchanges');
 const sources = require('./lib/sources');
+const { createMarketIntelligenceService } = require('./lib/market-intelligence');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
@@ -47,6 +48,7 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
 
 function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
+  const marketIntelligence = createMarketIntelligenceService({ apiKey: cfg.cgKey });
   const matchesToken = (expectedValue, provided) => {
     if (!expectedValue || typeof provided !== 'string') return false;
     const expected = Buffer.from(String(expectedValue));
@@ -150,6 +152,36 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const headers = { 'cache-control': 'no-store' };
             if (known && error.retryAfterSeconds) headers['retry-after'] = String(error.retryAfterSeconds);
             send(res, status, { status: 'error', code, message }, 'application/json', headers);
+          });
+          return;
+        }
+        if (url.pathname === '/api/market-intelligence' && req.method === 'GET') {
+          marketIntelligence.dashboard().then((payload) => {
+            const status = payload.status === 'error' ? 502 : 200;
+            send(res, status, payload, 'application/json', { 'cache-control': 'private, max-age=60' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'COINGECKO_UPSTREAM_ERROR';
+            send(res, 502, { status: 'error', code, message: 'Data Market Intelligence tidak dapat dimuat dari CoinGecko.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/market-intelligence/exchange-tickers' && req.method === 'GET') {
+          marketIntelligence.exchangeTickers(url.searchParams.get('exchange')).then((payload) => {
+            send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=300' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'COINGECKO_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            send(res, status, { status: 'error', code, message: code.startsWith('INVALID_') ? 'ID exchange tidak valid.' : 'Data trading pairs exchange tidak tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/market-intelligence/chart' && req.method === 'GET') {
+          marketIntelligence.chart(url.searchParams.get('coin'), url.searchParams.get('days') || '7').then((payload) => {
+            send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=300' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'COINGECKO_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            send(res, status, { status: 'error', code, message: code.startsWith('INVALID_') ? 'Parameter grafik tidak valid.' : 'Data historis CoinGecko tidak tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
