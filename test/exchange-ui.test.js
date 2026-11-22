@@ -43,3 +43,10 @@ test('Exchange Hub memiliki layout responsif dan fokus keyboard yang terlihat', 
   assert.match(css, /button:focus-visible,input:focus-visible/);
   assert.match(html, /aria-pressed="false"/);
 });
+test('Exchange Hub tetap read-only saat API Key Binance memiliki izin trading aktif', () => {
+  assert.match(js, /PERINGATAN KEAMANAN: API Key Binance masih memiliki/);
+  assert.match(js, /RADAR tetap berjalan dalam mode baca-saja dan tidak mengirim order/);
+  assert.match(js, /gunakan key baru read-only saat memungkinkan/);
+  assert.match(js, /method:'GET'/);
+  assert.doesNotMatch(js, /\/api\/v[13]\/order|\/fapi\/v1\/order|\/fapi\/v2\/order/);
+});
