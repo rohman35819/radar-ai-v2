@@ -1499,7 +1499,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 
 ### 37.4 Verifikasi dan status
 - Branch implementasi awal: `feat/bybit-api-key-permission-verification`; dipindahkan ke branch sinkronisasi setelah `main` maju dua commit.
-- GitHub Actions run #44996644470 untuk commit kode `ac8e4933b5e822bf9528628c0936f6713919ad2c`: **PASS, 68/68 tests, 0 failures**; job `test` selesai sukses. Log mencakup tes permission Bybit unavailable/incomplete, UID, redaksi API key, serta permission withdrawal/transfer Binance.
+- GitHub Actions run #44996750933 untuk commit kode `33fdaf603a7f589e72c6369eb469bc2269dfd2f8`: **PASS, 69/69 tests, 0 failures**; job `test` selesai sukses. Log mencakup tes permission Bybit unavailable/incomplete, UID, redaksi API key, permission withdrawal/transfer Binance, dan larangan fallback `availableToBorrow` sebagai withdrawable balance.
 - Pemeriksaan sintaks JavaScript melalui parser V8 untuk `lib/exchanges.js`, `public/trading.js`, `test/exchanges.test.js`, dan `test/exchange-ui.test.js`: PASS. Audit statis juga memastikan method exchange yang didefinisikan hanya GET, endpoint order tidak ditemukan, dan UI memisahkan permission withdrawal/transfer dari status trading.
 - PR #15: https://github.com/rohman35819/radar-ai-v2/pull/15; status open, mergeable, belum merged.
 - CI HEAD main saat audit: commit terbaru `cc6d9af` tidak memiliki combined-status entries; workflow-run connector tidak mengembalikan run untuk HEAD tersebut. Master context QA Gate mencatat 63/63 PASS pada commit fitur sebelumnya, bukan pada HEAD terbaru. PR #15 workflow belum mengembalikan run.
