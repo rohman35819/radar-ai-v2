@@ -61,3 +61,34 @@ test('GitHub gateway restricts file reads to approved paths and enforces 64 KiB'
     assert.deepEqual(reads, ['lib/ai/workspace.js', 'test/large.js']);
   });
 });
+
+
+test('Gemini GitHub command endpoint is admin-protected and read-only', async () => {
+  let received = null;
+  const app = createApp({
+    cfg: { adminToken: 'test-admin-token', trustedProxyHops: 0, corsOrigin: '' },
+    state: { tokens: [], fundamentals: {}, vol10m: {}, alerts: [], news: [], unlocks: [] },
+    githubAppClient: { async checkConnection() { return { connected: true }; }, async getFile() { throw new Error('not used'); } },
+    githubAgentRunner: async (input) => {
+      received = input;
+      return { provider: 'gemini', answer: 'Repository diperiksa.', tool_calls: [{ name: 'github_get_status', status: 'success' }], mode: 'read-only' };
+    }
+  });
+  await withServer(app, async (base) => {
+    const payload = { instruction: 'Periksa koneksi GitHub dan ringkas permission.' };
+    const denied = await fetch(base + '/api/ai/github/command', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+    assert.equal(denied.status, 403);
+    const allowed = await fetch(base + '/api/ai/github/command', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-admin-token': 'test-admin-token' },
+      body: JSON.stringify(payload)
+    });
+    assert.equal(allowed.status, 200);
+    const body = await allowed.json();
+    assert.equal(body.result.mode, 'read-only');
+    assert.equal(body.result.answer, 'Repository diperiksa.');
+    assert.equal(received.instruction, payload.instruction);
+    assert.equal(received.githubClient !== null, true);
+    assert.equal(allowed.headers.get('cache-control'), 'no-store');
+  });
+});
