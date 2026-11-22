@@ -92,3 +92,14 @@ Run `npm run news-check` to test configured RSS/Atom sources and print sanitized
 ### Hostless deployment diagnostics
 
 Run `npm run hostless-check` to probe the public `/api/ready` and `/api/snapshot` endpoints. The report contains only HTTP/readiness, storage state, News count and sanitized source health; it never prints response bodies or environment values. Set `RADAR_LIVE_URL` to probe a different public deployment.
+
+
+## Solana On-Chain Intelligence (Solscan)
+
+- Set `SOLSCAN_API_KEY` in Hostless server-side Environment Variables. The key is sent only from the Node.js backend in the `token` request header; it is never returned to the browser.
+- Dashboard: `/solscan.html`. The main overview includes a Solscan source-status summary.
+- Overview endpoints: Solscan Pro API v2 trending tokens, latest transactions, and latest blocks. Requests are cached in process for two minutes; dashboard polling is every five minutes.
+- Wallet lookup is on-demand and read-only: account detail, portfolio, token accounts, transactions, transfers, DeFi activities, and staking, subject to the API plan's endpoint access. No signing or transaction execution.
+- API routes: `GET /api/solscan/overview` and `GET /api/solscan/wallet?address=<base58>`. Wallet queries are rate-limited and validated server-side.
+- Solscan data availability and freshness depend on endpoint coverage, indexing delay, plan permissions, and CU quota. Missing fields remain unavailable (not zero); partial endpoint failures are shown separately.
+- Official API docs: https://pro-api.solscan.io/pro-api-docs/v2.0/docs
