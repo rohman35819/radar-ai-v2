@@ -2163,3 +2163,11 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Test cases cover: null/empty values excluded from volume ranking and breadth denominator; zero remains a valid numeric observation; missing 24h changes are counted separately; missing TVL is not ranked as zero; stale source metadata, upstream errors, and missing timestamps remain visible.
 - Test implementation commit: `506ad688c4daa55c828190720c66ff08f8a91cf2`. Exact-head GitHub Actions is pending. The previous 106/106 green run is for code head `ed45b98`, not this new test commit.
 - NEXT TASK: verify test and security workflow results on the new head; fix any fixture or rendering failures before considering independent QA.
+
+
+### 65.5 Regression test and security gate result — 23 November 2026
+- Exact tested branch head: `b9f5b3e7c4769c8163de9f94fdbed8f8d13dad2a` (includes the new `test/intelligence.test.js`).
+- GitHub Actions test run `45054489709`: **success; 108 passed, 0 failed, 0 skipped**. The two new Trading Intelligence tests passed.
+- GitHub Actions security run `45054489741`: **Gitleaks success** and **Trivy job success**.
+- This test head is the exact code+test head; any subsequent documentation-only commit must be treated as a distinct SHA. Hostless Build/LIVE and browser QA remain unverified.
+- NEXT TASK: obtain independent Divisi 01/05 review, inspect the updated dashboard on desktop/mobile, and verify Hostless deployment SHA and live source payloads. Keep PR #55 Draft until those gates are satisfied.
