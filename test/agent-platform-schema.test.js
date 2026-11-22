@@ -61,7 +61,7 @@ test('queue and audit payloads are bounded and retries cannot exceed the configu
 test('observer runtime has no task queue or audit write privileges and is not an owner', () => {
   const smoke = fs.readFileSync(path.join(__dirname, '../db/tests/001_agent_platform_smoke.sql'), 'utf8');
   assert.ok(smoke.includes("GRANT SELECT ON radar_agent.agent_registry TO radar_agent_runtime"));
-  assert.ok(!/GRANT\\s+[^;]*ON\\s+radar_agent\\.task_queue/i.test(smoke));
+  assert.ok(!/GRANT\s+[^;]*ON\s+radar_agent\.task_queue/i.test(smoke));
   assert.ok(!smoke.includes('GRANT INSERT ON radar_agent.audit_events TO radar_agent_runtime'));
   assert.ok(smoke.includes("has_table_privilege('radar_agent_runtime', 'radar_agent.audit_events', 'INSERT')"));
   assert.ok(smoke.includes("TRUNCATE TABLE radar_agent.audit_events"));
