@@ -12,7 +12,7 @@ function loadWorker() {
       calls.cacheOpen.push(name);
       return { addAll: async (files) => { calls.staticFiles = files; } };
     },
-    keys: async () => ['radar-shell-v11', 'radar-shell-v7', 'radar-api-v7', 'old-cache', 'other-app-cache'],
+    keys: async () => ['radar-shell-v12', 'radar-shell-v7', 'radar-api-v7', 'old-cache', 'other-app-cache'],
     delete: async (name) => { calls.cacheDeletes.push(name); return true; },
     match: async () => null,
   };
@@ -47,11 +47,14 @@ test('PWA tidak pernah menyimpan respons API ke Cache Storage', async () => {
   assert.deepEqual(calls.cacheOpen, []);
 });
 
-test('PWA shell menyediakan halaman Exchange Hub dan membersihkan cache API lama', async () => {
+test('PWA shell menyediakan halaman Market Intelligence dan Exchange Hub serta membersihkan cache API lama', async () => {
   const { handlers, calls } = loadWorker();
   let installPromise;
   handlers.install({ waitUntil: (promise) => { installPromise = promise; } });
   await installPromise;
+  assert.ok(calls.staticFiles.includes('/market.html'));
+  assert.ok(calls.staticFiles.includes('/market.js'));
+  assert.ok(calls.staticFiles.includes('/market.css'));
   assert.ok(calls.staticFiles.includes('/trading.html'));
   assert.ok(calls.staticFiles.includes('/trading.js'));
   assert.ok(calls.staticFiles.includes('/command.html'));
@@ -62,7 +65,7 @@ test('PWA shell menyediakan halaman Exchange Hub dan membersihkan cache API lama
   handlers.activate({ waitUntil: (promise) => { activatePromise = promise; } });
   await activatePromise;
   assert.ok(calls.cacheDeletes.includes('radar-api-v7'));
-  assert.equal(calls.cacheDeletes.includes('radar-shell-v11'), false);
+  assert.equal(calls.cacheDeletes.includes('radar-shell-v12'), false);
   assert.equal(calls.cacheDeletes.includes('other-app-cache'), false);
 });
 
