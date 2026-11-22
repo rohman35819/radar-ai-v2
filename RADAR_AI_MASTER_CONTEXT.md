@@ -1500,6 +1500,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 - npm test belum dijalankan lokal. Browser desktop/mobile, console, dan network belum tersedia; hasil statis bukan pengganti QA runtime.
 - GitHub Actions run #320 (ID 44996566576) pada PR head ba7791e1d24e265c0f04cb92fed93f05655f911f: completed / success. Job test dan langkah npm test sukses; log mengonfirmasi 65 tests, 65 pass, 0 fail, 0 skipped. Checkout/setup Node action v7 juga selesai sukses. Tes ini mencakup source, tes, PWA cache, README, dan dokumentasi pada SHA tersebut; perubahan dokumentasi verifikasi ini sendiri tidak mengubah kode.
 - GitHub Actions run #325 (ID 44996636965) pada PR head e1de5c1c20359036a3784d679bd98d82d4c8ae5a: completed / success. Job test dan npm test lulus dengan 65/65 pass, 0 fail, 0 skipped. Ini memverifikasi keseluruhan patch final sebelum catatan CI ini; tidak ada perubahan kode setelah SHA yang diuji.
+- Setelah perbaikan Membership dan penambahan satu tes, GitHub Actions run #336 (ID 44996781575) pada PR head b7be7acd9a6d71dad3e32ae34ad83c303cb7d77c completed / success. Job test dan npm test lulus dengan 66/66 pass, 0 fail, 0 skipped; ini mencakup seluruh tujuh file perubahan PR.
 - Hostless Build dan SHA LIVE tetap UNKNOWN / NOT VERIFIED.
 
 ### 37.4 Status dan NEXT TASK
