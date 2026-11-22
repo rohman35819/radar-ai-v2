@@ -1511,3 +1511,10 @@ ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus 
 4. Bandingkan Hostless scheduler, GitHub Actions, dan worker service terpisah berdasarkan uptime, biaya, secret management, persistence, dan operasional.
 5. Rancang pilot Stage 0/1: Agent Registry, persistent Task Queue schema, dan Audit Event; tanpa merge/deploy otomatis.
 6. Jangan menunda NEXT TASK stabilitas dan QA yang telah tercatat di section 36.
+
+
+### 37.5 Scheduled Director automation (ChatGPT)
+- On 22 November 2026, the existing ChatGPT automation was updated successfully to **Direktur RADAR AI**.
+- Task ID: `Automation_d1c6d80958b481919b82e348bd186410`; daily flexible schedule targeting 19:00 Asia/Jakarta (not exact-time guaranteed).
+- It is instructed to re-check repository/docs/PR/CI/deploy evidence, prioritize DATA_DIR/EROFS and Dashboard/Exchange Hub QA, coordinate domain tasks, and document verified progress under the established security/approval policy.
+- This scheduled ChatGPT task is a limited recurring check; it does not wake all separate folder chats or provide continuous execution. Product-level always-on autonomy still requires the application-side Agent Platform and worker infrastructure described above and in `RADAR_AI_ADVISOR_HANDOFF.md`.
