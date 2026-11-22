@@ -46,7 +46,7 @@ Backend:
 - `GET /api/market-intelligence/chart?coin=bitcoin&days=7`: historical market chart; coin ID dan rentang divalidasi.
 - `GET /api/market-intelligence/exchange-tickers?exchange=binance`: trading pairs exchange; ID divalidasi.
 - API key `COINGECKO_DEMO_KEY` hanya dikirim dari backend melalui header `x-cg-demo-api-key`; tidak pernah dikirim ke browser atau log.
-- Cache server 60 menit untuk feed utama, chart, dan exchange tickers. Polling UI 5 menit hanya membaca cache server selama TTL aktif; ini mengurangi pemakaian kuota Demo.
+- Cache server 60 menit untuk feed utama, chart, dan exchange tickers. Kegagalan upstream tanpa data cache diberi cooldown 5 menit agar polling UI tidak terus memukul endpoint yang sedang gagal. Polling UI 5 menit hanya membaca cache server selama TTL aktif; ini mengurangi pemakaian kuota Demo.
 - Jika salah satu endpoint gagal, feed lain tetap ditampilkan dan status sumber menunjukkan error/stale. Data cache lama tidak diberi label fresh.
 - Tidak ada dependency npm runtime baru.
 
