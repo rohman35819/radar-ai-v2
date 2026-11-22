@@ -1474,3 +1474,38 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 4. Complete Dashboard and Command Center desktop/mobile QA: all 12 navigation destinations, sidebar independent scroll, mobile drawer, data loading/error states, console and network.
 5. Continue EROFS investigation with actual Hostless mount and runtime logs; coordinate storage code changes with Divisi 01.
 6. Trace the `punycode` deprecation warning to its source; add a regression check only if a meaningful behavior risk is identified.
+
+---
+
+## 36. VERIFIKASI PERMISSION DAN IDENTITAS API KEY BYBIT — 22 NOVEMBER 2026
+
+### 36.1 Temuan audit Divisi 03
+- Backend Bybit sebelumnya hanya membaca Unified Wallet dan posisi Linear; tidak memanggil endpoint metadata API Key. UI karena itu belum dapat membuktikan apakah key benar-benar read-only atau memiliki permission trading/withdrawal/transfer.
+- Endpoint resmi Bybit `GET /v5/user/query-api` tersedia untuk master dan sub-user API key, mengembalikan `readOnly`, kategori `permissions`, dan `userID`. Referensi: https://bybit-exchange.github.io/docs/v5/user/apikey-info.
+- File `NEXT_TASK.md` tidak ditemukan pada root branch `main`; prioritas Divisi 03 diambil dari roadmap, catatan integrasi dan status kode aktual dalam master context/README.
+
+### 36.2 Perubahan
+- `lib/exchanges.js`: menambahkan signed HTTP GET `/v5/user/query-api`; hanya mengembalikan UID, flag read-only, dan daftar permission kategori yang disanitasi. `apiKey`, `secret`, IP whitelist, dan metadata sensitif lain tidak diteruskan ke browser.
+- `public/trading.js`: menampilkan UID Bybit bila tersedia dan membedakan permission read-only, trading, withdrawal, transfer, serta status belum terverifikasi.
+- `test/exchanges.test.js`: memperluas mock Bybit untuk verifikasi HMAC, UID, permission read-only, redaksi API key, dan fallback ketika endpoint permission gagal.
+- `test/exchange-ui.test.js`: menambah assertion untuk kontrak permission Bybit.
+- `README.md`: mendokumentasikan endpoint dan batas verifikasi.
+
+### 36.3 Keamanan dan batasan
+- Semua request akun Bybit tetap HTTP GET dan ditandatangani di server. Tidak ada endpoint update API key, order, transfer, atau withdrawal.
+- Jika metadata permission tidak tersedia, UI wajib menyatakan belum terverifikasi; koneksi saldo tidak boleh dianggap bukti read-only.
+- UID hanya ditampilkan sebagai identitas teknis dari respons exchange, bukan nama/email pemilik.
+- Binance tetap memakai endpoint resmi `/sapi/v1/account/apiRestrictions`; tidak ada perubahan permission atau environment exchange.
+
+### 36.4 Verifikasi dan status
+- Branch implementasi awal: `feat/bybit-api-key-permission-verification`; dipindahkan ke branch sinkronisasi setelah `main` maju dua commit.
+- Tes otomatis: belum dijalankan pada working copy lokal; wajib menunggu GitHub Actions setelah PR dibuat.
+- CI HEAD main sebelum patch: status commit `6a52a4a` kosong; hasil CI terbaru untuk HEAD saat ini perlu diperiksa melalui workflow.
+- Hostless Build dan Hostless LIVE: belum diverifikasi.
+- Koneksi exchange nyata: belum diuji; tidak ada akses ke kredensial Hostless dan tidak ada permintaan secret kepada Owner.
+
+### 36.5 NEXT TASK Divisi 03
+1. Jalankan seluruh `npm test` melalui GitHub Actions pada PR; perbaiki regresi bila ada.
+2. QA hasil metadata permission Bybit dengan respons nyata setelah deploy yang disetujui, tanpa mengubah izin API.
+3. Verifikasi identitas, saldo, posisi, dan permission Binance read-only pada environment Hostless.
+4. Lanjutkan QA responsif Exchange Hub dan audit error/timeout/rate-limit.
