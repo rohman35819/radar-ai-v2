@@ -1592,3 +1592,40 @@ ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus 
 - Job test completed successfully. npm test: 68 passed, 0 failed, 0 skipped; JavaScript syntax checks also completed in the workflow.
 - This proves the repository test suite for that PR head. It does not prove the PostgreSQL migration was executed against a live PostgreSQL server, does not validate worker runtime, and does not prove Hostless deployment/Live.
 - Subsequent documentation-only status updates may move the PR head; consult PR #18 for the current head and latest check run.
+
+
+---
+
+## 39. INFRASTRUKTUR FREE-FIRST — KEBIJAKAN BOS — 22 NOVEMBER 2026
+
+### 39.1 Keputusan yang mengikat
+- Status Hostless: akun existing. Gunakan akun yang sama sebagai kandidat utama; jangan membuat layanan/akun baru.
+- Kebijakan anggaran: **Rp0**. Tidak ada VPS, database berbayar, domain, paid AI API, subscription, kartu/metode pembayaran baru, upgrade berbayar, atau provisioning yang berpotensi menimbulkan tagihan.
+- Kuota Hostless dianggap **belum diketahui**, bukan dianggap masih tersedia. Free pool dapat dibagi lintas app/worker/database dan potensi overage wajib diperiksa sebelum provisioning.
+- Jika kuota atau overage protection tidak dapat dibuktikan, jangan deploy worker/database; lanjutkan pekerjaan repository dan pengujian yang tidak memerlukan resource berbayar.
+- Keputusan ini menggantikan estimasi worker Hostless USD 2.74/bulan pada section 38 sebagai asumsi biaya yang tidak disetujui.
+
+### 39.2 Alokasi layanan gratis
+1. GitHub Actions existing: CI, syntax checks, migration/static tests, dan batch terbatas; bukan always-on worker.
+2. Hostless existing: pertahankan app V2. Worker/database baru hanya jika free allowance aktual dan no-overage dibuktikan.
+3. Neon Free: kandidat database PostgreSQL disposable untuk migration/concurrency tests saja; jangan pindahkan production.
+4. Cloudflare Workers Free: opsional untuk trigger stateless ringan, bukan proses Node long-running.
+5. AI free tiers: hanya eksperimen non-sensitif dengan rate/token cap; tidak mengirim secret, data privat, atau payload exchange.
+
+### 39.3 Provisioning gate
+Sebelum provisioning, wajib ada bukti plan/remaining quota, estimasi compute/storage/egress/build/idle, tidak perlu kartu/upgrade, overage disabled/capped, rollback, dan secret least-privilege. Tindakan yang mengubah akun/production memerlukan persetujuan eksplisit BOS. Jika ada hal yang belum diketahui, status NOT APPROVED TO PROVISION.
+
+### 39.4 Hasil audit pada 22 November 2026
+- Repository main HEAD terverifikasi: b6c005ed4a217e8425652ecf6e26986e6cefcee2; commit message docs(agents): define advisor role and offline autonomy guardrails.
+- GitHub Actions main run #349 (ID 44997093881) untuk HEAD tersebut completed/success.
+- PR #18 tetap open, draft, belum merged; head 80ae75a78d9204b1110e8358811d667eeff0933a. Branch berisi migration/schema/docs/static tests; tidak ada DB adapter/queue runtime/worker.
+- CI run #371 pada commit 3fa8660dbc750b1f9940c1221eb6e5ae5dabe41f berhasil dengan 68 passed, 0 failed, 0 skipped; commit dokumentasi setelahnya mengubah head PR. Hasil itu bukan bukti PostgreSQL migration, worker runtime, atau Hostless Live.
+- Hostless dashboard quota, billing/overage, build, Live SHA, worker/database availability tidak dapat diakses melalui koneksi GitHub. Tidak ada provisioning atau pengeluaran dalam audit ini.
+- Repository branch main tidak memiliki branch protection aktif menurut endpoint GitHub branch metadata; PR review tetap menjadi proses wajib proyek.
+
+### 39.5 NEXT TASK
+1. Tambahkan DB adapter dan transactional queue service di branch PR #18 dengan feature flag default OFF, tanpa provisioning.
+2. Cari jalur PostgreSQL disposable gratis yang lolos provisioning gate; bila tidak ada, catat migration test sebagai blocker dan jangan klaim lulus.
+3. Divisi 01 review DB TLS/least privilege/secrets/approval/kill switch; Divisi 05 independent QA untuk migration/concurrency/recovery.
+4. Direktur Utama menetapkan PIC terpisah dan menghindari konflik file; Divisi 07 menyiapkan memory records tanpa embedding.
+5. Hostless quota/billing harus diverifikasi oleh pemilik akun melalui dashboard resmi sebelum worker/database dibuat.
