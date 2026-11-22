@@ -178,7 +178,7 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Owner-context audit trigger still rejects UPDATE/DELETE. No hash-chain is claimed.
 - Rp0, concurrency=1, divisions 01–08, max attempts=3, bounded payloads. PostgreSQL 16 tests are ephemeral CI only.
 - P2 worker queue semantics, approval queue, kill switch, memory provenance/retention and Hostless deployment remain unimplemented. No worker runtime is active.
-- PR #34 remains draft; CI run #471 passed 94/94 + PostgreSQL smoke and security run #26 passed. Independent Divisi 01/05 review is still pending. Issue #30 stays open.
+- PR #34 remains draft; CI run #479 passed 94/94 + PostgreSQL migration/observer smoke on PR head c33a5efb788b7001a28a9f6eaf49f0f4f98ed3f4; security run #28 passed Gitleaks/Trivy. Independent Divisi 01/05 review is still pending. Issue #30 stays open.
 
 ## 17. AI Workspace provider registry review — PR #28 (22 November 2026)
 
