@@ -20,9 +20,9 @@ const ratio = (v) => v == null || !Number.isFinite(Number(v)) ? '—' : Number(v
 const dateTime = (v) => v ? new Date(v).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}) : 'Belum tersedia';
 const esc = (v) => String(v ?? '—');
 const FLAG = {fdv_unknown:'FDV tidak diketahui',fdv_gt_5x_mcap:'FDV > 5x MCap',volume_gt_mcap:'Volume > MCap',stale:'Data basi'};
-const TITLES = {overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
+const TITLES = {'early-gems':'Early Gem Scanner',overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
 let data=null, aiGroup=null, aiWorkspace=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false;
-let screenerFilters={q:'',trend:'all',sort:'market_cap'},screenerVisible=[];
+let screenerFilters={q:'',trend:'all',sort:'market_cap'},screenerVisible=[],earlyGemFilters={q:'',minLiquidity:0};
 try {
  const stored=JSON.parse(localStorage.getItem('radar-watch')||'[]');
  if(Array.isArray(stored))watch=[...new Set(stored.filter(x=>typeof x==='string'&&x.length>0&&x.length<=128))];
@@ -205,6 +205,138 @@ async function runWorkspaceNow(){
   }
   render();toast('AI masih memproses. Buka kembali Ruang Kerja sebentar lagi.');
  }catch(e){toast(e.message||'Gagal menjalankan review AI');}
+}
+function renderEarlyGems(){
+ const v=$('#view');v.replaceChildren();
+ const all=Array.isArray(data?.early_gems)?data.early_gems:[];
+ const health=data?.health?.onchain||null,meta=data?.early_gems_meta||null;
+ const chains=new Set(all.map(x=>x.network_id).filter(Boolean));
+ const totalVolume=all.reduce((sum,x)=>sum+(Number(x.volume_24h_usd)||0),0);
+ const liquid=all.filter(x=>Number(x.liquidity_usd)>=5000).length;
+ const fresh=all.filter(x=>Number.isFinite(Number(x.age_hours))&&Number(x.age_hours)<=24).length;
+ v.append(sectionHead('Early Gem Scanner','Pool DEX baru dari jaringan yang diindeks GeckoTerminal; bukan daftar semua token yang pernah dibuat.',
+  el('span',{class:'muted'},meta?.fetched_at?'Update '+dateTime(meta.fetched_at):'Belum ada sinkronisasi')));
+ v.append(el('div',{class:'stats-grid'},statCard('POOL TERDETEKSI',all.length,'Maksimal '+(meta?.pool_count||all.length)+' pool dalam feed','✧'),statCard('JARINGAN',chains.size,'Network berbeda pada hasil','◈'),statCard('VOLUME 24 JAM',money(totalVolume),'Agregat pool yang tampil','⇅'),statCard('LIKUIDITAS ≥ $5K',liquid,fresh+' pool berumur ≤ 24 jam','⌁')));
+ const status=el('div',{class:'gem-status '+(health?.ok?'good':health?'bad':'muted')},
+  el('b',{},health?.ok?'● ON-CHAIN FEED ONLINE':health?'● ON-CHAIN FEED ERROR':'● MENUNGGU SINKRONISASI'),
+  el('span',{},health?.error?'Kode: '+health.error:(meta?'Sumber: '+(meta.source||'CoinGecko Onchain / GeckoTerminal')+' · Jendela data hingga 48 jam':'Pastikan CoinGecko Demo API key tersedia dan refresh server berhasil.')));
+ v.append(status);
+ const controls=el('div',{class:'filter-panel gem-filters'},
+  el('input',{id:'gem-q',type:'search',placeholder:'Cari token, simbol, chain, atau DEX…',value:earlyGemFilters.q}),
+  el('select',{id:'gem-liquidity'},el('option',{value:'0'},'Semua likuiditas'),el('option',{value:'5000'},'Likuiditas ≥ $5K'),el('option',{value:'25000'},'Likuiditas ≥ $25K'),el('option',{value:'100000'},'Likuiditas ≥ $100K')),
+  el('button',{class:'secondary-btn',onclick:()=>{earlyGemFilters={q:'',minLiquidity:0};renderEarlyGems();}},'Reset filter'));
+ const results=el('div',{class:'gem-grid',id:'gem-results'});
+ const updateResults=()=>{
+  earlyGemFilters={q:$('#gem-q').value,minLiquidity:Number($('#gem-liquidity').value)||0};
+  const q=earlyGemFilters.q.trim().toLowerCase();
+  const rows=all.filter(x=>(!q||[x.symbol,x.token_name,x.network,x.dex,x.pool_name,x.token_address].some(v=>String(v||'').toLowerCase().includes(q)))
+   &&(earlyGemFilters.minLiquidity===0||(Number(x.liquidity_usd)||0)>=earlyGemFilters.minLiquidity));
+  results.replaceChildren();
+  if(!rows.length){results.append(empty(all.length?'Tidak ada pool yang cocok':'Belum ada data pool','Ubah filter atau periksa status sumber on-chain di atas.'));return;}
+  rows.forEach(x=>{
+   const flags=(x.risk_flags||[]).map(flag=>({liquidity_unknown:'Likuiditas N/A',liquidity_low:'Likuiditas rendah',volume_unknown:'Volume N/A',volume_low:'Volume rendah',market_cap_unverified:'Market cap belum diverifikasi',trade_count_unknown:'Jumlah transaksi N/A'}[flag]||flag));
+   const age=Number.isFinite(Number(x.age_hours))?(Number(x.age_hours)<1?Math.max(1,Math.round(Number(x.age_hours)*60))+' menit lalu':Number(x.age_hours)<48?Number(x.age_hours).toFixed(1)+' jam lalu':(Number(x.age_hours)/24).toFixed(1)+' hari lalu'):'Umur pool N/A';
+   const link=typeof x.pool_url==='string'&&x.pool_url.startsWith('https://www.geckoterminal.com/')?x.pool_url:null;
+   const item=el('article',{class:'gem-card'},
+    el('div',{class:'gem-card-top'},
+     el('div',{class:'gem-identity'},el('span',{class:'coin-avatar'},esc(x.symbol).slice(0,3)),el('div',{},el('b',{},esc(x.symbol)),el('small',{},esc(x.token_name)))),
+     el('span',{class:'gem-label'},esc(x.discovery_label||'RECENT POOL'))),
+    el('div',{class:'gem-chain'},esc(x.network)+' · '+esc(x.dex)+' · '+age),
+    el('div',{class:'gem-metrics'},
+     el('div',{},el('small',{},'LIKUIDITAS'),el('b',{},money(x.liquidity_usd))),
+     el('div',{},el('small',{},'VOLUME 24J'),el('b',{},money(x.volume_24h_usd))),
+     el('div',{},el('small',{},'HARGA'),el('b',{},x.price_usd==null?'—':'
+ const v=$('#view');v.replaceChildren();const health=data?.health||{};
+ v.append(sectionHead('System Health','Transparansi status sumber data dan runtime.'));
+ v.append(el('div',{class:'stats-grid'},statCard('API STATUS',data&&snapshotReachable?'ONLINE':'OFFLINE',snapshotReachable?'Snapshot berhasil dijangkau':'Server tidak dapat dijangkau; data lama mungkin tampil','◉',snapshotReachable?'positive':'negative'),statCard('LAST SUCCESS',dateTime(data?.last_ok),'Refresh terakhir yang berhasil','↻'),statCard('TOKEN FEED',getTokens().length,'Token tersedia','◈'),statCard('ALERT LOG',(data?.alerts||[]).length,'Riwayat tersimpan','⌁')));
+ const rows=Object.entries(health);
+ v.append(card(sectionHead('Data Source Monitor','Status setiap sumber yang dipakai server.'),...rows.map(([name,s])=>el('div',{class:'source-row'},el('div',{},el('b',{},name.toUpperCase()),el('small',{},dateTime(s.at)),s.error?el('small',{class:'negative'},s.error):null),el('span',{class:s.ok?'source-ok':'source-error'},s.ok?'HEALTHY':'ERROR')))));
+ v.append(card(sectionHead('Konfigurasi & batas sistem','Informasi yang dapat dibaca dari API snapshot.'),el('div',{class:'detail-grid'},el('div',{},el('small',{},'Status data'),el('b',{},(data?.stale||!snapshotReachable)?'Stale / koneksi perlu dicek':'Aktif')),el('div',{},el('small',{},'Telegram'),el('b',{},data?.config_needed?.telegram?'Belum dikonfigurasi':'Terkonfigurasi')),el('div',{},el('small',{},'CoinGecko key'),el('b',{},data?.config_needed?.coingecko_key?'Tidak tersedia':'Terkonfigurasi')),el('div',{},el('small',{},'Unlock source'),el('b',{},data?.config_needed?.unlock_source?'Belum tersedia':'Terkonfigurasi'))),el('p',{class:'muted'},'API key dan token tidak pernah ditampilkan di dashboard.')));
+}
+function render(){
+ $('#page-title').textContent=TITLES[tab]||'RADAR AI';$('#crumb').textContent=(tab||'overview').toUpperCase();
+ document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+ if(tab==='overview')renderOverview();else if(tab==='screener')renderScreener();else if(tab==='early-gems')renderEarlyGems();else if(tab==='watch')renderWatch();else if(tab==='analytics')renderAnalytics();else if(tab==='news')renderNews();else if(tab==='unlock')renderUnlock();else if(tab==='alerts')renderAlerts();else if(tab==='ai')renderAI();else if(tab==='workspace')renderWorkspace();else renderSystem();
+}
+function setSidebarOpen(open){
+ const sidebar=$('#sidebar'),toggle=$('#menu-toggle');
+ sidebar.classList.toggle('open',open);
+ document.body.classList.toggle('sidebar-open',open);
+ toggle.setAttribute('aria-expanded',String(open));
+ toggle.setAttribute('aria-label',open?'Tutup menu':'Buka menu');
+}
+function closeSidebar(){setSidebarOpen(false);}
+function navigate(next){tab=next;render();closeSidebar();window.scrollTo({top:0,behavior:'smooth'});}
+function updateStatus(){
+ if(!data)return;
+ const age=data.last_ok?Date.now()-Date.parse(data.last_ok):Infinity,stale=Boolean(data.stale)||age>30*60000;
+ $('#status').textContent=stale?'Data perlu diperiksa':'Semua sistem berjalan';
+ $('#side-status').textContent=stale?'Data perlu diperiksa':'Feed terhubung';
+ $('#banner').hidden=!stale;
+ $('#banner').textContent=stale?'Sebagian data mungkin sudah lama atau belum tersedia. Periksa System Health sebelum mengambil keputusan.':'';
+}
+async function load(){
+ let snapshotOk=false;
+ try{
+  const r=await fetch('/api/snapshot',{cache:'no-store'});if(!r.ok)throw new Error('snapshot '+r.status);data=await r.json();snapshotOk=true;snapshotReachable=true;
+ }catch(e){
+  snapshotReachable=false;
+  $('#status').textContent='Gagal menghubungkan';
+  $('#side-status').textContent='Koneksi bermasalah';
+  $('#banner').hidden=false;
+  $('#banner').textContent='Tidak dapat mengambil snapshot terbaru. Data yang terlihat mungkin merupakan data sebelumnya; coba muat ulang kembali.';
+ }
+ try{const r=await fetch('/api/ai/group',{cache:'no-store'});if(r.ok)aiGroup=(await r.json()).group;}catch{}
+ try{const r=await fetch('/api/ai/workspace',{cache:'no-store'});if(r.ok)aiWorkspace=(await r.json()).workspace;}catch{}
+ if(snapshotOk)updateStatus();
+ render();
+ return snapshotOk;
+}
+async function refreshNow(){
+ if(refreshBusy)return;refreshBusy=true;$('#refresh').classList.add('spinning');toast('Memuat data terbaru…');
+ try{const ok=await load();toast(ok?'Dashboard berhasil diperbarui':'Gagal memperbarui dashboard. Data sebelumnya dipertahankan.');}
+ finally{refreshBusy=false;$('#refresh').classList.remove('spinning');}
+}
+function exportCSV(){
+ const rows=tab==='screener'?screenerVisible:getTokens();
+ if(!rows.length)return toast('Tidak ada data untuk diekspor');
+ const cols=['symbol','name','price','change_24h','change_7d','market_cap','volume_24h','fdv','vol_mcap'];
+ const cell=value=>{
+  let raw=String(value??'');
+  if(!raw)return '""';
+  if(!Number.isFinite(Number(raw))&&/^[\s]*[=+@\-]/.test(raw))raw="'"+raw;
+  return '"'+raw.replaceAll('"','""')+'"';
+ };
+ const csv=[cols.join(','),...rows.map(t=>cols.map(k=>cell(t[k])).join(','))].join('\n');
+ const blob=new Blob([String.fromCharCode(0xFEFF),csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=el('a',{href:url,download:'radar-ai-market-'+new Date().toISOString().slice(0,10)+'.csv'});
+ a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('CSV '+rows.length+' aset berhasil disiapkan');
+}
+document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.t)));
+$('.brand').addEventListener('click',e=>{e.preventDefault();navigate('overview');});
+$('#refresh').addEventListener('click',refreshNow);
+$('#theme').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;try{localStorage.setItem('radar-theme-v2',next);}catch{}});
+$('#menu-toggle').addEventListener('click',()=>setSidebarOpen(!$('#sidebar').classList.contains('open')));
+$('#sidebar-backdrop').addEventListener('click',closeSidebar);
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('#sidebar').classList.contains('open'))closeSidebar();});
+window.addEventListener('resize',()=>{if(window.innerWidth>760)closeSidebar();});
+try{const saved=localStorage.getItem('radar-theme-v2');if(saved)document.documentElement.dataset.theme=saved;}catch{}
+load();setInterval(load,120000);
+if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
++Number(x.price_usd).toPrecision(6))),
+     el('div',{},el('small',{},'FDV / MCAP'),el('b',{},money(x.market_cap_usd)+' / '+money(x.fdv_usd)))),
+    flags.length?el('div',{class:'gem-flags'},...flags.map(flag=>el('span',{class:'flag'},flag))):el('div',{class:'gem-flags'},el('span',{class:'gem-clean'},'Tidak ada flag kualitas data')),
+    el('div',{class:'gem-footer'},el('small',{},'Pool: '+(x.pool_address?String(x.pool_address).slice(0,8)+'…'+String(x.pool_address).slice(-6):'N/A')),link?el('a',{href:link,target:'_blank',rel:'noopener noreferrer'},'Buka di GeckoTerminal ↗'):null));
+   results.append(item);
+  });
+  $('#gem-count').textContent=rows.length+' pool ditampilkan';
+ };
+ v.append(controls,el('div',{class:'result-meta'},el('b',{id:'gem-count'},'Memuat…'),el('span',{class:'muted'},'Feed lintas-chain · maksimum 10 halaman API')),results,
+  card(el('b',{},'Catatan risiko & cakupan'),
+   el('p',{class:'muted'},'Pool baru bukan bukti token baru dibuat. Feed ini menampilkan pool DEX yang telah terindeks (jendela data sekitar 48 jam), bukan seluruh kontrak token di semua blockchain. Token tanpa pool likuid, chain yang belum didukung, atau pool yang belum terindeks tidak akan muncul.'),
+   el('p',{class:'muted'},'Flag hanya menunjukkan data yang kosong/rendah; ini bukan audit kontrak, pemeriksaan honeypot, verifikasi pemilik, analisis holder, atau rekomendasi beli. Market cap yang tidak diverifikasi tetap ditampilkan sebagai N/A.')));
+ $('#gem-liquidity').value=String(earlyGemFilters.minLiquidity);
+ ['gem-q','gem-liquidity'].forEach(id=>$('#'+id).addEventListener(id==='gem-q'?'input':'change',updateResults));
+ updateResults();
 }
 function renderSystem(){
  const v=$('#view');v.replaceChildren();const health=data?.health||{};
