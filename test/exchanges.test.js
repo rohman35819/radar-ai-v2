@@ -48,6 +48,29 @@ test('Binance menandatangani request di server dan menormalkan saldo serta posis
   assert.equal(JSON.stringify(result).includes(secret), false);
 });
 
+test('Binance reports actual API Key trading permissions independently from account canTrade', async () => {
+  const service = createExchangeService({
+    env: { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' },
+    fetchImpl: async (url) => {
+      const pathname = new URL(url).pathname;
+      if (pathname === '/api/v3/account') return response({ canTrade: false, balances: [] });
+      if (pathname === '/fapi/v2/account') return response({ canTrade: false });
+      if (pathname === '/fapi/v2/positionRisk') return response([]);
+      if (pathname === '/sapi/v1/account/apiRestrictions') return response({
+        enableSpotAndMarginTrading: true, enableFutures: true,
+        enableWithdrawals: false, enableInternalTransfer: false, permitsUniversalTransfer: false,
+      });
+      throw new Error('unexpected endpoint');
+    },
+  });
+  const result = await service.account('binance');
+  assert.equal(result.connected, true);
+  assert.equal(result.account.api_permissions.available, true);
+  assert.equal(result.account.api_permissions.spot_trading, true);
+  assert.equal(result.account.api_permissions.futures_trading, true);
+  assert.equal(result.account.api_permissions.withdrawals, false);
+});
+
 test('Binance reports unavailable positions separately from a successful wallet read', async () => {
   const service = createExchangeService({
     env: { BINANCE_API_KEY: 'key', BINANCE_API_SECRET: 'secret' },
@@ -60,6 +83,8 @@ test('Binance reports unavailable positions separately from a successful wallet 
     },
   });
   const result = await service.account('binance');
+  assert.equal(result.account.api_permissions.available, false);
+  assert.equal(result.account.api_permissions.error, 'API_PERMISSION_READ_UNAVAILABLE');
   assert.equal(result.account.futures.available, true);
   assert.equal(result.account.futures.positions_available, false);
   assert.equal(result.account.futures.positions_error, 'FUTURES_POSITIONS_READ_UNAVAILABLE');
