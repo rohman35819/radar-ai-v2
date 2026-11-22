@@ -212,7 +212,8 @@ function renderEarlyGems(){
  const health=data?.health?.onchain||null,meta=data?.early_gems_meta||null;
  const enabled=data?.config_needed?.early_gems_enabled!==false;
  const feedAgeMs=meta?.fetched_at?Date.now()-Date.parse(meta.fetched_at):Infinity;
- const feedStale=!enabled||!Number.isFinite(feedAgeMs)||feedAgeMs>30*60*1000;
+ const staleAfterMs=Math.max(30,Number(data?.config_needed?.onchain_refresh_min)||60)*1.5*60*1000;
+ const feedStale=!enabled||!Number.isFinite(feedAgeMs)||feedAgeMs>staleAfterMs;
  const chains=new Set(all.map(x=>x.network_id).filter(Boolean));
  const totalVolume=all.reduce((sum,x)=>sum+(Number(x.volume_24h_usd)||0),0);
  const liquid=all.filter(x=>Number(x.liquidity_usd)>=5000).length;
