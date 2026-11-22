@@ -343,9 +343,11 @@ test('Binance -1003 API response is normalized as rate-limited', async () => {
 test('Bybit retCode 10006 is normalized as rate-limited', async () => {
   const service = createExchangeService({
     env: { BYBIT_API_KEY: 'key', BYBIT_API_SECRET: 'secret' },
-    fetchImpl: async () => response({ retCode: 10006, retMsg: 'Too many visits!' }),
+    now: () => 1700000000000,
+    fetchImpl: async () => response({ retCode: 10006, retMsg: 'Too many visits!' }, true, 200, { 'x-bapi-limit-reset-timestamp': '1700000005000' }),
   });
-  await assert.rejects(service.account('bybit'), (error) => error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429);
+  await assert.rejects(service.account('bybit'), (error) =>
+    error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429 && error.retryAfterSeconds === 5);
 });
 
 test('private Exchange Hub forwards safe Retry-After for rate-limited exchange responses', async () => {
@@ -370,7 +372,7 @@ test('private Exchange Hub forwards safe Retry-After for rate-limited exchange r
 
 
 test('Bybit HTTP 403 access-too-frequent response is normalized as rate-limited', async () => {
-  const service = createExchangeService({ env: {}, fetchImpl: async () => response({ retMsg: 'access too frequent' }, false, 403, { 'retry-after': '600' }) });
+  const service = createExchangeService({ env: {}, fetchImpl: async () => response({ retMsg: 'access too frequent' }, false, 403) });
   await assert.rejects(service.market('bybit', 'BTCUSDT'), (error) =>
     error.code === 'EXCHANGE_RATE_LIMITED' && error.status === 429 && error.retryAfterSeconds === 600);
 });
