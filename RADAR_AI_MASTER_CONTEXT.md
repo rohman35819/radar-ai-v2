@@ -1432,7 +1432,7 @@ Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. S
 - Divisi lead: 01 Security & Reliability. Divisi pendukung: 05 QA, Testing & DevOps untuk validasi CI; tidak ada perubahan kontrak data dashboard selain detail health internal.
 
 ### 36.2 File dan pengujian
-- `server.js`: pencatatan status persistensi terlokalisasi dan health response yang tidak membocorkan detail sensitif.
+- `server.js`: pencatatan status persistensi untuk refresh utama dan seluruh AI save path, dengan health/readiness response yang tidak membocorkan detail sensitif.
 - `test/radar.test.js`: simulasi EROFS pada atomic rename, verifikasi 503/degraded, lalu pemulihan 200/ok.
 - Tes yang ditambahkan memakai filesystem sementara dan monkeypatch terbatas yang selalu dipulihkan pada blok `finally`.
 
