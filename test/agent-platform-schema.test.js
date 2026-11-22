@@ -61,7 +61,7 @@ test('queue and audit payloads are bounded and retries cannot exceed the configu
 test('proposal runtime has no task queue access, table-owner membership or audit truncate privilege', () => {
   const smoke = fs.readFileSync(path.join(__dirname, '../db/tests/001_agent_platform_smoke.sql'), 'utf8');
   assert.ok(smoke.includes("GRANT SELECT ON radar_agent.agent_registry TO radar_agent_runtime"));
-  assert.ok(!/GRANT\\s+[^;]*ON\\s+radar_agent\\.task_queue/i.test(smoke));
+  assert.ok(!/GRANT\s+[^;]*ON\s+radar_agent\.task_queue/i.test(smoke));
   assert.ok(smoke.includes("TRUNCATE TABLE radar_agent.audit_events"));
   assert.ok(smoke.includes("pg_has_role('radar_agent_runtime', 'radar_test', 'MEMBER')"));
 });
