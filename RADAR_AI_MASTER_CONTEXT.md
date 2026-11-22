@@ -1511,3 +1511,75 @@ ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus 
 4. Bandingkan Hostless scheduler, GitHub Actions, dan worker service terpisah berdasarkan uptime, biaya, secret management, persistence, dan operasional.
 5. Rancang pilot Stage 0/1: Agent Registry, persistent Task Queue schema, dan Audit Event; tanpa merge/deploy otomatis.
 6. Jangan menunda NEXT TASK stabilitas dan QA yang telah tercatat di section 36.
+
+
+---
+
+## 38. AGENT PLATFORM — ARSITEKTUR DAN FONDASI PILOT — 22 NOVEMBER 2026
+
+### 38.1 Verifikasi kondisi repository sebelum perubahan
+- Branch utama: main.
+- HEAD yang diverifikasi: b6c005ed4a217e8425652ecf6e26986e6cefcee2 — "docs(agents): define advisor role and offline autonomy guardrails".
+- Branch kerja fondasi: feat/agent-platform-foundation.
+- File yang diperiksa: package.json, server.js, README.md, lib/ingest.js, .env.example, test/radar.test.js, AGENTS.md, RADAR_AI_ADVISOR_HANDOFF.md, dan bagian akhir master context.
+- PR terbuka saat audit: #17 Bybit API key identity/permissions; #16 AI moderator fallback; #14 Screener/membership preview; #12 storage persistence health; #7 Trading Terminal foundation; #6 live deployment/visual verification. PR bukan fitur main sampai merge.
+- GitHub combined status untuk HEAD tidak memberikan status entries; pemeriksaan workflow-run yang tersedia tidak mengembalikan run untuk push HEAD. CI HEAD saat ini tidak dapat dinyatakan lulus atau gagal.
+- Hostless Build, Live SHA, dan perilaku runtime tetap belum terverifikasi.
+
+### 38.2 Temuan implementasi aktual
+- server.js menjalankan HTTP API, refresh interval, laporan AI harian, dan AI Workspace harian di satu proses menggunakan setInterval.
+- AI Group/Workspace memakai status in-memory seperti aiBusy/workspaceBusy; tidak ada task queue persisten, lease, idempotency, atau pemulihan task setelah restart.
+- package.json tidak memiliki dependency runtime dan tes dijalankan melalui Node test runner.
+- lib/ingest.js menyimpan state JSON ke DATA_DIR; default adalah ./data. Hostless mendokumentasikan root filesystem read-only dan hanya disk mount/database yang persisten. Ini cocok dengan gejala EROFS, tetapi mount dan environment aktual tetap harus diperiksa; jangan menganggap penyebab/path aktual telah terbukti.
+- Belum ada Agent Registry, Orchestrator, distributed worker runtime, atau append-only audit event store yang terintegrasi.
+
+### 38.3 Keputusan arsitektur yang diterima
+- Pilihan utama adalah Control Plane + Worker Plane terpisah pada Hostless untuk tahap awal, dengan managed PostgreSQL sebagai sumber kebenaran Agent Registry, Task Queue, dependency, dan Audit Events.
+- Aplikasi Hostless V2 tetap menjadi dashboard/API dan tidak direfaktor besar.
+- Worker pertama dipilih sebagai **standalone Hostless worker**, satu replica, deployment dan command terpisah dari dashboard. Ini mengurangi coupling deploy/restart dan memakai proses long-running yang memang didukung Hostless.
+- Hostless cron hanya untuk enqueue pekerjaan terjadwal/maintenance; bukan pengganti queue consumer.
+- PostgreSQL dipilih untuk transaksi, constraints, foreign keys, row locking, lease dan audit. Redis ditunda sampai metrik menunjukkan kebutuhan.
+- GitHub Actions tetap untuk CI, migration checks, dan batch job yang terbatas; bukan worker permanen.
+- Kontrak database/task dibuat provider-neutral agar worker dapat dipindahkan ke Railway/Render/VPS tanpa mengubah model task.
+- Dokumentasi platform yang menjadi dasar: Hostless background workers (standalone dan embedded), apps/cron/managed databases, filesystem read-only, dan tarif resource. Sumber: https://docs.hostless.cloud/app/workers ; https://docs.hostless.cloud/overview ; https://docs.hostless.cloud/app/filesystem ; https://docs.hostless.cloud/plans/limits
+- Perkiraan worker awal: 1 replica, 0.1 vCPU, 256 MiB RAM, concurrency 1. Pada 730 jam, tarif compute terpublikasi menghasilkan estimasi sekitar USD 2.74/bulan sebelum free allowance, database, dan model API. Ini bukan tagihan aktual; free allowance dibagi seluruh resource akun dan kebijakan plan dapat berbeda.
+
+### 38.4 Fondasi schema yang dibuat di branch
+- db/migrations/001_agent_platform.sql: schema radar_agent dengan agent_registry, task_queue, task_dependencies, audit_events, indeks dispatch/lease/timeline, batas autonomy Stage 0/1, default agent paused, idempotency key, retry cap, lease fields, dan trigger yang menolak UPDATE/DELETE audit_events.
+- docs/agent-platform-architecture.md: ADR, pilihan infrastruktur, lifecycle task, permission matrix, backlog Divisi 06/07, acceptance criteria, budget awal, risiko dan next task.
+- test/agent-platform-schema.test.js: static contract tests untuk schema.
+- Perubahan masih berada di branch feat/agent-platform-foundation; belum merge ke main dan belum dijalankan terhadap PostgreSQL.
+- Schema saja **bukan** queue service yang aktif. Belum ada DB adapter, scheduler, worker process, endpoint, atau task yang dapat dieksekusi.
+
+### 38.5 Guardrails pilot
+- Registry default paused; autonomy_stage dibatasi 0–1.
+- Worker pilot hanya observe/propose dan read-only. Tidak ada code write, merge, deploy, production mutation, exchange write, transfer, withdrawal, atau trading.
+- Worker tidak dapat mengubah permission/policy atau menaikkan autonomy stage sendiri.
+- Setiap task berikutnya wajib memiliki idempotency, deadline, max attempts, lease token, budget/token cap, allowed tool list, acceptance criteria, dan kondisi stop.
+- Audit tidak boleh menyimpan secret, token, authorization header, atau payload privat exchange. Trigger append-only adalah defense-in-depth; DB runtime role tetap harus diberi INSERT/SELECT tanpa UPDATE/DELETE.
+- Setiap perubahan status task harus menulis audit event dalam transaksi yang sama pada implementasi runtime kelak.
+
+### 38.6 Validasi dan status
+- Pemeriksaan file/diff via GitHub dilakukan setelah penulisan. Working copy lokal tidak tersedia.
+- npm test lokal: tidak dijalankan.
+- Migration PostgreSQL: belum dijalankan; belum ada disposable DB test harness pada sesi ini.
+- GitHub Actions untuk branch/PR: menunggu hasil setelah PR dibuat.
+- Hostless worker/database belum dibuat; belum ada resource provisioning atau biaya yang dikeluarkan.
+- Hostless Build dan Live: belum diverifikasi.
+- Tidak ada perubahan pada aplikasi Live, exchange permission, secret, atau trading.
+
+### 38.7 Backlog lintas divisi dan prioritas
+1. Divisi 06 (P0): DB adapter dengan TLS, connection pool terbatas, config validation, graceful shutdown dan health.
+2. Divisi 06 (P0): transactional queue API untuk enqueue/claim/heartbeat/complete/retry/dead-letter; gunakan row locking/SKIP LOCKED dan lease fencing.
+3. Divisi 06 (P0): audit writer append-only; event status dalam transaksi yang sama; redaction dan correlation ID.
+4. Divisi 01: review DB role least privilege, secret injection, threat model, approval boundary, kill switch dan recovery.
+5. Divisi 05: PostgreSQL migration test, concurrent double-claim, stale lease, idempotency, retries, dependency blocking, audit immutability, failure injection dan independent QA.
+6. Divisi 07 (P0/P1): decision records dengan provenance/supersedes; task handoff/outcome/artifact references; metadata/full-text search lebih dulu.
+7. Divisi 06 (P1): scheduler/orchestrator, approval queue, budget manager dan worker pilot Stage 0/1.
+8. Divisi 05 tetap melanjutkan blocker QA/release section 36; fondasi Agent Platform tidak membatalkan verifikasi Hostless, Exchange Hub, Dashboard/Command Center, EROFS dan warning punycode.
+
+### 38.8 NEXT TASK
+- Selesaikan review branch/PR fondasi dan jalankan CI.
+- Setelah schema disetujui QA, Divisi 06 menambahkan DB adapter/queue service di belakang feature flag; jangan membuat worker aktif sebelum tes PostgreSQL concurrency dan Security Gate selesai.
+- Direktur Utama menetapkan PIC terpisah untuk DB/queue, security review, dan QA agar tidak ada dua divisi mengedit file yang sama.
+- BOS tidak perlu mengaktifkan resource Hostless atau memberikan credential melalui chat. Provisioning managed PostgreSQL/worker dan konfigurasi secret hanya melalui akun Hostless resmi setelah biaya dan akses ditinjau.
