@@ -32,7 +32,9 @@ async function load(){
   setStatus(payload);$('#updated-at').textContent='Observed: '+new Date(payload.observed_at).toLocaleString('id-ID');
   const endpoints=payload.endpoints||{},chain=unwrap(endpoints.chain_info),tx=arr(endpoints.latest_transactions),blocks=arr(endpoints.latest_blocks),tokens=arr(endpoints.trending_tokens);
   const latest=(key)=>{const series=unwrap(endpoints[key])?.series;return Array.isArray(series)&&series.length?series[series.length-1]:null;};
-  const txDay=latest('transaction_analytics'),stakeDay=latest('stake_analytics'),feeDay=latest('fee_analytics'),defiDay=latest('defi_analytics');\n  const lagValues=['transaction_analytics','stake_analytics','fee_analytics','defi_analytics','compute_analytics'].map(k=>unwrap(endpoints[k])?.lag_days).filter(v=>Number.isFinite(Number(v)));\n  const maxLag=lagValues.length?Math.max(...lagValues):null;
+  const txDay=latest('transaction_analytics'),stakeDay=latest('stake_analytics'),feeDay=latest('fee_analytics'),defiDay=latest('defi_analytics');
+  const lagValues=['transaction_analytics','stake_analytics','fee_analytics','defi_analytics','compute_analytics'].map(k=>unwrap(endpoints[k])?.lag_days).filter(v=>Number.isFinite(Number(v)));
+  const maxLag=lagValues.length?Math.max(...lagValues):null;
   const grid=$('#network-stats');grid.replaceChildren(
    stat('BLOCK TERAKHIR',fmt(chain?.blockHeight ?? blocks[0]?.slot ?? blocks[0]?.block_id),'Solscan indexed'),
    stat('EPOCH',fmt(chain?.currentEpoch),'Solana Mainnet'),
@@ -76,4 +78,8 @@ $('#wallet-form').addEventListener('submit',async event=>{
   displayWallet(payload);
  }catch(error){$('#wallet-result').textContent=showError(error.code||'SOLSCAN_REQUEST_FAILED');}
 });
-$('#refresh').addEventListener('click',load);\nconst menu=$('#menu-toggle'),sidebar=$('#sidebar'),backdrop=$('#sidebar-backdrop');\nconst setMenu=(open)=>{sidebar.classList.toggle('open',open);document.body.classList.toggle('sidebar-open',open);menu.setAttribute('aria-expanded',String(open));};\nmenu.addEventListener('click',()=>setMenu(!sidebar.classList.contains('open')));backdrop.addEventListener('click',()=>setMenu(false));document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false);});\nload();setInterval(load,300000);
+$('#refresh').addEventListener('click',load);
+const menu=$('#menu-toggle'),sidebar=$('#sidebar'),backdrop=$('#sidebar-backdrop');
+const setMenu=(open)=>{sidebar.classList.toggle('open',open);document.body.classList.toggle('sidebar-open',open);menu.setAttribute('aria-expanded',String(open));};
+menu.addEventListener('click',()=>setMenu(!sidebar.classList.contains('open')));backdrop.addEventListener('click',()=>setMenu(false));document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false);});
+load();setInterval(load,300000);
