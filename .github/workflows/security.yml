@@ -34,7 +34,7 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
 
   filesystem-scan:
-    name: Filesystem vulnerabilities and misconfigurations (Trivy)
+    name: Filesystem dependency and secret scan (Trivy)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -47,7 +47,7 @@ jobs:
           version: v0.76.2
           scan-type: fs
           scan-ref: .
-          scanners: vuln,misconfig
+          scanners: vuln,secret
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: "1"
