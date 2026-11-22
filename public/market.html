@@ -54,9 +54,14 @@
     <article class="market-panel"><div class="market-heading"><div><h2>Top Losers</h2><p>Penurunan 24 jam terdalam di Top 100</p></div></div><div id="losers" class="compact-list"></div></article>
   </section>
   <section class="market-panel">
-    <div class="market-heading"><div><h2>Historical Market Chart</h2><p>Harga, market cap, dan volume historis untuk aset pilihan</p></div><div class="chart-controls"><select id="chart-coin" aria-label="Pilih koin"></select><select id="chart-days" aria-label="Rentang grafik"><option value="7">7 hari</option><option value="30">30 hari</option><option value="90">90 hari</option><option value="1">24 jam</option></select></div></div>
+    <div class="market-heading"><div><h2>Historical Market Chart</h2><p>Harga, market cap, dan volume historis untuk aset pilihan</p></div><div class="chart-controls"><select id="chart-coin" aria-label="Pilih koin"></select><select id="chart-days" aria-label="Rentang grafik"><option value="7">7 hari</option><option value="30">30 hari</option><option value="90">90 hari</option><option value="1">24 jam</option></select><select id="chart-metric" aria-label="Jenis grafik"><option value="prices">Harga</option><option value="market_caps">Market cap</option><option value="total_volumes">Volume</option></select></div></div>
     <div id="chart-meta" class="chart-meta">Pilih aset untuk memuat histori harga.</div><div id="price-chart" class="price-chart"><div class="muted">Grafik akan tampil setelah data dimuat.</div></div>
     <div class="chart-legend"><span><i></i> Harga USD</span><span>Powered by CoinGecko</span></div>
+  </section>
+  <section class="market-panel">
+    <div class="market-heading"><div><h2>Exchange Trading Pairs</h2><p>Harga, volume, dan spread pasangan pasar pada exchange pilihan</p></div><select id="exchange-select" aria-label="Pilih exchange"></select></div>
+    <div class="table-scroll"><table><thead><tr><th>Pair</th><th>Market</th><th>Harga</th><th>Volume 24J</th><th>Spread</th><th>Trust</th></tr></thead><tbody id="exchange-tickers"><tr><td colspan="6">Pilih exchange untuk memuat pairs.</td></tr></tbody></table></div>
+    <div class="table-foot" id="exchange-ticker-status">Data dimuat saat exchange dipilih; cache server 60 menit.</div>
   </section>
   <section class="market-grid two">
     <article class="market-panel"><div class="market-heading"><div><h2>Sector Rotation</h2><p>Kategori dengan perubahan market cap 24 jam</p></div></div><div id="sector-list" class="compact-list"></div></article>
