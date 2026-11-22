@@ -8,7 +8,7 @@ const { createExchangeService, ExchangeError } = require('./lib/exchanges');
 const sources = require('./lib/sources');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
-const { runWorkspaceReview } = require('./lib/ai/workspace');
+const { runWorkspaceReview, listWorkspaceProviders } = require('./lib/ai/workspace');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
@@ -172,6 +172,10 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
         if (url.pathname === '/api/ai/group' && req.method === 'GET') {
           return send(res, 200, { status: 'success', group: st.aiGroup || null }, 'application/json', { 'cache-control': 'no-store' });
         }
+        if (url.pathname === '/api/ai/workspace/providers' && req.method === 'GET') {
+          if (!hasValidAdminToken(req.headers['x-admin-token'])) return send(res, 403, { status: 'error', message: 'ADMIN_TOKEN tidak cocok' });
+          return send(res, 200, { status: 'success', providers: listWorkspaceProviders(process.env) }, 'application/json', { 'cache-control': 'no-store' });
+        }
         if (url.pathname === '/api/ai/workspace' && req.method === 'GET') {
           return send(res, 200, { status: 'success', workspace: st.aiWorkspace || null }, 'application/json', { 'cache-control': 'no-store' });
         }
@@ -184,8 +188,11 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             let body; try { body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); } catch { return send(res, 400, { status: 'error', message: 'Format perintah tidak valid' }); }
             const instruction = typeof body.instruction === 'string' ? body.instruction.trim().slice(0, 2000) : '';
             if (!instruction) return send(res, 400, { status: 'error', message: 'Tulis perintah terlebih dahulu' });
-            const allowed = ['gemini', 'groq', 'openrouter', 'openai'];
-            const participants = Array.isArray(body.participants) ? [...new Set(body.participants.filter((p) => allowed.includes(p)))] : allowed;
+            const availableProviders = listWorkspaceProviders(process.env);
+            const allowed = new Set(availableProviders.map((provider) => provider.id));
+            const participants = Array.isArray(body.participants)
+              ? [...new Set(body.participants.filter((provider) => typeof provider === 'string' && allowed.has(provider)))]
+              : availableProviders.filter((provider) => provider.defaultSelected).map((provider) => provider.id);
             if (!participants.length) return send(res, 400, { status: 'error', message: 'Pilih minimal satu peserta rapat' });
             if (workspaceBusy) return send(res, 409, { status: 'running', message: 'Rapat sebelumnya masih berlangsung' });
             const commandId = 'meeting-' + Date.now();
