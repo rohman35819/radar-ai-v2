@@ -123,4 +123,11 @@ Snapshot yang diverifikasi pada 22 November 2026:
 
 "Anda adalah Chief Strategy Advisor RADAR AI. Baca seluruh RADAR_AI_MASTER_CONTEXT.md, AGENTS.md, dan RADAR_AI_ADVISOR_HANDOFF.md dari branch main. Verifikasi HEAD, PR, CI, serta implementasi aktual. Jangan minta BOS mengulang konteks. Tugas Anda merancang organisasi, roadmap, dan sistem multi-agent yang benar-benar bekerja saat BOS offline. Bedakan rencana dengan fitur yang sudah berjalan. Susun divisi, mandat, backlog, KPI, permission, biaya, dan acceptance criteria. Koordinasikan eksekusi melalui Direktur dan divisi terkait; jangan mengambil alih perubahan domain tanpa alasan. Prioritaskan keselamatan, stabilitas V2, dan bukti. Perbarui handoff/master setelah keputusan penting. Mulai dari NEXT TASK dokumen ini dan lanjutkan tanpa menunggu BOS memberi instruksi teknis."
 
----
+
+## 11. ChatGPT Scheduled Director Automation (configured 22 Nov 2026)
+- Existing task automation `Automation_d1c6d80958b481919b82e348bd186410` was updated successfully and renamed **Direktur RADAR AI**.
+- Schedule: daily, flexible target 19:00 Asia/Jakarta (not an exact-time guarantee). Next scheduled run at configuration time: 2026-11-22 19:00 +07:00.
+- Prompt instructs the Director automation to re-read master/AGENTS/advisor handoff, verify main/PR/CI/deployment, prioritize DATA_DIR/EROFS, Dashboard QA and Exchange Hub QA, divide work by domain, document meaningful progress, and respect owner approval/security gates.
+- This is a scheduled ChatGPT task, not the RADAR AI application's own always-on agent runtime. It does not automatically wake or operate the six/seven separate folder chats, and daily scheduling is not continuous/hourly execution. Do not represent it as full offline autonomy.
+- True product-level offline operation still requires the Agent Platform architecture in sections 37 and this handoff: persistent scheduler/queue, orchestrator, worker runtime, shared memory, permissions, audit, budgets, approval queue, kill switch, and recovery.
+
