@@ -2062,3 +2062,39 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - CoinGecko Market Intelligence is being integrated on top of the latest `main` that already contains Solscan. Preserve the Solscan backend, frontend, routes, tests, and server-only `SOLSCAN_API_KEY` handling.
 - The combined branch adds CoinGecko backend routes and `/market.html` while retaining `/solscan.html`; no provider key or Hostless environment value is changed by this integration.
 - Exact-head CI, security checks, and production deployment verification are separate release gates. Do not claim LIVE until the Hostless deployment SHA and page are verified.
+
+
+---
+
+## 64. HOSTLESS DEPLOYMENT MONITOR VIA GITHUB ACTIONS — 23 NOVEMBER 2026
+
+### 64.1 Goal and verified Hostless capabilities
+- Owner requested deployment completion/failure visibility in GitHub so routine verification does not require opening the Hostless dashboard.
+- Official Hostless documentation confirms a read-only REST API for deployment lists/details: `GET /v1/apps/{appName}/deployments`, requiring `deployments:read`; API base `https://api.hostless.cloud`; send the full API key in the `Authorization` header without a `Bearer` prefix.
+- Hostless Alerts supports Email, Slack, and signed generic HTTPS Webhook destinations. It does not document a native GitHub Actions/repository-dispatch destination. A direct Hostless-to-GitHub API push would need an authenticated bridge. Therefore the first implementation uses GitHub Actions polling rather than pretending a native push webhook exists.
+- Hostless automatic deployments start on configured Git branch pushes; Hostless may group pushes and queue builds, so a GitHub commit is not itself proof of a completed deployment.
+
+### 64.2 Implementation branch
+- Branch: `ops/hostless-deployment-watch`, based on main `c46e652ad4a1c284442464532f169fa82192da0e`.
+- Added `.github/workflows/hostless-deployment-monitor.yml`.
+- Workflow runs every 5 minutes and supports manual `workflow_dispatch`.
+- It queries the latest Hostless deployment, reports deployment ID/status/commit and compares the deployed commit with the workflow's main SHA.
+- It separately checks public `/api/ready` and requires HTTP 200 plus application status `ready`. Deployment API success and public LIVE readiness are reported as separate signals.
+- It uses only read-only deployment access; it cannot start, rerun, roll back, or modify a Hostless deployment.
+- Secret and configuration requirements:
+  - GitHub Actions secret `HOSTLESS_API_KEY`: Hostless API key with **only** `deployments:read`.
+  - Optional repository variable `HOSTLESS_APP_NAME`: Hostless app resource name; workflow default is `radar-ai-v2`.
+  - Optional repository variable `RADAR_LIVE_URL`: defaults to `https://radar-ai-v2.hostless.app`.
+- Never commit the Hostless key, paste it into chat, or place it in workflow source. Store it only in GitHub Actions Secrets. A short expiry and dedicated read-only key are preferred.
+
+### 64.3 Validation and release status
+- Workflow source commits on the isolated branch: `67cc5e7`, `1fe3395`, `42ec1b3` (latest implementation commit before this documentation update).
+- GitHub Actions execution against the Hostless API has **not** yet been possible because the owner has not added `HOSTLESS_API_KEY` to GitHub Actions Secrets. The workflow has not yet been validated against the live Hostless API response schema.
+- Hostless Build and LIVE status are unchanged and remain independently unverified by this change.
+- No Hostless setting, deployment, app secret, billing option, or live trading setting was changed. No SSH private key is required.
+- NEXT TASK:
+  1. Open repository Settings → Secrets and variables → Actions → New repository secret; add `HOSTLESS_API_KEY` using a Hostless API key with only `deployments:read`.
+  2. If the Hostless app resource name differs from `radar-ai-v2`, add repository variable `HOSTLESS_APP_NAME` with the exact app name.
+  3. Merge the monitoring workflow after CI/review, then run it manually once. Verify API parsing, latest deployment commit/status, and public `/api/ready`.
+  4. If Hostless API returns a different response envelope/status enum, adjust the parser from actual evidence. Do not claim the monitor is operational until a successful real run appears in GitHub Actions.
+  5. Consider a signed Hostless alert webhook bridge only if event-driven notification is later needed; do not expose a GitHub PAT or Hostless API key in a public URL.
