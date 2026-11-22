@@ -129,16 +129,19 @@ function renderAccount(data){
  const permissionCheckAvailable=apiPermissions.available===true;
  const spotTradingEnabled=data.exchange==='binance'&&permissionCheckAvailable&&Boolean(apiPermissions.spot_trading);
  const futuresTradingEnabled=data.exchange==='binance'&&permissionCheckAvailable&&Boolean(apiPermissions.futures_trading);
+ const binanceWithdrawalsEnabled=data.exchange==='binance'&&permissionCheckAvailable&&Boolean(apiPermissions.withdrawals);
+ const binanceTransferEnabled=data.exchange==='binance'&&permissionCheckAvailable&&(Boolean(apiPermissions.internal_transfer)||Boolean(apiPermissions.universal_transfer));
  const bybitWriteEnabled=data.exchange==='bybit'&&permissionCheckAvailable&&(
   apiPermissions.read_only!==true||Boolean(apiPermissions.spot_trading)||Boolean(apiPermissions.contract_trading)||
   Boolean(apiPermissions.withdrawals)||Boolean(apiPermissions.transfers));
- const tradingPermissionEnabled=spotTradingEnabled||futuresTradingEnabled||bybitWriteEnabled;
+ const tradingPermissionEnabled=spotTradingEnabled||futuresTradingEnabled||binanceWithdrawalsEnabled||binanceTransferEnabled||bybitWriteEnabled;
  const permissionUnknown=!permissionCheckAvailable;
  const permissionWarning=data.exchange==='bybit'
   ?[apiPermissions.read_only!==true?'API Key tidak read-only':'',apiPermissions.spot_trading?'Spot Trading':'',
     apiPermissions.contract_trading?'Contract Trading':'',apiPermissions.withdrawals?'Withdrawal':'',
     apiPermissions.transfers?'Transfer':''].filter(Boolean).join(', ')
-  :spotTradingEnabled&&futuresTradingEnabled?'izin Spot dan Futures Trading':spotTradingEnabled?'izin Spot Trading':'izin Futures Trading';
+  :[spotTradingEnabled?'Spot Trading':'',futuresTradingEnabled?'Futures Trading':'',
+    binanceWithdrawalsEnabled?'Withdrawal':'',binanceTransferEnabled?'Transfer':''].filter(Boolean).join(', ');
  const bybitPermissionDetails=data.exchange==='bybit'&&apiPermissions.categories
   ?Object.entries(apiPermissions.categories).filter(([,items])=>Array.isArray(items)&&items.length)
    .map(([category,items])=>category+': '+items.join(', ')).join(' · '):'';
@@ -147,7 +150,7 @@ function renderAccount(data){
   :permissionUnknown
    ?'Status izin API Key belum dapat diverifikasi oleh endpoint resmi. Jangan anggap key sudah read-only sebelum diperiksa langsung di exchange.'
    :data.exchange==='binance'
-    ?'Izin API Key terverifikasi: Spot & Margin Trading dan Futures Trading nonaktif.'
+    ?'Izin API Key terverifikasi: Spot & Margin Trading, Futures Trading, Withdrawal, dan Transfer nonaktif.'
     :apiPermissions.read_only===true
      ?'Izin API Key Bybit terverifikasi read-only; permission trading, transfer, dan withdrawal tidak terdeteksi.'
      :'Status permission Bybit belum memenuhi kriteria read-only.';
