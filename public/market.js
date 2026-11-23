@@ -442,4 +442,5 @@ $('#chart-days').addEventListener('change', loadChart);
 $('#chart-metric').addEventListener('change', loadChart);
 $('#exchange-select').addEventListener('change', () => { $('#exchange-select').dataset.loaded = ''; loadExchangeTickers(); });
 loadMarket();
+loadDexScanner(); // Independent source: DEX data must still load if CoinGecko is unavailable.
 setInterval(() => loadMarket(false), 5 * 60 * 1000);
