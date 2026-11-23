@@ -41,6 +41,10 @@ test('Marketlight snapshot reads only one selected coin and returns three attrib
   assert.equal(result.data.derivatives.oi.total, 12500000000);
   assert.equal(result.data.liquidations.total.long, 1200000);
   assert.equal(result.data.fear_greed.value, 32);
+  assert.equal(result.observed_at, new Date(1795450000000).toISOString());
+  assert.equal(result.sources.derivatives.updated_at, new Date(payloads.derivatives.updatedMs).toISOString());
+  assert.equal(result.sources.liquidations.updated_at, new Date(payloads.liquidations.toMs).toISOString());
+  assert.equal(result.sources.fear_greed.updated_at, payloads.fear.updatedAt);
   assert.equal(fixture.calls.length, 3);
   assert.ok(fixture.calls.every((call) => call.url.startsWith('https://marketlight.ai/')));
   assert.ok(fixture.calls.every((call) => call.options.method === 'GET' && call.options.redirect === 'error'));
