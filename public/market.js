@@ -23,6 +23,9 @@ let market = null;
 let chartBusy = false;
 let search = '';
 let refreshBusy = false;
+let dexScanner = null;
+let dexSearch = '';
+let dexBusy = false;
 function changeNode(value) {
   const span = node('span', Number(value) >= 0 ? 'positive' : 'negative', fmtPct(value));
   return span;
@@ -315,6 +318,69 @@ async function loadAICouncilSummary() {
     target.replaceChildren(node('div', 'muted', 'Laporan AI Council belum dapat dimuat.'));
   }
 }
+function renderDexScanner() {
+  const body = $('#dex-table');
+  if (!body) return;
+  body.replaceChildren();
+  const rows = (dexScanner?.data || []).filter((item) => !dexSearch || [
+    item.token_name, item.token_symbol, item.chain_id, item.token_address
+  ].some((value) => String(value || '').toLowerCase().includes(dexSearch)));
+  if (!rows.length) {
+    const tr = node('tr'); const td = node('td', 'muted', dexScanner ? 'Belum ada token/pair yang cocok atau data pool belum terindeks.' : 'Data DEX Screener belum tersedia.');
+    td.colSpan = 8; tr.append(td); body.append(tr);
+  }
+  rows.slice(0, 60).forEach((item) => {
+    const tr = node('tr');
+    const token = node('td', 'dex-token-cell');
+    const name = node('b', '', safeText(item.token_name || item.token_symbol || 'Token belum teridentifikasi'));
+    const meta = node('small', 'muted', safeText(item.token_symbol || '—') + ' · ' + safeText(item.chain_id).toUpperCase());
+    const address = node('small', 'muted', String(item.token_address || '').slice(0, 8) + '…' + String(item.token_address || '').slice(-6));
+    token.append(name, meta, address);
+    tr.append(token);
+    tr.append(node('td', 'number-cell', item.price_usd == null ? '—' : fmtMoney(item.price_usd)));
+    tr.append(node('td', 'number-cell', item.volume_24h_usd == null ? '—' : fmtMoney(item.volume_24h_usd)));
+    tr.append(node('td', 'number-cell', item.liquidity_usd == null ? '—' : fmtMoney(item.liquidity_usd)));
+    tr.append(node('td', 'number-cell', (item.buys_24h == null ? '—' : fmtNum(item.buys_24h)) + ' / ' + (item.sells_24h == null ? '—' : fmtNum(item.sells_24h))));
+    tr.append(changeNode(item.price_change_24h_pct));
+    const score = item.radar_activity_score == null ? 'N/A' : item.radar_activity_score + '/100';
+    const scoreCell = node('td', 'number-cell', score);
+    if (item.signals?.length) scoreCell.title = item.signals.join(', ');
+    tr.append(scoreCell);
+    const source = node('td', 'dex-source-cell');
+    source.append(node('small', 'muted', [item.profile ? 'PROFILE' : '', item.boosted ? 'BOOST' : ''].filter(Boolean).join(' · ') || 'PAIR'));
+    if (item.dex_url) {
+      const link = node('a', 'text-btn', 'DEX ↗');
+      link.href = item.dex_url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      source.append(link);
+    }
+    tr.append(source);
+    body.append(tr);
+  });
+  const total = (dexScanner?.data || []).length;
+  $('#dex-count').textContent = rows.length + ' dari ' + total + ' token · Skor RADAR memakai buy/sell, volume/liquidity, pool liquidity, dan perubahan 24J; bukan probabilitas profit.';
+}
+async function loadDexScanner(force = false) {
+  if (dexBusy) return;
+  dexBusy = true;
+  const status = $('#dex-status');
+  if (status) status.textContent = force ? 'Memperbarui data DEX Screener…' : 'Memuat data DEX Screener…';
+  try {
+    const response = await fetch('/api/dexscreener/scanner', { cache: 'no-store' });
+    const result = await response.json();
+    if (!response.ok && !result.data) throw new Error(result.message || result.code || 'DEX Screener unavailable');
+    dexScanner = result;
+    renderDexScanner();
+    const sourceCount = Object.values(result.sources || {}).filter((source) => source.ok).length;
+    const stale = result.cached ? ' · cache server' : '';
+    status.textContent = (result.partial ? 'Data parsial' : 'Terhubung') + ' · ' + (result.data || []).length + ' token · ' + sourceCount + ' sumber/pool OK' + stale + ' · ' + new Date(result.updated_at).toLocaleTimeString('id-ID');
+  } catch (error) {
+    status.textContent = 'DEX Screener tidak tersedia: ' + safeText(error.message);
+    if (!dexScanner) {
+      const body = $('#dex-table'); body.replaceChildren();
+      const tr = node('tr'); const td = node('td', 'negative', 'Tidak dapat mengambil data DEX Screener. Coba muat ulang beberapa saat lagi.'); td.colSpan = 8; tr.append(td); body.append(tr);
+    }
+  } finally { dexBusy = false; }
+}
 function renderAll() {
   if (!market) return;
   globalMetrics();
@@ -329,6 +395,7 @@ function renderAll() {
   renderSummary();
   renderExchangeSelector();
   loadAICouncilSummary();
+  loadDexScanner();
   updateStatus();
 }
 async function loadMarket(force = false) {
@@ -367,6 +434,8 @@ document.querySelectorAll('.side-nav a').forEach((link) => link.addEventListener
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
 window.addEventListener('resize', () => { if (window.innerWidth > 760) setSidebarOpen(false); });
 $('#refresh').addEventListener('click', () => loadMarket(true));
+$('#dex-refresh').addEventListener('click', () => loadDexScanner(true));
+$('#dex-search').addEventListener('input', (event) => { dexSearch = event.target.value.trim().toLowerCase(); renderDexScanner(); });
 $('#coin-search').addEventListener('input', (event) => { search = event.target.value.trim().toLowerCase(); marketRows(); });
 $('#chart-coin').addEventListener('change', loadChart);
 $('#chart-days').addEventListener('change', loadChart);
