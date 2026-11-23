@@ -10,7 +10,7 @@ const { createSolscanService, SolscanError } = require('./lib/solscan');
 const { createMarketIntelligenceService } = require('./lib/market-intelligence');
 const { createDerivativesService } = require('./lib/derivatives');
 const { createDexScreenerService } = require('./lib/dexscreener');
-const { createGoPlusService } = require('./lib/goplus');
+const { createGoPlusService, GOPLUS_SUPPORTED_NETWORKS } = require('./lib/goplus');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
@@ -275,7 +275,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           return send(res, 200, { status: 'success', server_time: new Date().toISOString(), last_refresh: st.lastRefresh, last_ok: st.lastOk,
             stale: age === null || age > cfg.refreshMs * 3, health: st.health, filters: { min_mcap: cfg.minMcap, max_mcap: cfg.maxMcap, min_volume: cfg.minVolume },
             tokens: st.tokens.map((t) => ({ ...t, fundamental: st.fundamentals[t.id] || null, vol10m: (st.vol10m || {})[t.id] || null })), exchange: st.exchStats || null, news: st.news, unlocks: st.unlocks, alerts: st.alerts.slice(0, 50), early_gems: Array.isArray(st.earlyGems) ? st.earlyGems : [], early_gems_meta: st.earlyGemsMeta || null,
-            config_needed: { telegram: !(cfg.tgToken && cfg.tgChat), coingecko_key: !cfg.cgKey, onchain_key: !cfg.cgKey, early_gems_enabled: cfg.earlyGemsEnabled !== false, onchain_refresh_min: cfg.onchainRefreshMin || 60, goplus_enabled: Boolean(process.env.GOPLUS_ACCESS_TOKEN || (process.env.GOPLUS_APP_KEY && process.env.GOPLUS_APP_SECRET)), goplus_usage: { day_count: Number(st.goplusUsage?.day_count || 0), month_count: Number(st.goplusUsage?.month_count || 0), daily_limit: 1000, monthly_limit: 5000 }, unlock_source: !cfg.unlocksUrl && !st.unlocks.length } },
+            config_needed: { telegram: !(cfg.tgToken && cfg.tgChat), coingecko_key: !cfg.cgKey, onchain_key: !cfg.cgKey, early_gems_enabled: cfg.earlyGemsEnabled !== false, onchain_refresh_min: cfg.onchainRefreshMin || 60, goplus_enabled: Boolean(process.env.GOPLUS_ACCESS_TOKEN || (process.env.GOPLUS_APP_KEY && process.env.GOPLUS_APP_SECRET)), goplus_usage: { day_count: Number(st.goplusUsage?.day_count || 0), month_count: Number(st.goplusUsage?.month_count || 0), daily_limit: 1000, monthly_limit: 5000 }, goplus_supported_networks: GOPLUS_SUPPORTED_NETWORKS, unlock_source: !cfg.unlocksUrl && !st.unlocks.length } },
           'application/json', { 'cache-control': 'public, max-age=30' });
         }
         if (url.pathname === '/api/ai/group' && req.method === 'GET') {
