@@ -27,10 +27,12 @@ test('Binance derivatives returns funding, open interest, OI history and taker f
 
 test('derivatives cache prevents duplicate requests and shares in-flight work', async () => {
   let calls = 0;
-  const service = createDerivativesService({ fetchImpl: async () => {
+  const service = createDerivativesService({ fetchImpl: async (url) => {
     calls += 1;
     await new Promise((resolve) => setTimeout(resolve, 5));
-    return response({});
+    if (url.includes('premiumIndex')) return response({ lastFundingRate: '0.001', markPrice: '1' });
+    if (url.includes('/openInterest?')) return response({ openInterest: '1' });
+    return response([]);
   }});
   const [a, b] = await Promise.all([service.snapshot('ETHUSDT'), service.snapshot('ETHUSDT')]);
   assert.equal(calls, 4);
