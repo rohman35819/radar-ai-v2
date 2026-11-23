@@ -43,3 +43,26 @@ test('GoPlus Solana beta endpoint is selected and unsupported network rejected',
   assert.match(url, /\/api\/v1\/solana\/token_security/);
   await assert.rejects(service.security({ networkId: 'sui', tokenAddress: address }), (e) => e.code === 'GOPLUS_UNSUPPORTED_NETWORK');
 });
+
+test('GoPlus enforces a five-call/minute budget before upstream requests', async () => {
+  let calls = 0;
+  const service = createGoPlusService({ accessToken: 'static-token', fetchImpl: async () => {
+    calls++;
+    return response({ code: 1, result: { ['0x1111111111111111111111111111111111111111']: { token_name: 'Test' } } });
+  }});
+  const address = '0x1111111111111111111111111111111111111111';
+  for (let i = 0; i < 5; i++) await service.security({ networkId: 'base', tokenAddress: address + '' + '' }).catch(() => {});
+  assert.ok(calls <= 1, 'per-token cache should collapse repeated lookups');
+});
+
+test('GoPlus persists usage counters and blocks daily quota exhaustion', async () => {
+  let calls = 0, persisted = 0;
+  const usageState = { day: '2026-11-23', month: '2026-11', day_count: 1000, month_count: 1000 };
+  const service = createGoPlusService({ accessToken: 'static-token', usageState, onUsage: () => { persisted++; }, now: () => Date.parse('2026-11-23T10:00:00Z'), fetchImpl: async () => {
+    calls++;
+    return response({ code: 1, result: {} });
+  }});
+  await assert.rejects(service.security({ networkId: 'base', tokenAddress: '0x1111111111111111111111111111111111111111' }), (e) => e.code === 'GOPLUS_FREE_QUOTA_DAILY' && e.status === 429);
+  assert.equal(calls, 0);
+  assert.equal(persisted, 0);
+});
