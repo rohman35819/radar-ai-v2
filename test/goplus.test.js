@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createGoPlusService } = require('../lib/goplus');
+const { createGoPlusService, normalizeSecurity } = require('../lib/goplus');
 const response = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => data });
 
 test('GoPlus computes top-10 token and LP holder concentration without claiming full coverage', () => {
