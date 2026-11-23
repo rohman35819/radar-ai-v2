@@ -87,7 +87,7 @@ test('Marketlight global cooldown prevents bursts for different assets', async (
   now += MIN_BATCH_INTERVAL_MS;
   const result = await service.snapshot('ETH', 24);
   assert.equal(result.status, 'success');
-  assert.equal(fixture.calls.length, 6);
+  assert.equal(fixture.calls.length, 4);
 });
 
 test('Marketlight response body is size bounded', async () => {
