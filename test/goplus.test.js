@@ -133,3 +133,40 @@ test('GoPlus validates Tron Base58Check addresses and selects the documented Tro
   assert.equal(result.chain_id, 'tron');
   assert.match(requested, /\\/token_security\\/tron\\?/);
 });
+
+
+test('GoPlus credential verification checks Bearer access without exposing credentials', async () => {
+  const calls = [];
+  const service = createGoPlusService({ appKey: 'private-app-key', appSecret: 'private-app-secret', now: () => 1800000000000, fetchImpl: async (url, options) => {
+    calls.push({ url, options });
+    if (url.endsWith('/api/v1/token')) return response({ code: 1, result: { access_token: 'private-bearer-token', expires_in: 600 } });
+    assert.equal(options.headers.authorization, 'Bearer private-bearer-token');
+    return response({ code: 1, result: [{ chain_id: '5042', name: 'Arc' }] });
+  }});
+  const result = await service.verifyCredentials();
+  assert.equal(result.configured, true);
+  assert.equal(result.verified, true);
+  assert.equal(result.auth_mode, 'app_key_secret');
+  assert.equal(result.provider_chain_count, 1);
+  assert.equal(JSON.stringify(result).includes('private-bearer-token'), false);
+  assert.equal(JSON.stringify(result).includes('private-app-secret'), false);
+  assert.equal(calls.length, 2);
+  const cached = await service.verifyCredentials();
+  assert.equal(cached.cached, true);
+  assert.equal(calls.length, 2);
+});
+
+test('GoPlus credential verification reports missing or rejected credentials safely', async () => {
+  let calls = 0;
+  const missing = createGoPlusService({ fetchImpl: async () => { calls++; return response({ code: 1, result: [] }); } });
+  const absent = await missing.verifyCredentials();
+  assert.equal(absent.configured, false);
+  assert.equal(absent.verified, false);
+  assert.equal(absent.error_code, 'GOPLUS_NOT_CONFIGURED');
+  assert.equal(calls, 0);
+  const rejected = createGoPlusService({ accessToken: 'bad-token', fetchImpl: async () => response({ code: 4023, message: 'Access token not found' }) });
+  const invalid = await rejected.verifyCredentials();
+  assert.equal(invalid.configured, true);
+  assert.equal(invalid.verified, false);
+  assert.equal(invalid.error_code, 'GOPLUS_CREDENTIALS_REJECTED');
+});
