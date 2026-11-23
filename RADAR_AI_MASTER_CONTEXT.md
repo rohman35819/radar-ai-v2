@@ -2274,3 +2274,35 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Latest Hostless monitor run 45180358589 re-confirmed live Binance Futures BTCUSDT success (funding, current OI, OI history, taker flow all available) and DEX Screener success (one pair, exact pool match). GeckoTerminal feed remained healthy with 80 indexed pools. GoPlus remains unconfigured and was not called.
 - The only failed monitor gate is readiness: HTTP 503 / degraded / EROFS. Deployment SHA cannot be verified until the read-only HOSTLESS_API_KEY secret is configured. Do not claim a healthy production deployment.
 - Next owner-side steps: attach an existing persistent Hostless disk at /data and set DATA_DIR=/data; if a new disk is needed, review its price and approve before provisioning. Configure GoPlus credentials only if desired, in Hostless server secrets, then perform one manual security lookup. Etherscan and FRED remain deferred.
+
+
+---
+
+## 70. FRED API COMPLIANCE HOLD — 23 NOVEMBER 2026
+
+### Keputusan
+- BOS meminta FRED diintegrasikan ke RADAR AI V2. Setelah membaca FRED® Services Terms of Use dan Additional Terms of Use for the FRED® API secara lengkap, integrasi **tidak boleh dipromosikan ke main/production** tanpa izin tertulis/pengecualian dari Federal Reserve Bank of St. Louis.
+- FRED Services Terms §II(84) melarang penggunaan FRED Content dalam hubungan dengan pengembangan/pelatihan software, sistem, machine learning, dan AI. FRED API Terms §Prohibitions(k) menyatakan larangan serupa untuk penggunaan API.
+- FRED API Terms §Prohibitions(l) juga melarang penyimpanan, caching, pengarsipan, dan memasukkan FRED Content ke database/cache. Kandidat RADAR menggunakan cache 30 menit sehingga tidak sesuai dengan ketentuan yang ditemukan.
+- Data series pihak ketiga memiliki label hak cipta dan persyaratan berbeda. Beberapa seri hanya dapat dipakai dengan atribusi; seri tertentu memerlukan pre-approval/izin tertulis. Penggunaan komersial juga dibatasi.
+- Karena RADAR AI adalah platform intelijen berbasis AI, tidak cukup hanya menambahkan atribusi dan link Terms. Perlu izin tertulis yang secara eksplisit mencakup penggunaan AI/software, penyimpanan/cache, redistribusi/penggunaan pengguna lain, dan skenario komersial yang relevan.
+
+### Sumber resmi yang diverifikasi
+- FRED Legal / full Services Terms: https://fred.stlouisfed.org/legal/
+- FRED API Terms of Use: https://fred.stlouisfed.org/docs/api/terms_of_use.html
+- FRED API docs: https://fred.stlouisfed.org/docs/api/fred/
+- Halaman Legal FRED menyebutkan kategori Copyrighted: Pre-approval required, Copyrighted: Citation required, dan Public Domain: Citation requested; label per-series harus diperiksa sebelum penggunaan.
+
+### Riwayat engineering kandidat
+- PR #64 dibuat pada branch terisolasi `feat/fred-macro-intelligence`, berisi adapter, route, panel UI, dokumentasi, dan tes.
+- CI pada exact candidate head `3661a2c485c5493a813c97f9556e4d747db73c18`: 141 passed, 0 failed, 0 skipped (run `45188659728`).
+- Security run `45188660054`: Gitleaks success. Trivy workflow success, tetapi log menyatakan tidak ada supported language-specific files untuk vulnerability scanner; dependency vulnerability coverage NOT AVAILABLE.
+- Setelah temuan terms, PR #64 ditutup tanpa merge. Branch kandidat di-reset ke main. Tidak ada adapter FRED, route FRED, atau panel FRED di main/Live. Tidak ada panggilan live FRED dari RADAR.
+- BOS sebelumnya melaporkan telah mengisi `FRED_API_KEY` di Hostless. Main saat ini tidak membaca variabel tersebut; hapus/nonaktifkan variabel itu sampai penggunaan FRED mendapat izin tertulis atau diganti sumber yang sesuai. Jangan pernah membagikan key melalui chat.
+
+### NEXT TASK
+- Divisi 08: riset alternatif makro gratis dari sumber primer (BLS, U.S. Treasury, NY Fed, BEA, OECD/BIS) dan verifikasi terms, izin AI/software, cache, redistribusi, commercial use, key/card requirement, kuota, dan endpoint.
+- Divisi 04: pilih seri makro yang dibutuhkan RADAR dan validasi makna/frekuensi/freshness tiap sumber.
+- Divisi 01: review keamanan adapter kandidat alternatif sebelum implementasi.
+- Divisi 05: QA independen.
+- Jangan mengaktifkan FRED sampai izin tertulis/pengecualian diterima. Prioritas operasional Hostless EROFS/DATA_DIR tetap berlaku sesuai section 68/69.
