@@ -9,7 +9,7 @@ const sample = { articles: [
   { title: 'Duplicate', url: 'https://news.example/a', seendate: '20261123T110000Z' },
   { title: 'Unsafe', url: 'http://news.example/b', seendate: '20261123T100000Z' },
   { title: 'Credential URL', url: 'https://user:pass@news.example/c' },
-  { title: 'No title', url: 'https://news.example/d' }
+  { title: '', url: 'https://news.example/d' }
 ] };
 
 test('GDELT normalizes publisher metadata, rejects unsafe URLs, and deduplicates articles', () => {
