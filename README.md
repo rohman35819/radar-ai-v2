@@ -58,6 +58,14 @@ Batasan:
 - Data exchange adalah data agregat provider; spread dan trust score bukan audit likuiditas atau keamanan exchange.
 - Tampilkan atribusi **Powered by CoinGecko** saat menggunakan data. Dokumentasi dan paket: https://docs.coingecko.com/ dan https://www.coingecko.com/en/api/pricing.
 
+## Macroeconomic Intelligence (FRED)
+
+RADAR menyediakan endpoint backend `GET /api/market-intelligence/macro` untuk delapan seri FRED yang dipilih secara eksplisit: Federal Funds Rate, SOFR, Treasury 10Y/2Y, spread 10Y-2Y, CPI, unemployment rate, dan M2. Data diambil melalui endpoint resmi `https://api.stlouisfed.org/fred/series/observations`; API key hanya dibaca dari environment server `FRED_API_KEY`, tidak pernah dikirim ke browser atau dimasukkan ke respons/log. Set key di Hostless Production. Tanpa key, endpoint mengembalikan status `unconfigured` dan tidak melakukan request upstream.
+
+Cache backend 30 menit, cooldown kegagalan 5 menit, timeout 10 detik, dan rate limit lokal 5 request/menit per IP serta global. FRED mendokumentasikan batas 120 request/menit sebelum HTTP 429; RADAR membatasi lebih ketat. Missing observation (`.`) tetap `null`, bukan nol. Respons parsial/stale menandai sumber bermasalah dan tidak menyamarkan data lama sebagai data baru. Ini adalah indikator ekonomi AS, bukan sinyal trading atau jaminan prediksi crypto.
+
+Sumber: [FRED API documentation](https://fred.stlouisfed.org/docs/api/fred/) dan [FRED API Terms of Use](https://fred.stlouisfed.org/docs/api/terms_of_use.html). RADAR menampilkan atribusi dan disclaimer yang diwajibkan: “This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.” Pengguna juga diberi tautan Terms of Use dan pemberitahuan bahwa penggunaan RADAR berarti menyetujui ketentuan FRED. Data series tertentu dapat dimiliki pihak ketiga; setiap seri harus ditinjau catatan hak ciptanya sebelum penggunaan komersial.
+
 ## Futures Flow Intelligence (free public market data)
 
 Halaman Market Intelligence menambahkan panel **Futures Flow Intelligence**. Pair USDT dapat diperiksa manual melalui `GET /api/market-intelligence/derivatives?symbol=BTCUSDT`. Backend mengambil data publik Binance USDⓈ-M Futures:
