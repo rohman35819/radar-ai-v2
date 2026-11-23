@@ -2412,3 +2412,45 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 3. After deployment is confirmed, run one controlled server-side connection test per configured provider using existing Hostless secrets. Report only provider name, HTTP/status, model slug, latency, and sanitized error code; never reveal key/token.
 4. Re-run Rapat Perbaikan and confirm valid response count 4/4, round progression, and minutes generation. If OpenRouter still returns "User not found", check its API key status/credits and current provider incident status; do not ask BOS to paste secrets into chat.
 5. Resume market data expansion backlog from section 71.5 after AI reliability is stable.
+
+
+---
+
+## 73. AI OUTPUT TOKEN BUDGET — RESPONSE LEBIH LENGKAP — 24 NOVEMBER 2026
+
+### Permintaan BOS
+- BOS meminta agar limit token keluaran pada AI RADAR dinaikkan dan tidak terlalu cepat memotong jawaban setelah seluruh API Key provider dikonfigurasi.
+- Klarifikasi teknis wajib: tidak ada "token gratis tanpa batas" di API. `max_completion_tokens` / `maxOutputTokens` adalah batas output per request, bukan jatah gratis. Batas keras model, kuota/rate limit akun, billing provider, dan harga token tetap berlaku.
+
+### Implementasi
+- Rapat Perbaikan / Workspace: seluruh provider Chat Completions menggunakan `max_completion_tokens: 4096`, menggantikan 1500/1800.
+- Workspace Gemini: `maxOutputTokens: 4096`, menggantikan 2200.
+- Gemini market analysis: `maxOutputTokens: 4096`, menggantikan 1200.
+- Structured market analysis (OpenAI/Groq/OpenRouter via `lib/ai/chat-completions.js`): default `max_completion_tokens: 4096`, menggantikan 220.
+- Regression assertions diperbarui untuk memastikan parameter token baru dikirim dan parameter lama `max_tokens` tidak digunakan.
+- Tidak ada API Key yang dibaca/diubah, tidak ada provider berbayar yang ditambahkan, dan tidak ada perubahan trading/order execution.
+
+### File berubah
+- `lib/ai/workspace.js`
+- `lib/ai/chat-completions.js`
+- `lib/ai/gemini.js`
+- `test/ai-workspace.test.js`
+- `test/ai-group.test.js`
+
+### Commit
+- `0dfd17bb7c4e47c49907b0339aa94b1b5615da92` workspace output budget.
+- `9d9a416f1afb0852d4e7aebb907b0f40ca9ca4f6` structured analysis output budget.
+- `976315ed68ba1350f70506510862242aee6089f7` Gemini market output budget.
+- `08d72c08b71c1927c670b979c82721b6b6dbac15` workspace test assertions.
+- `8fd3852215b78ef6abae1a5afa67250cdccf6d24` market test assertions.
+
+### Validasi dan batasan
+- Perubahan kode sudah masuk branch `main`; exact-head CI harus diverifikasi setelah dokumentasi commit.
+- 4096 bukan unlimited. Jika model/provider memiliki hard cap lebih rendah atau akun kehabisan quota, request tetap dapat ditolak atau dipotong. Token output lebih banyak dapat meningkatkan biaya API pada provider berbayar.
+- Koneksi live per-provider belum diverifikasi dari Hostless karena API secrets tidak tersedia di sesi ini. Hostless masih memiliki blocker readiness `EROFS` / `DATA_DIR` dan deployment SHA belum dapat diverifikasi tanpa `HOSTLESS_API_KEY`.
+
+### NEXT TASK
+1. Verifikasi exact-head GitHub tests dan security scans untuk perubahan token budget.
+2. Setelah Hostless deployment tersedia, jalankan test provider satu per satu tanpa menampilkan secret: HTTP status, model, latency, valid JSON, token usage, dan sanitized error.
+3. Pastikan Gemini/Groq/OpenRouter/OpenAI benar-benar menyelesaikan rapat 3 putaran serta notulen dengan output lebih lengkap.
+4. Jika provider menolak 4096 karena model cap, gunakan cap per-model yang didokumentasikan; jangan retry berulang tanpa batas.
