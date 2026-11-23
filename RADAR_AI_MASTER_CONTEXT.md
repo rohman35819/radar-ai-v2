@@ -2445,6 +2445,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - `8fd3852215b78ef6abae1a5afa67250cdccf6d24` market test assertions.
 
 ### Validasi dan batasan
+- Final code-head validation: GitHub Actions test run #817 passed and security scan #360 passed for commit `8fd3852215b78ef6abae1a5afa67250cdccf6d24`. Hostless deployment monitor #36 failed; production readiness remains unverified and the existing EROFS/DATA_DIR issue remains separate from provider-token code. Intermediate test run #816 failed while only the workspace assertion update had landed; the next commit updated the market assertion and exact final code-head run #817 passed.
 - Perubahan kode sudah masuk branch `main`; exact-head CI harus diverifikasi setelah dokumentasi commit.
 - 4096 bukan unlimited. Jika model/provider memiliki hard cap lebih rendah atau akun kehabisan quota, request tetap dapat ditolak atau dipotong. Token output lebih banyak dapat meningkatkan biaya API pada provider berbayar.
 - Koneksi live per-provider belum diverifikasi dari Hostless karena API secrets tidak tersedia di sesi ini. Hostless masih memiliki blocker readiness `EROFS` / `DATA_DIR` dan deployment SHA belum dapat diverifikasi tanpa `HOSTLESS_API_KEY`.
