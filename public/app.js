@@ -286,7 +286,7 @@ function renderEarlyGems(){
      const rows=(result.pairs||[]).slice(0,3).map(pair=>el('div',{class:'gem-validation-line'},
       el('b',{},String(pair.dex_id||'DEX')+' · '+String(pair.base_token?.symbol||'?')+'/'+String(pair.quote_token?.symbol||'?')),
       el('span',{},'Likuiditas '+money(pair.liquidity_usd)+' · Volume 24J '+money(pair.volume_24h_usd)+' · '+pct(pair.price_change_24h_pct)),
-      pair.same_pool?el('small',{class:'gem-clean'},'Alamat pool cocok dengan GeckoTerminal'):el('small',{class:'muted'},'Pair token cocok; bukan pool yang sama'))));
+      pair.same_pool?el('small',{class:'gem-clean'},'Alamat pool cocok dengan GeckoTerminal'):el('small',{class:'muted'},'Pair token cocok; bukan pool yang sama')));
      dexResult.replaceChildren(el('b',{},'DEX Screener · '+result.pair_count+' pair ditemukan'),...(rows.length?rows:[el('small',{class:'muted'},'Tidak ada pair cocok. Ini bukan bukti token scam.')]));
     }catch(error){dexResult.textContent='DEX Screener: '+String(error.message||'tidak tersedia').slice(0,120);}
     finally{dexButton.disabled=false;}
