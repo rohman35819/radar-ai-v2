@@ -80,7 +80,9 @@ test('Marketlight global cooldown prevents bursts for different assets', async (
   let now = 1795450000000;
   const service = createMarketlightService({ fetchImpl: fixture.fetchImpl, now: () => now });
   await service.snapshot('BTC', 24);
-  await assert.rejects(service.snapshot('ETH', 24), (error) => error.code === 'MARKETLIGHT_LOCAL_COOLDOWN' && error.status === 429);
+  const cooled = await service.snapshot('ETH', 24);
+  assert.equal(cooled.status, 'error');
+  assert.equal(cooled.sources.liquidations.stale, true);
   assert.equal(fixture.calls.length, 3);
   now += MIN_BATCH_INTERVAL_MS;
   const result = await service.snapshot('ETH', 24);
