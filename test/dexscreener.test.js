@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createDexScreenerService, scorePair } = require('../lib/dexscreener');
+const { createDexScreenerService } = require('../lib/dexscreener');
 
 const response = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => data });
 
