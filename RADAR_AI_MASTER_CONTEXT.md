@@ -2257,3 +2257,16 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - GoPlus is deliberately not called by scheduled diagnostics so no GoPlus CU is consumed; monitor reports only whether credentials are configured and the persistent usage counters.
 - Probe output is sanitized to status, available metric flags, pair count, same-pool boolean and normalized error codes; token addresses, provider response bodies, and secrets are not logged.
 - Added tests for both provider summaries. CI result pending on the exact current main head.
+
+## 69. GOPLUS FULL DOCUMENTED CHAIN COVERAGE + CREDENTIAL PROBE — 23 NOVEMBER 2026
+- Starting main HEAD: `22e90d301ff8508b9144dc4187f79a601b84d2b7`.
+- Official GoPlus [Response Details](https://docs.gopluslabs.io/reference/response-details-9) currently lists 38 identifiers: 37 numeric chain IDs and Tron string ID. This is broader than the 36-chain gap originally reported. The GoPlus Token Security EVM route is `/api/v1/token_security/{chain_id}`; Solana has its own Beta route `/api/v1/solana/token_security`. GoPlus also has a Sui changelog, but an operational Token Security endpoint reference was not verified; do not claim Sui support.
+- Branch `fix/goplus-full-chain-coverage` expands `lib/goplus.js` with the full 37 numeric IDs, canonical names and GeckoTerminal aliases, direct numeric-ID support, Tron endpoint support and Tron Base58Check address validation.
+- `GOPLUS_SUPPORTED_NETWORKS` exposes the provider-backed catalog to snapshot/UI. Early Gem UI disables GoPlus audit for networks outside the catalog instead of issuing a doomed request.
+- Added `GET /api/market-intelligence/goplus/status`: explicitly verifies configured Bearer credentials against GoPlus `/api/v1/supported_chains`, caches result briefly, and returns only configured/verified/auth mode/timestamp/provider chain count/error code. No key, secret or token is returned. UI checks this status before calling token-security.
+- Tests added for all 37 numeric IDs + aliases, Arc/ID mapping, Tron checksum and route, Solana Beta, credential success/failure, cache and UI gate. Exact-head CI is pending at PR creation.
+- Runtime credentials remain unverified until this branch is deployed and status endpoint returns `verified=true` on Hostless. Do not copy secrets into GitHub/chat. No GoPlus credentials were added.
+- Hostless remains separately blocked: last recorded LIVE readiness returned HTTP 503 / `EROFS`; persistent disk mount and `DATA_DIR=/data` are not yet evidenced. Because GoPlus quota counters must persist before upstream calls, the audit path correctly fails closed when state persistence fails. This code change does not fix Hostless storage.
+- Budget guard remains 5 token-security calls/minute, 1,000/day, 5,000/month; status verification has its own stricter 2/minute limiter and no token-security request.
+- No trading, signing, wallet action, paid service, secret or production config change.
+- NEXT TASK: verify exact-head CI/security, review diff, merge only after checks pass; then deploy through Hostless and check `/api/ready`, `/api/snapshot`, and `/api/market-intelligence/goplus/status`. Hostless credential verification and LIVE UI test remain pending.
