@@ -130,3 +130,33 @@ Inventarisasi sumber data publik tanpa login/kartu kredit, dengan prioritas trad
 - GitHub Actions test run #743 / ID 45192843609: npm test **135 passed, 0 failed, 0 skipped**.
 - Security run #286 / ID 45192843607: Gitleaks success, no leaks; Trivy secret scanner success, no findings. Trivy vulnerability scanner did not run because there were zero supported language-specific files. Dependency vulnerability coverage is **NOT AVAILABLE**, not a clean scan.
 - Documentation-only branch; no runtime source adapter was deployed and Hostless Build/LIVE remain unverified.
+
+
+## 23 November 2026 — additional trading-data candidates
+
+### Marketlight public derivatives API — candidate, not yet activated
+- Developer documentation: https://marketlight.ai/developers
+- States: no API key or signup, read-only JSON, CC BY 4.0 with attribution to Marketlight.
+- Documented coverage: current/historical funding and open interest for Binance, Bybit, OKX, Bitget, Gate, MEXC and Hyperliquid; public liquidation summaries and historical daily aggregates; 24 listed base assets.
+- Useful RADAR endpoints include `/api/public/derivatives?base=BTC`, `/bt/api/public/funding`, and `/bt/api/public/liquidations/summary?hours=24`.
+- Decision: **controlled probe only**. Before production, independently verify uptime, update timestamps, field definitions, exchange provenance, symbol coverage, response-size limits, rate behavior, provider rights over normalized exchange data, and attribution. Keep venue-specific rows separate. Aggregated liquidations are not wallet identities or proof of whale activity. A live API response was not verified during this audit.
+
+### Jupiter Tokens API v2 — Solana candidate, not yet activated
+- Official docs: https://developers.jup.ag/ and https://developers.jup.ag/docs/tokens
+- Documented fields include token metadata, verification/organic score, mint/freeze authority, holder count, market cap/FDV, liquidity and buy/sell statistics over 5m/1h/6h/24h.
+- Official developer guide states keyless access for testing at 0.5 requests/second; a free developer API key raises this to 1 request/second without payment.
+- Decision: technical access is free, but **production use remains on hold** until current API terms and commercial/display/cache rights are checked. If approved, use exact Solana mint address, keep the source's quality flags distinct from GoPlus, and do not treat Organic Score as a security audit. A live API response was not verified during this audit.
+
+### Expand existing Binance USDⓈ-M Futures data before adding more vendors
+- Official docs: https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data
+- RADAR currently fetches latest funding/mark, current open interest, OI history and taker flow. Official public market-data docs additionally expose funding history, global long/short account ratio, top-trader account and position ratios, order-book depth and mark/index price klines.
+- Decision: highest-value incremental derivatives work after review of PR #65. Add on-demand, bounded/cached fields with exchange, instrument type, interval, provider timestamp and freshness flags. Keep account ratios explicitly exchange-specific; do not describe them as wallet cohort/whale flows. Do not add order placement or authenticated trading routes.
+
+### Prioritization update
+1. Review/merge BLS + New York Fed PR #65 only after independent Divisi 01/02/05 review and exact-head CI.
+2. Implement Treasury Fiscal Data + selected World Bank Indicators macro series in isolated PRs; use publication/availability dates and per-dataset license metadata.
+3. Implement GDELT Project event metadata (not GDELT Cloud) with publisher links and source timestamps; do not copy publisher article content.
+4. Expand Binance Futures public positioning/funding/depth metrics.
+5. Probe Marketlight and Jupiter under controlled limits after terms/security checks.
+
+No candidate above has been activated in production by this addendum. No credentials, accounts, payment methods, Hostless environment, or trading permissions were changed.
