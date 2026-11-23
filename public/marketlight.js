@@ -31,8 +31,8 @@
     stats.replaceChildren(
       metric('TOTAL OPEN INTEREST', money(oi.total), 'Agregat USD · ' + payload.base),
       metric('PERUBAHAN OI 24J', hasNumber(oi.change24h) ? (Number(oi.change24h) * 100).toFixed(2) + '%' : '—', 'Fraction provider → persen'),
-      metric('LIKUIDASI LONG', money(total.long), 'Jendela ' + payload.liquidation_hours + ' jam'),
-      metric('LIKUIDASI SHORT', money(total.short), 'Jendela ' + payload.liquidation_hours + ' jam'),
+      metric('LIKUIDASI LONG · GLOBAL', money(total.long), 'Seluruh pasar · ' + payload.liquidation_hours + ' jam'),
+      metric('LIKUIDASI SHORT · GLOBAL', money(total.short), 'Seluruh pasar · ' + payload.liquidation_hours + ' jam'),
       metric('FEAR & GREED', hasNumber(fear.value) ? number(fear.value, 0) + ' / 100' : '—', text(fear.label, 'Belum tersedia'))
     );
 
@@ -58,9 +58,13 @@
     const sourceRows = Object.entries(payload.sources || {});
     const stale = sourceRows.some(([, source]) => source.stale);
     const failures = sourceRows.filter(([, source]) => !source.ok).map(([name, source]) => name + ': ' + (source.error || (source.stale ? 'stale' : 'unavailable')));
-    $('#marketlight-status').textContent = payload.base + ' · diambil ' + new Date(payload.observed_at).toLocaleString('id-ID') +
+    $('#marketlight-status').textContent = payload.base + ' · snapshot diambil ' + new Date(payload.observed_at).toLocaleString('id-ID') +
       (payload.cached ? ' · cache' : '') + (stale ? ' · DATA LAMA' : '') +
       (failures.length ? ' · parsial: ' + failures.join(', ') : ' · seluruh feed OK');
+    const feedNames = { derivatives: 'Open interest/funding', liquidations: 'Likuidasi global', fear_greed: 'Fear & Greed' };
+    $('#marketlight-freshness').textContent = 'Waktu observasi sumber (terpisah dari waktu pengambilan): ' +
+      sourceRows.map(([name, source]) => feedNames[name] + ': ' + (source.updated_at ? new Date(source.updated_at).toLocaleString('id-ID') : 'belum tersedia') +
+        (source.stale ? ' [lama]' : '')).join(' · ');
   }
 
   async function load() {
