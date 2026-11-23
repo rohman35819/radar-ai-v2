@@ -2177,3 +2177,10 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Etherscan and FRED remain deferred per BOS direction.
 - Current code/test head and exact CI results are recorded in the PR after the final test run. Hostless Build, deployed SHA, and LIVE visual QA remain separate unverified statuses.
 - NEXT TASK: complete exact-head CI for this branch; perform desktop/mobile and endpoint QA on Hostless after deployment; configure GoPlus free Console credentials only if BOS obtains them; validate GoPlus API runtime before enabling.
+
+
+### 67.1 GoPlus free-tier quota guard — 23 November 2026
+- Official GoPlus pricing lists Free Version 150,000 CU/month, 30,000 CU/day, and 150 CU/minute. The token-security API price endpoint documents an example price of 25 CU/call. The separate support page states 30 calls/minute; the application uses the stricter CU-based budget.
+- Local GoPlus limits: 5 calls/minute, 1,000/day, 5,000/month; 5-minute token cache; only on-demand requests. This keeps the configured use below the 150 CU/minute and daily/monthly free-tier budget, leaving headroom for other GoPlus use.
+- Daily/monthly counters are stored in `st.goplusUsage` in `DATA_DIR/state.json` and persisted before the upstream call. If persistence fails, the request fails closed. Cache hits do not consume the internal API call budget.
+- GoPlus token-security access still requires Console credentials to mint Bearer token; credentials are not present in Git. No live credential-backed API request has been verified.
