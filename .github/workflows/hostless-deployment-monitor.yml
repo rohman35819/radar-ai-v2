@@ -140,12 +140,10 @@ jobs:
             const safe = { http: process.env.HTTP_CODE || '', status: data && data.status || null, storage: data && data.storage ? { status: data.storage.status || null, code: data.storage.code || null } : null };
             console.log(JSON.stringify(safe));
             const lines = ['### LIVE readiness', '', '| Field | Result |', '|---|---|', '| HTTP | ' + safe.http + ' |', '| API status | ' + (safe.status || 'unavailable') + ' |', '| Storage | ' + (safe.storage && safe.storage.status || 'unknown') + ' |', '| Storage code | ' + (safe.storage && safe.storage.code || 'none') + ' |'];
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\\n') + '\\n');
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n') + '\n');
             if (Number(safe.http) !== 200 || safe.status !== 'ready') process.exit(1);
           "
 
       - name: Verify LIVE snapshot and news sources
         if: always() && steps.live.outputs.http == '200'
-        env:
-          RADAR_LIVE_URL: ${{ env.RADAR_LIVE_URL }}
         run: node scripts/hostless-live-check.js
