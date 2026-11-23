@@ -145,5 +145,5 @@ jobs:
           "
 
       - name: Verify LIVE snapshot and news sources
-        if: always() && steps.live.outputs.http == '200'
+        if: always()
         run: node scripts/hostless-live-check.js
