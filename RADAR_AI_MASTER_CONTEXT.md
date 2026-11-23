@@ -2622,3 +2622,28 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 3. Divisi 01 independently reviews token scope, child-process isolation and free-only routing; Divisi 05 independently reviews schedule/concurrency and test evidence.
 4. Only after both gates and a verified zero-cost provider path, obtain BOS approval for repository variable/secret configuration and activate. Observe at least three scheduled runs before expanding scope.
 5. Keep PR Draft/disabled until the above acceptance criteria are met.
+
+## 78. AUTONOMOUS WORKER FAILURE-PATH TESTING & ORPHAN CLEANUP — 24 NOVEMBER 2026
+
+### Perbaikan tambahan
+- Worker sekarang menghapus branch remote yang telanjur ter-push jika pembuatan Draft PR gagal. Penghapusan memakai jalur Git extra-header yang sama, dibatasi dan divalidasi; kegagalan cleanup tidak menutupi error PR asli.
+- Temporary patch file memakai nama unik per proses dan selalu dibersihkan melalui finally. Writer/remover dapat diinjeksi agar failure path bisa diuji tanpa filesystem produksi.
+- Penambahan tes main() untuk malformed JSON/model-hostile path, provider failure (tidak boleh mutasi repository), patch apply failure (temporary patch selalu dihapus), dan PR creation failure (remote orphan branch dihapus).
+- Total deklarasi tes autonomous-agent.test.js setelah penambahan: 10? [verify exact count in CI before relying on this number].
+
+### Commit
+- fb8b918c816f07eb1d7f2f1c5fe58177f51e26cd: cleanup orphaned remote branch when PR creation fails.
+- 2abc76cccc70235ea28bf9e4a87822948be5fae7: regression tests for provider, patch cleanup and PR failure paths.
+- Branch head at this documentation point: 2abc76cccc70235ea28bf9e4a87822948be5fae7.
+
+### Validasi
+- Exact-head GitHub Actions test and security scans for 2abc76cccc70235ea28bf9e4a87822948be5fae7 were running when this entry was prepared. Results must be checked before reporting completion.
+- Earlier commit fb8b918c816f07eb1d7f2f1c5fe58177f51e26cd had test and security workflows both report success; this does not certify the later test-only commit.
+- No worker schedule, provider request, GitHub remote push by the worker, Hostless Build, or Hostless LIVE was exercised.
+- PR #81 remains Draft/unmerged and disabled. Independent Divisi 01/05 review is still outstanding.
+
+### NEXT TASK
+1. Check exact-head tests/security for latest docs+code commit and correct any failures.
+2. Inspect workflow permissions and one-outstanding-PR concurrency semantics; confirm no provider path other than OpenRouter free router remains.
+3. Obtain genuine independent Divisi 01 and Divisi 05 reviews; do not self-approve or fabricate review submissions.
+4. Keep disabled until review gates, zero-cost provider verification, and BOS authorization for repository configuration are complete.
