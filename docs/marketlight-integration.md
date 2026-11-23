@@ -29,7 +29,7 @@
 
 ## Verification status
 - GitHub Actions exact head `ed20d134cf9c18e133c6e077cc95225ad29fdb12`: test run #786 / ID `45216629631` success — 143 passed, 0 failed, 0 skipped.
-- Security run #786 / ID `45216629543` success: Gitleaks no leaks; Trivy secret scan no findings. Trivy vulnerability scanner did not run because zero supported language-specific files were found, so dependency CVE coverage is unavailable.
+- Security run #329 / ID `45216629543` success: Gitleaks no leaks; Trivy secret scan no findings. Trivy vulnerability scanner did not run because zero supported language-specific files were found, so dependency CVE coverage is unavailable.
 - `package.json` checks syntax for both Marketlight modules; PWA shell advanced to `radar-shell-v13` and precaches `/marketlight.js`.
 - Hostless Build and Live: not checked; no deployment claim.
 - Independent Division 01 security review and Division 05 QA remain required before merge/release.
