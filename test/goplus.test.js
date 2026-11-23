@@ -131,7 +131,7 @@ test('GoPlus validates Tron Base58Check addresses and selects the documented Tro
   const result = await service.security({ networkId: 'tron', tokenAddress: address });
   assert.equal(result.status, 'success');
   assert.equal(result.chain_id, 'tron');
-  assert.match(requested, /\\/token_security\\/tron\\?/);
+  assert.ok(requested.includes('/token_security/tron?'));
 });
 
 
