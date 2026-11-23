@@ -2163,3 +2163,17 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - CI evidence before combined merge: PR #59 prior exact head tests 110/110 and Gitleaks/Trivy secret scans success; after Binance cache hardening a new exact-head CI run is required. PR #46 historical head tests 98/98 and security workflow success, but that old head is not evidence for the combined branch.
 - Hostless Build and LIVE SHA are not verified. No production env values or deployment settings changed.
 - NEXT TASK: add on-demand DEX Screener pair validation and GoPlus optional token security checks with free-tier quota safeguards; validate the combined branch on its exact head; independent QA and Hostless visual verification before merge/deploy.
+
+
+---
+
+## 67. DEX SCREENER + GOPLUS VALIDATION — 23 NOVEMBER 2026
+- Binance Futures PR #59 was merged into `main` as merge commit `3a3380d60d4d14db860ca503dca63d3d61d45a53`. It remains read-only: funding, mark price, current/history open interest, and taker buy/sell volume only; no order endpoints.
+- GeckoTerminal PR #46 is rebased onto the merged Binance main line. It discovers indexed new pools and provider-trending pools from CoinGecko Onchain using the existing server-side Demo key. Default cadence is 60 minutes, 3 new-pool pages plus one trending request; this is pool discovery, not token creation detection.
+- DEX Screener validation is on-demand per pool/token. It queries `/token-pairs/v1/{chainId}/{tokenAddress}`, matches chain + exact token address, displays up to five liquid pairs, and indicates whether the exact pool address matches GeckoTerminal. Pair-level volume/liquidity are not misrepresented as token-only volume; quote-side base metrics remain unknown. Cache identity includes pool address (case-sensitive for Solana), TTL 2 minutes, concurrency cap 50, global 240/min and per-IP 30/min.
+- DEX Screener API public pair endpoint requires no API key and documents 300 requests/minute. Its API terms restrict building a product whose primary purpose competes directly with DEX Screener; RADAR AI is broader multi-source AI intelligence, but legal/commercial review is required before any commercial launch using this feed.
+- GoPlus Token Security integration is optional/on-demand. Free access exists but API requires Bearer token; code can mint it server-side from Console `GOPLUS_APP_KEY` + `GOPLUS_APP_SECRET` using documented SHA-1 signature, or accept a pre-generated `GOPLUS_ACCESS_TOKEN`. EVM and Solana Beta routes are supported. App global limit 20 requests/minute and 5-minute per-token cache. No GoPlus credentials are committed; Hostless credential presence/runtime access remains unverified and the UI stays disabled until configured.
+- Missing GoPlus fields are unknown, not safe. Risk flags are not an audit guarantee. DEX no-pair result is not a scam finding.
+- Etherscan and FRED remain deferred per BOS direction.
+- Current code/test head and exact CI results are recorded in the PR after the final test run. Hostless Build, deployed SHA, and LIVE visual QA remain separate unverified statuses.
+- NEXT TASK: complete exact-head CI for this branch; perform desktop/mobile and endpoint QA on Hostless after deployment; configure GoPlus free Console credentials only if BOS obtains them; validate GoPlus API runtime before enabling.
