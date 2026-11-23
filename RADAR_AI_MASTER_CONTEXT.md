@@ -2116,3 +2116,42 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - The monitor workflow is now on `main`, so scheduled runs can start. It is **not operationally verified yet** until the owner adds `HOSTLESS_API_KEY` and one real run successfully reads the Hostless deployment API.
 - Owner action still required: add the read-only `deployments:read` API key in GitHub repository Actions Secrets. Do not send the token through chat. Check/set repository variable `HOSTLESS_APP_NAME` only if the Hostless app resource name is not `radar-ai-v2`.
 - Hostless Build and LIVE commit remain separate from GitHub merge/CI and are not yet verified by the new monitor.
+
+---
+
+## 65. DEX SCREENER ZERO-KEY MARKET SCANNER — 23 NOVEMBER 2026
+
+### 65.1 Routing and scope
+- Owner asked to connect DEX Screener to RADAR AI V2 immediately.
+- Lead: Main Director coordinating Divisi 08 (provider verification/adapter procurement) and Divisi 04 (market data semantics); supporting Divisi 01 (security) and Divisi 05 (independent QA). Divisi 02 owns visual review of the Market Intelligence panel.
+- Official API reference: https://docs.dexscreener.com/api/reference. The documented public REST endpoints used here require no API key: latest token profiles, latest token boosts, top boosted tokens, and token batch pair lookup. Official reference lists 60 requests/minute for profiles/boosts and 300 requests/minute for pair/token lookup.
+- Direct public endpoint probe on 23 Nov 2026 returned a JSON array from `/token-profiles/latest/v1`. This proves the endpoint responded from the probe environment, not that Hostless has deployed the integration.
+
+### 65.2 Implementation branch and files
+- Branch: `feat/dexscreener-market-scanner`, based on main `0843e2f0080f7933fd13500723da26f8a0f43462`.
+- Draft PR #60: https://github.com/rohman35819/radar-ai-v2/pull/60.
+- Added `lib/dexscreener.js`: server-side adapter, dedupe by chain + token address, identifier validation, timeout, redirect rejection, partial-source diagnostics, batch enrichment capped at 30 addresses per chain and four chain groups, two-minute in-memory cache, and explicit nulls for unavailable metrics.
+- Added `GET /api/dexscreener/scanner` with local rate limit 8 requests/minute/IP.
+- Added DEX scanner panel to `public/market.html`, rendering/search to `public/market.js`, responsive styles to `public/market.css`, and service-worker shell cache v13 so changed Market Intelligence assets are refreshed.
+- Added `test/dexscreener.test.js` and `test/dexscreener-route.test.js`; updated `test/market-ui.test.js`, `test/service-worker.test.js`, `package.json`, and README.
+- No new environment variable, API key, runtime dependency, Hostless setting, paid plan, or card is required.
+
+### 65.3 Data semantics and guardrails
+- DEX Screener profile/boost feeds are provider-curated profile/promotion feeds; they are not proof of token creation time, organic trend, or quality.
+- RADAR Activity Score is an explicitly heuristic composite of 24h buy/sell share, volume/liquidity, pool liquidity, and 24h price change. It is not calibrated probability, a buy recommendation, or a guarantee.
+- DEX Screener does not identify whale wallets or provide wallet-owner identity. Whale confirmation remains a separate on-chain task using Solscan or another appropriately verified indexer.
+- Missing metrics remain null/N/A; profile-only tokens can appear without pair metrics. No signing, transaction, order, transfer, or financial action is implemented.
+- Pair batch enrichment only covers up to four chain groups in one scan; other chains remain visible as profiles without enriched pool data. This is an explicit coverage limit, not an all-chain completeness claim.
+
+### 65.4 CI, review and deployment status
+- First PR head `3c88f85323f7ce7cf7c1b1465a892d71d0289f01`: test workflow failed because a private scoring helper was incorrectly exported outside its service scope. Gitleaks/Trivy workflow succeeded on that head. The failure was corrected by keeping the helper private and removing the invalid direct-helper test.
+- Corrected code head `e84b71380ea13057c59dd532b06809ca62ca9cf1`: GitHub check runs were observed queued/in progress at handoff; do not claim the corrected test suite passed until completed exact-head checks are read.
+- Hostless Build and LIVE: not checked and not verified. No merge or production deployment performed.
+- Initial PR metadata briefly reported mergeable=false while GitHub calculated mergeability; subsequent PR info reported mergeable=true. PR remains Draft and unmerged.
+
+### 65.5 NEXT TASK
+1. Read exact-head test, Gitleaks and Trivy results for the latest PR #60 commit; inspect logs and fix any remaining failures.
+2. Divisi 01 review URL validation, cache behavior, route limiter, data exposure, and untrusted provider fields.
+3. Divisi 04 review score semantics and make sure labels do not overstate data.
+4. Divisi 05 independent regression review, including existing Solscan/Exchange Hub routes, service worker cache behavior, and mobile/desktop UI.
+5. After checks/reviews and Owner approval, merge only through the approved repository workflow; then separately verify Hostless Build, deployed SHA and the live scanner endpoint. Until then, this is a GitHub PR, not a production-live feature.
