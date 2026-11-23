@@ -275,7 +275,7 @@ function renderEarlyGems(){
     el('div',{class:'gem-footer'},el('small',{title:tokenAddress},'CA: '+(tokenAddress?tokenAddress.slice(0,8)+'…'+tokenAddress.slice(-6):'N/A')),el('div',{class:'gem-links'},tokenLink?el('a',{href:tokenLink,target:'_blank',rel:'noopener noreferrer'},'Token ↗'):null,link?el('a',{href:link,target:'_blank',rel:'noopener noreferrer'},'Pool ↗'):null)));
 
    const validation=el('div',{class:'gem-validation-actions'});
-   const dexButton=el('button',{class:'mini-btn',type:'button'},'Validasi DEX');
+   const dexButton=el('button',{class:'mini-btn',type:'button',disabled:tokenAddress?null:true},'Validasi DEX');
    const dexResult=el('div',{class:'gem-validation-result'},'DEX Screener belum diperiksa.');
    dexButton.addEventListener('click',async()=>{
     dexButton.disabled=true;dexResult.textContent='Memeriksa pair DEX Screener…';
@@ -293,7 +293,7 @@ function renderEarlyGems(){
    });
    validation.append(dexButton);
    const goPlusEnabled=Boolean(data?.config_needed?.goplus_enabled);
-   const goPlusButton=el('button',{class:'mini-btn',type:'button',disabled:goPlusEnabled?null:true,title:goPlusEnabled?'Periksa risiko kontrak GoPlus':'Atur GOPLUS_ACCESS_TOKEN atau GOPLUS_APP_KEY + GOPLUS_APP_SECRET di Hostless'},goPlusEnabled?'Audit GoPlus':'GoPlus belum diatur');
+   const goPlusButton=el('button',{class:'mini-btn',type:'button',disabled:goPlusEnabled&&tokenAddress?null:true,title:goPlusEnabled?'Periksa risiko kontrak GoPlus':'Atur GOPLUS_ACCESS_TOKEN atau GOPLUS_APP_KEY + GOPLUS_APP_SECRET di Hostless'},goPlusEnabled?'Audit GoPlus':'GoPlus belum diatur');
    const goPlusResult=el('div',{class:'gem-validation-result'},goPlusEnabled?'Audit GoPlus belum dijalankan.':'GoPlus gratis tersedia; konfigurasi kredensial Console server-side diperlukan.');
    goPlusButton.addEventListener('click',async()=>{
     goPlusButton.disabled=true;goPlusResult.textContent='Memeriksa keamanan token GoPlus…';
@@ -302,7 +302,13 @@ function renderEarlyGems(){
      const response=await fetch('/api/market-intelligence/goplus?'+query.toString(),{cache:'no-store'});
      const result=await response.json();if(!response.ok||!['success','partial'].includes(result.status))throw new Error(result.code||result.message||'GoPlus validation failed');
      const flags=(result.risk_flags||[]).map(flag=>el('span',{class:'flag'},flag.label+' ['+flag.severity+']'));
-     goPlusResult.replaceChildren(el('b',{},'GoPlus · '+(result.status==='partial'?'DATA PARSIAL':'DATA TERSEDIA')),
+     const security=result.data||{},known=(key)=>security[key]===undefined?'Tidak diketahui':String(security[key]);
+     const tax=(key)=>security[key]===undefined?'—':(Number(security[key])*100).toFixed(2)+'%';
+     const details=el('div',{class:'gem-validation-line'},
+      el('span',{},'Open source: '+known('is_open_source')+' · Honeypot: '+known('is_honeypot')),
+      el('span',{},'Buy tax: '+tax('buy_tax')+' · Sell tax: '+tax('sell_tax')),
+      el('span',{},'Mintable: '+known('is_mintable')+' · Holders: '+known('holder_count')));
+     goPlusResult.replaceChildren(el('b',{},'GoPlus · '+(result.status==='partial'?'DATA PARSIAL':'DATA TERSEDIA')),details,
       ...(flags.length?flags:[el('small',{class:'muted'},'Tidak ada flag positif yang dilaporkan. Field yang kosong tetap tidak diketahui; ini bukan jaminan aman.')]),
       el('small',{class:'muted'},'Update '+dateTime(result.observed_at)));
     }catch(error){goPlusResult.textContent='GoPlus: '+String(error.message||'tidak tersedia').slice(0,140);}
