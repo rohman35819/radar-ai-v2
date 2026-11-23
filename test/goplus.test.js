@@ -69,3 +69,18 @@ test('GoPlus persists usage counters and blocks daily quota exhaustion', async (
   assert.equal(calls, 0);
   assert.equal(persisted, 0);
 });
+
+test('GoPlus usage counters persist after an actual upstream request', async () => {
+  const address = '0x2222222222222222222222222222222222222222';
+  const usageState = { day: null, month: null, day_count: 0, month_count: 0 };
+  let persisted = 0;
+  const service = createGoPlusService({ accessToken: 'static-token', usageState, now: () => Date.parse('2026-11-23T10:00:00Z'),
+    onUsage: (value) => { persisted++; assert.equal(value, usageState); },
+    fetchImpl: async () => response({ code: 1, result: { [address]: { token_name: 'Budgeted Token' } } })
+  });
+  const result = await service.security({ networkId: 'base', tokenAddress: address });
+  assert.equal(result.data.token_name, 'Budgeted Token');
+  assert.equal(usageState.day_count, 1);
+  assert.equal(usageState.month_count, 1);
+  assert.equal(persisted, 1);
+});
