@@ -72,7 +72,15 @@ test('DEX Screener rejects malformed token identifiers before building pair URL'
 });
 
 test('DEX Screener score is null when no measurable market data exists', () => {
-  const result = scorePair({ baseToken: {}, txns: {}, volume: {}, liquidity: {}, priceChange: {} });
-  assert.equal(result.radar_activity_score, null);
-  assert.equal(result.price_usd, null);
+  const result = await createDexScreenerService({ fetchImpl: async (url) => {
+    if (url.endsWith('/token-profiles/latest/v1')) return response([{ chainId: 'solana', tokenAddress: 'D'.repeat(32) }]);
+    if (url.endsWith('/token-boosts/latest/v1') || url.endsWith('/token-boosts/top/v1')) return response([]);
+    if (url.includes('/tokens/v1/')) return response([{ baseToken: { address: 'D'.repeat(32) }, volume: { h24: null }, liquidity: { usd: null }, priceChange: { h24: null }, marketCap: null, fdv: null, txns: { h24: { buys: null, sells: null } } }]);
+    throw new Error('unexpected URL');
+  }}).scanner();
+  assert.equal(result.data[0].radar_activity_score, null);
+  assert.equal(result.data[0].volume_24h_usd, null);
+  assert.equal(result.data[0].liquidity_usd, null);
+  assert.equal(result.data[0].market_cap_usd, null);
+  assert.equal(result.data[0].fdv_usd, null);
 });
