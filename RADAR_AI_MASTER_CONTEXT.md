@@ -2192,3 +2192,12 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Whale confirmation remains unavailable: no verified wallet cohort or per-token large-transfer USD attribution exists in the current source contract. UI marks whale state unverified and excludes it from score.
 - PR #55 remains open, Draft, unmerged; 27 commits ahead / 0 behind at this check. No independent review exists. Hostless Build, deployed SHA, and LIVE browser QA remain unverified; workflow Hostless diagnostics were skipped.
 - NEXT TASK: obtain independent frontend/data QA; verify Hostless build/deployed SHA and desktop/mobile visual behavior; research and validate a token-address-aware whale transfer source before implementing confirmed whale inflow.
+
+
+### 65.8 Scanner score cap and latest validation — 23 November 2026
+- Corrected the scanner score to clamp at 100/100; the weighted component maximum could otherwise total 105. Added a regression assertion for the 100-point ceiling.
+- Exact code/test head: `b99effa5b8f960228545eebf3a8cde585e67593b`.
+- GitHub Actions test run `45156207224`: **109 passed, 0 failed, 0 skipped**. The npm test step completed successfully.
+- Gitleaks on security run `45156207436`: success. Trivy scan step completed successfully; the workflow/job had not yet finalized when this note was written.
+- PR #55 remains Draft/open/unmerged. No independent review or Hostless Build/LIVE verification is recorded. Do not claim this feature is visible on the production dashboard yet.
+- NEXT TASK: complete the security workflow final status, request independent frontend/data QA, then verify Hostless build and LIVE deployed SHA before release.
