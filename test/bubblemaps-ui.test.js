@@ -39,3 +39,49 @@ test('Bubble Maps validates contract addresses by chain instead of accepting tic
   assert.match(app, /1-9A-HJ-NP-Za-km-z\]\{32,44\}/);
   assert.match(app, /isValidBubbleTokenAddress\(chainId,tokenAddress\)/);
 });
+
+test('Bubblemaps config endpoint exposes only the public partner ID and CSP allows only its official iframe host', async () => {
+  const { createApp } = require('../server');
+  const ingestModule = require('../lib/ingest');
+  const { mkdtempSync, rmSync } = require('node:fs');
+  const { tmpdir } = require('node:os');
+  const { join } = require('node:path');
+  const dir = mkdtempSync(join(tmpdir(), 'radar-bubblemaps-'));
+  const cfg = { ...ingestModule.loadConfig(), dataDir: dir, adminToken: '', bubbleMapsPartnerId: 'partner-test-public' };
+  const app = createApp({ cfg, state: ingestModule.emptyState() });
+  await new Promise((resolve) => app.server.listen(0, resolve));
+  try {
+    const response = await fetch('http://127.0.0.1:' + app.server.address().port + '/api/bubblemaps/config');
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('content-security-policy'), /frame-src https:\/\/iframe\.bubblemaps\.io/);
+    assert.deepEqual(await response.json(), {
+      provider: 'Bubblemaps V2',
+      configured: true,
+      partnerId: 'partner-test-public',
+      source: 'official_iframe'
+    });
+  } finally {
+    app.stop();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('Bubblemaps config endpoint stays disabled when production partner ID is absent', async () => {
+  const { createApp } = require('../server');
+  const ingestModule = require('../lib/ingest');
+  const app = createApp({
+    cfg: { ...ingestModule.loadConfig(), bubbleMapsPartnerId: '' },
+    state: ingestModule.emptyState()
+  });
+  await new Promise((resolve) => app.server.listen(0, resolve));
+  try {
+    const response = await fetch('http://127.0.0.1:' + app.server.address().port + '/api/bubblemaps/config');
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      provider: 'Bubblemaps V2',
+      configured: false,
+      partnerId: null,
+      source: 'official_iframe'
+    });
+  } finally { app.stop(); }
+});
