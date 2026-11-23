@@ -170,3 +170,7 @@ Hostless uses a read-only root filesystem. RADAR AI writes `state.json` under `D
 3. In app server environment variables, set `DATA_DIR=/data`, then redeploy.
 4. Verify `/api/ready` returns HTTP 200 with `status: ready` and `storage.status: ok`.
 Do not use `/tmp` for RADAR AI state: Hostless clears it when the process starts again.
+
+
+### Marketlight public derivatives (read-only)
+The Market Intelligence page includes an optional manual-refresh panel backed by `GET /api/market-intelligence/marketlight?base=BTC&hours=24`. It retrieves cross-exchange open interest/funding, liquidation totals and Fear & Greed from Marketlight's public API without a login or API key. Supported bases and liquidation windows are allowlisted. The panel shows Marketlight attribution under CC BY 4.0. Data is an aggregated corroboration source, not a standalone trading signal. See [the integration notes](docs/marketlight-integration.md).
