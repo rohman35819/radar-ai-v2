@@ -11,6 +11,7 @@ const { createMarketIntelligenceService } = require('./lib/market-intelligence')
 const { createDerivativesService } = require('./lib/derivatives');
 const { createDexScreenerService } = require('./lib/dexscreener');
 const { createGoPlusService } = require('./lib/goplus');
+const { createFredService } = require('./lib/fred');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
@@ -50,7 +51,7 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService, dexScreenerService, goPlusService } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService, dexScreenerService, goPlusService, fredService } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
   const solscanApi = solscanService || createSolscanService();
   const marketIntelligence = marketIntelligenceService || createMarketIntelligenceService({ apiKey: cfg.cgKey });
@@ -75,6 +76,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   };
   st.goplusUsage = st.goplusUsage && typeof st.goplusUsage === 'object' ? st.goplusUsage : { day: null, month: null, day_count: 0, month_count: 0 };
   const goPlus = goPlusService || createGoPlusService({ appKey: process.env.GOPLUS_APP_KEY || '', appSecret: process.env.GOPLUS_APP_SECRET || '', accessToken: process.env.GOPLUS_ACCESS_TOKEN || '', usageState: st.goplusUsage, onUsage: persistState });
+  const fred = fredService || createFredService({ apiKey: process.env.FRED_API_KEY || '' });
   let busy = null;
   let aiBusy = null;
   let aiTimer = null;
@@ -87,6 +89,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const dexScreenerGlobalLimited = createRateLimiter({ limit: 240, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerLimited = createRateLimiter({ limit: 30, windowMs: 60000, maxKeys: 1000 });
   const goPlusLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1000 });
+  const fredLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
     .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
     .catch((error) => {
@@ -216,6 +219,24 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'COINGECKO_UPSTREAM_ERROR';
             const status = Number.isInteger(error.status) ? error.status : 502;
             send(res, status, { status: 'error', code, message: code.startsWith('INVALID_') ? 'ID exchange tidak valid.' : 'Data trading pairs exchange tidak tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/market-intelligence/macro' && req.method === 'GET') {
+          if (fredLimited('global') || fredLimited(ip)) return send(res, 429, { status: 'error', code: 'FRED_LOCAL_RATE_LIMITED', message: 'Permintaan data makro terlalu sering. Tunggu satu menit.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          fred.snapshot().then((payload) => {
+            const status = payload.status === 'unconfigured' ? 503 : payload.status === 'error' ? 502 : 200;
+            send(res, status, payload, 'application/json', { 'cache-control': 'private, max-age=300' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'FRED_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            const messages = {
+              FRED_API_KEY_NOT_CONFIGURED: 'FRED_API_KEY belum dikonfigurasi di server.',
+              FRED_RATE_LIMITED: 'Batas permintaan FRED tercapai. Tunggu sebelum mencoba lagi.',
+              FRED_TIMEOUT: 'FRED tidak merespons tepat waktu.',
+              FRED_BUSY: 'Antrean data makro sedang penuh. Coba lagi sebentar.'
+            };
+            send(res, status, { status: 'error', code, message: messages[code] || 'Data makro FRED belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
