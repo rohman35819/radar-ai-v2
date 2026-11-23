@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createMacroService, parseBls, parseNyFed, BLS_SERIES, NYFED_SERIES } = require('../lib/macro');
+const { createMacroService, parseBls, parseNyFed, parseTreasury, parseWorldBank, BLS_SERIES, NYFED_SERIES, WORLD_BANK_SERIES } = require('../lib/macro');
 const { createApp } = require('../server');
 
 const jsonResponse = (data, status = 200) => ({
@@ -30,6 +30,18 @@ const nyFedFixture = (type, rate) => ({
   ]
 });
 
+const treasuryFixture = { data: [
+  { record_date: '10/31/2026', security_desc: 'Treasury Bills', avg_interest_rate_amt: '4.014%' },
+  { record_date: '10/31/2026', security_desc: 'Treasury Notes', avg_interest_rate_amt: '3.399%' },
+  { record_date: '10/31/2026', security_desc: 'Treasury Bonds', avg_interest_rate_amt: '3.483%' },
+  { record_date: '10/31/2026', security_desc: 'Treasury Inflation-Protected Securities (TIPS)', avg_interest_rate_amt: '1.227%' }
+] };
+const worldBankFixture = (indicator) => [{ page: 1, pages: 1, total: 3 }, [
+  { countryiso3code: 'USA', country: { value: 'United States' }, date: '2025', value: '2.1', obs_status: '' },
+  { countryiso3code: 'CHN', country: { value: 'China' }, date: '2025', value: '4.8', obs_status: '' },
+  { countryiso3code: 'IDN', country: { value: 'Indonesia' }, date: '2025', value: '5.0', obs_status: '' }
+]];
+
 test('BLS parser keeps monthly observations and skips annual-average records', () => {
   const parsed = parseBls(blsFixture);
   assert.equal(parsed.length, BLS_SERIES.length);
@@ -45,6 +57,20 @@ test('NY Fed parser validates rate observations and keeps missing values null', 
   assert.throws(() => parseNyFed({ refRates: [{ effectiveDate: '2026-11-20', percentRate: null, volumeInBillions: null }] }, NYFED_SERIES[0]), { code: 'NYFED_EMPTY_RESPONSE' });
 });
 
+test('Treasury parser keeps monthly security rates and ignores unrelated rows', () => {
+  const parsed = parseTreasury(treasuryFixture);
+  assert.equal(parsed.length, 4);
+  assert.equal(parsed.find((item) => item.id === 'TREASURY_BILLS').latest.value, 4.014);
+  assert.equal(parsed.find((item) => item.id === 'TREASURY_BILLS').latest.date, '2026-10-31');
+});
+
+test('World Bank parser keeps country/indicator identity and nulls missing observations', () => {
+  const parsed = parseWorldBank(worldBankFixture(), WORLD_BANK_SERIES[0]);
+  assert.equal(parsed.length, 3);
+  assert.equal(parsed.find((item) => item.country_code === 'IDN').latest.value, 5);
+  assert.equal(parsed[0].source, 'World Bank');
+});
+
 test('macro service calls BLS v1 once and NY Fed endpoints without API keys', async () => {
   const calls = [];
   const service = createMacroService({
@@ -54,13 +80,15 @@ test('macro service calls BLS v1 once and NY Fed endpoints without API keys', as
       if (String(url).includes('api.bls.gov')) return jsonResponse(blsFixture);
       if (String(url).includes('/secured/sofr/')) return jsonResponse(nyFedFixture('SOFR', 3.92));
       if (String(url).includes('/unsecured/effr/')) return jsonResponse(nyFedFixture('EFFR', 3.88));
+      if (String(url).includes('fiscaldata.treasury.gov')) return jsonResponse(treasuryFixture);
+      if (String(url).includes('api.worldbank.org')) return jsonResponse(worldBankFixture());
       throw new Error('Unexpected upstream');
     }
   });
   const result = await service.snapshot();
   assert.equal(result.status, 'success');
-  assert.equal(result.series.length, BLS_SERIES.length + NYFED_SERIES.length);
-  assert.equal(calls.length, 3);
+  assert.equal(result.series.length, BLS_SERIES.length + NYFED_SERIES.length + 4 + WORLD_BANK_SERIES.length * 3);
+  assert.equal(calls.length, 6 + WORLD_BANK_SERIES.length);
   assert.equal(calls.filter((item) => item.options.method === 'POST').length, 1);
   assert.ok(calls.every((item) => !String(item.url).includes('api_key')));
   assert.equal(result.series.find((item) => item.id === 'SOFR').latest.value, 3.92);
@@ -80,7 +108,7 @@ test('macro service caches each source and deduplicates concurrent snapshots', a
   const [first, second] = await Promise.all([service.snapshot(), service.snapshot()]);
   assert.equal(first.status, 'success');
   assert.equal(second.status, 'success');
-  assert.equal(calls, 3);
+  assert.equal(calls, 6 + WORLD_BANK_SERIES.length);
   const cached = await service.snapshot();
   assert.equal(calls, 3);
   assert.equal(cached.cached, true);
@@ -92,6 +120,8 @@ test('macro service returns partial data without fabricating missing values', as
       if (String(url).includes('api.bls.gov')) return jsonResponse(blsFixture);
       if (String(url).includes('/secured/sofr/')) return jsonResponse(nyFedFixture('SOFR', 3.92));
       if (String(url).includes('/unsecured/effr/')) return jsonResponse({}, 503);
+      if (String(url).includes('fiscaldata.treasury.gov')) return jsonResponse(treasuryFixture);
+      if (String(url).includes('api.worldbank.org')) return jsonResponse(worldBankFixture());
       throw new Error('Unexpected upstream');
     }
   });
