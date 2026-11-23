@@ -56,7 +56,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const marketIntelligence = marketIntelligenceService || createMarketIntelligenceService({ apiKey: cfg.cgKey });
   const derivatives = derivativesService || createDerivativesService();
   const dexScreener = dexScreenerService || createDexScreenerService();
-  const goPlus = goPlusService || createGoPlusService({ appKey: process.env.GOPLUS_APP_KEY || '', appSecret: process.env.GOPLUS_APP_SECRET || '', accessToken: process.env.GOPLUS_ACCESS_TOKEN || '' });
+  
   const matchesToken = (expectedValue, provided) => {
     if (!expectedValue || typeof provided !== 'string') return false;
     const expected = Buffer.from(String(expectedValue));
@@ -73,6 +73,8 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
     try { ingest.save(cfg, st); storageChecked = true; storageErrorCode = null; }
     catch (error) { storageChecked = true; storageErrorCode = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'STORAGE_WRITE_FAILED'; throw error; }
   };
+  st.goplusUsage = st.goplusUsage && typeof st.goplusUsage === 'object' ? st.goplusUsage : { day: null, month: null, day_count: 0, month_count: 0 };
+  const goPlus = goPlusService || createGoPlusService({ appKey: process.env.GOPLUS_APP_KEY || '', appSecret: process.env.GOPLUS_APP_SECRET || '', accessToken: process.env.GOPLUS_ACCESS_TOKEN || '', usageState: st.goplusUsage, onUsage: persistState });
   let busy = null;
   let aiBusy = null;
   let aiTimer = null;
@@ -84,7 +86,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const solscanLimited = createRateLimiter({ limit: 10, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerGlobalLimited = createRateLimiter({ limit: 240, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerLimited = createRateLimiter({ limit: 30, windowMs: 60000, maxKeys: 1000 });
-  const goPlusLimited = createRateLimiter({ limit: 20, windowMs: 60000, maxKeys: 1000 });
+  const goPlusLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
     .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
     .catch((error) => {
@@ -246,7 +248,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           }).catch((error) => {
             const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'GOPLUS_UPSTREAM_ERROR';
             const status = Number.isInteger(error.status) ? error.status : 502;
-            send(res, status, { status: 'error', code, message: code === 'GOPLUS_NOT_CONFIGURED' ? 'GoPlus gratis tersedia, tetapi kredensial Console belum dikonfigurasi di server.' : code === 'GOPLUS_BUSY' ? 'Antrean GoPlus sedang penuh; coba lagi sebentar.' : code.startsWith('GOPLUS_INVALID_') || code === 'GOPLUS_UNSUPPORTED_NETWORK' ? 'Jaringan atau alamat token tidak valid/tidak didukung GoPlus.' : 'Data keamanan GoPlus belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+            send(res, status, { status: 'error', code, message: code === 'GOPLUS_NOT_CONFIGURED' ? 'GoPlus gratis tersedia, tetapi kredensial Console belum dikonfigurasi di server.' : code === 'GOPLUS_BUSY' ? 'Antrean GoPlus sedang penuh; coba lagi sebentar.' : code === 'GOPLUS_FREE_QUOTA_DAILY' ? 'Batas kuota gratis GoPlus untuk hari ini tercapai.' : code === 'GOPLUS_FREE_QUOTA_MONTHLY' ? 'Batas kuota gratis GoPlus untuk bulan ini tercapai.' : code.startsWith('GOPLUS_INVALID_') || code === 'GOPLUS_UNSUPPORTED_NETWORK' ? 'Jaringan atau alamat token tidak valid/tidak didukung GoPlus.' : 'Data keamanan GoPlus belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
@@ -273,7 +275,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           return send(res, 200, { status: 'success', server_time: new Date().toISOString(), last_refresh: st.lastRefresh, last_ok: st.lastOk,
             stale: age === null || age > cfg.refreshMs * 3, health: st.health, filters: { min_mcap: cfg.minMcap, max_mcap: cfg.maxMcap, min_volume: cfg.minVolume },
             tokens: st.tokens.map((t) => ({ ...t, fundamental: st.fundamentals[t.id] || null, vol10m: (st.vol10m || {})[t.id] || null })), exchange: st.exchStats || null, news: st.news, unlocks: st.unlocks, alerts: st.alerts.slice(0, 50), early_gems: Array.isArray(st.earlyGems) ? st.earlyGems : [], early_gems_meta: st.earlyGemsMeta || null,
-            config_needed: { telegram: !(cfg.tgToken && cfg.tgChat), coingecko_key: !cfg.cgKey, onchain_key: !cfg.cgKey, early_gems_enabled: cfg.earlyGemsEnabled !== false, onchain_refresh_min: cfg.onchainRefreshMin || 60, goplus_enabled: Boolean(process.env.GOPLUS_ACCESS_TOKEN || (process.env.GOPLUS_APP_KEY && process.env.GOPLUS_APP_SECRET)), unlock_source: !cfg.unlocksUrl && !st.unlocks.length } },
+            config_needed: { telegram: !(cfg.tgToken && cfg.tgChat), coingecko_key: !cfg.cgKey, onchain_key: !cfg.cgKey, early_gems_enabled: cfg.earlyGemsEnabled !== false, onchain_refresh_min: cfg.onchainRefreshMin || 60, goplus_enabled: Boolean(process.env.GOPLUS_ACCESS_TOKEN || (process.env.GOPLUS_APP_KEY && process.env.GOPLUS_APP_SECRET)), goplus_usage: { day_count: Number(st.goplusUsage?.day_count || 0), month_count: Number(st.goplusUsage?.month_count || 0), daily_limit: 1000, monthly_limit: 5000 }, unlock_source: !cfg.unlocksUrl && !st.unlocks.length } },
           'application/json', { 'cache-control': 'public, max-age=30' });
         }
         if (url.pathname === '/api/ai/group' && req.method === 'GET') {
