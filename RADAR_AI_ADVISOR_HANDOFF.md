@@ -223,3 +223,12 @@ Snapshot yang diverifikasi pada 22 November 2026:
 
 - Latest implementation head `e90db36ebe90c09811c44e51765e5a56fc873250`: GitHub Actions test #649 passed 110/110; security #192 Gitleaks and Trivy filesystem scan succeeded.
 - PR #59 remains Draft/unmerged; Divisi 03/05 reviews and Hostless Build/LIVE validation remain pending.
+
+
+## 17. Global news catalyst and scanner closure — 23 November 2026
+
+- BOS asked to finish remaining scanner gaps urgently. Current-main re-audit found Binance Futures, GeckoTerminal pool discovery, DEX exact-pair validation, GoPlus adapter, and Solscan wallet reads already in main; GoPlus is still unconfigured in Hostless, and Hostless readiness remains EROFS.
+- New isolated delivery `feat/gdelt-news-catalyst-scanner` adds on-demand GDELT 24h crypto/macro news metadata, bounded to 50 records, 15m cache, 5s cooldown, HTTPS URL validation, stale fallback, route/UI/tests/docs. CI is pending until exact-head run completes; not merged or LIVE.
+- Macro PR #65 (`feat/primary-macro-intelligence`) is CI-green at exact head `2428483049c5d36e6e997036845e212639d92472`: 141/141 tests; Gitleaks and Trivy pass. Adds BLS + NY Fed data, but independent review and merge remain pending.
+- Procurement audit PR #67 is CI-green at exact head `93d65f0dc4e1b3bcfad507b292c71e36c1551fa7`: 135/135 tests; Gitleaks and Trivy pass. It clears Treasury/World Bank and GDELT for further adapter work subject to dataset attribution/metadata, while FRED is blocked and DEX Screener broader scanner remains compliance-held.
+- Do not claim whale/smart-money labels, full holder concentration, or all-chain token unlock automation. These require provenance and reliable data. Next sequence: GDELT CI/review, PR #65 review, Treasury/World Bank adapters, then Solscan watchlist whale pilot.
