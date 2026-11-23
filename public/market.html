@@ -82,6 +82,15 @@
     <div class="table-scroll"><table><thead><tr><th>Metrik</th><th>Nilai</th><th>Waktu</th></tr></thead><tbody id="derivatives-table"><tr><td colspan="3">Belum dimuat.</td></tr></tbody></table></div>
     <div class="market-footnote">Open interest bukan jumlah posisi long saja; setiap kontrak memiliki sisi long dan short. Taker ratio menunjukkan agresor transaksi pada interval, bukan identitas whale atau bukti akumulasi.</div>
   </section>
+  <section class="market-panel">
+    <div class="market-heading"><div><h2>Macroeconomic Intelligence · Primary Sources</h2><p>Inflasi, tenaga kerja, suku bunga kebijakan, funding rate, dan yield Treasury AS</p></div><button id="load-macro" class="secondary-btn" type="button">Perbarui data</button></div>
+    <div id="macro-status" class="chart-meta">Memuat data makro dari sumber primer…</div>
+    <div class="table-scroll"><table><thead><tr><th>Indikator</th><th>Nilai terbaru</th><th>Tanggal data</th><th>Sumber / frekuensi</th></tr></thead><tbody id="macro-table"><tr><td colspan="4">Menunggu data makro…</td></tr></tbody></table></div>
+    <div class="market-footnote">
+      BLS data retrieved on the date shown above. BLS.gov cannot vouch for the data or analyses derived from these data after the data have been retrieved from BLS.gov. Sources: <a href="https://www.bls.gov/developers/termsOfService.htm" target="_blank" rel="noopener noreferrer">BLS API Terms</a>, <a href="https://home.treasury.gov/treasury-daily-interest-rate-xml-feed" target="_blank" rel="noopener noreferrer">US Treasury Yield Feed</a>, and <a href="https://www.newyorkfed.org/privacy/termsofuse.html" target="_blank" rel="noopener noreferrer">New York Fed Terms of Use</a>.
+      The SOFR Data is subject to the Terms of Use posted at newyorkfed.org. The New York Fed is not responsible for publication of the SOFR Data by RADAR AI V2, does not sanction or endorse any particular republication, and has no liability for your use. RADAR AI V2 is not affiliated with the New York Fed. The New York Fed does not sanction, endorse, or recommend any products or services offered by RADAR AI V2.
+    </div>
+  </section>
   <section class="market-grid two">
     <article class="market-panel"><div class="market-heading"><div><h2>Sector Rotation</h2><p>Kategori dengan perubahan market cap 24 jam</p></div></div><div id="sector-list" class="compact-list"></div></article>
     <article class="market-panel"><div class="market-heading"><div><h2>Exchange Intelligence</h2><p>Volume exchange terpusat dan trust score CoinGecko</p></div></div><div id="exchange-list" class="compact-list"></div></article>
