@@ -250,3 +250,31 @@ RADAR AI V2 saat ini adalah aplikasi Node.js >=20 dengan `package.json` menyatak
 
 ### Kesimpulan procurement
 Tidak ada alasan aman untuk menambahkan banyak framework sekaligus ke runtime V2. **CCXT adalah kandidat kode paling praktis untuk evaluasi multi-exchange berikutnya**, sementara Freqtrade/Hummingbot/NautilusTrader berguna sebagai referensi riset/backtest/arsitektur yang berdiri terpisah. Solana web3.js hanya ditambahkan bila ada kebutuhan parsing yang tidak tertangani. Prioritas immediate tetap menyelesaikan sumber data yang sudah diotorisasi, review provider rights, dan memperbaiki blocker storage Hostless sebelum memperbesar beban sistem.
+
+
+## 72. Handoff procurement untuk integrasi yang sudah disiapkan — 23 November 2026
+
+Audit ulang terhadap main dan PR aktif menemukan bahwa kebutuhan trading BOS lebih tepat dipenuhi dengan menyelesaikan integrasi yang sudah disiapkan daripada menambahkan dependency open-source baru:
+
+| PR | Kapabilitas | Exact-head CI | Procurement status | Gate tersisa |
+|---|---|---|---|---|
+| [#65](https://github.com/rohman35819/radar-ai-v2/pull/65) | BLS + NY Fed + Treasury + World Bank macro | 143/143 tests; Gitleaks + Trivy success pada `e00cfd8e6f803ad5b91da66dc6ee6036bc944eca` | Conditional source approval; keyless public APIs | Divisi 04 series semantics, Divisi 01 security/terms, Divisi 05 independent QA |
+| [#70](https://github.com/rohman35819/radar-ai-v2/pull/70) | GDELT Project news catalyst metadata | 140/140 tests; Gitleaks + Trivy success pada `aa629c10162f06819de8e13972e6cdf1f73106a8` | Conditional source approval; no key/card; metadata-only | Divisi 04 relevance/freshness, Divisi 01 SSRF/terms, Divisi 05 throttle/partial failure/UI QA |
+| [#71](https://github.com/rohman35819/radar-ai-v2/pull/71) | Solscan large USD transfer watch | 139/139 tests; Gitleaks + Trivy success pada `78e91c75df448b8fe27b87ecdf8565d11d44c69b` | Existing provider, export endpoint entitlement unverified | Verify current Solscan plan permits `/account/transfer/export`; Divisi 03 semantics, Divisi 01 security, Divisi 05 QA |
+| [#72](https://github.com/rohman35819/radar-ai-v2/pull/72) | GoPlus top-10 holder concentration + provider-reported locks | 137/137 tests; Gitleaks + Trivy success pada `1b99b6d419cb0e5c2bccaf146ce9e81f0c7272e9` | Free quota documented but Bearer credential required | Hostless credential absent; Divisi 03 semantics, Divisi 01 auth/quota, Divisi 05 QA |
+
+### Procurement reviews submitted
+- Added formal Division 08 COMMENT reviews to PR #65 (review 6025158361), #70 (6025158977), #71 (6025159558), and #72 (6025160083), anchored to each exact head.
+- These are not independent security or QA approvals and not merge approvals.
+- Current main remains `4a08855cf22c94c18c97ed550de3ba0706095d44`; all four PRs remain separate and unmerged. Their exact-head Actions are green, but GitHub review API currently reports no independent review submissions.
+- Main runtime is unchanged by these reviews. GDELT/macro adapters and the additional Solscan/GoPlus features are not yet confirmed LIVE.
+- GoPlus configuration remains `credentials_configured=false` in the latest recorded Hostless monitor. Do not claim holder intelligence is active until one controlled call succeeds using existing approved credentials.
+- Solscan export endpoint plan access has not been tested in Hostless; do not buy or upgrade. A 403 must be treated as plan unavailable.
+
+### Open-source adoption decision
+- No CCXT, Freqtrade, Hummingbot, NautilusTrader, TA-Lib, Solana web3.js, Agave, Yellowstone, or chart dependency was added. This is intentional: RADAR already has native Binance public endpoints, exchange support, Solscan and market charting; no measured gap justifies adding a new runtime dependency now.
+- For immediate trading intelligence, finish the current PRs above and then prioritize incremental Binance Futures metrics already documented in master section 71.2: funding history, global/top-trader account and position ratios, and order-book depth. These are exchange-positioning metrics, never wallet/whale identity.
+- Keep the data model source-specific and read-only. No live orders, wallet signing, withdrawals, new paid plan, or paid fallback.
+
+### NEXT TASK
+Executive Office should sequence PR #65/#70 for Division 04 + Division 01 + Division 05 independent reviews, and PR #71/#72 for Division 03 + Division 01 + Division 05 reviews. Verify the Solscan export endpoint entitlement and GoPlus credential status using existing configuration only. After these gates, Divisi 03 owns Binance Futures incremental metrics; Divisi 05 exact-head QA. Owner-side Hostless persistent storage `/data` / `DATA_DIR=/data` remains required before a healthy LIVE readiness claim.
