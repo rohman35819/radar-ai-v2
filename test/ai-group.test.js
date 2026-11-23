@@ -118,7 +118,7 @@ test('structured adapters use completion-token parameter and strict Groq JSON sc
       }) } }] }) };
     }
   });
-  assert.equal(sent.max_completion_tokens, 220);
+  assert.equal(sent.max_completion_tokens, 4096);
   assert.equal(sent.max_tokens, undefined);
   assert.equal(sent.response_format.type, 'json_schema');
   assert.equal(sent.response_format.json_schema.strict, true);
