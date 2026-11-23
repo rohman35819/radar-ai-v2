@@ -2456,3 +2456,27 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 2. Setelah Hostless deployment tersedia, jalankan test provider satu per satu tanpa menampilkan secret: HTTP status, model, latency, valid JSON, token usage, dan sanitized error.
 3. Pastikan Gemini/Groq/OpenRouter/OpenAI benar-benar menyelesaikan rapat 3 putaran serta notulen dengan output lebih lengkap.
 4. Jika provider menolak 4096 karena model cap, gunakan cap per-model yang didokumentasikan; jangan retry berulang tanpa batas.
+
+
+## 80. GOPLUS FULL DOCUMENTED CHAIN COVERAGE + CREDENTIAL PROBE — 23 NOVEMBER 2026
+- Starting main HEAD: `22e90d301ff8508b9144dc4187f79a601b84d2b7`.
+- Official GoPlus [Response Details](https://docs.gopluslabs.io/reference/response-details-9) currently lists 38 identifiers: 37 numeric chain IDs and Tron string ID. This is broader than the 36-chain gap originally reported. The GoPlus Token Security EVM route is `/api/v1/token_security/{chain_id}`; Solana has its own Beta route `/api/v1/solana/token_security`. GoPlus also has a Sui changelog, but an operational Token Security endpoint reference was not verified; do not claim Sui support.
+- Branch `fix/goplus-full-chain-coverage` expands `lib/goplus.js` with the full 37 numeric IDs, canonical names and GeckoTerminal aliases, direct numeric-ID support, Tron endpoint support and Tron Base58Check address validation.
+- `GOPLUS_SUPPORTED_NETWORKS` exposes the provider-backed catalog to snapshot/UI. Early Gem UI disables GoPlus audit for networks outside the catalog instead of issuing a doomed request.
+- Added `GET /api/market-intelligence/goplus/status`: explicitly verifies configured Bearer credentials against GoPlus `/api/v1/supported_chains`, caches result briefly, and returns only configured/verified/auth mode/timestamp/provider chain count/error code. No key, secret or token is returned. UI checks this status before calling token-security.
+- Tests added for all 37 numeric IDs + aliases, Arc/ID mapping, Tron checksum and route, Solana Beta, credential success/failure, cache and UI gate. Exact-head CI is pending at PR creation.
+- Runtime credentials remain unverified until this branch is deployed and status endpoint returns `verified=true` on Hostless. Do not copy secrets into GitHub/chat. No GoPlus credentials were added.
+- Hostless remains separately blocked: last recorded LIVE readiness returned HTTP 503 / `EROFS`; persistent disk mount and `DATA_DIR=/data` are not yet evidenced. Because GoPlus quota counters must persist before upstream calls, the audit path correctly fails closed when state persistence fails. This code change does not fix Hostless storage.
+- Budget guard remains 5 token-security calls/minute, 1,000/day, 5,000/month; status verification has its own stricter 2/minute limiter and no token-security request.
+- No trading, signing, wallet action, paid service, secret or production config change.
+- NEXT TASK: verify exact-head CI/security, review diff, merge only after checks pass; then deploy through Hostless and check `/api/ready`, `/api/snapshot`, and `/api/market-intelligence/goplus/status`. Hostless credential verification and LIVE UI test remain pending.
+
+
+### 69.1 Exact-head CI and review status — 23 November 2026
+- Final implementation/test head before this documentation-only evidence update: `770122b77685f9cb3f45a49f51a8c2daa03bb0cd`.
+- GitHub Actions test run #723 / ID `45180875720`: **141 passed, 0 failed, 0 skipped**.
+- Security run #266 / ID `45180875757`: workflow success; Gitleaks success; Trivy secret scan reports no issues. Trivy vulnerability scanner reports no supported manifest/lockfile, so dependency CVE coverage is unavailable (not a clean dependency scan).
+- One initial test run #722 caught a fixture mismatch in the Arc numeric-ID test; the fixture was corrected to return the address actually requested. The final exact implementation head above passes all tests.
+- PR #62 is ready for review and mergeable against current main; no independent review recorded yet. Divisi 05 QA review is required before integration; Divisi 01 review is requested for the new server-side credential verification path.
+- Hostless monitor run #45180358589 (latest documented monitor at this point): readiness HTTP 503 / EROFS; snapshot HTTP 200, News 50 items; `goplus.credentials_configured=false`, GoPlus not called. Hostless API key/deployment SHA not available. No production deployment or credential verification claim.
+- NEXT: obtain independent Divisi 01/05 review, then merge PR #62; after deployment and BOS-side storage/credential configuration, verify readiness and GoPlus status endpoint. Keep Rp0.

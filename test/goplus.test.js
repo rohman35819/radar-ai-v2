@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createGoPlusService } = require('../lib/goplus');
+const { createGoPlusService, GOPLUS_CHAINS, GOPLUS_SUPPORTED_NETWORKS, EVM_CHAINS, validAddress, validTronAddress } = require('../lib/goplus');
 const response = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => data });
 
 test('GoPlus requires credentials and never silently bypasses authentication', async () => {
@@ -83,4 +83,91 @@ test('GoPlus usage counters persist after an actual upstream request', async () 
   assert.equal(usageState.day_count, 1);
   assert.equal(usageState.month_count, 1);
   assert.equal(persisted, 1);
+});
+
+
+test('GoPlus supports every documented Token Security chain ID plus Solana Beta', () => {
+  const address = '0x1111111111111111111111111111111111111111';
+  const numericChains = GOPLUS_CHAINS.filter((chain) => Number.isInteger(Number(chain.id)));
+  assert.equal(GOPLUS_CHAINS.length, 38);
+  assert.equal(numericChains.length, 37);
+  assert.equal(GOPLUS_SUPPORTED_NETWORKS.length, 39);
+  for (const chain of numericChains) {
+    assert.equal(validAddress(chain.id, address), true, chain.name + ' numeric chain ID');
+    assert.equal(EVM_CHAINS[chain.id], chain.id);
+    for (const alias of chain.aliases) {
+      assert.equal(validAddress(alias, address), true, chain.name + ' alias ' + alias);
+      assert.equal(EVM_CHAINS[alias], chain.id);
+    }
+  }
+  assert.equal(validAddress('solana', 'So11111111111111111111111111111111111111112'), true);
+  assert.equal(validAddress('sui', address), false);
+});
+
+test('GoPlus maps newly documented Arc chain and numeric IDs to canonical API path', async () => {
+  const address = '0x1111111111111111111111111111111111111111';
+  const urls = [];
+  const service = createGoPlusService({ accessToken: 'static-token', fetchImpl: async (url) => {
+    urls.push(url);
+    const requestedAddress = new URL(url).searchParams.get('contract_addresses');
+    return response({ code: 1, result: { [requestedAddress]: { token_name: 'Arc Test Token' } } });
+  }});
+  const byAlias = await service.security({ networkId: 'arc', tokenAddress: address });
+  assert.equal(byAlias.chain_id, '5042');
+  const byId = await service.security({ networkId: '5042', tokenAddress: '0x2222222222222222222222222222222222222222' });
+  assert.equal(byId.chain_id, '5042');
+  assert.ok(urls.some((url) => url.includes('/token_security/5042?')));
+});
+
+test('GoPlus validates Tron Base58Check addresses and selects the documented Tron route', async () => {
+  const address = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+  let requested = '';
+  assert.equal(validTronAddress(address), true);
+  assert.equal(validAddress('tron', address), true);
+  assert.equal(validTronAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6x'), false);
+  const service = createGoPlusService({ accessToken: 'static-token', fetchImpl: async (url) => {
+    requested = url;
+    return response({ code: 1, result: { [address]: { token_name: 'USD Tether' } } });
+  }});
+  const result = await service.security({ networkId: 'tron', tokenAddress: address });
+  assert.equal(result.status, 'success');
+  assert.equal(result.chain_id, 'tron');
+  assert.ok(requested.includes('/token_security/tron?'));
+});
+
+
+test('GoPlus credential verification checks Bearer access without exposing credentials', async () => {
+  const calls = [];
+  const service = createGoPlusService({ appKey: 'private-app-key', appSecret: 'private-app-secret', now: () => 1800000000000, fetchImpl: async (url, options) => {
+    calls.push({ url, options });
+    if (url.endsWith('/api/v1/token')) return response({ code: 1, result: { access_token: 'private-bearer-token', expires_in: 600 } });
+    assert.equal(options.headers.authorization, 'Bearer private-bearer-token');
+    return response({ code: 1, result: [{ chain_id: '5042', name: 'Arc' }] });
+  }});
+  const result = await service.verifyCredentials();
+  assert.equal(result.configured, true);
+  assert.equal(result.verified, true);
+  assert.equal(result.auth_mode, 'app_key_secret');
+  assert.equal(result.provider_chain_count, 1);
+  assert.equal(JSON.stringify(result).includes('private-bearer-token'), false);
+  assert.equal(JSON.stringify(result).includes('private-app-secret'), false);
+  assert.equal(calls.length, 2);
+  const cached = await service.verifyCredentials();
+  assert.equal(cached.cached, true);
+  assert.equal(calls.length, 2);
+});
+
+test('GoPlus credential verification reports missing or rejected credentials safely', async () => {
+  let calls = 0;
+  const missing = createGoPlusService({ fetchImpl: async () => { calls++; return response({ code: 1, result: [] }); } });
+  const absent = await missing.verifyCredentials();
+  assert.equal(absent.configured, false);
+  assert.equal(absent.verified, false);
+  assert.equal(absent.error_code, 'GOPLUS_NOT_CONFIGURED');
+  assert.equal(calls, 0);
+  const rejected = createGoPlusService({ accessToken: 'bad-token', fetchImpl: async () => response({ code: 4023, message: 'Access token not found' }) });
+  const invalid = await rejected.verifyCredentials();
+  assert.equal(invalid.configured, true);
+  assert.equal(invalid.verified, false);
+  assert.equal(invalid.error_code, 'GOPLUS_CREDENTIALS_REJECTED');
 });

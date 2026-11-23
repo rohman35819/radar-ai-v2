@@ -293,13 +293,20 @@ function renderEarlyGems(){
    });
    validation.append(dexButton);
    const goPlusEnabled=Boolean(data?.config_needed?.goplus_enabled);
-   const goPlusButton=el('button',{class:'mini-btn',type:'button',disabled:goPlusEnabled&&tokenAddress?null:true,title:goPlusEnabled?'Periksa risiko kontrak GoPlus':'Atur GOPLUS_ACCESS_TOKEN atau GOPLUS_APP_KEY + GOPLUS_APP_SECRET di Hostless'},goPlusEnabled?'Audit GoPlus':'GoPlus belum diatur');
+   const goPlusNetworks=Array.isArray(data?.config_needed?.goplus_supported_networks)?data.config_needed.goplus_supported_networks:[];
+   const goPlusNetwork=String(x.network_id||'').toLowerCase();
+   const goPlusChain=goPlusNetworks.find(chain=>String(chain.id).toLowerCase()===goPlusNetwork||(chain.aliases||[]).some(alias=>String(alias).toLowerCase()===goPlusNetwork));
+   const goPlusSupported=Boolean(goPlusChain);
+   const goPlusButton=el('button',{class:'mini-btn',type:'button',disabled:goPlusEnabled&&tokenAddress&&goPlusSupported?null:true,title:!goPlusSupported?'Jaringan ini belum ada pada daftar dukungan Token Security GoPlus':goPlusEnabled?'Periksa risiko kontrak GoPlus':'Atur GOPLUS_ACCESS_TOKEN atau GOPLUS_APP_KEY + GOPLUS_APP_SECRET di Hostless'},!goPlusSupported?'GoPlus tidak mendukung chain':goPlusEnabled?'Audit GoPlus':'GoPlus belum diatur');
    const quota=data?.config_needed?.goplus_usage||{};
    const quotaText='Kuota internal GoPlus: '+(quota.day_count||0)+'/'+(quota.daily_limit||1000)+' hari ini · '+(quota.month_count||0)+'/'+(quota.monthly_limit||5000)+' bulan ini.';
-   const goPlusResult=el('div',{class:'gem-validation-result'},(goPlusEnabled?'Audit GoPlus belum dijalankan.':'GoPlus gratis tersedia; konfigurasi kredensial Console server-side diperlukan.')+' '+quotaText);
+   const goPlusResult=el('div',{class:'gem-validation-result'},(goPlusEnabled?'Audit GoPlus belum dijalankan.':'GoPlus gratis tersedia; konfigurasi kredensial Console server-side diperlukan.')+' '+(goPlusSupported?'Jaringan didukung: '+goPlusChain.name+'.':'Jaringan ini belum didukung GoPlus Token Security.')+' '+quotaText);
    goPlusButton.addEventListener('click',async()=>{
     goPlusButton.disabled=true;goPlusResult.textContent='Memeriksa keamanan token GoPlus…';
     try{
+     const credentialResponse=await fetch('/api/market-intelligence/goplus/status',{cache:'no-store'});
+     const credentialStatus=await credentialResponse.json();
+     if(!credentialResponse.ok||!credentialStatus.verified)throw new Error(credentialStatus.error_code||'GOPLUS_CREDENTIALS_NOT_VERIFIED');
      const query=new URLSearchParams({network:String(x.network_id||''),token:tokenAddress});
      const response=await fetch('/api/market-intelligence/goplus?'+query.toString(),{cache:'no-store'});
      const result=await response.json();if(!response.ok||!['success','partial'].includes(result.status))throw new Error(result.code||result.message||'GoPlus validation failed');
