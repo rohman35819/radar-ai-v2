@@ -273,6 +273,43 @@ function renderEarlyGems(){
      el('div',{},el('small',{},'BUY / SELL 24J'),el('b',{},(x.buys_24h??'—')+' / '+(x.sells_24h??'—')))),
     flags.length?el('div',{class:'gem-flags'},...flags.map(flag=>el('span',{class:'flag'},flag))):el('div',{class:'gem-flags'},el('span',{class:'gem-clean'},'Tidak ada flag kualitas data')),
     el('div',{class:'gem-footer'},el('small',{title:tokenAddress},'CA: '+(tokenAddress?tokenAddress.slice(0,8)+'…'+tokenAddress.slice(-6):'N/A')),el('div',{class:'gem-links'},tokenLink?el('a',{href:tokenLink,target:'_blank',rel:'noopener noreferrer'},'Token ↗'):null,link?el('a',{href:link,target:'_blank',rel:'noopener noreferrer'},'Pool ↗'):null)));
+
+   const validation=el('div',{class:'gem-validation-actions'});
+   const dexButton=el('button',{class:'mini-btn',type:'button'},'Validasi DEX');
+   const dexResult=el('div',{class:'gem-validation-result'},'DEX Screener belum diperiksa.');
+   dexButton.addEventListener('click',async()=>{
+    dexButton.disabled=true;dexResult.textContent='Memeriksa pair DEX Screener…';
+    try{
+     const query=new URLSearchParams({network:String(x.network_id||''),token:tokenAddress,pool:String(x.pool_address||'')});
+     const response=await fetch('/api/market-intelligence/dexscreener?'+query.toString(),{cache:'no-store'});
+     const result=await response.json();if(!response.ok||result.status!=='success')throw new Error(result.code||result.message||'DEX validation failed');
+     const rows=(result.pairs||[]).slice(0,3).map(pair=>el('div',{class:'gem-validation-line'},
+      el('b',{},String(pair.dex_id||'DEX')+' · '+String(pair.base_token?.symbol||'?')+'/'+String(pair.quote_token?.symbol||'?')),
+      el('span',{},'Likuiditas '+money(pair.liquidity_usd)+' · Volume 24J '+money(pair.volume_24h_usd)+' · '+pct(pair.price_change_24h_pct)),
+      pair.same_pool?el('small',{class:'gem-clean'},'Alamat pool cocok dengan GeckoTerminal'):el('small',{class:'muted'},'Pair token cocok; bukan pool yang sama'))));
+     dexResult.replaceChildren(el('b',{},'DEX Screener · '+result.pair_count+' pair ditemukan'),...(rows.length?rows:[el('small',{class:'muted'},'Tidak ada pair cocok. Ini bukan bukti token scam.')]));
+    }catch(error){dexResult.textContent='DEX Screener: '+String(error.message||'tidak tersedia').slice(0,120);}
+    finally{dexButton.disabled=false;}
+   });
+   validation.append(dexButton);
+   const goPlusEnabled=Boolean(data?.config_needed?.goplus_enabled);
+   const goPlusButton=el('button',{class:'mini-btn',type:'button',disabled:!goPlusEnabled,title:goPlusEnabled?'Periksa risiko kontrak GoPlus':'Atur GOPLUS_ACCESS_TOKEN atau GOPLUS_APP_KEY + GOPLUS_APP_SECRET di Hostless'},goPlusEnabled?'Audit GoPlus':'GoPlus belum diatur');
+   const goPlusResult=el('div',{class:'gem-validation-result'},goPlusEnabled?'Audit GoPlus belum dijalankan.':'GoPlus gratis tersedia; konfigurasi kredensial Console server-side diperlukan.');
+   goPlusButton.addEventListener('click',async()=>{
+    goPlusButton.disabled=true;goPlusResult.textContent='Memeriksa keamanan token GoPlus…';
+    try{
+     const query=new URLSearchParams({network:String(x.network_id||''),token:tokenAddress});
+     const response=await fetch('/api/market-intelligence/goplus?'+query.toString(),{cache:'no-store'});
+     const result=await response.json();if(!response.ok||!['success','partial'].includes(result.status))throw new Error(result.code||result.message||'GoPlus validation failed');
+     const flags=(result.risk_flags||[]).map(flag=>el('span',{class:'flag'},flag.label+' ['+flag.severity+']'));
+     goPlusResult.replaceChildren(el('b',{},'GoPlus · '+(result.status==='partial'?'DATA PARSIAL':'DATA TERSEDIA')),
+      ...(flags.length?flags:[el('small',{class:'muted'},'Tidak ada flag positif yang dilaporkan. Field yang kosong tetap tidak diketahui; ini bukan jaminan aman.')]),
+      el('small',{class:'muted'},'Update '+dateTime(result.observed_at)));
+    }catch(error){goPlusResult.textContent='GoPlus: '+String(error.message||'tidak tersedia').slice(0,140);}
+    finally{goPlusButton.disabled=false;}
+   });
+   validation.append(goPlusButton);
+   item.append(validation,dexResult,goPlusResult);
    results.append(item);
   });
   $('#gem-count').textContent=rows.length+' pool ditampilkan';
