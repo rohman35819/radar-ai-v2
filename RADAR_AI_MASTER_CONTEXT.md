@@ -2250,3 +2250,10 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Added test/hostless-live-check.test.js to verify safe diagnostic output and distinguish missing configuration.
 - Validation on the new exact main head is pending GitHub Actions.
 - NEXT TASK: confirm latest main test/security runs; use the next Hostless monitor result to inspect early_gems and GoPlus configuration flags; BOS must resolve persistent storage before declaring production healthy. If GoPlus is not configured, obtain GoPlus Console app key/secret and set them as Hostless server secrets; then run one controlled on-demand token-security check.
+
+
+### 69.1 Live provider probe diagnostics — 23 November 2026
+- Extended scripts/hostless-live-check.js to make one read-only BTCUSDT Binance Futures request and, when an indexed GeckoTerminal pool exists, one on-demand DEX Screener cross-validation request during the monitor run.
+- GoPlus is deliberately not called by scheduled diagnostics so no GoPlus CU is consumed; monitor reports only whether credentials are configured and the persistent usage counters.
+- Probe output is sanitized to status, available metric flags, pair count, same-pool boolean and normalized error codes; token addresses, provider response bodies, and secrets are not logged.
+- Added tests for both provider summaries. CI result pending on the exact current main head.
