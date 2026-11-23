@@ -1,0 +1,30 @@
+name: Gemini AI Assistant - RADAR AI-V2
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  gemini-review:
+    if: github.event_name == 'pull_request' || contains(github.event.comment.body, '@gemini')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Kode RADAR AI-V2
+        uses: actions/checkout@v4
+
+      - name: Jalankan Gemini AI
+        uses: google-github-actions/run-gemini-cli@v0
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          prompt: |
+            Kamu adalah asisten teknis untuk proyek RADAR AI-V2.
+            Tinjau perubahan kode pada Pull Request ini atau jawab instruksi pada komentar.
+            Fokus pada bug, keamanan, dan kerapian struktur kode.
