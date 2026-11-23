@@ -2,14 +2,13 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createMacroService, parseBls, parseTreasuryXml, parseNyFed, BLS_SERIES, NYFED_SERIES } = require('../lib/macro');
+const { createMacroService, parseBls, parseNyFed, BLS_SERIES, NYFED_SERIES } = require('../lib/macro');
 const { createApp } = require('../server');
 
 const jsonResponse = (data, status = 200) => ({
   ok: status >= 200 && status < 300,
   status,
-  json: async () => data,
-  text: async () => typeof data === 'string' ? data : JSON.stringify(data)
+  json: async () => data
 });
 
 const blsFixture = {
@@ -23,16 +22,6 @@ const blsFixture = {
     ]
   })) }
 };
-
-const treasuryFixture = `<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom" xmlns:d="http://schemas.microsoft.com/ado/2007/08/dataservices">
-<entry><content><m:properties xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">
-<d:NEW_DATE>2026-11-20T00:00:00</d:NEW_DATE><d:BC_3MONTH>3.92</d:BC_3MONTH><d:BC_2YEAR>4.12</d:BC_2YEAR><d:BC_10YEAR>4.34</d:BC_10YEAR><d:BC_30YEAR>4.72</d:BC_30YEAR>
-</m:properties></content></entry>
-<entry><content><m:properties xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">
-<d:NEW_DATE>2026-11-19T00:00:00</d:NEW_DATE><d:BC_3MONTH>3.90</d:BC_3MONTH><d:BC_2YEAR>4.10</d:BC_2YEAR><d:BC_10YEAR>4.32</d:BC_10YEAR><d:BC_30YEAR>4.70</d:BC_30YEAR>
-</m:properties></content></entry>
-</feed>`;
 
 const nyFedFixture = (type, rate) => ({
   refRates: [
@@ -49,27 +38,19 @@ test('BLS parser keeps monthly observations and skips annual-average records', (
   assert.equal(parsed[0].observations.length, 2);
 });
 
-test('Treasury XML parser normalizes yield curve values and preserves missing data', () => {
-  const parsed = parseTreasuryXml(treasuryFixture);
-  assert.equal(parsed.length, 4);
-  assert.equal(parsed.find((item) => item.id === 'TREASURY_10Y').latest.value, 4.34);
-  assert.equal(parsed.find((item) => item.id === 'TREASURY_2Y').latest.date, '2026-11-20');
-});
-
 test('NY Fed parser validates rate observations', () => {
   const parsed = parseNyFed(nyFedFixture('SOFR', 3.92), NYFED_SERIES[0]);
   assert.equal(parsed.latest.value, 3.92);
   assert.equal(parsed.latest.volume_in_billions, 3141);
 });
 
-test('macro service uses BLS v1, Treasury XML and NY Fed APIs without API keys', async () => {
+test('macro service calls BLS v1 once and NY Fed endpoints without API keys', async () => {
   const calls = [];
   const service = createMacroService({
     now: () => Date.parse('2026-11-23T00:00:00Z'),
     fetchImpl: async (url, options = {}) => {
       calls.push({ url: String(url), options });
       if (String(url).includes('api.bls.gov')) return jsonResponse(blsFixture);
-      if (String(url).includes('home.treasury.gov')) return jsonResponse(treasuryFixture);
       if (String(url).includes('/secured/sofr/')) return jsonResponse(nyFedFixture('SOFR', 3.92));
       if (String(url).includes('/unsecured/effr/')) return jsonResponse(nyFedFixture('EFFR', 3.88));
       throw new Error('Unexpected upstream');
@@ -77,12 +58,11 @@ test('macro service uses BLS v1, Treasury XML and NY Fed APIs without API keys',
   });
   const result = await service.snapshot();
   assert.equal(result.status, 'success');
-  assert.equal(result.series.length, BLS_SERIES.length + 4 + NYFED_SERIES.length - 2);
-  assert.equal(calls.length, 4);
+  assert.equal(result.series.length, BLS_SERIES.length + NYFED_SERIES.length);
+  assert.equal(calls.length, 3);
   assert.equal(calls.filter((item) => item.options.method === 'POST').length, 1);
   assert.ok(calls.every((item) => !String(item.url).includes('api_key')));
   assert.equal(result.series.find((item) => item.id === 'SOFR').latest.value, 3.92);
-  assert.equal(result.series.find((item) => item.id === 'TREASURY_10Y').latest.value, 4.34);
 });
 
 test('macro service caches each source and deduplicates concurrent snapshots', async () => {
@@ -91,7 +71,6 @@ test('macro service caches each source and deduplicates concurrent snapshots', a
     fetchImpl: async (url) => {
       calls += 1;
       if (String(url).includes('api.bls.gov')) return jsonResponse(blsFixture);
-      if (String(url).includes('home.treasury.gov')) return jsonResponse(treasuryFixture);
       if (String(url).includes('/secured/sofr/')) return jsonResponse(nyFedFixture('SOFR', 3.92));
       if (String(url).includes('/unsecured/effr/')) return jsonResponse(nyFedFixture('EFFR', 3.88));
       throw new Error('Unexpected upstream');
@@ -100,9 +79,9 @@ test('macro service caches each source and deduplicates concurrent snapshots', a
   const [first, second] = await Promise.all([service.snapshot(), service.snapshot()]);
   assert.equal(first.status, 'success');
   assert.equal(second.status, 'success');
-  assert.equal(calls, 4);
+  assert.equal(calls, 3);
   const cached = await service.snapshot();
-  assert.equal(calls, 4);
+  assert.equal(calls, 3);
   assert.equal(cached.cached, true);
 });
 
@@ -110,9 +89,8 @@ test('macro service returns partial data without fabricating missing values', as
   const service = createMacroService({
     fetchImpl: async (url) => {
       if (String(url).includes('api.bls.gov')) return jsonResponse(blsFixture);
-      if (String(url).includes('home.treasury.gov')) return jsonResponse('<feed></feed>');
       if (String(url).includes('/secured/sofr/')) return jsonResponse(nyFedFixture('SOFR', 3.92));
-      if (String(url).includes('/unsecured/effr/')) return jsonResponse(nyFedFixture('EFFR', 3.88));
+      if (String(url).includes('/unsecured/effr/')) return jsonResponse({}, 503);
       throw new Error('Unexpected upstream');
     }
   });
@@ -120,7 +98,7 @@ test('macro service returns partial data without fabricating missing values', as
   assert.equal(result.status, 'success');
   assert.equal(result.partial, true);
   assert.ok(result.series.some((item) => item.id === 'CUSR0000SA0'));
-  assert.ok(!result.series.some((item) => item.id.startsWith('TREASURY_')));
+  assert.ok(!result.series.some((item) => item.id === 'EFFR'));
 });
 
 test('macro route returns normalized data without requiring secrets', async (t) => {
