@@ -219,6 +219,15 @@ const BUBBLEMAPS_CHAINS = [
  ['sonic','Sonic'],['avalanche','Avalanche'],['polygon','Polygon'],['monad','Monad'],['aptos','Aptos'],
  ['arbitrum','Arbitrum'],['hyperevm','HyperEVM'],['robinhood','Robinhood'],['arc','Arc']
 ];
+function isValidBubbleTokenAddress(chain,address){
+ if(!address||address.length>128||/\\s/.test(address))return false;
+ if(chain==='solana')return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
+ if(chain==='tron')return /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(address);
+ if(chain==='ton')return /^(?:EQ|UQ)[A-Za-z0-9_-]{46}$|^0:[a-fA-F0-9]{64}$/.test(address);
+ if(chain==='aptos')return /^0x[0-9a-fA-F]{1,64}$/.test(address);
+ const evm=['eth','bsc','base','sonic','avalanche','polygon','monad','arbitrum','hyperevm','robinhood','arc'];
+ return evm.includes(chain)&&/^0x[a-fA-F0-9]{40}$/.test(address);
+}
 function renderBubbleMaps(){
  const v=$('#view');v.replaceChildren();
  v.append(sectionHead('Bubble Maps','Peta distribusi holder dan hubungan transfer dari Bubblemaps V2.'));
@@ -243,7 +252,7 @@ function renderBubbleMaps(){
  };
  open.addEventListener('click',()=>{
   const chainId=chain.value,tokenAddress=address.value.trim();
-  if(!BUBBLEMAPS_CHAINS.some(([id])=>id===chainId)||!tokenAddress||tokenAddress.length>128||/\\s/.test(tokenAddress)){
+  if(!BUBBLEMAPS_CHAINS.some(([id])=>id===chainId)||!isValidBubbleTokenAddress(chainId,tokenAddress)){
    setStatus('Pilih jaringan dan masukkan alamat token yang valid. Jangan gunakan simbol ticker.','negative');return;
   }
   if(!bubbleMapsConfig?.configured||!bubbleMapsConfig.partnerId){setStatus('Partner ID resmi belum tersedia; embed produksi belum dapat dibuka.','negative');return;}
