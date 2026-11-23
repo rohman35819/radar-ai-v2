@@ -82,6 +82,12 @@
     <div class="table-scroll"><table><thead><tr><th>Metrik</th><th>Nilai</th><th>Waktu</th></tr></thead><tbody id="derivatives-table"><tr><td colspan="3">Belum dimuat.</td></tr></tbody></table></div>
     <div class="market-footnote">Open interest bukan jumlah posisi long saja; setiap kontrak memiliki sisi long dan short. Taker ratio menunjukkan agresor transaksi pada interval, bukan identitas whale atau bukti akumulasi.</div>
   </section>
+  <section class="market-panel">
+    <div class="market-heading"><div><h2>Macroeconomic Intelligence · FRED</h2><p>Indikator suku bunga, Treasury, inflasi, tenaga kerja, dan likuiditas AS</p></div><button id="load-fred" class="secondary-btn" type="button">Perbarui data</button></div>
+    <div id="fred-status" class="chart-meta">Memeriksa konfigurasi FRED…</div>
+    <div class="table-scroll"><table><thead><tr><th>Indikator</th><th>Nilai terbaru</th><th>Tanggal data</th><th>Frekuensi</th></tr></thead><tbody id="fred-table"><tr><td colspan="4">Menunggu data FRED…</td></tr></tbody></table></div>
+    <div class="market-footnote">Sumber: Federal Reserve Bank of St. Louis FRED. Data ekonomi dapat direvisi dan memiliki jeda publikasi; tanggal observasi bukan waktu rilis. Dengan menggunakan RADAR AI, pengguna menyetujui <a href="https://fred.stlouisfed.org/docs/api/terms_of_use.html" target="_blank" rel="noopener noreferrer">FRED API Terms of Use</a>. Produk ini menggunakan FRED® API tetapi tidak didukung atau disertifikasi oleh Federal Reserve Bank of St. Louis.</div>
+  </section>
   <section class="market-grid two">
     <article class="market-panel"><div class="market-heading"><div><h2>Sector Rotation</h2><p>Kategori dengan perubahan market cap 24 jam</p></div></div><div id="sector-list" class="compact-list"></div></article>
     <article class="market-panel"><div class="market-heading"><div><h2>Exchange Intelligence</h2><p>Volume exchange terpusat dan trust score CoinGecko</p></div></div><div id="exchange-list" class="compact-list"></div></article>
