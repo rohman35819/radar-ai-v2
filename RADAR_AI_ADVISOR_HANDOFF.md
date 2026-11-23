@@ -223,3 +223,14 @@ Snapshot yang diverifikasi pada 22 November 2026:
 
 - Latest implementation head `e90db36ebe90c09811c44e51765e5a56fc873250`: GitHub Actions test #649 passed 110/110; security #192 Gitleaks and Trivy filesystem scan succeeded.
 - PR #59 remains Draft/unmerged; Divisi 03/05 reviews and Hostless Build/LIVE validation remain pending.
+
+
+
+## 17. GoPlus chain coverage and runtime verification — 23 November 2026
+- Branch: `fix/goplus-full-chain-coverage`.
+- Adds all 38 identifiers from GoPlus Response Details (37 numeric chain IDs + Tron), plus separate Solana Beta route; supports numeric chain IDs and GeckoTerminal aliases. Tron address checksum is validated.
+- Early Gem UI receives supported-network catalog and disables audit for unsupported networks.
+- New sanitized `GET /api/market-intelligence/goplus/status` verifies Bearer credentials using GoPlus supported-chains endpoint; it never returns credentials. UI checks this before token audit.
+- Sui appears in historical changelog but operational endpoint is not documented/verified; do not mark it supported.
+- Runtime credentials remain unverified until Hostless serves this branch and status returns verified. Hostless EROFS remains separate blocker; persistent disk + `DATA_DIR=/data` are required for durable GoPlus quota counters.
+- NEXT: exact-head CI/security, merge gate, then Hostless deploy/readiness/credential/live UI verification. Rp0; no paid provisioning.
