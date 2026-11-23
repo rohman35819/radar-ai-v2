@@ -2319,3 +2319,12 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - No API key/login/card, exchange credential, Hostless env, permission, dependency, trading/order, signing, or withdrawal change.
 - Local `npm test` not run in this session. GitHub Actions for exact final head pending. Hostless Build/Live not checked. No production deployment claim.
 - NEXT TASK: run exact-head CI; fix all failures; obtain Division 01 security and Division 05 independent QA; Division 03 validate actual API response semantics; only then request BOS release approval. Binance public futures expansion remains separate follow-up work.
+
+
+### 72.1 Division 08 procurement review — Marketlight public API — 23 November 2026
+- Official developer docs verified: Marketlight public GET API requires no sign-up, API key, payment method or card; API data are CC BY 4.0 including commercial use with visible attribution/link. Provider asks clients to cache and keep requests to a few per minute; endpoint caches are 1–5 minutes. Official source: https://marketlight.ai/developers
+- Division 08 submitted procurement COMMENT review #6025236564 on exact implementation head `8be468f1babe38acabecfeabb158dea5e652acea`. Source/license accepted conditionally; this is not Division 01 security approval, Division 05 QA, or merge approval.
+- Review findings for Divisions 01/02/03/05: current `response.text()` fully buffers upstream response before the 1 MiB byte check, so it is not a true memory cap; use a bounded streaming reader and regression test. UI should show both long and short liquidations; provider endpoint is market-wide, not coin-specific. Preserve per-feed provider timestamps and distinguish them from retrieval time. Funding values are fractions with exchange-specific payment intervals; do not compare raw rates without `intervalHours` context.
+- At review time, no exact-head GitHub Actions check run existed for head `8be468f1babe38acabecfeabb158dea5e652acea`; live provider response had not been verified from Hostless. Fixtures are not a production probe.
+- No key/card/account, paid tier, runtime dependency, Hostless secret or exchange credential is required. No trading action.
+- NEXT TASK: Division 03/05 address the bounded-reader and UI/semantics conditions, run exact-head tests/security, and verify one controlled public API request from Hostless after storage readiness. Division 01 performs security review. Keep manual refresh and request cooldown; do not add background polling.
