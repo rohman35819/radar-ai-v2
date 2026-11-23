@@ -2133,3 +2133,17 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Documentation branch: `docs/early-whale-detector-spec`; specification commit `752891af26588dd89f14f6e8ea92d50e26075e14`.
 - CI for this documentation branch, Hostless Build, and LIVE are not yet verified. No production deployment was attempted.
 - NEXT TASK: review Stage 0 provider capability/ToS/rate-limit and cost matrix with Division 08, validate CEX/DEX semantics with Division 03, then define fixtures and quality gates with Divisions 01/04/05. In parallel, continue the existing Hostless monitor owner prerequisite (read-only `HOSTLESS_API_KEY` secret) and verify DATA_DIR/EROFS from actual Hostless logs/configuration before any durable scanner rollout.
+
+
+---
+
+## 66. REAL-TIME MOVEMENT ALERTS & CONDITIONAL TRADING PLAN — 23 NOVEMBER 2026
+
+- BOS clarified the product requirement: every meaningful detected movement for assets in the scan universe should be reported, with a plain-language explanation and conditional outlook; when evidence permits, include entry zone, maximum chase price, stop/invalidation, TP1/TP2/TP3, risk/reward and expiry.
+- “Every movement” is implemented as event-driven material changes, not every raw tick/repeated snapshot. Micro-ticks are aggregated into short-window summaries; significant whale-flow, liquidity/security, breakout/breakdown and invalidation events alert immediately. All meaningful events remain in the in-app live feed.
+- Telegram + PWA push both remain required. Default preference is all meaningful events, with user-configurable all/important/high-priority levels, dedupe and safe retries.
+- Trading plans must be derived from current support/retest, VWAP/structure, volatility, spread, fees and slippage. Include maximum chase price; beyond it advise wait/do not chase. If identity, freshness, liquidity, security or structure gates fail, return “NO TRADE PLAN” rather than inventing prices.
+- Outlook must be conditional (bullish/bearish/sideways/insufficient evidence) with evidence grade and invalidation conditions. Scores are rankings, not win probabilities. TP levels and partial exit fractions must be reproducible and tested.
+- No auto-trading, order placement, wallet signing, custody or transfers. No profit guarantee.
+- Expanded specification in section 14 of `docs/early-whale-detector-spec.md`. Documentation update only; no scanner or notification implementation is claimed.
+- NEXT TASK: implement event schema and replay fixtures for movement events, then validate notification routing/latency and reproducible entry/SL/TP calculations under Division 05 QA gates.
