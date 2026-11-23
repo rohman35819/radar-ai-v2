@@ -10,7 +10,7 @@ const fmtMoney = (value) => {
   if (Math.abs(n) < 0.01 && n !== 0) return '$' + n.toPrecision(4);
   return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 4 });
 };
-const fmtPct = (value) => Number.isFinite(Number(value)) ? (Number(value) > 0 ? '+' : '') + Number(value).toFixed(2) + '%' : '—';
+const fmtPct = (value) => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) ? (Number(value) > 0 ? '+' : '') + Number(value).toFixed(2) + '%' : '—';
 const fmtNum = (value) => Number.isFinite(Number(value)) ? Number(value).toLocaleString('id-ID', { maximumFractionDigits: 2 }) : '—';
 const safeText = (value) => String(value ?? '—');
 const node = (tag, className, text) => {
