@@ -2110,7 +2110,11 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Official iframe source: `https://iframe.bubblemaps.io/map?chain=...&address=...&partnerId=...`. Bubblemaps documentation states `demo` is localhost/0.0.0.0 only; production requires a real partner ID and production-domain whitelist. No demo ID or API credentials are committed.
 - UI explicitly warns that wallet transfer relationships do not prove common beneficial ownership or market-buy intent, and that map data is not a tick-by-tick trade feed. Provider timestamp/refresh semantics remain authoritative.
 - Changed files: `public/index.html`, `public/app.js`, `public/style.css`, `public/sw.js` (shell v13), `server.js`, `lib/ingest.js`, `.env.example`, `README.md`, `test/bubblemaps-ui.test.js`.
-- Branch: `feat/bubblemaps-dashboard-embed`; PR #57. Test and security workflows on the exact final head are pending. Hostless Build, production iframe activation, and desktop/mobile visual QA are not verified.
+- Branch: `feat/bubblemaps-dashboard-embed`; PR #57. Final branch HEAD: `b683068a7329f9b3f1f28a11afda5457962fb753`.
+- GitHub Actions test run #642 (ID `45160154972`) on this exact final HEAD: **completed / success; 112 pass, 0 fail**. The workflow ran `node --check` across configured JavaScript files and `node --test test/*.test.js`.
+- GitHub Actions security run #184 (ID `45160154706`) on the same final HEAD: **completed / success**; Gitleaks and Trivy jobs succeeded.
+- Earlier run #640 found one stale PWA fixture expecting shell v12 after the cache version bump; the fixture was corrected to v13 and the subsequent test runs passed.
+- No local `npm test` was run because this session had no local working copy; GitHub Actions is the verified test environment. Hostless Build, production iframe activation, and desktop/mobile visual QA are not verified.
 - Production blocker: BOS must obtain a Bubblemaps partner ID and ask Bubblemaps to whitelist `radar-ai-v2.hostless.app`; then set `BUBBLEMAPS_PARTNER_ID` in Hostless environment. This ID is public configuration, not a secret. Do not use `demo` on production.
 - NEXT TASK: finish exact-head CI/security and independent QA; request the official partner ID/domain whitelist; set the public partner ID only after provider approval; then verify Hostless Build and LIVE iframe separately.
 
