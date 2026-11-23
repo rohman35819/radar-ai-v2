@@ -2332,3 +2332,19 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - BLS API/terms: https://www.bls.gov/developers/ ; https://www.bls.gov/developers/termsOfService.htm
 - Treasury XML feed: https://home.treasury.gov/treasury-daily-interest-rate-xml-feed
 - New York Fed Markets API/terms: https://markets.newyorkfed.org/static/docs/markets-api.html ; https://www.newyorkfed.org/privacy/termsofuse.html
+
+
+---
+
+## 72. EXPANDED FREE MACRO INTELLIGENCE — 23 NOVEMBER 2026
+
+- Lead: Divisi 04; source procurement by Divisi 08; backend/security Divisi 01; Market UI Divisi 02; independent QA Divisi 05.
+- PR #65 branch `feat/primary-macro-intelligence`; exact implementation head `c7afdc5e8e3ff24fbca3f189757d7edb4c4953db`.
+- Existing BLS v1 + NY Fed SOFR/EFFR adapter expanded with U.S. Treasury Fiscal Data average Treasury Bills/Notes/Bonds/TIPS rates and World Bank annual GDP growth/CPI inflation/unemployment for USA, China and Indonesia.
+- Treasury data cache 12h; World Bank cache 24h; existing BLS 12h and NY Fed 1h. No key/login/card, no new environment variables, no FRED.
+- Macro parser preserves source, series/country identity, observation date, units and annual/monthly/daily frequency. Missing observations stay null. Partial upstream failure does not discard healthy feeds.
+- Explicit semantics: Treasury average debt rates are monthly government statistics, not real-time secondary-market yields. World Bank observation year is not publication/availability date; do not use for look-ahead-sensitive backtests without release-date provenance.
+- Exact-head GitHub Actions test run #762 / ID `45195440278`: 143 passed, 0 failed, 0 skipped. Security run #305 / ID `45195440263`: Gitleaks and Trivy filesystem scan succeeded.
+- PR #65 is open, non-draft, mergeable at the recorded head, but independent Divisi 04/05 review is not recorded. Hostless Build/LIVE and upstream runtime connectivity are not verified. Do not claim macro sources active in production.
+- Official references: BLS https://www.bls.gov/developers/ ; New York Fed https://markets.newyorkfed.org/static/docs/markets-api.html ; Treasury https://fiscaldata.treasury.gov/api-documentation/ ; World Bank https://datahelpdesk.worldbank.org/knowledgebase/articles/889392 .
+- NEXT TASK: independent Divisi 04 semantic/source review and Divisi 05 QA; then integrate, deploy only through normal release gate, and verify live endpoint. World Bank release dates must be added before any historical macro backtest. Add BEA only after terms and series are reviewed.
