@@ -195,3 +195,17 @@ No candidate above has been activated in production by this addendum. No credent
 - Hyperliquid Info API is public and documented, but the Foundation non-validating node is best-effort with no guarantees for availability, latency, performance or completeness and must not be the sole/authoritative source for trading or time-sensitive activity. API data rights/redistribution were not confirmed. Do not rely on it as primary source.
 - Coinbase public exchange endpoints exist, but Coinbase Institutional identifies authorized redistribution partners for exchange market data. Do not republish Coinbase market data in RADAR without the relevant market-data permission.
 - Bybit public market endpoints may not require authentication, but the API terms prohibit unapproved redistribution/commercial exploitation/competing use. Keep out of public-facing RADAR unless a permitted personal-only scope or written permission is confirmed.
+
+
+## Official terms follow-up — Jupiter and Coin Metrics (23 November 2026)
+
+### Jupiter Tokens API — technical access is public; legal scope remains unresolved
+- Token API docs: https://developers.jup.ag/docs/tokens. Keyless search works for prototyping at 0.5 req/s; free API key gives 1 req/s.
+- Jupiter SDK & API License Agreement: https://developers.jup.ag/docs/legal/sdk-api-license-agreement
+- The published agreement is fee-bearing, restricts sublicensing/transferring API content to third parties, and reserves written consent for uses not prescribed. Its formal API definition focuses on the routing API; the docs do not unambiguously establish whether all Token API data fields are covered by that agreement or a separate data license.
+- Decision: **HOLD production/customer-facing use** until Jupiter confirms in writing the Token API's specific license, commercial use, caching, display/redistribution, and any fee. Do not treat keyless access as a grant of data rights. No account/key registration was done.
+
+### Coin Metrics Community API — no key but non-commercial license
+- Official API docs: https://docs.coinmetrics.io/api/v4 and community offering: https://github.com/coinmetrics/product-docs/blob/master/docs/packages/coin-metrics-community-data.md
+- Community endpoints do not require an API key; published IP limit is 10 requests per 6-second sliding window.
+- Official API docs describe Community API data as free for **non-commercial use** under a Creative Commons license; product docs identify the community dataset. This is not an acceptable production feed for a commercial RADAR service without an alternative written commercial license. Exclude from commercial/customer-facing RADAR. It may be used only in a clearly non-commercial research context after checking the specific dataset license and attribution.
