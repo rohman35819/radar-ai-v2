@@ -62,6 +62,7 @@
         content.append(levels);
         const metrics = node('div', 'trade-setup-meta');
         metrics.append(node('span', '', 'RSI 14: ' + fmt(setup.indicators?.rsi_14)));
+        metrics.append(node('span', '', 'Momentum 24J / 7H: ' + fmt(setup.indicators?.momentum_24h_pct) + '% / ' + fmt(setup.indicators?.momentum_7d_pct) + '%'));
         metrics.append(node('span', '', 'ATR 14: ' + fmt(setup.indicators?.atr_14) + ' (' + fmt(setup.indicators?.atr_percent) + '%)'));
         metrics.append(node('span', '', 'Volume 5 candle / median: ' + fmt(setup.indicators?.volume_ratio_5_vs_20) + 'x'));
         metrics.append(node('span', '', 'Risk ke SL: ' + fmt(setup.risk_percent) + '%'));
