@@ -89,6 +89,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const dexScreenerGlobalLimited = createRateLimiter({ limit: 240, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerLimited = createRateLimiter({ limit: 30, windowMs: 60000, maxKeys: 1000 });
   const goPlusLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1000 });
+  const tradeSetupsGlobalLimited = createRateLimiter({ limit: 60, windowMs: 60000, maxKeys: 1000 });
   const tradeSetupsLimited = createRateLimiter({ limit: 6, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
     .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
@@ -234,7 +235,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           return;
         }
         if (url.pathname === '/api/market-intelligence/trade-setups' && req.method === 'GET') {
-          if (tradeSetupsLimited('global') || tradeSetupsLimited(ip)) return send(res, 429, { status: 'error', code: 'TRADE_SETUP_RATE_LIMITED', message: 'Pemindaian setup dibatasi. Tunggu satu menit.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          if (tradeSetupsGlobalLimited('global') || tradeSetupsLimited(ip)) return send(res, 429, { status: 'error', code: 'TRADE_SETUP_RATE_LIMITED', message: 'Pemindaian setup dibatasi. Tunggu satu menit.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
           marketIntelligence.dashboard().then((market) => {
             if (!Array.isArray(market?.data?.markets)) throw Object.assign(new Error('TRADE_SETUP_MARKET_DATA_UNAVAILABLE'), { code: 'TRADE_SETUP_MARKET_DATA_UNAVAILABLE', status: 503 });
             return tradeSetups.scan(market.data.markets);
