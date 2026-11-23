@@ -2508,3 +2508,15 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 3. Port PR #43 and #45 manually onto current main; port PR #55 and #57 only as isolated UI/data modules after current API contract review.
 4. Keep PR #55/#57/#43/#45 in Draft until their current-main port and exact-head tests/security/reviews pass.
 5. Resolve Hostless EROFS with BOS-approved persistent storage decision before claiming durable tracking or LIVE readiness.
+
+## 88. GOPLUS HOLDER CONCENTRATION + REPORTED LOCK UNLOCKS — 23 NOVEMBER 2026
+
+- Lead: Divisi 03; support Divisi 01 security, Divisi 02 UI, Divisi 04 research, Divisi 05 QA.
+- PR #72 branch `feat/goplus-holder-concentration`, exact head `48a3cec600858e920a9585e399db448b2fb103b8`.
+- `lib/goplus.js` now derives top-1 and reported top-10 token holder percentages, separates non-contract wallet vs contract/LP shares, locked sample share, LP-holder sample share, holder counts, owner and creator percentages. Provider `percent` scale is 0-1 where 1 = 100%. Invalid/missing percentage is omitted/null, never treated as zero.
+- From provider `locked_detail` for top-10 holders/LP holders, derives known lock events (`amount`, `opt_time`, `end_time`) and displays up to 3 upcoming/known entries. This is not a full token vesting calendar, not all allocations/lock contracts, and not a general unlock feed. LP-holder lock events are distinct from token-holder lock events.
+- UI explicitly labels top-10 sample coverage and warns that it is not full distribution/beneficial ownership; lock events are provider-reported top-10 only.
+- No extra GoPlus request, quota consumption, API key, environment variable or paid source. GoPlus still requires Console credentials; latest Hostless config audit had none, so live results remain blocked until credentials are configured.
+- Exact-head GitHub Actions test run #776 / ID `45197069881`: 137 passed, 0 failed, 0 skipped. Security #319 / ID `45197069922`: Gitleaks and Trivy filesystem scan passed.
+- Official semantics: GoPlus Response Details https://docs.gopluslabs.io/reference/response-details ; top-10 `holders` includes percent/is_locked/locked_detail; percent 1 = 100%. No beneficial-owner attribution is supplied.
+- NEXT TASK: independent Divisi 03/05 review, then integrate/deploy through release gate. Do not show holder concentration or unlock schedule when the provider omits these fields. Resolve Hostless GoPlus credentials separately; do not paste secret into chat.
