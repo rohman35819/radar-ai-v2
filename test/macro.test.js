@@ -102,6 +102,8 @@ test('macro service caches each source and deduplicates concurrent snapshots', a
       if (String(url).includes('api.bls.gov')) return jsonResponse(blsFixture);
       if (String(url).includes('/secured/sofr/')) return jsonResponse(nyFedFixture('SOFR', 3.92));
       if (String(url).includes('/unsecured/effr/')) return jsonResponse(nyFedFixture('EFFR', 3.88));
+      if (String(url).includes('fiscaldata.treasury.gov')) return jsonResponse(treasuryFixture);
+      if (String(url).includes('api.worldbank.org')) return jsonResponse(worldBankFixture());
       throw new Error('Unexpected upstream');
     }
   });
