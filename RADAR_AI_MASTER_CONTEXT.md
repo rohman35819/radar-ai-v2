@@ -2171,3 +2171,13 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - GitHub Actions security run `45054489741`: **Gitleaks success** and **Trivy job success**.
 - This test head is the exact code+test head; any subsequent documentation-only commit must be treated as a distinct SHA. Hostless Build/LIVE and browser QA remain unverified.
 - NEXT TASK: obtain independent Divisi 01/05 review, inspect the updated dashboard on desktop/mobile, and verify Hostless deployment SHA and live source payloads. Keep PR #55 Draft until those gates are satisfied.
+
+
+### 65.6 Live Coin Scanner — 23 November 2026
+- BOS meminta scanner visual untuk kandidat koin dengan momentum harga, kenaikan aktivitas volume, dan konfirmasi whale.
+- Menambahkan Live Coin Scanner pada panel Trading Intelligence. Ranking 0–100 adalah skor kecocokan indikator transparan (momentum 1h/24h/7d, turnover 24h, dan Binance closed-candle volume 10m vs median) — bukan probabilitas atau prediksi.
+- CoinGecko markets feed kini meminta sparkline 7 hari dan memakai cache 2 menit khusus endpoint markets; feed CoinGecko lain tetap cache 1 jam untuk menghemat kuota. Grafik mini adalah histori 7 hari, bukan streaming tick.
+- Whale flow belum dapat diverifikasi dari payload saat ini: Solscan overview/latest transaction tidak memberi cohort wallet berlabel dan token-specific inflow. Setiap kandidat menampilkan WHALE BELUM TERVERIFIKASI dan whale tidak masuk skor. Jangan menyatakan whale masuk tanpa data wallet/transfer yang tervalidasi.
+- Files changed: `public/intelligence.js`, `public/style.css`, `lib/market-intelligence.js`, `test/intelligence.test.js`, this master context.
+- Validation, CI, Hostless Build, and LIVE deployment are pending on the updated exact branch head. PR #55 remains Draft/unmerged until QA and source availability review.
+- NEXT TASK: validate scanner with tests/security scans; add a verified on-chain whale source (wallet cohort/large token transfers with USD valuation) only after endpoint, licensing, rate limits, and token-address mapping are verified.
