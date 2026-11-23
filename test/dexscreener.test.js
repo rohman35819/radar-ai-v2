@@ -10,13 +10,13 @@ test('DEX Screener validates the exact chain and token address, then normalizes 
     calls.push(url);
     return response([
       { chainId: 'solana', dexId: 'raydium', pairAddress: 'PoolABC', url: 'https://dexscreener.com/solana/PoolABC',
-        baseToken: { address: 'TokenABC', name: 'Alpha', symbol: 'ALP' }, quoteToken: { address: 'QuoteABC', name: 'SOL', symbol: 'SOL' },
+        baseToken: { address: 'So11111111111111111111111111111111111111112', name: 'Alpha', symbol: 'ALP' }, quoteToken: { address: 'QuoteABC', name: 'SOL', symbol: 'SOL' },
         priceUsd: '0.02', liquidity: { usd: 25000 }, volume: { h24: 12000 }, priceChange: { h24: 8 },
         txns: { h24: { buys: 120, sells: 80 } }, fdv: 100000, marketCap: 90000, pairCreatedAt: 1000 },
-      { chainId: 'ethereum', baseToken: { address: 'TokenABC' }, quoteToken: { address: '0x0000000000000000000000000000000000000001' } }
+      { chainId: 'ethereum', baseToken: { address: 'So11111111111111111111111111111111111111112' }, quoteToken: { address: '0x0000000000000000000000000000000000000001' } }
     ]);
   }});
-  const result = await service.validate({ networkId: 'solana', tokenAddress: 'TokenABC', poolAddress: 'PoolABC' });
+  const result = await service.validate({ networkId: 'solana', tokenAddress: 'So11111111111111111111111111111111111111112', poolAddress: 'PoolABC' });
   assert.equal(result.status, 'success');
   assert.equal(result.pair_count, 1);
   assert.equal(result.same_pool_found, true);
@@ -24,14 +24,14 @@ test('DEX Screener validates the exact chain and token address, then normalizes 
   assert.equal(result.pairs[0].volume_24h_usd, 12000);
   assert.equal(result.pairs[0].buys_24h, 120);
   assert.equal(calls.length, 1);
-  assert.match(calls[0], /token-pairs\/v1\/solana\/TokenABC/);
+  assert.match(calls[0], /token-pairs\/v1\/solana\/So11111111111111111111111111111111111111112/);
 });
 
 test('DEX Screener rejects unknown networks and invalid token addresses before network access', async () => {
   let calls = 0;
   const service = createDexScreenerService({ fetchImpl: async () => { calls++; return response([]); } });
-  await assert.rejects(service.validate({ networkId: 'unknown', tokenAddress: 'TokenABC' }), (e) => e.code === 'DEXSCREENER_UNSUPPORTED_NETWORK');
-  await assert.rejects(service.validate({ networkId: 'base', tokenAddress: 'TokenABC' }), (e) => e.code === 'DEXSCREENER_INVALID_TOKEN_ADDRESS');
+  await assert.rejects(service.validate({ networkId: 'unknown', tokenAddress: 'So11111111111111111111111111111111111111112' }), (e) => e.code === 'DEXSCREENER_UNSUPPORTED_NETWORK');
+  await assert.rejects(service.validate({ networkId: 'base', tokenAddress: 'So11111111111111111111111111111111111111112' }), (e) => e.code === 'DEXSCREENER_INVALID_TOKEN_ADDRESS');
   assert.equal(calls, 0);
 });
 
