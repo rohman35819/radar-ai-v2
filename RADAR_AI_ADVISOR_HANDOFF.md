@@ -223,3 +223,10 @@ Snapshot yang diverifikasi pada 22 November 2026:
 
 - Latest implementation head `e90db36ebe90c09811c44e51765e5a56fc873250`: GitHub Actions test #649 passed 110/110; security #192 Gitleaks and Trivy filesystem scan succeeded.
 - PR #59 remains Draft/unmerged; Divisi 03/05 reviews and Hostless Build/LIVE validation remain pending.
+
+
+## 18. Expanded macro data source implementation — 23 November 2026
+
+- PR #65 expanded from BLS + NY Fed to include U.S. Treasury monthly average security rates and World Bank annual GDP/CPI/unemployment indicators for USA/China/Indonesia.
+- Latest implementation head `c7afdc5e8e3ff24fbca3f189757d7edb4c4953db`: GitHub Actions tests #762 passed 143/143; security #305 Gitleaks and Trivy succeeded.
+- PR title/body updated; still awaits independent Divisi 04/05 review. Not merged or Hostless LIVE. Treasury values are monthly average debt rates, not real-time yields; World Bank data annual, no publication date in the API response and therefore not for look-ahead-sensitive backtests.

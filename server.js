@@ -11,6 +11,7 @@ const { createMarketIntelligenceService } = require('./lib/market-intelligence')
 const { createDerivativesService } = require('./lib/derivatives');
 const { createDexScreenerService } = require('./lib/dexscreener');
 const { createGoPlusService } = require('./lib/goplus');
+const { createMacroService } = require('./lib/macro');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
@@ -50,7 +51,7 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService, dexScreenerService, goPlusService } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService, dexScreenerService, goPlusService, macroService } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
   const solscanApi = solscanService || createSolscanService();
   const marketIntelligence = marketIntelligenceService || createMarketIntelligenceService({ apiKey: cfg.cgKey });
@@ -75,6 +76,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   };
   st.goplusUsage = st.goplusUsage && typeof st.goplusUsage === 'object' ? st.goplusUsage : { day: null, month: null, day_count: 0, month_count: 0 };
   const goPlus = goPlusService || createGoPlusService({ appKey: process.env.GOPLUS_APP_KEY || '', appSecret: process.env.GOPLUS_APP_SECRET || '', accessToken: process.env.GOPLUS_ACCESS_TOKEN || '', usageState: st.goplusUsage, onUsage: persistState });
+  const macro = macroService || createMacroService();
   let busy = null;
   let aiBusy = null;
   let aiTimer = null;
@@ -87,6 +89,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const dexScreenerGlobalLimited = createRateLimiter({ limit: 240, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerLimited = createRateLimiter({ limit: 30, windowMs: 60000, maxKeys: 1000 });
   const goPlusLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1000 });
+  const macroLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
     .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
     .catch((error) => {
@@ -216,6 +219,17 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'COINGECKO_UPSTREAM_ERROR';
             const status = Number.isInteger(error.status) ? error.status : 502;
             send(res, status, { status: 'error', code, message: code.startsWith('INVALID_') ? 'ID exchange tidak valid.' : 'Data trading pairs exchange tidak tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/market-intelligence/macro' && req.method === 'GET') {
+          if (macroLimited('global') || macroLimited(ip)) return send(res, 429, { status: 'error', code: 'MACRO_LOCAL_RATE_LIMITED', message: 'Permintaan data makro terlalu sering. Tunggu satu menit.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          macro.snapshot().then((payload) => {
+            send(res, payload.status === 'error' ? 502 : 200, payload, 'application/json', { 'cache-control': 'private, max-age=300' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'MACRO_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            send(res, status, { status: 'error', code, message: code === 'MACRO_UPSTREAM_COOLDOWN' ? 'Sumber data makro sedang cooldown. Coba lagi sebentar.' : 'Data makro belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
