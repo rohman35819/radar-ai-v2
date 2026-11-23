@@ -89,6 +89,7 @@ test('Live Coin Scanner ranks real momentum and Binance volume spikes without in
   assert.match(view.textContent, /Live Coin Scanner/);
   assert.match(view.textContent, /Alpha Coin/);
   assert.match(view.textContent, /Volume Binance 10m spike/);
+  assert.match(view.textContent, /100\/100/);
   assert.match(view.textContent, /Whale: BELUM TERVERIFIKASI/);
   assert.match(view.textContent, /bukan probabilitas harga naik/);
 });
