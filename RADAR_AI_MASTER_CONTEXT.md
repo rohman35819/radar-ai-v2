@@ -2103,6 +2103,17 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 ### 64.4 Review refinement
 - The LIVE readiness probe uses `if: always()` so it still runs and reports its independent result when the Hostless deployment API reports a failed deployment.
 - Latest branch code commit after this refinement: `64ad1e24ed63ebf822bfd3ca29abc12c40095ddd`.
+ 
+### 64.4.1 Bubble Maps dashboard integration — 23 November 2026
+- Added a dashboard Bubble Maps view using the official Bubblemaps V2 iframe integration, with chain + contract-address selection and strict chain-specific address validation. Existing Dashboard navigation, Solscan, Market Intelligence, and Exchange Hub entries are preserved.
+- Added `BUBBLEMAPS_PARTNER_ID` server configuration, a read-only `GET /api/bubblemaps/config` endpoint that exposes only the public partner ID/configured flag, and CSP `frame-src https://iframe.bubblemaps.io`.
+- Official iframe source: `https://iframe.bubblemaps.io/map?chain=...&address=...&partnerId=...`. Bubblemaps documentation states `demo` is localhost/0.0.0.0 only; production requires a real partner ID and production-domain whitelist. No demo ID or API credentials are committed.
+- UI explicitly warns that wallet transfer relationships do not prove common beneficial ownership or market-buy intent, and that map data is not a tick-by-tick trade feed. Provider timestamp/refresh semantics remain authoritative.
+- Changed files: `public/index.html`, `public/app.js`, `public/style.css`, `public/sw.js` (shell v13), `server.js`, `lib/ingest.js`, `.env.example`, `README.md`, `test/bubblemaps-ui.test.js`.
+- Branch: `feat/bubblemaps-dashboard-embed`; PR #57. Test and security workflows on the exact final head are pending. Hostless Build, production iframe activation, and desktop/mobile visual QA are not verified.
+- Production blocker: BOS must obtain a Bubblemaps partner ID and ask Bubblemaps to whitelist `radar-ai-v2.hostless.app`; then set `BUBBLEMAPS_PARTNER_ID` in Hostless environment. This ID is public configuration, not a secret. Do not use `demo` on production.
+- NEXT TASK: finish exact-head CI/security and independent QA; request the official partner ID/domain whitelist; set the public partner ID only after provider approval; then verify Hostless Build and LIVE iframe separately.
+
 
 
 ### 64.5 PR integration and current handoff
