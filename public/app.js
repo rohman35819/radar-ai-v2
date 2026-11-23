@@ -317,9 +317,16 @@ function renderEarlyGems(){
       el('span',{},'Top10 holder sample: '+(tokenHolders?share(tokenHolders.top10_reported_percent):'N/A')+' · Top1: '+(tokenHolders?share(tokenHolders.top1_percent):'N/A')),
       el('span',{},'Top10 wallet: '+(tokenHolders?share(tokenHolders.non_contract_top10_percent):'N/A')+' · contract: '+(tokenHolders?share(tokenHolders.contract_top10_percent):'N/A')+' · locked: '+(tokenHolders?share(tokenHolders.locked_top10_percent):'N/A')),
       el('span',{},'LP holder sample: '+(lpHolders?share(lpHolders.top10_reported_percent):'N/A')+' · Owner: '+share(concentration.owner_percent)+' · Creator: '+share(concentration.creator_percent)));
-     goPlusResult.replaceChildren(el('b',{},'GoPlus · '+(result.status==='partial'?'DATA PARSIAL':'DATA TERSEDIA')),details,
+     const unlockEvents=concentration.unlock_schedule?.events||[];
+     const unlockSummary=el('div',{class:'gem-validation-line'});
+     if(unlockEvents.length){
+      unlockSummary.append(el('b',{},'Jadwal unlock yang dilaporkan GoPlus (top-10 sample)'));
+      unlockEvents.slice(0,3).forEach(event=>unlockSummary.append(el('span',{},String(event.asset_group||'holder')+' · '+(event.holder_tag||event.holder_address||'alamat tidak berlabel')+' · '+dateTime(event.unlock_at)+' · jumlah '+(event.amount??'N/A'))));
+     }else unlockSummary.append(el('small',{class:'muted'},'Tidak ada locked_detail unlock yang dilaporkan GoPlus untuk sampel top-10 ini.'));
+     goPlusResult.replaceChildren(el('b',{},'GoPlus · '+(result.status==='partial'?'DATA PARSIAL':'DATA TERSEDIA')),details,unlockSummary,
       ...(flags.length?flags:[el('small',{class:'muted'},'Tidak ada flag positif yang dilaporkan. Field yang kosong tetap tidak diketahui; ini bukan jaminan aman.')]),
       el('small',{class:'muted'},'Konsentrasi hanya dari sampel top-10 yang dilaporkan GoPlus; kontrak/LP dipisah dari wallet non-kontrak. Ini bukan distribusi holder lengkap atau bukti pemilik beneficial.'),
+      el('small',{class:'muted'},'Jadwal unlock berasal hanya dari locked_detail yang dikembalikan provider untuk top-10 holder/LP; bukan kalender vesting lengkap token.'),
       el('small',{class:'muted'},'Update '+dateTime(result.observed_at)));
     }catch(error){goPlusResult.textContent='GoPlus: '+String(error.message||'tidak tersedia').slice(0,140);}
     finally{goPlusButton.disabled=false;}
