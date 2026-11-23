@@ -2218,3 +2218,35 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Correct durable fix: attach an existing persistent Hostless disk at `/data` and set server environment `DATA_DIR=/data`, then redeploy. Do not silently fallback to `/tmp`, because state and GoPlus quota counters would disappear on restart. New disk creation can incur cost; check Hostless's displayed cost/free entitlement before creating one.
 - Hostless monitor workflow now runs on pushes to main, skips only deployment metadata lookup when `HOSTLESS_API_KEY` is missing, and still checks readiness plus snapshot/news. It reports storage status/code. `HOSTLESS_API_KEY` is still absent, so deployed commit SHA cannot be checked through Hostless API.
 - NEXT TASK: BOS attaches/chooses persistent disk and sets `DATA_DIR=/data`; add read-only `HOSTLESS_API_KEY` as GitHub Actions repository secret to verify deployment SHA. Then rerun monitor and verify readiness.
+
+
+---
+
+## 69. BINANCE / GECKOTERMINAL / DEX / GOPLUS DELIVERY AUDIT — 23 NOVEMBER 2026
+
+### Verified repository state
+- Current main before this audit improvement: 22e90d301ff8508b9144dc4187f79a601b84d2b7.
+- Binance Futures PR #59 is closed/merged at 3a3380d60d4d14db860ca503dca63d3d61d45a53. It uses public USDⓈ-M endpoints only (funding/mark, current OI, OI history, taker flow); no signed account, order, or withdrawal routes.
+- GeckoTerminal PR #46 is closed/merged at 76a36d5f2ad1dbe29d2c2eb546ab39f9f4a6faa3. Early Gem Scanner fetches up to 3 new-pool pages and one 24h trending page by default, on a 60-minute cadence using the existing server-side CoinGecko Demo key if configured. Pool discovery is limited to provider-indexed pools, not all token deployments.
+- DEX Screener cross-validation is integrated by PR #46 using public /token-pairs/v1/{chainId}/{tokenAddress} lookups on demand. Matching uses chain + token address and exact pool address where supplied. Liquidity/volume are labeled as pair-level. No pair is not a scam finding. The separate broader scanner PR #60 remains Draft/unmerged and is not needed to satisfy the requested validation integration.
+- GoPlus Token Security adapter is integrated by PR #46, optional and on-demand. It supports EVM networks and Solana Beta. It requires a Bearer token; the backend can mint one with server-side GOPLUS_APP_KEY + GOPLUS_APP_SECRET (SHA-1 of app_key + timestamp + app_secret) or accept GOPLUS_ACCESS_TOKEN. No credential value is committed or exposed to the browser.
+- Etherscan and FRED remain deferred.
+
+### GoPlus free-access audit
+- Official GoPlus pricing currently lists a Free Version with 150,000 CU/month, 30,000 CU/day, and 150 CU/minute; official support separately describes the free Security API as 30 calls/minute. Token Security docs mark the endpoint Authorization header as Bearer-required; token minting docs describe the app_key/time/sign method. Sources: https://gopluslabs.io/en/security-api, https://docs.gopluslabs.io/reference/support, https://docs.gopluslabs.io/reference/tokensecurityusingget_1, https://docs.gopluslabs.io/reference/getaccesstokenusingpost.
+- Token Security pricing example in the official API pricing reference is 25 CU/call. Local safeguards remain intentionally stricter: 5 calls/minute (125 CU/minute), 1,000/day (25,000 CU/day), and 5,000/month (125,000 CU/month), below the published free CU limits. Counters persist in state.json before calls; cache TTL is 5 minutes.
+- Conclusion: API usage is free within published limits, but not anonymous: RADAR needs GoPlus Console credentials or a valid access token. Public docs establish a Free Version; they do not establish whether Console signup requires a payment card. Do not claim card-free signup without direct signup verification.
+- Runtime credential presence is not yet verified. The public snapshot exposes only a boolean config flag and usage counters; no secret is exposed.
+
+### Current CI and production status
+- GitHub main at audit start: 22e90d301ff8508b9144dc4187f79a601b84d2b7.
+- Main test run 45175050527: 132 passed, 0 failed, 0 skipped.
+- Main security run 45175050395: Gitleaks success; Trivy filesystem scan success.
+- Hostless monitor run 45175050305: failed readiness check. /api/ready returned HTTP 503, status degraded, storage error EROFS; /api/snapshot returned HTTP 200. Hostless deployment metadata lookup was skipped because HOSTLESS_API_KEY is not configured in GitHub Actions. This is not a verified deployment SHA.
+- Root cause and required production fix remain as section 68: attach an existing persistent disk at /data and set DATA_DIR=/data, then redeploy. Do not silently switch to ephemeral /tmp; state and quota counters would reset on restart. Any new paid storage requires Owner approval.
+
+### Audit tooling improvement
+- Updated scripts/hostless-live-check.js to report safe on-chain feed status, pool count/freshness, CoinGecko key configured boolean, GoPlus configured boolean, and quota counters—never secret values.
+- Added test/hostless-live-check.test.js to verify safe diagnostic output and distinguish missing configuration.
+- Validation on the new exact main head is pending GitHub Actions.
+- NEXT TASK: confirm latest main test/security runs; use the next Hostless monitor result to inspect early_gems and GoPlus configuration flags; BOS must resolve persistent storage before declaring production healthy. If GoPlus is not configured, obtain GoPlus Console app key/secret and set them as Hostless server secrets; then run one controlled on-demand token-security check.
