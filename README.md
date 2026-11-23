@@ -156,6 +156,7 @@ Dashboard menu **Early Gem Scanner** mengambil pool DEX terbaru (jendela provide
 - DEX Screener API tidak membutuhkan API key untuk endpoint publik; aplikasi hanya meminta data saat tombol validasi ditekan dan menyimpan cache 2 menit.
 - GoPlus Token Security bersifat opsional dan hanya dipanggil atas permintaan pengguna. Paket gratis tersedia, tetapi endpoint token-security saat ini mensyaratkan Bearer access token. Konfigurasi server: `GOPLUS_APP_KEY` + `GOPLUS_APP_SECRET` untuk mint token otomatis, atau `GOPLUS_ACCESS_TOKEN` pre-generated. Jangan pernah menaruh nilai ini di frontend/Git.
 - GoPlus dibatasi konservatif 5 panggilan/menit, 1.000/hari, dan 5.000/bulan secara internal (cache 5 menit). Batas internal ini berada di bawah kuota free tier GoPlus: 150.000 CU/bulan, 30.000 CU/hari, 150 CU/menit; endpoint token-security tercantum 25 CU/call. Data kosong/parsial tidak ditampilkan sebagai "aman". Solana API ditandai beta oleh provider.
+- GoPlus menampilkan konsentrasi top-10 holder dan top-10 LP holder bila provider mengembalikan `holders`/`lp_holders`: top1, jumlah persentase sampel top-10, wallet non-contract, contract/LP, dan locked. Ini hanya sampel top-10 yang dilaporkan GoPlus, bukan distribusi holder lengkap atau bukti beneficial ownership. Persentase provider memakai skala 0–1 (1 = 100%).
 
 
 ### API usage and commercial review
