@@ -181,3 +181,17 @@ body{
 
 /* Solscan overview dashboard card */
 .solscan-dashboard-card .detail-grid{margin-top:12px}
+
+/* Official Bubblemaps V2 dashboard embed */
+.bubble-intro{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.bubble-intro h2{margin:0 0 5px;font-size:16px}.bubble-intro p{margin:0}
+.bubble-provider{font-size:9px;letter-spacing:1px;color:var(--accent);font-weight:800;white-space:nowrap}
+.bubble-controls{display:grid;grid-template-columns:minmax(150px,.65fr) minmax(220px,1.4fr) auto;align-items:end;gap:12px}
+.bubble-controls label{display:grid;gap:6px;color:var(--muted);font-size:11px;font-weight:700}
+.bubble-controls input,.bubble-controls select{width:100%;min-width:0;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.bubble-status{font-size:11px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel2)}
+.bubble-status.positive{color:var(--green)}.bubble-status.negative{color:var(--amber)}
+.bubble-map-frame{width:100%;min-height:260px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel2)}
+.bubble-map-frame iframe{display:block;width:100%;height: min(78vh,820px);min-height:620px;border:0;background:#fff}
+.bubble-disclaimer,.bubble-partner-help{font-size:10px;margin:0}
+@media(max-width:760px){.bubble-controls{grid-template-columns:1fr}.bubble-controls button{width:100%}.bubble-intro{display:block}.bubble-provider{display:inline-block;margin-top:8px}.bubble-map-frame iframe{height:72vh;min-height:560px}}
