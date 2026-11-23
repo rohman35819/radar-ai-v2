@@ -2144,10 +2144,12 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Pair batch enrichment only covers up to four chain groups in one scan; other chains remain visible as profiles without enriched pool data. This is an explicit coverage limit, not an all-chain completeness claim.
 
 ### 65.4 CI, review and deployment status
-- First PR head `3c88f85323f7ce7cf7c1b1465a892d71d0289f01`: test workflow failed because a private scoring helper was incorrectly exported outside its service scope. Gitleaks/Trivy workflow succeeded on that head. The failure was corrected by keeping the helper private and removing the invalid direct-helper test.
-- Corrected code head `e84b71380ea13057c59dd532b06809ca62ca9cf1`: GitHub check runs were observed queued/in progress at handoff; do not claim the corrected test suite passed until completed exact-head checks are read.
+- CI history: first PR head `3c88f85323f7ce7cf7c1b1465a892d71d0289f01` failed because a private scoring helper was incorrectly exported outside its service scope. A later test run exposed a stale direct-helper test and then an `await` in a non-async test callback. Both were corrected; the latest exact implementation head above passed all 111 tests. Earlier failed runs remain historical and are superseded by the exact-head success.
+- Final implementation code head `ecf93e2f896fa3e7fef1037f99a874a7618f0be9`: GitHub Actions exact-head test run #? / ID `45170498423`: **completed / success; 111 tests pass, 0 fail**. Syntax checks in `npm test` also passed.
+- Exact-head security run ID `45170498596`: **completed / success**. Gitleaks passed. Trivy secret scanner reported no issues. Trivy vulnerability scanner warned that no supported files were found for the `vuln` scanner; dependency vulnerability coverage is unavailable, not a clean CVE result.
 - Hostless Build and LIVE: not checked and not verified. No merge or production deployment performed.
-- Initial PR metadata briefly reported mergeable=false while GitHub calculated mergeability; subsequent PR info reported mergeable=true. PR remains Draft and unmerged.
+- Current PR #60 is Draft and unmerged; latest GitHub metadata reports mergeable=true. Independent Divisi 01/04/05/08 review remains pending.
+- Latest code changes after final passing checks are limited to documentation; code head remains `ecf93e2f896fa3e7fef1037f99a874a7618f0be9`.
 
 ### 65.5 NEXT TASK
 1. Read exact-head test, Gitleaks and Trivy results for the latest PR #60 commit; inspect logs and fix any remaining failures.
