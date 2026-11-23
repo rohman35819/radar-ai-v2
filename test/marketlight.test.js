@@ -8,12 +8,16 @@ const payloads = {
   liquidations: { fromMs: 1795440000000, toMs: 1795450000000, total: { long: 1200000, short: 900000 }, byExchange: { Binance: { long: 800000, short: 500000 } }, bySymbol: [] },
   fear: { value: 32, label: 'fear', updatedAt: '2026-11-23T17:26:40.000Z', components: [], history: [] }
 };
-const response = (data, status = 200) => ({
-  ok: status >= 200 && status < 300,
-  status,
-  headers: { get: () => null },
-  text: async () => JSON.stringify(data)
-});
+const response = (data, status = 200) => {
+  const bytes = Buffer.from(JSON.stringify(data));
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: { get: () => String(bytes.byteLength) },
+    body: new ReadableStream({ start(controller) { controller.enqueue(bytes); controller.close(); } }),
+    text: async () => { throw new Error('Unbounded text reader must not be used'); }
+  };
+};
 function fixtureFetch(overrides = {}) {
   const calls = [];
   const fetchImpl = async (url, options) => {
@@ -91,10 +95,29 @@ test('Marketlight global cooldown prevents bursts for different assets', async (
   assert.equal(fixture.calls.length, 4);
 });
 
-test('Marketlight response body is size bounded', async () => {
-  const fetchImpl = async () => ({ ok: true, status: 200, headers: { get: () => null }, text: async () => ' '.repeat(1024 * 1024 + 1) });
+test('Marketlight response body is streamed and cancelled at the 1 MiB cap', async () => {
+  let cancelled = false;
+  const fetchImpl = async () => ({
+    ok: true,
+    status: 200,
+    headers: { get: () => null },
+    body: new ReadableStream({
+      start(controller) { controller.enqueue(new Uint8Array(1024 * 1024)); controller.enqueue(new Uint8Array(1)); },
+      cancel() { cancelled = true; }
+    }),
+    text: async () => { throw new Error('Unbounded text reader must not be used'); }
+  });
   const service = createMarketlightService({ fetchImpl, now: () => 1795450000000 });
   const result = await service.snapshot('BTC', 24);
   assert.equal(result.status, 'error');
   assert.equal(result.sources.derivatives.error, 'MARKETLIGHT_RESPONSE_TOO_LARGE');
+  assert.equal(cancelled, true);
+});
+
+test('Marketlight rejects responses without a streaming body', async () => {
+  const fetchImpl = async () => ({ ok: true, status: 200, headers: { get: () => null }, text: async () => JSON.stringify(payloads.derivatives) });
+  const service = createMarketlightService({ fetchImpl, now: () => 1795450000000 });
+  const result = await service.snapshot('BTC', 24);
+  assert.equal(result.status, 'error');
+  assert.equal(result.sources.derivatives.error, 'MARKETLIGHT_INVALID_RESPONSE_BODY');
 });
