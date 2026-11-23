@@ -2274,3 +2274,17 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Latest Hostless monitor run 45180358589 re-confirmed live Binance Futures BTCUSDT success (funding, current OI, OI history, taker flow all available) and DEX Screener success (one pair, exact pool match). GeckoTerminal feed remained healthy with 80 indexed pools. GoPlus remains unconfigured and was not called.
 - The only failed monitor gate is readiness: HTTP 503 / degraded / EROFS. Deployment SHA cannot be verified until the read-only HOSTLESS_API_KEY secret is configured. Do not claim a healthy production deployment.
 - Next owner-side steps: attach an existing persistent Hostless disk at /data and set DATA_DIR=/data; if a new disk is needed, review its price and approve before provisioning. Configure GoPlus credentials only if desired, in Hostless server secrets, then perform one manual security lookup. Etherscan and FRED remain deferred.
+
+
+---
+
+## 70. GOPLUS SIGNATURE DATA DECODE — 23 NOVEMBER 2026
+- Scope: Division 01 — Security & Reliability (lead), with Division 02 UI integration and Division 05 independent QA. This is an on-demand transaction calldata/signature inspection feature, not transaction signing or execution.
+- Verified official GoPlus docs: POST `/api/v1/abi/input_decode`; Bearer authorization; required `chain_id` and `data`; optional `contract_address`, `signer`, `input`, and `transcation_type`. The request field spelling `transcation_type` intentionally follows the provider's documented schema.
+- Implementation branch: `feat/goplus-signature-data-decode`, based on main HEAD `ea501dab7873c7ef9b6d3f43cc7be5f2834ea083`.
+- Planned changes: extend `lib/goplus.js` with strict EVM chain/calldata/address validation and shared free-tier quota enforcement; add POST `/api/market-intelligence/goplus/decode` with bounded JSON body and safe errors; add an on-demand calldata decode panel to Early Gem Scanner; add service, route, and UI regression tests.
+- Supported decode chain IDs follow the endpoint schema: 1, 25, 56, 128, 137, 250, 321, 42161, and 43114. Solana decode is not supported by this endpoint. No calldata is submitted automatically; the user must paste it and initiate the request.
+- Security: credentials remain server-side; the decode request shares the existing GoPlus 5/minute application limiter and persistent daily/monthly CU budget. No secret, signing key, or transaction execution path is added.
+- Test status: pending GitHub Actions on the exact PR head. Local test execution is not available through the GitHub repository connector.
+- GitHub PR: pending creation after branch commits. Hostless Build and LIVE status: not verified. Production GoPlus credentials remain unconfigured per the latest Hostless monitor.
+- NEXT TASK: run exact-head tests and Gitleaks/Trivy; independent Division 05 review; after merge/deploy and once BOS configures GoPlus credentials server-side, perform one manually initiated decode test using non-sensitive calldata and verify the UI output.
