@@ -103,3 +103,77 @@ test('OpenRouter moderator always uses the free router even when a paid model ov
     if (previousModel === undefined) delete process.env.OPENROUTER_MODEL; else process.env.OPENROUTER_MODEL = previousModel;
   }
 });
+
+
+test('structured adapters use completion-token parameter and strict Groq JSON schema', async () => {
+  const { requestStructured } = require('../lib/ai/chat-completions');
+  let sent;
+  await requestStructured({
+    provider: 'groq', apiKey: 'test-key', baseUrl: 'https://example.invalid',
+    model: 'openai/gpt-oss-20b', messages: [{ role: 'user', content: 'JSON' }],
+    fetchImpl: async (_url, options) => {
+      sent = JSON.parse(options.body);
+      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({
+        decision: 'WAIT', confidence_score: 20, timeframe: '1h', reasons: [], risks: [], missing_data: [], summary: 'uji'
+      }) } }] }) };
+    }
+  });
+  assert.equal(sent.max_completion_tokens, 220);
+  assert.equal(sent.max_tokens, undefined);
+  assert.equal(sent.response_format.type, 'json_schema');
+  assert.equal(sent.response_format.json_schema.strict, true);
+});
+
+test('Groq falls back to JSON object mode when strict generation fails', async () => {
+  const { requestStructured } = require('../lib/ai/chat-completions');
+  const formats = [];
+  const result = await requestStructured({
+    provider: 'groq', apiKey: 'test-key', baseUrl: 'https://example.invalid',
+    model: 'openai/gpt-oss-20b', messages: [{ role: 'user', content: 'JSON' }],
+    fetchImpl: async (_url, options) => {
+      const body = JSON.parse(options.body);
+      formats.push(body.response_format.type);
+      if (formats.length === 1) return { ok: false, status: 400, json: async () => ({ error: { message: 'failed_generation: invalid schema' } }) };
+      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({
+        decision: 'WAIT', confidence_score: 10, timeframe: '15m', reasons: [], risks: [], missing_data: [], summary: 'fallback'
+      }) } }] }) };
+    }
+  });
+  assert.deepEqual(formats, ['json_schema', 'json_object']);
+  assert.equal(result.summary, 'fallback');
+});
+
+test('OpenRouter User not found gets one transient retry', async () => {
+  const { requestStructured } = require('../lib/ai/chat-completions');
+  let calls = 0;
+  const result = await requestStructured({
+    provider: 'openrouter', apiKey: 'test-key', baseUrl: 'https://example.invalid',
+    model: 'openrouter/free', messages: [{ role: 'user', content: 'JSON' }], retryDelayMs: 0,
+    fetchImpl: async () => {
+      calls++;
+      if (calls === 1) return { ok: false, status: 401, json: async () => ({ error: { message: 'User not found' } }) };
+      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({
+        decision: 'WAIT', confidence_score: 10, timeframe: '1h', reasons: [], risks: [], missing_data: [], summary: 'recovered'
+      }) } }] }) };
+    }
+  });
+  assert.equal(calls, 2);
+  assert.equal(result.summary, 'recovered');
+});
+
+test('Gemini market analyzer retries a temporary high-demand response', async () => {
+  const { analyzeMarket } = require('../lib/ai/gemini');
+  let calls = 0;
+  const result = await analyzeMarket({ tokens: [{ symbol: 'BTC' }] }, {
+    apiKey: 'test-key', retryDelayMs: 0,
+    fetchImpl: async () => {
+      calls++;
+      if (calls === 1) return { ok: false, status: 503, json: async () => ({ error: { message: 'high demand' } }) };
+      return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify({
+        decision: 'WAIT', confidence_score: 25, timeframe: '1h', reasons: [], risks: [], missing_data: [], summary: 'recovered'
+      }) }] } }] }) };
+    }
+  });
+  assert.equal(calls, 2);
+  assert.equal(result.summary, 'recovered');
+});
