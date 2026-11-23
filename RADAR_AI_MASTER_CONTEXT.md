@@ -2181,3 +2181,14 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Files changed: `public/intelligence.js`, `public/style.css`, `lib/market-intelligence.js`, `test/intelligence.test.js`, this master context.
 - Validation, CI, Hostless Build, and LIVE deployment are pending on the updated exact branch head. PR #55 remains Draft/unmerged until QA and source availability review.
 - NEXT TASK: validate scanner with tests/security scans; add a verified on-chain whale source (wallet cohort/large token transfers with USD valuation) only after endpoint, licensing, rate limits, and token-address mapping are verified.
+
+
+### 65.7 Live Coin Scanner validation — 23 November 2026
+- Scanner implementation head: `b1afa3a815c9c5a68a24036f1383e1c15eddf75b`.
+- GitHub Actions test run `45156015196`: **109 passed, 0 failed, 0 skipped**. Includes scanner ranking, Binance 10m volume spike rendering, and explicit whale-unverified state.
+- GitHub Actions security run `45156015012`: **Gitleaks success** and **Trivy filesystem scan success** on the same exact head.
+- The scanner uses CoinGecko market 1h/24h/7d changes, 24h turnover, and existing Binance closed 10m candle vs median where the token is mapped. Score is indicator confluence, not a price probability.
+- CoinGecko market endpoint now requests 7d sparkline and uses a 2-minute cache. Other CoinGecko market endpoints remain cached for 1 hour. Existing browser refresh is approximately 120 seconds. This is frequent polling, not WebSocket/tick streaming.
+- Whale confirmation remains unavailable: no verified wallet cohort or per-token large-transfer USD attribution exists in the current source contract. UI marks whale state unverified and excludes it from score.
+- PR #55 remains open, Draft, unmerged; 27 commits ahead / 0 behind at this check. No independent review exists. Hostless Build, deployed SHA, and LIVE browser QA remain unverified; workflow Hostless diagnostics were skipped.
+- NEXT TASK: obtain independent frontend/data QA; verify Hostless build/deployed SHA and desktop/mobile visual behavior; research and validate a token-address-aware whale transfer source before implementing confirmed whale inflow.
