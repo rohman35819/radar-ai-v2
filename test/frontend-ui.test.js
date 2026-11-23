@@ -40,4 +40,6 @@ test('GoPlus holder concentration is explicitly labeled as top-10 sample, not fu
   assert.match(app,/Top10 holder sample/);
   assert.match(app,/sampel top-10/);
   assert.match(app,/bukan distribusi holder lengkap/);
+  assert.match(app,/Jadwal unlock yang dilaporkan GoPlus/);
+  assert.match(app,/bukan kalender vesting lengkap token/);
 });
