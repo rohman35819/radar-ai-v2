@@ -55,7 +55,7 @@ test('DEX Screener cache keeps pool-specific same-pool verification separate', a
       liquidity: { usd: 1000 }, volume: { h24: 500 } }]);
   }});
   const first = await service.validate({ networkId: 'solana', tokenAddress: token, poolAddress: 'PoolOne' });
-  const second = await service.validate({ networkId: 'solana', tokenAddress: token, poolAddress: 'PoolTwo' });
+  const second = await service.validate({ networkId: 'solana', tokenAddress: token, poolAddress: 'poolone' });
   assert.equal(first.same_pool_found, true);
   assert.equal(second.same_pool_found, false);
   assert.equal(calls, 2);
