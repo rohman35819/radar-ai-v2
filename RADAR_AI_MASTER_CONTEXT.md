@@ -2207,3 +2207,14 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - PR #59 is merged. PR #46 is ready for merge on top of merge commit `3a3380d60d4d14db860ca503dca63d3d61d45a53`.
 - Hostless Build, deployed SHA, GoPlus credential-backed runtime call, and LIVE desktop/mobile visual QA are still not verified.
 - NEXT TASK: merge PR #46, then verify Hostless build/deployed SHA and confirm GoPlus configuration status from the live dashboard.
+
+
+---
+
+## 68. HOSTLESS EROFS / DATA_DIR BLOCKER — 23 NOVEMBER 2026
+- After PR #59 and PR #46 were merged, GitHub main is `76a36d5f2ad1dbe29d2c2eb546ab39f9f4a6faa3`; main CI passed **132/132 tests**, Gitleaks success, Trivy success.
+- Hostless LIVE monitor run `45174689168` returned `HTTP 503`, body status `degraded`, `storage.status=error`, `storage.code=EROFS`.
+- Root cause is configuration, not the scanner code: `lib/ingest.js` defaults `DATA_DIR=./data`; Hostless root filesystem is read-only. Hostless documentation confirms only `/tmp`, `/root`, `/app/.cache`, and attached disk mount paths are writable; temporary directories are cleared on restart.
+- Correct durable fix: attach an existing persistent Hostless disk at `/data` and set server environment `DATA_DIR=/data`, then redeploy. Do not silently fallback to `/tmp`, because state and GoPlus quota counters would disappear on restart. New disk creation can incur cost; check Hostless's displayed cost/free entitlement before creating one.
+- Hostless monitor workflow now runs on pushes to main, skips only deployment metadata lookup when `HOSTLESS_API_KEY` is missing, and still checks readiness plus snapshot/news. It reports storage status/code. `HOSTLESS_API_KEY` is still absent, so deployed commit SHA cannot be checked through Hostless API.
+- NEXT TASK: BOS attaches/chooses persistent disk and sets `DATA_DIR=/data`; add read-only `HOSTLESS_API_KEY` as GitHub Actions repository secret to verify deployment SHA. Then rerun monitor and verify readiness.
