@@ -35,3 +35,9 @@ test('Membership preview keeps the registration name field hidden in login mode'
   assert.match(membershipHtml,/id="name-field" hidden/);
   assert.match(membershipCss,/#name-field\[hidden\]\s*\{\s*display:\s*none\s*\}/);
 });
+
+test('GoPlus holder concentration is explicitly labeled as top-10 sample, not full ownership',()=>{
+  assert.match(app,/Top10 holder sample/);
+  assert.match(app,/sampel top-10/);
+  assert.match(app,/bukan distribusi holder lengkap/);
+});
