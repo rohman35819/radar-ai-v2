@@ -57,3 +57,46 @@ test('derivatives rejects invalid symbols before network access', async () => {
   await assert.rejects(service.snapshot('BTCUSD'), (error) => error.code === 'INVALID_FUTURES_SYMBOL');
   assert.equal(calls, 0);
 });
+
+
+test('derivatives rejects malformed successful upstream payloads as partial unavailable data', async () => {
+  const service = createDerivativesService({ fetchImpl: async (url) => {
+    if (url.includes('premiumIndex')) return response({ symbol: 'BTCUSDT' });
+    if (url.includes('/openInterest?')) return response({ symbol: 'BTCUSDT', openInterest: '12' });
+    if (url.includes('openInterestHist')) return response([]);
+    return response([]);
+  }});
+  const result = await service.snapshot('BTCUSDT');
+  assert.equal(result.status, 'success');
+  assert.equal(result.partial, true);
+  assert.equal(result.data.funding, null);
+  assert.equal(result.sources.funding.error, 'BINANCE_FUTURES_INVALID_RESPONSE');
+  assert.equal(result.data.open_interest.openInterest, '12');
+});
+
+test('derivatives does not cache a fully failed snapshot', async () => {
+  let calls = 0;
+  const service = createDerivativesService({ fetchImpl: async () => { calls++; return response({}, 503); } });
+  const first = await service.snapshot('BTCUSDT');
+  const second = await service.snapshot('BTCUSDT');
+  assert.equal(first.status, 'error');
+  assert.equal(second.status, 'error');
+  assert.equal(calls, 8);
+});
+
+test('derivatives cache is bounded and evicts least-recently-used symbols', async () => {
+  const { MAX_CACHE_ENTRIES } = require('../lib/derivatives');
+  let calls = 0;
+  const service = createDerivativesService({ fetchImpl: async (url) => {
+    calls++;
+    if (url.includes('premiumIndex')) return response({ lastFundingRate: '0.001', markPrice: '1' });
+    if (url.includes('/openInterest?')) return response({ openInterest: '1' });
+    return response([]);
+  }});
+  for (let i = 0; i <= MAX_CACHE_ENTRIES; i++) await service.snapshot('C' + String(i).padStart(3, '0') + 'USDT');
+  assert.equal(calls, (MAX_CACHE_ENTRIES + 1) * 4);
+  await service.snapshot('C000USDT');
+  assert.equal(calls, (MAX_CACHE_ENTRIES + 2) * 4);
+  await service.snapshot('C100USDT');
+  assert.equal(calls, (MAX_CACHE_ENTRIES + 2) * 4);
+});
