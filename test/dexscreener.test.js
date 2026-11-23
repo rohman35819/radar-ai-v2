@@ -44,3 +44,19 @@ test('DEX Screener caches lookups and returns explicit no-pair results', async (
   assert.equal(second.cached, true);
   assert.equal(calls, 1);
 });
+
+test('DEX Screener cache keeps pool-specific same-pool verification separate', async () => {
+  let calls = 0;
+  const token = 'So11111111111111111111111111111111111111112';
+  const service = createDexScreenerService({ fetchImpl: async () => {
+    calls++;
+    return response([{ chainId: 'solana', dexId: 'raydium', pairAddress: 'PoolOne',
+      baseToken: { address: token, symbol: 'SOL' }, quoteToken: { address: '11111111111111111111111111111111', symbol: 'USDC' },
+      liquidity: { usd: 1000 }, volume: { h24: 500 } }]);
+  }});
+  const first = await service.validate({ networkId: 'solana', tokenAddress: token, poolAddress: 'PoolOne' });
+  const second = await service.validate({ networkId: 'solana', tokenAddress: token, poolAddress: 'PoolTwo' });
+  assert.equal(first.same_pool_found, true);
+  assert.equal(second.same_pool_found, false);
+  assert.equal(calls, 2);
+});
