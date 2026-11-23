@@ -2321,19 +2321,20 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Filter setup LONG: harga di atas EMA20, EMA20 di atas EMA50 dan meningkat, RSI14 48–70, rasio volume 5 candle terhadap median 20 candle minimal 1.1x, ATR% 0.15–6%, harga mark tidak menjauh lebih dari 1.5 ATR dari candle terakhir, dan skor confluence minimal 65/100.
 - Level: Entry = Binance mark price saat scan; SL = Entry − 1.5 × ATR14; TP1/TP2/TP3 = Entry + 1R/2R/3R. R = 1.5 × ATR14. Tidak ada probabilitas profit atau order execution.
 - Pair mapping dibatasi ke ticker CoinGecko yang unik dan base asset Binance yang unik. Ini bukan verifikasi contract address; UI memperingatkan pengguna untuk memverifikasi identitas pair.
-- `GET /api/market-intelligence/trade-setups` memanggil data market server-side dan scan Binance publik, dibatasi 6 request/menit/IP + guard global; hasil scan cache 2 menit.
+- `GET /api/market-intelligence/trade-setups` memanggil data market server-side dan scan Binance publik, dibatasi 6 request/menit/IP dan 60 request/menit global; hasil scan cache 2 menit.
 - Dashboard overview menampilkan satu setup terbaik, atau pesan no-setup bila tidak ada kandidat lolos. Entry, SL, TP1, TP2, TP3 dan indikator utama ditampilkan sebagai angka terpisah.
 - Tidak ada secret baru, transaksi, wallet action, order, atau perubahan izin exchange.
 - Files: `lib/trade-setups.js`, `server.js`, `public/trade-setups.js`, `public/index.html`, `public/app.js`, `public/style.css`, `test/trade-setups.test.js`, `package.json`, `README.md`, master context.
 
 ### Validasi dan batas
 - Tes unit mencakup perhitungan entry/SL/TP, penolakan kandidat lemah, dan penolakan ticker ambigu. Fixture tren naik menggunakan candle tertutup sintetis; bukan backtest atau validasi profitabilitas.
-- Exact-head GitHub Actions, test suite penuh, security scans, independent Division 05 QA, Hostless Build, dan LIVE visual QA masih menunggu.
+- CI pada implementasi head awal `b9b4112ca538b1daf9bb3a650dfa118241a279be`: test run #735 lulus 138/138; security run #278 success.
+- Setelah hardening parser candle, neutral RSI, label USDT, dan regression fixture candle berjalan, exact final code/test head `9e8c919d13a0a06fd9a16df311a79d9934d7437f` lulus test run #739: **138 passed, 0 failed, 0 skipped**. Security run #282: Gitleaks no leaks; Trivy secret scan no issues. Trivy vulnerability scanner menyatakan tidak menemukan manifest yang didukung, sehingga dependency CVE coverage **NOT AVAILABLE**, bukan clean dependency scan.
+- Independent Division 05 QA, Hostless Build, dan LIVE visual QA masih menunggu.
 - Data CoinGecko market universe dapat memakai cache upstream; harga mark dan candle berasal dari Binance Futures publik. Tidak ada jaminan fill, harga bisa berubah, dan sinyal dapat kedaluwarsa.
 - Hostless storage readiness masih diketahui bermasalah EROFS dari audit sebelumnya; perubahan ini tidak mengubah DATA_DIR atau storage config.
 
 ### NEXT TASK
-1. Jalankan exact-head npm test dan security scans pada branch ini; perbaiki kegagalan.
-2. Minta review independen Divisi 05 untuk formula indikator, contract mapping, route rate-limit, dan UI desktop/mobile.
-3. Verifikasi endpoint dan hasil no-setup/setup pada Hostless setelah storage EROFS diperbaiki; jangan mengklaim LIVE sebelum deployed SHA dan UI terverifikasi.
-4. Setelah QA, ajukan PR untuk review; jangan merge otomatis dan jangan aktifkan trading.
+1. Minta review independen Divisi 05 untuk formula indikator, contract mapping, route rate-limit, dan UI desktop/mobile.
+2. Verifikasi endpoint dan hasil no-setup/setup pada Hostless setelah storage EROFS diperbaiki; jangan mengklaim LIVE sebelum deployed SHA dan UI terverifikasi.
+3. Setelah QA, minta review lintas Divisi 01/04/05; jangan merge otomatis dan jangan aktifkan trading.
