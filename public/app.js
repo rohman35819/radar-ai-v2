@@ -317,7 +317,36 @@ function renderEarlyGems(){
     finally{goPlusButton.disabled=false;}
    });
    validation.append(goPlusButton);
-   item.append(validation,dexResult,goPlusResult);
+   const decodePanel=el('details',{class:'gem-validation-result'});
+   decodePanel.append(el('summary',{},'Decode calldata / signature (GoPlus)'));
+   const decodeData=el('textarea',{rows:'3',placeholder:'Tempel transaction input / calldata (0x...)'});
+   const decodeSigner=el('input',{type:'text',placeholder:'Signer wallet (opsional)'});
+   const decodeSupported=new Set(['eth','ethereum','bsc','cronos','heco','polygon','polygon_pos','ftm','fantom','kcc','arbitrum','avalanche','avax','1','25','56','128','137','250','321','42161','43114']);
+   const decodeButton=el('button',{class:'mini-btn',type:'button',disabled:goPlusEnabled&&tokenAddress&&decodeSupported.has(String(x.network_id||'').toLowerCase())?null:true},'Decode transaksi');
+   const decodeOutput=el('div',{class:'gem-validation-line'},'Masukkan calldata transaksi untuk membaca fungsi dan risiko signature.');
+   decodeButton.addEventListener('click',async()=>{
+    const calldata=decodeData.value.trim(),signer=decodeSigner.value.trim();
+    if(!calldata){decodeOutput.textContent='Calldata wajib diisi.';return;}
+    decodeButton.disabled=true;decodeOutput.textContent='Menganalisis calldata melalui GoPlus…';
+    try{
+     const response=await fetch('/api/market-intelligence/goplus/decode',{method:'POST',headers:{'content-type':'application/json'},cache:'no-store',
+      body:JSON.stringify({network:String(x.network_id||''),contract_address:tokenAddress,data:calldata,...(signer?{signer}:{})})});
+     const decoded=await response.json();
+     if(!response.ok||decoded.status!=='success')throw new Error(decoded.code||decoded.message||'Signature decode failed');
+     const detail=decoded.result||{};
+     const risk=detail.risky_signature===1||detail.risky_signature==='1';
+     const malicious=detail.malicious_contract===1||detail.malicious_contract==='1';
+     const params=Array.isArray(detail.params)?detail.params:[];
+     decodeOutput.replaceChildren(el('b',{},String(detail.method||'Metode tidak diketahui')+' · '+(risk?'RISIKO SIGNATURE':'Hasil decode')),
+      el('span',{},String(detail.signature_detail||detail.contract_description||'Tidak ada penjelasan metode dari GoPlus.')),
+      el('span',{},'Kontrak: '+String(detail.contract_name||'Tidak diketahui')+' · Malicious: '+(malicious?'TERINDIKASI':'Tidak terindikasi')),
+      el('span',{},'Risiko: '+String(detail.risk||'Tidak ada uraian risiko')),
+      ...params.slice(0,12).map(param=>el('small',{},String(param.name||'parameter')+' ('+String(param.type||'?')+'): '+JSON.stringify(param.input??param.address_info??null).slice(0,220))));
+    }catch(error){decodeOutput.textContent='GoPlus Decode: '+String(error.message||'tidak tersedia').slice(0,140);}
+    finally{decodeButton.disabled=false;}
+   });
+   decodePanel.append(decodeData,decodeSigner,decodeButton,decodeOutput);
+   item.append(validation,dexResult,goPlusResult,decodePanel);
    results.append(item);
   });
   $('#gem-count').textContent=rows.length+' pool ditampilkan';
