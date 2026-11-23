@@ -234,7 +234,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           }).catch((error) => {
             const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'DEXSCREENER_UPSTREAM_ERROR';
             const status = Number.isInteger(error.status) ? error.status : 502;
-            send(res, status, { status: 'error', code, message: code.startsWith('DEXSCREENER_INVALID_') || code === 'DEXSCREENER_UNSUPPORTED_NETWORK' ? 'Jaringan atau alamat token tidak valid/tidak didukung.' : 'Validasi DEX Screener belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+            send(res, status, { status: 'error', code, message: code === 'DEXSCREENER_BUSY' ? 'Validasi DEX sedang sibuk; coba lagi sebentar.' : code.startsWith('DEXSCREENER_INVALID_') || code === 'DEXSCREENER_UNSUPPORTED_NETWORK' ? 'Jaringan atau alamat token tidak valid/tidak didukung.' : 'Validasi DEX Screener belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
@@ -245,7 +245,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           }).catch((error) => {
             const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'GOPLUS_UPSTREAM_ERROR';
             const status = Number.isInteger(error.status) ? error.status : 502;
-            send(res, status, { status: 'error', code, message: code === 'GOPLUS_NOT_CONFIGURED' ? 'GoPlus gratis tersedia, tetapi kredensial Console belum dikonfigurasi di server.' : code.startsWith('GOPLUS_INVALID_') || code === 'GOPLUS_UNSUPPORTED_NETWORK' ? 'Jaringan atau alamat token tidak valid/tidak didukung GoPlus.' : 'Data keamanan GoPlus belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+            send(res, status, { status: 'error', code, message: code === 'GOPLUS_NOT_CONFIGURED' ? 'GoPlus gratis tersedia, tetapi kredensial Console belum dikonfigurasi di server.' : code === 'GOPLUS_BUSY' ? 'Antrean GoPlus sedang penuh; coba lagi sebentar.' : code.startsWith('GOPLUS_INVALID_') || code === 'GOPLUS_UNSUPPORTED_NETWORK' ? 'Jaringan atau alamat token tidak valid/tidak didukung GoPlus.' : 'Data keamanan GoPlus belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
