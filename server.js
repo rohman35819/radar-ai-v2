@@ -252,6 +252,36 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           });
           return;
         }
+        if (url.pathname === '/api/market-intelligence/goplus/decode' && req.method === 'POST') {
+          if (goPlusLimited('global') || goPlusLimited(ip)) return send(res, 429, { status: 'error', code: 'GOPLUS_LOCAL_RATE_LIMITED', message: 'Batas audit GoPlus tercapai. Tunggu sebentar.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          let size = 0; const chunks = []; let tooLarge = false;
+          req.on('data', (chunk) => { size += chunk.length; if (size <= 22000) chunks.push(chunk); else tooLarge = true; });
+          req.on('end', () => {
+            if (tooLarge) return send(res, 413, { status: 'error', code: 'GOPLUS_REQUEST_TOO_LARGE', message: 'Data transaksi terlalu besar.' }, 'application/json', { 'cache-control': 'no-store' });
+            let body;
+            try { body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); }
+            catch { return send(res, 400, { status: 'error', code: 'GOPLUS_INVALID_REQUEST', message: 'Format permintaan tidak valid.' }, 'application/json', { 'cache-control': 'no-store' }); }
+            if (!body || typeof body !== 'object' || Array.isArray(body)) return send(res, 400, { status: 'error', code: 'GOPLUS_INVALID_REQUEST', message: 'Format permintaan tidak valid.' }, 'application/json', { 'cache-control': 'no-store' });
+            goPlus.decode({
+              networkId: body.network, contractAddress: body.contract_address, data: body.data,
+              signer: body.signer, input: body.input, transactionType: body.transcation_type
+            }).then((payload) => {
+              send(res, 200, payload, 'application/json', { 'cache-control': 'no-store' });
+            }).catch((error) => {
+              const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'GOPLUS_UPSTREAM_ERROR';
+              const status = Number.isInteger(error.status) ? error.status : 502;
+              const message = code === 'GOPLUS_NOT_CONFIGURED' ? 'Kredensial GoPlus belum dikonfigurasi di server.' :
+                code === 'GOPLUS_BUSY' ? 'Antrean GoPlus sedang penuh; coba lagi sebentar.' :
+                code === 'GOPLUS_FREE_QUOTA_DAILY' ? 'Batas kuota gratis GoPlus hari ini tercapai.' :
+                code === 'GOPLUS_FREE_QUOTA_MONTHLY' ? 'Batas kuota gratis GoPlus bulan ini tercapai.' :
+                code === 'GOPLUS_LOCAL_RATE_LIMITED' || code === 'GOPLUS_RATE_LIMITED' ? 'Batas request GoPlus tercapai; coba lagi nanti.' :
+                code.startsWith('GOPLUS_INVALID_') || code === 'GOPLUS_UNSUPPORTED_NETWORK' ? 'Chain, alamat, atau calldata tidak valid/tidak didukung.' :
+                'Signature tidak dapat didekode oleh GoPlus.';
+              send(res, status, { status: 'error', code, message }, 'application/json', { 'cache-control': 'no-store' });
+            });
+          });
+          return;
+        }
         if (url.pathname === '/api/market-intelligence/chart' && req.method === 'GET') {
           marketIntelligence.chart(url.searchParams.get('coin'), url.searchParams.get('days') || '7').then((payload) => {
             send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=300' });

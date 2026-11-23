@@ -2456,3 +2456,18 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 2. Setelah Hostless deployment tersedia, jalankan test provider satu per satu tanpa menampilkan secret: HTTP status, model, latency, valid JSON, token usage, dan sanitized error.
 3. Pastikan Gemini/Groq/OpenRouter/OpenAI benar-benar menyelesaikan rapat 3 putaran serta notulen dengan output lebih lengkap.
 4. Jika provider menolak 4096 karena model cap, gunakan cap per-model yang didokumentasikan; jangan retry berulang tanpa batas.
+
+
+## 79. GOPLUS SIGNATURE DATA DECODE — 23 NOVEMBER 2026
+- Scope: Division 01 — Security & Reliability (lead), Division 02 UI integration, Division 05 independent QA.
+- Verified official GoPlus docs: POST `/api/v1/abi/input_decode`; Bearer authorization; required `chain_id` and `data`; optional `contract_address`, `signer`, `input`, and `transcation_type`. The request field spelling `transcation_type` intentionally follows the provider's documented schema.
+- Implementation is complete on branch `feat/goplus-signature-data-decode`, PR #63: https://github.com/rohman35819/radar-ai-v2/pull/63. Base main at start: `ea501dab7873c7ef9b6d3f43cc7be5f2834ea083`. Current implementation head before documentation refresh: `4f2e9f1109e8adbd54c6e35d5a249cf17bb975a5`.
+- Files changed: `lib/goplus.js`, `server.js`, `public/app.js`, `test/goplus.test.js`, `test/provider-validation-routes.test.js`, `test/early-gem-ui.test.js`, this master context, and README.
+- Backend adds `decode()` and POST `/api/market-intelligence/goplus/decode`; request body is capped at 22 KB, calldata at 20,002 characters, chain/address/type/input are validated, errors are sanitized, and Bearer credentials remain server-side.
+- Early Gem Scanner adds a collapsed on-demand decode panel per token card. User must paste calldata and press Decode; signer is optional. The UI disables decode on networks not listed by the provider.
+- Supported chain IDs: 1, 25, 56, 128, 137, 250, 321, 42161, and 43114. Solana decode is not supported. This is calldata inspection only, not transaction signing or execution.
+- Decode shares the existing GoPlus global/per-IP 5 requests/minute limiter and persistent 1,000/day, 5,000/month application quota. No new credentials or dependencies are introduced.
+- CI exact implementation head `4f2e9f1109e8adbd54c6e35d5a249cf17bb975a5`: GitHub Actions test run `45183559775` completed SUCCESS, **137 passed, 0 failed, 0 skipped**. Security run `45183559727`: Gitleaks SUCCESS and Trivy SUCCESS.
+- Initial CI attempt on `59395b310b6ab947726a619f5a52b32e8fdc4202` failed one new validation test because the test used Base (chain 8453), which this specific decode endpoint does not document. The implementation/test were corrected to enforce the documented supported chain list; the subsequent exact implementation head passed 137/137.
+- PR #63 remains Draft/open for independent Division 05 QA; it is not merged into main. Hostless Build and deployed LIVE SHA are not verified. The last recorded Hostless probe still showed GoPlus credentials not configured and storage EROFS; no live GoPlus decode request has been attempted.
+- NEXT TASK: Division 05 independently review PR #63 and exact-head CI. After QA approval and merge, configure GoPlus Console credentials only in Hostless server-side environment if BOS chooses to enable it; resolve the persistent storage EROFS blocker, then verify Hostless Build/LIVE and one manually initiated decode using non-sensitive calldata.
