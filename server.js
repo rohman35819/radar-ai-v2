@@ -82,6 +82,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const reportHour = Math.max(0, Math.min(23, Number(process.env.AI_REPORT_HOUR || 9)));
   const limited = createRateLimiter({ limit: 60, windowMs: 60000, maxKeys: 5000 });
   const solscanLimited = createRateLimiter({ limit: 10, windowMs: 60000, maxKeys: 1000 });
+  const dexScreenerGlobalLimited = createRateLimiter({ limit: 240, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerLimited = createRateLimiter({ limit: 30, windowMs: 60000, maxKeys: 1000 });
   const goPlusLimited = createRateLimiter({ limit: 20, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
@@ -228,7 +229,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           return;
         }
         if (url.pathname === '/api/market-intelligence/dexscreener' && req.method === 'GET') {
-          if (dexScreenerLimited(ip)) return send(res, 429, { status: 'error', code: 'DEXSCREENER_LOCAL_RATE_LIMITED', message: 'Validasi DEX terlalu sering. Tunggu satu menit.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          if (dexScreenerGlobalLimited('global') || dexScreenerLimited(ip)) return send(res, 429, { status: 'error', code: 'DEXSCREENER_LOCAL_RATE_LIMITED', message: 'Validasi DEX terlalu sering. Tunggu satu menit.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
           dexScreener.validate({ networkId: url.searchParams.get('network'), tokenAddress: url.searchParams.get('token'), poolAddress: url.searchParams.get('pool') }).then((payload) => {
             send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=60' });
           }).catch((error) => {
