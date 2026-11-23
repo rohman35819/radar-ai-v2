@@ -320,12 +320,12 @@ async function loadDerivatives() {
     const latestTaker = taker[taker.length - 1] || {};
     const rows = [
       ['Funding rate terakhir', funding.lastFundingRate == null ? null : Number(funding.lastFundingRate) * 100, 'Persentase per periode funding'],
-      ['Mark price', funding.markPrice == null ? null : Number(funding.markPrice), 'Harga mark USD'],
+      ['Mark price', funding.markPrice == null ? null : Number(funding.markPrice), 'Harga mark dalam USDT'],
       ['Open interest kontrak', oi.openInterest == null ? null : Number(oi.openInterest), 'Jumlah kontrak; bukan arah long/short'],
-      ['Open interest value', latestOI.sumOpenInterestValue == null ? null : Number(latestOI.sumOpenInterestValue), 'Nilai USD dari histori 5 menit'],
-      ['Taker buy volume', latestTaker.buyVol == null ? null : Number(latestTaker.buyVol), 'Interval 5 menit'],
-      ['Taker sell volume', latestTaker.sellVol == null ? null : Number(latestTaker.sellVol), 'Interval 5 menit'],
-      ['Taker buy/sell ratio', latestTaker.buySellRatio == null ? null : Number(latestTaker.buySellRatio), 'Di atas 1 berarti buy aggressor lebih besar']
+      ['Open interest value', latestOI.sumOpenInterestValue == null ? null : Number(latestOI.sumOpenInterestValue), 'Nilai notional USDT dari histori 5 menit'],
+      ['Taker buy volume', latestTaker.buyVol == null ? null : Number(latestTaker.buyVol), 'Volume aset dasar · interval 5 menit'],
+      ['Taker sell volume', latestTaker.sellVol == null ? null : Number(latestTaker.sellVol), 'Volume aset dasar · interval 5 menit'],
+      ['Taker buy/sell ratio', latestTaker.buySellRatio == null ? null : Number(latestTaker.buySellRatio), 'Di atas 1 berarti volume agresor beli lebih besar']
     ];
     body.replaceChildren();
     rows.forEach(([label, value, unit]) => {
