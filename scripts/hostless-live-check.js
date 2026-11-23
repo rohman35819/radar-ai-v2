@@ -104,6 +104,15 @@ async function main() {
   let host = 'invalid-url';
   try { host = new URL(baseUrl).host; } catch { /* Report invalid base without echoing environment value. */ }
   const [ready, snapshot] = await Promise.all([request('/api/ready'), request('/api/snapshot')]);
+  const pool = Array.isArray(snapshot.data?.early_gems)
+    ? snapshot.data.early_gems.find((item) => item && item.network_id && item.token_address)
+    : null;
+  const [derivatives, dex] = await Promise.all([
+    request('/api/market-intelligence/derivatives?symbol=BTCUSDT'),
+    pool ? request('/api/market-intelligence/dexscreener?' + new URLSearchParams({
+      network: String(pool.network_id), token: String(pool.token_address), pool: String(pool.pool_address || '')
+    })) : Promise.resolve({ error: 'NO_INDEXED_POOL_TO_PROBE' })
+  ]);
   const report = {
     host,
     ready: {
@@ -116,6 +125,11 @@ async function main() {
       http: snapshot.http || null,
       error: snapshot.error || null,
       ...summarizeSnapshot(snapshot.data)
+    },
+    provider_probes: {
+      binance_futures: summarizeDerivatives(derivatives, derivatives.http),
+      dex_screener: summarizeDex(dex, dex.http),
+      goplus: 'NOT_CALLED: credential status only; scheduled monitor does not consume GoPlus quota'
     }
   };
   process.stdout.write(JSON.stringify(report, null, 2) + '\n');
