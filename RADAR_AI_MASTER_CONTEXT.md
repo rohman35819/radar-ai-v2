@@ -2152,3 +2152,14 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - GitHub Actions test run #649 / ID `45166095636`: completed / success; **110 passed, 0 failed** on the exact head.
 - Security run #192 / ID `45166095704`: Gitleaks success and Trivy filesystem scan completed successfully.
 - PR #59 remains Draft and unmerged. Independent Divisi 03/05 review and Hostless build/LIVE checks remain pending.
+
+
+---
+
+## 66. MARKET DISCOVERY — BINANCE FUTURES + GECKOTERMINAL — 23 NOVEMBER 2026
+- PR #59 Binance USDⓈ-M Futures read-only scanner is included in this branch ancestry. The service has a bounded 100-symbol LRU cache, validates upstream payload shapes, does not cache fully failed snapshots, and exposes funding, mark price, open interest, OI history and taker buy/sell flow. No order endpoints are used.
+- PR #46 GeckoTerminal Early Gem Scanner is rebased/merged with the Binance branch. It uses the existing CoinGecko Demo key server-side, with 3 pages new pools + 1 trending page on a separate 60-minute cadence by default.
+- The GeckoTerminal feed is an indexed pool discovery feed, not all tokens/contracts and not a token launch feed. Trending is provider ranking, not security certification.
+- CI evidence before combined merge: PR #59 prior exact head tests 110/110 and Gitleaks/Trivy secret scans success; after Binance cache hardening a new exact-head CI run is required. PR #46 historical head tests 98/98 and security workflow success, but that old head is not evidence for the combined branch.
+- Hostless Build and LIVE SHA are not verified. No production env values or deployment settings changed.
+- NEXT TASK: add on-demand DEX Screener pair validation and GoPlus optional token security checks with free-tier quota safeguards; validate the combined branch on its exact head; independent QA and Hostless visual verification before merge/deploy.

@@ -9,6 +9,8 @@ const sources = require('./lib/sources');
 const { createSolscanService, SolscanError } = require('./lib/solscan');
 const { createMarketIntelligenceService } = require('./lib/market-intelligence');
 const { createDerivativesService } = require('./lib/derivatives');
+const { createDexScreenerService } = require('./lib/dexscreener');
+const { createGoPlusService } = require('./lib/goplus');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
@@ -48,11 +50,13 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService, dexScreenerService, goPlusService } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
   const solscanApi = solscanService || createSolscanService();
   const marketIntelligence = marketIntelligenceService || createMarketIntelligenceService({ apiKey: cfg.cgKey });
   const derivatives = derivativesService || createDerivativesService();
+  const dexScreener = dexScreenerService || createDexScreenerService();
+  const goPlus = goPlusService || createGoPlusService({ appKey: process.env.GOPLUS_APP_KEY || '', appSecret: process.env.GOPLUS_APP_SECRET || '', accessToken: process.env.GOPLUS_ACCESS_TOKEN || '' });
   const matchesToken = (expectedValue, provided) => {
     if (!expectedValue || typeof provided !== 'string') return false;
     const expected = Buffer.from(String(expectedValue));
@@ -78,6 +82,8 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const reportHour = Math.max(0, Math.min(23, Number(process.env.AI_REPORT_HOUR || 9)));
   const limited = createRateLimiter({ limit: 60, windowMs: 60000, maxKeys: 5000 });
   const solscanLimited = createRateLimiter({ limit: 10, windowMs: 60000, maxKeys: 1000 });
+  const dexScreenerLimited = createRateLimiter({ limit: 30, windowMs: 60000, maxKeys: 1000 });
+  const goPlusLimited = createRateLimiter({ limit: 20, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
     .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
     .catch((error) => {
@@ -221,6 +227,28 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           });
           return;
         }
+        if (url.pathname === '/api/market-intelligence/dexscreener' && req.method === 'GET') {
+          if (dexScreenerLimited(ip)) return send(res, 429, { status: 'error', code: 'DEXSCREENER_LOCAL_RATE_LIMITED', message: 'Validasi DEX terlalu sering. Tunggu satu menit.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          dexScreener.validate({ networkId: url.searchParams.get('network'), tokenAddress: url.searchParams.get('token'), poolAddress: url.searchParams.get('pool') }).then((payload) => {
+            send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=60' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'DEXSCREENER_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            send(res, status, { status: 'error', code, message: code === 'DEXSCREENER_BUSY' ? 'Validasi DEX sedang sibuk; coba lagi sebentar.' : code.startsWith('DEXSCREENER_INVALID_') || code === 'DEXSCREENER_UNSUPPORTED_NETWORK' ? 'Jaringan atau alamat token tidak valid/tidak didukung.' : 'Validasi DEX Screener belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/market-intelligence/goplus' && req.method === 'GET') {
+          if (goPlusLimited('global') || goPlusLimited(ip)) return send(res, 429, { status: 'error', code: 'GOPLUS_LOCAL_RATE_LIMITED', message: 'Audit GoPlus dibatasi untuk menjaga kuota gratis.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          goPlus.security({ networkId: url.searchParams.get('network'), tokenAddress: url.searchParams.get('token') }).then((payload) => {
+            send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=60' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'GOPLUS_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            send(res, status, { status: 'error', code, message: code === 'GOPLUS_NOT_CONFIGURED' ? 'GoPlus gratis tersedia, tetapi kredensial Console belum dikonfigurasi di server.' : code === 'GOPLUS_BUSY' ? 'Antrean GoPlus sedang penuh; coba lagi sebentar.' : code.startsWith('GOPLUS_INVALID_') || code === 'GOPLUS_UNSUPPORTED_NETWORK' ? 'Jaringan atau alamat token tidak valid/tidak didukung GoPlus.' : 'Data keamanan GoPlus belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
         if (url.pathname === '/api/market-intelligence/chart' && req.method === 'GET') {
           marketIntelligence.chart(url.searchParams.get('coin'), url.searchParams.get('days') || '7').then((payload) => {
             send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=300' });
@@ -243,8 +271,8 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           const age = st.lastOk ? Date.now() - Date.parse(st.lastOk) : null;
           return send(res, 200, { status: 'success', server_time: new Date().toISOString(), last_refresh: st.lastRefresh, last_ok: st.lastOk,
             stale: age === null || age > cfg.refreshMs * 3, health: st.health, filters: { min_mcap: cfg.minMcap, max_mcap: cfg.maxMcap, min_volume: cfg.minVolume },
-            tokens: st.tokens.map((t) => ({ ...t, fundamental: st.fundamentals[t.id] || null, vol10m: (st.vol10m || {})[t.id] || null })), exchange: st.exchStats || null, news: st.news, unlocks: st.unlocks, alerts: st.alerts.slice(0, 50),
-            config_needed: { telegram: !(cfg.tgToken && cfg.tgChat), coingecko_key: !cfg.cgKey, unlock_source: !cfg.unlocksUrl && !st.unlocks.length } },
+            tokens: st.tokens.map((t) => ({ ...t, fundamental: st.fundamentals[t.id] || null, vol10m: (st.vol10m || {})[t.id] || null })), exchange: st.exchStats || null, news: st.news, unlocks: st.unlocks, alerts: st.alerts.slice(0, 50), early_gems: Array.isArray(st.earlyGems) ? st.earlyGems : [], early_gems_meta: st.earlyGemsMeta || null,
+            config_needed: { telegram: !(cfg.tgToken && cfg.tgChat), coingecko_key: !cfg.cgKey, onchain_key: !cfg.cgKey, early_gems_enabled: cfg.earlyGemsEnabled !== false, onchain_refresh_min: cfg.onchainRefreshMin || 60, goplus_enabled: Boolean(process.env.GOPLUS_ACCESS_TOKEN || (process.env.GOPLUS_APP_KEY && process.env.GOPLUS_APP_SECRET)), unlock_source: !cfg.unlocksUrl && !st.unlocks.length } },
           'application/json', { 'cache-control': 'public, max-age=30' });
         }
         if (url.pathname === '/api/ai/group' && req.method === 'GET') {
