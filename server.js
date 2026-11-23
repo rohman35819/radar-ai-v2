@@ -9,6 +9,7 @@ const sources = require('./lib/sources');
 const { createSolscanService, SolscanError } = require('./lib/solscan');
 const { createMarketIntelligenceService } = require('./lib/market-intelligence');
 const { createDerivativesService } = require('./lib/derivatives');
+const { createTradeSetupService } = require('./lib/trade-setups');
 const { createDexScreenerService } = require('./lib/dexscreener');
 const { createGoPlusService } = require('./lib/goplus');
 const { analyzeMarket } = require('./lib/ai/gemini');
@@ -50,11 +51,12 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService, dexScreenerService, goPlusService } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService, tradeSetupService, dexScreenerService, goPlusService } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
   const solscanApi = solscanService || createSolscanService();
   const marketIntelligence = marketIntelligenceService || createMarketIntelligenceService({ apiKey: cfg.cgKey });
   const derivatives = derivativesService || createDerivativesService();
+  const tradeSetups = tradeSetupService || createTradeSetupService();
   const dexScreener = dexScreenerService || createDexScreenerService();
   
   const matchesToken = (expectedValue, provided) => {
@@ -87,6 +89,8 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const dexScreenerGlobalLimited = createRateLimiter({ limit: 240, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerLimited = createRateLimiter({ limit: 30, windowMs: 60000, maxKeys: 1000 });
   const goPlusLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1000 });
+  const tradeSetupsGlobalLimited = createRateLimiter({ limit: 60, windowMs: 60000, maxKeys: 1000 });
+  const tradeSetupsLimited = createRateLimiter({ limit: 6, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
     .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
     .catch((error) => {
@@ -227,6 +231,20 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'BINANCE_FUTURES_UPSTREAM_ERROR';
             const status = Number.isInteger(error.status) ? error.status : 502;
             send(res, status, { status: 'error', code, message: code === 'INVALID_FUTURES_SYMBOL' ? 'Gunakan pair USDT Futures yang valid, misalnya BTCUSDT.' : code === 'BINANCE_FUTURES_BUSY' ? 'Antrean Binance Futures sedang penuh; coba lagi sebentar.' : 'Data derivatives Binance Futures tidak tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/market-intelligence/trade-setups' && req.method === 'GET') {
+          if (tradeSetupsGlobalLimited('global') || tradeSetupsLimited(ip)) return send(res, 429, { status: 'error', code: 'TRADE_SETUP_RATE_LIMITED', message: 'Pemindaian setup dibatasi. Tunggu satu menit.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          marketIntelligence.dashboard().then((market) => {
+            if (!Array.isArray(market?.data?.markets)) throw Object.assign(new Error('TRADE_SETUP_MARKET_DATA_UNAVAILABLE'), { code: 'TRADE_SETUP_MARKET_DATA_UNAVAILABLE', status: 503 });
+            return tradeSetups.scan(market.data.markets);
+          }).then((payload) => {
+            send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=30' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'TRADE_SETUP_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            send(res, status, { status: 'error', code, message: code === 'TRADE_SETUP_MARKET_DATA_UNAVAILABLE' ? 'Daftar market belum tersedia untuk pemindaian.' : 'Trade Setup belum dapat dihitung dari data Binance Futures.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }

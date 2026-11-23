@@ -2508,3 +2508,33 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 3. Port PR #43 and #45 manually onto current main; port PR #55 and #57 only as isolated UI/data modules after current API contract review.
 4. Keep PR #55/#57/#43/#45 in Draft until their current-main port and exact-head tests/security/reviews pass.
 5. Resolve Hostless EROFS with BOS-approved persistent storage decision before claiming durable tracking or LIVE readiness.
+
+## 88. TRADE SETUP SCANNER — ENTRY / STOP LOSS / TP1–TP3 — 23 NOVEMBER 2026
+
+### Tujuan dan gap yang ditemukan
+- BOS menegaskan dashboard harus menampilkan satu koin hasil scan dengan harga entry/beli, TP1, TP2, dan TP3. Audit menemukan PR #55 hanya memiliki Live Coin Scanner dengan momentum/volume score; tidak menghitung entry, stop loss, atau target profit, dan PR #55 masih Draft/unmerged.
+- Implementasi baru dibuat terisolasi pada branch `feat/trade-setup-entry-tp`, berbasis main HEAD `4a08855cf22c94c18c97ed550de3ba0706095d44`. Tidak mengubah atau menggabungkan PR #55.
+
+### Implementasi
+- `lib/trade-setups.js`: memilih maksimal 8 ticker unik dari daftar CoinGecko top market yang cocok dengan Binance USDⓈ-M USDT perpetual aktif; memeriksa exchangeInfo, mark price, dan candle 1 jam tertutup.
+- Filter setup LONG: harga di atas EMA20, EMA20 di atas EMA50 dan meningkat, RSI14 48–70, momentum Binance 24 jam dan 7 hari positif, rasio volume 5 candle terhadap median 20 candle minimal 1.1x, ATR% 0.15–6%, harga mark tidak menjauh lebih dari 1.5 ATR dari candle terakhir, dan skor confluence minimal 65/100.
+- Level: Entry = Binance mark price saat scan; SL = Entry − 1.5 × ATR14; TP1/TP2/TP3 = Entry + 1R/2R/3R. R = 1.5 × ATR14. Tidak ada probabilitas profit atau order execution.
+- Pair mapping dibatasi ke ticker CoinGecko yang unik dan base asset Binance yang unik. Ini bukan verifikasi contract address; UI memperingatkan pengguna untuk memverifikasi identitas pair.
+- `GET /api/market-intelligence/trade-setups` memanggil data market server-side dan scan Binance publik, dibatasi 6 request/menit/IP dan 60 request/menit global; hasil scan cache 2 menit.
+- Dashboard overview menampilkan satu setup terbaik, atau pesan no-setup bila tidak ada kandidat lolos. Entry, SL, TP1, TP2, TP3 dan indikator utama ditampilkan sebagai angka terpisah.
+- Tidak ada secret baru, transaksi, wallet action, order, atau perubahan izin exchange.
+- Files: `lib/trade-setups.js`, `server.js`, `public/trade-setups.js`, `public/index.html`, `public/app.js`, `public/style.css`, `test/trade-setups.test.js`, `package.json`, `README.md`, master context.
+
+### Validasi dan batas
+- Tes unit mencakup perhitungan entry/SL/TP, penolakan kandidat lemah, dan penolakan ticker ambigu. Fixture tren naik menggunakan candle tertutup sintetis; bukan backtest atau validasi profitabilitas.
+- Exact final implementation/test head `f97942e0e85b7e24238f621672437dee8a4e5766`: GitHub Actions test run #744 **138 passed, 0 failed, 0 skipped**.
+- Security run #287: Gitleaks **no leaks**; Trivy secret scanner **no issues**. Trivy vulnerability scanner menyatakan tidak menemukan manifest yang didukung, sehingga dependency CVE coverage **NOT AVAILABLE**, bukan clean dependency scan.
+- Perbaikan source setelah uji awal: momentum 24 jam/7 hari dihitung dari candle Binance (bukan perubahan CoinGecko yang dapat stale); test fixture lonjakan volume diselaraskan pada 5 candle terakhir.
+- Independent Division 05 QA, Hostless Build, dan LIVE visual QA masih menunggu.
+- Data CoinGecko hanya dipakai untuk universe/nama/rank; momentum 24 jam dan 7 hari, harga mark, serta candle teknikal dihitung dari Binance Futures publik agar tidak bergantung pada cache perubahan harga CoinGecko. Scanner meminta hingga 200 candle 1 jam agar perubahan 7 hari dapat dihitung dari sumber yang sama. Tidak ada jaminan fill, harga bisa berubah, dan sinyal dapat kedaluwarsa.
+- Hostless storage readiness masih diketahui bermasalah EROFS dari audit sebelumnya; perubahan ini tidak mengubah DATA_DIR atau storage config.
+
+### NEXT TASK
+1. Minta review independen Divisi 05 untuk formula indikator, contract mapping, route rate-limit, dan UI desktop/mobile.
+2. Verifikasi endpoint dan hasil no-setup/setup pada Hostless setelah storage EROFS diperbaiki; jangan mengklaim LIVE sebelum deployed SHA dan UI terverifikasi.
+3. Setelah QA, minta review lintas Divisi 01/04/05; jangan merge otomatis dan jangan aktifkan trading.
