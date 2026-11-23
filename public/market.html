@@ -50,6 +50,12 @@
     <div id="ai-market-summary" class="market-summary"><div class="muted">Memeriksa laporan AI Council…</div></div>
   </section>
   <section class="market-panel">
+    <div class="market-heading"><div><h2>Global News Catalyst Scanner</h2><p>Discovery berita 24 jam terakhir dari GDELT · metadata dan tautan publisher · tanpa API key</p></div><button id="load-gdelt" class="secondary-btn" type="button">Cari katalis berita</button></div>
+    <div id="gdelt-status" class="chart-meta">Pencarian dilakukan saat tombol ditekan. Cache 15 menit; batas upstream minimal 5 detik antar-request.</div>
+    <div id="gdelt-articles" class="gdelt-list"><div class="muted">Belum ada hasil pencarian.</div></div>
+    <div class="market-footnote">GDELT mengindeks berita global untuk penemuan sumber. Judul, bahasa, negara sumber, dan waktu publikasi bukan verifikasi fakta; buka artikel publisher untuk pemeriksaan. Konten asli tetap milik publisher.</div>
+  </section>
+  <section class="market-panel">
     <div class="market-heading"><div><h2>Global Coin Scanner</h2><p>Top 100 berdasarkan kapitalisasi pasar · gainers, losers, dan momentum</p></div><input id="coin-search" type="search" placeholder="Cari aset…" aria-label="Cari aset"></div>
     <div class="table-scroll"><table><thead><tr><th>Aset</th><th>Harga</th><th>1 Jam</th><th>24 Jam</th><th>7 Hari</th><th>Market Cap</th><th>Volume 24J</th></tr></thead><tbody id="market-table"><tr><td colspan="7">Memuat data pasar…</td></tr></tbody></table></div>
     <div class="table-foot" id="market-count">Menunggu data CoinGecko</div>
