@@ -12,13 +12,13 @@ test('GoPlus computes top-10 token and LP holder concentration without claiming 
     holders: [
       { address: 'pool', percent: '0.52', is_contract: '1', is_locked: '0' },
       { address: 'wallet-a', percent: '0.04', is_contract: '0', is_locked: '0' },
-      { address: 'wallet-b', percent: '0.03', is_contract: '0', is_locked: '1' },
+      { address: 'wallet-b', percent: '0.03', is_contract: '0', is_locked: '1', locked_detail: [{ amount: '300', end_time: '1798761600', opt_time: '1795000000' }] },
       { address: 'invalid', percent: 'unknown', is_contract: '0', is_locked: '0' }
     ],
     lp_holder_count: '2',
     lp_holders: [
       { address: 'lp-a', percent: '0.99', is_contract: '0', is_locked: '0' },
-      { address: 'lp-b', percent: '0.01', is_contract: '0', is_locked: '1' }
+      { address: 'lp-b', percent: '0.01', is_contract: '0', is_locked: '1', locked_detail: [{ amount: '1.5', end_time: '2027-01-31T00:00:00Z' }] }
     ]
   });
   const summary = normalized.holder_concentration;
@@ -32,6 +32,9 @@ test('GoPlus computes top-10 token and LP holder concentration without claiming 
   assert.equal(summary.lp_holders.top10_reported_percent, 100);
   assert.equal(summary.owner_percent, 3);
   assert.equal(summary.token_holders.coverage, 'reported_top_10_sample_only');
+  assert.equal(summary.unlock_schedule.event_count, 2);
+  assert.equal(summary.unlock_schedule.coverage, 'provider_reported_locked_detail_for_top_10_only');
+  assert.equal(summary.unlock_schedule.events[0].asset_group, 'token_holder');
 });
 
 test('GoPlus requires credentials and never silently bypasses authentication', async () => {
