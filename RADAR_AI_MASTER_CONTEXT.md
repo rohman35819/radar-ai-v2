@@ -2362,3 +2362,51 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Provider caveats: GDELT is metadata/event discovery only; do not copy publisher article bodies/images. Treasury adapter series are monthly average rates, not live yield curve. World Bank indicators are annual and observation year is not publication date; avoid look-ahead. Solscan export endpoint entitlement `/account/transfer/export` is not confirmed by the existing plan; no paid upgrade. GoPlus public free quota requires Bearer credentials; latest Hostless monitor says credentials_configured=false, so holder/lock data are not LIVE.
 - Main runtime, secrets, Hostless environment, dependency manifest and permissions were not changed. No deployment or live trading action was performed.
 - NEXT TASK: Executive Office sequences #65/#70 for Divisi 04 + Divisi 01 + Divisi 05 reviews, #71/#72 for Divisi 03 + Divisi 01 + Divisi 05 reviews. Divisi 03 then owns incremental Binance Futures funding history, global/top-trader long/short account and position ratios, and order-book depth; never label account ratios as wallet/whale flows. Verify only existing Solscan entitlement and GoPlus configuration; no paid upgrade. Hostless `/data` + `DATA_DIR=/data` readiness blocker remains.
+
+
+---
+
+## 72. AI PROVIDER RELIABILITY — RAPAT PERBAIKAN & GRUP ANALISIS — 24 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### Permintaan BOS dan diagnosis
+- BOS melaporkan Rapat Perbaikan RADAR pada 23 November 2026 pukul 23:25 menunjukkan 0/4 AI aktif dengan error: Gemini high demand, Groq failed_generation JSON, OpenRouter "User not found", dan OpenAI menolak parameter max_tokens.
+- Lead: Divisi 05 QA/DevOps untuk reliability dan regression tests; Divisi 04 AI Intelligence untuk adapter/prompt/schema; Divisi 01 Security untuk memastikan secret tetap server-side. Tidak ada perubahan API key/secret atau konfigurasi Hostless.
+- Audit main menemukan dua jalur adapter terpisah: `lib/ai/workspace.js` untuk Rapat Perbaikan dan `lib/ai/chat-completions.js` + `lib/ai/gemini.js` untuk Grup AI pasar. Perbaikan hanya pada satu jalur tidak akan memperbaiki semua penggunaan provider.
+
+### Akar masalah dan perubahan implementasi
+- Workspace dan market adapters memakai `max_tokens`; diganti ke `max_completion_tokens` pada endpoint Chat Completions. OpenAI request tidak lagi mengirim `temperature` secara default pada jalur reasoning-compatible. Ini mengatasi parameter yang ditolak pada error OpenAI dan menyelaraskan Groq dengan parameter API terbarunya.
+- Groq model `openai/gpt-oss-20b` kini memakai strict JSON Schema untuk output rapat dan analisis pasar. Jika Groq mengembalikan error generation/schema, adapter melakukan satu fallback ke JSON Object mode.
+- Gemini dan kompatibel chat-completions kini memiliki maksimal satu retry untuk timeout/network error serta HTTP 429/5xx. OpenRouter juga mendapat satu retry terbatas khusus respons 401 "User not found" karena provider pernah mendokumentasikan error tersebut sebagai gangguan internal lookup, bukan selalu API key invalid.
+- Output Rapat Perbaikan kini divalidasi berdasarkan bentuk JSON yang dibutuhkan. Respons object kosong/tidak sesuai tidak lagi dihitung sebagai AI aktif. Jalur Gemini sekretaris rapat diperbaiki agar menggunakan prompt notulen, bukan prompt usulan.
+- Retry dibatasi satu kali per request; tidak ada infinite retry. Error non-transient tetap dikembalikan ke UI. Tidak ada perubahan ke model pilihan BOS, provider berbayar, permission, trading, atau API credentials.
+
+### File yang diubah
+- `lib/ai/workspace.js`
+- `lib/ai/chat-completions.js`
+- `lib/ai/gemini.js`
+- `test/ai-workspace.test.js`
+- `test/ai-group.test.js`
+
+### Commit dan pengujian
+- `10c54d3e858e8b8f747ca11f7f8609ac5f9eecaa`: workspace token compatibility + retry.
+- `5a6454f810faba7ac04898ac42cb377aeb046ecf`: Gemini workspace retry.
+- `67a720db1b776c2f0da0104e6ce10ed3562cd09a`: workspace provider tests.
+- `d6d127d11b5f8d9ffcad8090c3a8342dc14c3949`: market Chat Completions token/schema/retry compatibility.
+- `69a3fc1131ea82c9f72f2037a47fcd70d2548496`: Gemini market retry.
+- `7ee5def64ce70b7c0b6a37aee491d5021f7b9dcc`: market provider regression tests; Actions test run #801 passed.
+- `23fbfe486ebb0139afcbedc52bbf155f2af96892`: validate meeting JSON and correct Gemini secretary prompt. Exact-head test run #803, security run #346, and Hostless monitor run #28 were in progress when this note was written; re-check exact-head results before final handoff.
+- No local npm test was run in this connector-only session. CI is the authoritative executed test evidence. No live provider call was made because Hostless secrets are not exposed to this session.
+
+### Status dan risiko tersisa
+- GitHub main contains the adapter fixes; provider credentials remain configured only in Hostless server environment and were not inspected or changed.
+- Code-level retries improve resilience but cannot fix an invalid/disabled key, exhausted provider quota, unavailable model, account restrictions, or persistent upstream outage. OpenRouter "User not found" may be transient infrastructure; if it persists after one retry, inspect key status and provider status page from the Hostless runtime without printing the key.
+- Gemini high-demand response gets one retry only; if still unavailable, the meeting must show provider failure and continue with remaining valid agents.
+- Hostless production readiness remains separately blocked by the previously recorded `EROFS` / `DATA_DIR` configuration. Do not equate GitHub CI success with successful provider connections or healthy LIVE app.
+- No AI provider is counted active unless a valid schema response is received. Meeting completion still requires enough valid agents; no auto-approval or code writes were introduced.
+
+### NEXT TASK
+1. Verify exact-head Actions test #803 and security #346 for commit `23fbfe486ebb0139afcbedc52bbf155f2af96892`; fix any regression before proceeding.
+2. Inspect Hostless monitor #28 separately. Resolve persistent storage `DATA_DIR=/data` before treating production readiness as healthy.
+3. After deployment is confirmed, run one controlled server-side connection test per configured provider using existing Hostless secrets. Report only provider name, HTTP/status, model slug, latency, and sanitized error code; never reveal key/token.
+4. Re-run Rapat Perbaikan and confirm valid response count 4/4, round progression, and minutes generation. If OpenRouter still returns "User not found", check its API key status/credits and current provider incident status; do not ask BOS to paste secrets into chat.
+5. Resume market data expansion backlog from section 71.5 after AI reliability is stable.
