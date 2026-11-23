@@ -2116,3 +2116,20 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - The monitor workflow is now on `main`, so scheduled runs can start. It is **not operationally verified yet** until the owner adds `HOSTLESS_API_KEY` and one real run successfully reads the Hostless deployment API.
 - Owner action still required: add the read-only `deployments:read` API key in GitHub repository Actions Secrets. Do not send the token through chat. Check/set repository variable `HOSTLESS_APP_NAME` only if the Hostless app resource name is not `radar-ai-v2`.
 - Hostless Build and LIVE commit remain separate from GitHub merge/CI and are not yet verified by the new monitor.
+
+
+---
+
+## 65. AI EARLY WHALE DETECTOR — TECHNICAL SPECIFICATION — 23 NOVEMBER 2026
+
+- BOS selected market coverage CEX + DEX, medium-risk profile, Telegram + PWA push notifications, informational/read-only mode.
+- Added `docs/early-whale-detector-spec.md` as the technical specification and staged implementation plan. This is documentation only; no scanner, provider adapter, score engine, notification delivery, or UI is claimed implemented.
+- Existing foundations verified on main: CoinGecko Market Intelligence (hourly cached market context), Solscan Pro v2 integration (Solana indexed intelligence), Telegram configuration documented, Node.js >=20 native HTTP server with no declared runtime dependencies.
+- Important source semantics: Binance public aggTrade exposes executed trade/taker-side context but not beneficial-owner identity; DEX Screener/GeckoTerminal are discovery/pool snapshot/OHLCV sources, not universal wallet-level raw swap feeds; Solscan transfer events must not be treated as proof of market buys.
+- Proposed score weights: relative-volume anomaly 25, large executed buy-flow/verified DEX accumulation 25, price structure 15, liquidity/execution quality 15, token/pool security 10, market regime/cross-source confirmation 10. Hard data-quality/liquidity/security gates suppress signals regardless of score.
+- Proposed stages: (0) provider/source matrix and canonical event contract; (1) CEX adapters; (2) DEX discovery and one decoded swap pilot; (3) deterministic detection/scoring and signal journal; (4) Telegram then PWA push + UI; (5) replay and forward paper evaluation.
+- No paid provider/quota, production secret/configuration change, Hostless storage provisioning, trading endpoint, wallet signing, order execution, transfer, or withdrawal was enabled or approved.
+- Persistence risk remains: existing DATA_DIR/EROFS issue must be resolved and writable durable storage verified before promising persistent signal history/cooldowns.
+- Documentation branch: `docs/early-whale-detector-spec`; specification commit `752891af26588dd89f14f6e8ea92d50e26075e14`.
+- CI for this documentation branch, Hostless Build, and LIVE are not yet verified. No production deployment was attempted.
+- NEXT TASK: review Stage 0 provider capability/ToS/rate-limit and cost matrix with Division 08, validate CEX/DEX semantics with Division 03, then define fixtures and quality gates with Divisions 01/04/05. In parallel, continue the existing Hostless monitor owner prerequisite (read-only `HOSTLESS_API_KEY` secret) and verify DATA_DIR/EROFS from actual Hostless logs/configuration before any durable scanner rollout.
