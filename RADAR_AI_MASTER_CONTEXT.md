@@ -2535,3 +2535,21 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - PR #74 remains Draft, open, mergeable, and 41 commits ahead / 0 behind latest main (`d2be6b0a2f605716cbf9a20bfaf54d01d7e3beb6`). After syncing latest main, exact integration head `d8c9ef28a400b998fb7920fe78aecac999ce470e` passed test run #811 (150/150, 0 failed, 0 skipped) and security run #354 (Gitleaks no leaks; Trivy secret scanner no findings). Trivy vulnerability coverage remains unavailable because no supported language-specific dependency files were found. Latest Hostless monitor #30 on main reports readiness HTTP 503 / degraded with storage `EROFS`; snapshot still returns HTTP 200 with 50 news items. Hostless API key is empty, so deployment SHA lookup was skipped. No Hostless deployment was performed. Only Division 08 procurement COMMENT review is recorded; no independent Division 01 Security or Division 05 QA approval exists. Division 03 must validate source semantics when a permitted runtime probe is available.
 - No Hostless environment, secret, permission, payment, exchange credential, dependency, trading permission, order, wallet signature, or withdrawal was changed. No deployment or LIVE claim.
 - NEXT TASK: obtain independent Division 01 and Division 05 reviews and BOS release approval; separately resolve Hostless persistent volume and verify `/api/ready`. Only then merge PR #74 and confirm Hostless Build + Live health.
+
+
+---
+
+## 90. MARKETLIGHT STALE-CACHE ACCURACY FIX — 24 NOVEMBER 2026 (ASIA/JAKARTA)
+
+- Lead: Divisi 04 (AI Intelligence & Research) untuk semantik data provider; dukungan Divisi 05 QA. Review independen Divisi 01 dan Divisi 05 tetap diminta sebelum merge.
+- Temuan: saat refresh upstream gagal setelah cache sebelumnya kedaluwarsa, adapter mengembalikan data lama dengan `stale: true` untuk respons saat itu, tetapi menyimpan kembali cache tanpa menandai entri sebagai stale. Permintaan berikutnya dalam jendela fallback 30 detik dapat membaca entri yang sama sebagai fresh. Ini berisiko menampilkan feed lama sebagai sehat.
+- Perbaikan: fallback cache kini menyimpan `stale: true` sehingga seluruh cache hit berikutnya tetap menandai feed sebagai stale sampai refresh berhasil.
+- Regression test baru: `Marketlight keeps stale status on subsequent cache hits after upstream failure`; memvalidasi fresh → upstream failure → stale fallback → cache hit tetap stale.
+- File kode: `lib/marketlight.js`, `test/marketlight.test.js`.
+- Test exact head `69dd5ae76309791acdb211d1b80c111d4828aa84`: GitHub Actions `npm test` sukses, 151/151 passed, 0 failed.
+- Security exact head `69dd5ae76309791acdb211d1b80c111d4828aa84`: Gitleaks sukses dan Trivy filesystem scan sukses. Catatan: hasil filesystem scan bukan bukti dependency CVE coverage bila manifest/lockfile yang didukung tidak tersedia.
+- Commit dokumentasi ini akan memicu ulang CI; hasil exact-head setelah dokumentasi harus diperiksa sebelum menyatakan validasi final.
+- Status PR #74: tetap Draft, belum merge. Hostless Build dan LIVE tidak diperiksa/tidak diketahui. Runtime provider Marketlight masih perlu validasi aktual setelah deploy yang disetujui; data publik bukan ground truth tunggal.
+- Risiko terbuka: review independen Divisi 01 (SSRF/redirect/timeout/response cap/rate limit), Divisi 05 (regression/UI), dan Divisi 03 (validitas timestamp/field provider) belum tercatat. PR #74 masih satu commit di belakang main menurut compare; sinkronisasi akhir dilakukan sebelum merge dan CI harus dijalankan ulang.
+- NEXT TASK: minta review independen Divisi 01/05/03 pada head terbaru PR #74; sinkronkan ke main terbaru; jalankan exact-head CI; setelah persetujuan rilis, validasi response Marketlight di runtime dan lakukan QA visual halaman Market Intelligence. Lanjutkan audit DATA_DIR/EROFS sebagai blocker readiness terpisah.
+
