@@ -32,3 +32,44 @@ test('provider routes expose on-demand DEX and GoPlus results without credential
   assert.deepEqual(dexArgs, { networkId: 'solana', tokenAddress: 'TokenABC', poolAddress: 'PoolABC' });
   assert.deepEqual(securityArgs, { networkId: 'base', tokenAddress: '0x1111111111111111111111111111111111111111' });
 });
+
+
+test('Marketlight route serves bounded read-only data and applies a per-IP limit', async () => {
+  const calls = [];
+  await withApp({
+    marketlightService: {
+      snapshot: async (base, hours) => {
+        calls.push({ base, hours });
+        return { status: 'success', provider: 'Marketlight public derivatives API', license: 'CC BY 4.0', attribution: { url: 'https://marketlight.ai' }, base, liquidation_hours: hours, data: {}, sources: {} };
+      }
+    }
+  }, async (base) => {
+    for (let i = 0; i < 6; i++) {
+      const response = await fetch(base + '/api/market-intelligence/marketlight?base=ETH&hours=12');
+      assert.equal(response.status, 200);
+      const payload = await response.json();
+      assert.equal(payload.provider, 'Marketlight public derivatives API');
+      assert.equal(payload.attribution.url, 'https://marketlight.ai');
+    }
+    const limited = await fetch(base + '/api/market-intelligence/marketlight?base=ETH&hours=12');
+    assert.equal(limited.status, 429);
+    assert.equal((await limited.json()).code, 'MARKETLIGHT_LOCAL_RATE_LIMITED');
+  });
+  assert.equal(calls.length, 6);
+  assert.ok(calls.every((call) => call.base === 'ETH' && call.hours === '12'));
+});
+
+test('Marketlight route rejects invalid assets without exposing upstream details', async () => {
+  await withApp({
+    marketlightService: {
+      snapshot: async () => { const error = new Error('MARKETLIGHT_UNSUPPORTED_BASE'); error.code = 'MARKETLIGHT_UNSUPPORTED_BASE'; error.status = 400; throw error; }
+    }
+  }, async (base) => {
+    const response = await fetch(base + '/api/market-intelligence/marketlight?base=INVALID&hours=24');
+    assert.equal(response.status, 400);
+    const payload = await response.json();
+    assert.equal(payload.code, 'MARKETLIGHT_UNSUPPORTED_BASE');
+    assert.equal(payload.message, 'Aset belum didukung Marketlight.');
+    assert.equal(JSON.stringify(payload).includes('https://marketlight.ai'), false);
+  });
+});
