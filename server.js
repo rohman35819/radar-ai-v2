@@ -8,6 +8,7 @@ const { createExchangeService, ExchangeError } = require('./lib/exchanges');
 const sources = require('./lib/sources');
 const { createSolscanService, SolscanError } = require('./lib/solscan');
 const { createMarketIntelligenceService } = require('./lib/market-intelligence');
+const { createDexScreenerService } = require('./lib/dexscreener');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
@@ -47,10 +48,11 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, dexScreenerService } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
   const solscanApi = solscanService || createSolscanService();
   const marketIntelligence = marketIntelligenceService || createMarketIntelligenceService({ apiKey: cfg.cgKey });
+  const dexScreenerApi = dexScreenerService || createDexScreenerService();
   const matchesToken = (expectedValue, provided) => {
     if (!expectedValue || typeof provided !== 'string') return false;
     const expected = Buffer.from(String(expectedValue));
@@ -76,6 +78,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const reportHour = Math.max(0, Math.min(23, Number(process.env.AI_REPORT_HOUR || 9)));
   const limited = createRateLimiter({ limit: 60, windowMs: 60000, maxKeys: 5000 });
   const solscanLimited = createRateLimiter({ limit: 10, windowMs: 60000, maxKeys: 1000 });
+  const dexScreenerLimited = createRateLimiter({ limit: 8, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
     .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
     .catch((error) => {
@@ -185,6 +188,18 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const headers = { 'cache-control': 'no-store' };
             if (known && error.retryAfterSeconds) headers['retry-after'] = String(error.retryAfterSeconds);
             send(res, status, { status: 'error', code, message }, 'application/json', headers);
+          });
+          return;
+        }
+        if (url.pathname === '/api/dexscreener/scanner' && req.method === 'GET') {
+          if (dexScreenerLimited(ip)) return send(res, 429, { status: 'error', code: 'DEXSCREENER_LOCAL_RATE_LIMITED', message: 'Terlalu banyak permintaan scanner DEX. Tunggu sebentar.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          dexScreenerApi.scanner().then((payload) => {
+            const status = payload.status === 'error' ? 502 : 200;
+            send(res, status, payload, 'application/json', { 'cache-control': 'private, max-age=60' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'DEXSCREENER_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            send(res, status, { status: 'error', code, message: 'Data DEX Screener belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
