@@ -118,7 +118,7 @@ test('GoPlus Signature Data Decode rejects unsupported chains and malformed call
   let calls = 0;
   const service = createGoPlusService({ accessToken: 'decode-token', fetchImpl: async () => { calls++; return response({ code: 1, result: {} }); } });
   await assert.rejects(service.decode({ networkId: 'solana', data: '0x1234' }), (e) => e.code === 'GOPLUS_UNSUPPORTED_NETWORK');
-  await assert.rejects(service.decode({ networkId: 'base', data: '0xxyz' }), (e) => e.code === 'GOPLUS_INVALID_TRANSACTION_DATA');
-  await assert.rejects(service.decode({ networkId: 'base', data: '0x1234', signer: 'not-an-address' }), (e) => e.code === 'GOPLUS_INVALID_SIGNER');
+  await assert.rejects(service.decode({ networkId: 'bsc', data: '0xxyz' }), (e) => e.code === 'GOPLUS_INVALID_TRANSACTION_DATA');
+  await assert.rejects(service.decode({ networkId: 'bsc', data: '0x1234', signer: 'not-an-address' }), (e) => e.code === 'GOPLUS_INVALID_SIGNER');
   assert.equal(calls, 0);
 });
