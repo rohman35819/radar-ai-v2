@@ -217,7 +217,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           }).catch((error) => {
             const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'BINANCE_FUTURES_UPSTREAM_ERROR';
             const status = Number.isInteger(error.status) ? error.status : 502;
-            send(res, status, { status: 'error', code, message: code === 'INVALID_FUTURES_SYMBOL' ? 'Gunakan pair USDT Futures yang valid, misalnya BTCUSDT.' : 'Data derivatives Binance Futures tidak tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+            send(res, status, { status: 'error', code, message: code === 'INVALID_FUTURES_SYMBOL' ? 'Gunakan pair USDT Futures yang valid, misalnya BTCUSDT.' : code === 'BINANCE_FUTURES_BUSY' ? 'Antrean Binance Futures sedang penuh; coba lagi sebentar.' : 'Data derivatives Binance Futures tidak tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
