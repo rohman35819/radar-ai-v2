@@ -2184,3 +2184,15 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Local GoPlus limits: 5 calls/minute, 1,000/day, 5,000/month; 5-minute token cache; only on-demand requests. This keeps the configured use below the 150 CU/minute and daily/monthly free-tier budget, leaving headroom for other GoPlus use.
 - Daily/monthly counters are stored in `st.goplusUsage` in `DATA_DIR/state.json` and persisted before the upstream call. If persistence fails, the request fails closed. Cache hits do not consume the internal API call budget.
 - GoPlus token-security access still requires Console credentials to mint Bearer token; credentials are not present in Git. No live credential-backed API request has been verified.
+
+
+### 67.2 Exact-head QA record — 23 November 2026
+- Binance Futures PR #59 merged into `main`: `3a3380d60d4d14db860ca503dca63d3d61d45a53`.
+- GeckoTerminal + DEX Screener + optional GoPlus code/test head: `d28cc54febd32d3d2bea027dc245d9430ba6251a`.
+- GitHub Actions test run `45173666312`: **132 passed, 0 failed, 0 skipped**.
+- Same exact code/test head security run `45173666289`: **Gitleaks success + Trivy success**.
+- GoPlus free-tier budget is now enforced in code: 5 calls/minute, 1,000/day, 5,000/month; counters persist in `state.json` before upstream calls. This is intentionally below the documented CU-based allowance and does not assume GoPlus is configured on Hostless.
+- DEX Screener is on-demand and uses public pair endpoint; API terms need review before any commercial product positioning that could compete directly.
+- PR #46 latest code/test head passed. Documentation-only update follows; exact latest HEAD checks must complete before merge.
+- Hostless Build, GoPlus live credential test, deployed SHA and LIVE desktop/mobile visual QA remain unverified.
+- NEXT TASK: confirm documentation-head CI, merge PR #46, then verify Hostless Build and deployed LIVE SHA separately.
