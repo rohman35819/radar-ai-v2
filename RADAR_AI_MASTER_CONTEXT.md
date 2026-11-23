@@ -2647,3 +2647,12 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 2. Inspect workflow permissions and one-outstanding-PR concurrency semantics; confirm no provider path other than OpenRouter free router remains.
 3. Obtain genuine independent Divisi 01 and Divisi 05 reviews; do not self-approve or fabricate review submissions.
 4. Keep disabled until review gates, zero-cost provider verification, and BOS authorization for repository configuration are complete.
+
+## 79. AUTONOMOUS WORKER TEST FIXTURE CORRECTION — 24 NOVEMBER 2026
+
+- Exact-head CI for commit 2abc76cccc70235ea28bf9e4a87822948be5fae7 exposed three failing tests. Root cause was test fixture strings containing literal backslash+n instead of newline characters; tracked-file lists and unified diffs were therefore malformed before the intended failure-path assertions ran.
+- Corrected the fixture escaping in test/autonomous-agent.test.js; the file now contains 13 autonomous-worker test declarations.
+- Fix commit: 8e3e23f5216f4dcaf801c20dc16112633ba37704.
+- Exact-head tests and security scans for this fix were queued at documentation time. Do not claim pass until both finish.
+- Prior CI failure is retained in history; it was not hidden or treated as success.
+- NEXT: inspect exact-head Actions logs; if green, verify current PR metadata/reviews and continue Divisi 01/05 review request. Keep Draft/disabled.
