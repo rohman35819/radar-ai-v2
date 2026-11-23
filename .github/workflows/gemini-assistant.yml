@@ -1,8 +1,8 @@
 name: Gemini AI Assistant - RADAR AI-V2
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  # Manual invocation only: the Gemini free tier has a daily request cap.
+  # Add "@gemini /review" to a PR comment when an automated review is wanted.
   issue_comment:
     types: [created]
 
