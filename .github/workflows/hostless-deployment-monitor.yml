@@ -122,12 +122,6 @@ jobs:
         if: always()
         uses: actions/checkout@v7
 
-      - name: Verify LIVE snapshot and news sources
-        if: always() && steps.live.outputs.http == '200'
-        env:
-          RADAR_LIVE_URL: ${{ env.RADAR_LIVE_URL }}
-        run: node scripts/hostless-live-check.js
-
       - name: Verify public LIVE readiness
         if: always()
         id: live
@@ -139,8 +133,7 @@ jobs:
             -o "$RUNNER_TEMP/radar-ready.json" \
             -w "%{http_code}" "$RADAR_LIVE_URL/api/ready")
           echo "http=$code" >> "$GITHUB_OUTPUT"
-          echo "HTTP_CODE=$code" >> "$GITHUB_ENV"
-          node -e "
+          HTTP_CODE="$code" node -e "
             const fs = require('node:fs');
             let data = null;
             try { data = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/radar-ready.json', 'utf8')); } catch {}
@@ -150,3 +143,9 @@ jobs:
             fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\\n') + '\\n');
             if (Number(safe.http) !== 200 || safe.status !== 'ready') process.exit(1);
           "
+
+      - name: Verify LIVE snapshot and news sources
+        if: always() && steps.live.outputs.http == '200'
+        env:
+          RADAR_LIVE_URL: ${{ env.RADAR_LIVE_URL }}
+        run: node scripts/hostless-live-check.js
