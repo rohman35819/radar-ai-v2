@@ -26,7 +26,7 @@ PWA menyimpan shell halaman agar dapat dibuka kembali saat offline. Respons API 
 | Token unlock | **Butuh konfigurasi**: tidak ada sumber gratis terverifikasi. Isi `data/unlocks.json` atau `UNLOCKS_URL` (array `[{id (gecko id), symbol, date, amount_usd, pct_supply, source}]`) |
 | Telegram | **Butuh konfigurasi**: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 | CoinGecko Demo key | Disarankan (`COINGECKO_DEMO_KEY`); cek ToS jika komersial |
-| Makro/ekonomi global | **Primary Macro Intelligence**: BLS, US Treasury, dan New York Fed; tanpa API key atau kartu |
+| Makro/ekonomi global | **Primary Macro Intelligence**: BLS dan New York Fed; tanpa API key atau kartu |
 
 ## Market Intelligence (CoinGecko)
 
@@ -60,15 +60,14 @@ Batasan:
 
 ## Macroeconomic Intelligence (primary public sources)
 
-RADAR's macro endpoint is `GET /api/market-intelligence/macro`. It combines four monthly U.S. labor/inflation series from the BLS Public Data API v1, four daily Treasury par-yield tenors from the official U.S. Treasury XML feed, and SOFR/EFFR reference rates from the New York Fed Markets API. No provider API key, payment card, or paid plan is required.
+RADAR's macro endpoint is `GET /api/market-intelligence/macro`. It combines four monthly U.S. labor/inflation/wage series from the BLS Public Data API v1 and SOFR/EFFR reference rates from the New York Fed Markets API. No provider API key, payment card, or paid plan is required.
 
 - BLS v1 batches four series in one POST request and does not require registration; BLS documents 25 queries/day, so the backend caches this group for 12 hours. The BLS v2 registered tier is optional and offers higher documented limits.
-- Treasury XML returns the current calendar year's daily yield curve and requires no key.
 - New York Fed returns the latest SOFR and EFFR observations without a key; the backend caches these rates for one hour.
 - Local endpoint rate limit: 5 requests/minute/IP and global; upstream timeouts are 10 seconds; stale data is explicitly marked.
 - Missing/empty observations remain null, never zero. All data is retrieved from the original provider, not FRED.
 
-Attribution and notices are displayed in Market Intelligence. BLS requires a retrieval date and the statement that BLS cannot vouch for downstream data/analysis. New York Fed reference-rate data requires its specific republication disclaimer and non-affiliation notice. Review provider terms before adding other series. Sources: [BLS API](https://www.bls.gov/developers/), [BLS Terms](https://www.bls.gov/developers/termsOfService.htm), [Treasury XML feed](https://home.treasury.gov/treasury-daily-interest-rate-xml-feed), [New York Fed Markets API](https://markets.newyorkfed.org/static/docs/markets-api.html), [New York Fed Terms](https://www.newyorkfed.org/privacy/termsofuse.html).
+Attribution and notices are displayed in Market Intelligence. BLS requires a retrieval date and the statement that BLS cannot vouch for downstream data/analysis. New York Fed reference-rate data requires its specific republication disclaimer and non-affiliation notice. Review provider terms before adding other series. Sources: [BLS API](https://www.bls.gov/developers/), [BLS Terms](https://www.bls.gov/developers/termsOfService.htm), [New York Fed Markets API](https://markets.newyorkfed.org/static/docs/markets-api.html), [New York Fed Terms](https://www.newyorkfed.org/privacy/termsofuse.html).
 
 ## Futures Flow Intelligence (free public market data)
 
