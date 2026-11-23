@@ -26,7 +26,7 @@ test('trade setup derives entry, stop loss and three risk-multiple targets from 
       const parsed = new URL(url); calls.push(parsed.pathname);
       if (parsed.pathname.endsWith('/exchangeInfo')) return response({ symbols: [{ symbol: 'BTCUSDT', baseAsset: 'BTC', quoteAsset: 'USDT', contractType: 'PERPETUAL', status: 'TRADING' }] });
       if (parsed.pathname.endsWith('/premiumIndex')) return response([{ symbol: 'BTCUSDT', markPrice: '104.2' }]);
-      if (parsed.pathname.endsWith('/klines')) return response(candles());
+      if (parsed.pathname.endsWith('/klines')) return response(rows);
       throw new Error('unexpected endpoint');
     }
   });
