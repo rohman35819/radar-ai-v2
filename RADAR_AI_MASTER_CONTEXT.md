@@ -2318,7 +2318,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - BLS v1 is open without registration; BLS docs state 25 queries/day and up to 25 series per query. Backend batches four series into one request and caches the BLS group for 12 hours. BLS terms require retrieval-date attribution and the caveat that BLS cannot vouch for downstream data/analysis.
 - Treasury daily yield XML has no API key, but its source-specific reuse terms were not sufficiently verified in this pass; do not include it until a compliance review confirms rights.
 - New York Fed Markets API public endpoints for SOFR/EFFR require no API key. New York Fed Terms allow automated access, storage, business use, and redistribution with required source identifiers and reference-rate disclaimers.
-- No credit card or paid plan is required for these three sources. No FRED_API_KEY is read by main.
+- No credit card or paid plan is required for the two selected sources. No FRED_API_KEY is read by main.
 
 ### Candidate implementation branch feat/primary-macro-intelligence
 - Backend adapter `lib/macro.js`; endpoint `GET /api/market-intelligence/macro`.
