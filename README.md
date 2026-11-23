@@ -132,3 +132,11 @@ Run `npm run hostless-check` to probe the public `/api/ready` and `/api/snapshot
 - API routes: `GET /api/solscan/overview` and `GET /api/solscan/wallet?address=<base58>`. Wallet queries are rate-limited and validated server-side.
 - Solscan data availability and freshness depend on endpoint coverage, indexing delay, plan permissions, and CU quota. Missing fields remain unavailable (not zero); partial endpoint failures are shown separately.
 - Official API docs: https://pro-api.solscan.io/pro-api-docs/v2.0/docs
+
+
+### Bubblemaps V2 dashboard integration
+- Dashboard includes an official Bubblemaps V2 iframe view for token-holder distribution and wallet relationship research.
+- Configure `BUBBLEMAPS_PARTNER_ID` in the server environment only after Bubblemaps issues a partner ID and whitelists the production domain. The partner ID is public configuration, not an API secret.
+- The `demo` partner ID is for localhost/0.0.0.0 testing only; do not use it on Hostless production. No paid API or provider key is used by the iframe integration.
+- The embed requires a token contract/address and supported chain; ticker symbols are not accepted as asset identity.
+- Map freshness and coverage are provided by Bubblemaps; wallet links indicate indexed transfer relationships, not proof of common beneficial ownership or a market buy.
