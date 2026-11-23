@@ -2103,7 +2103,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 ### 64.4 Review refinement
 - The LIVE readiness probe uses `if: always()` so it still runs and reports its independent result when the Hostless deployment API reports a failed deployment.
 - Latest branch code commit after this refinement: `64ad1e24ed63ebf822bfd3ca29abc12c40095ddd`.
- 
+
 ### 64.4.1 Bubble Maps dashboard integration — 23 November 2026
 - Added a dashboard Bubble Maps view using the official Bubblemaps V2 iframe integration, with chain + contract-address selection and strict chain-specific address validation. Existing Dashboard navigation, Solscan, Market Intelligence, and Exchange Hub entries are preserved.
 - Added `BUBBLEMAPS_PARTNER_ID` server configuration, a read-only `GET /api/bubblemaps/config` endpoint that exposes only the public partner ID/configured flag, and CSP `frame-src https://iframe.bubblemaps.io`.
