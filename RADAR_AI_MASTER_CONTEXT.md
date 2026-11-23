@@ -2588,3 +2588,37 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Hostless Build: not applicable to this GitHub Actions worker change and not checked.
 - Hostless LIVE: not checked; no deployment claim.
 - Next: verify exact-head Actions; request and obtain independent Divisi 01/05 reviews; close any findings; then obtain BOS authorization/configuration for the GitHub Actions variable and free-provider secrets. After activation, collect at least three successful scheduled run records before expanding scope.
+
+## 77. AUTONOMOUS WORKER EXECUTION GATES & FREE-ONLY PROVIDER — 24 NOVEMBER 2026
+
+### Divisi dan ruang lingkup
+- Lead: Divisi 06 — Agent Platform & Automation.
+- Supporting gates: Divisi 01 — Security & Reliability; Divisi 05 — QA, Testing & DevOps.
+- Scope tetap worker proposal maintenance yang berjalan di GitHub Actions; tidak mencakup Director runtime, durable queue, memory service, Hostless worker, market-data scheduler, merge/deploy otomatis, atau tindakan trading.
+
+### Temuan lanjutan dan perbaikan
+1. Audit secret-isolation sebelumnya menemukan bahwa environment allowlist juga menghapus GIT_CONFIG_* yang dibutuhkan oleh proses git push. Worker dapat lulus tes tetapi gagal mengirim branch. Perbaikan sekarang hanya mengizinkan tiga variabel Git extra-header dengan nama konfigurasi dan format header yang divalidasi, dan hanya jika pemanggil secara eksplisit menandai subprocess sebagai trusted Git push. Raw GITHUB_TOKEN dan provider key tetap tidak diteruskan ke child process.
+2. Kebijakan biaya diperketat: worker hanya menggunakan OPENROUTER_API_KEY dengan model router eksplisit openrouter/free. Jalur Groq dan variabel Groq dihapus dari workflow worker. Tidak ada fallback berbayar. Jika free router tidak tersedia, worker berhenti dengan error/skip; tidak mencoba model berbayar.
+3. main() kini menerima dependency injection untuk fetch, command runner, pembacaan source, provider call, dan clock agar jalur kontrol dapat diuji tanpa memanggil jaringan, GitHub, atau provider sungguhan.
+4. Ditambahkan tes untuk environment child process dan Git auth config yang sangat terbatas; worker disabled tanpa akses jaringan/filesystem/Git; outstanding autonomous Draft PR menghentikan worker sebelum source/provider dipanggil; dan ketiadaan OpenRouter key gratis menghentikan provider call.
+5. Perbaikan wiring: main() memakai injected source reader dan command runner untuk membaca file kandidat dan daftar tracked files; jalur git push mengaktifkan allowlist Git auth config secara eksplisit.
+
+### Commit perubahan
+- bbf54ce921a32818527917c4b6849f000da889ec: scoped Git auth dan free-only provider.
+- e3932577b6b9538c9672568a0e1965ebd742c8db: dependency injection wiring.
+- cd8d242d387b328eac83f809eb80545a13fa49fa: regression tests.
+- ea7536d1210036a44991bc0d5dfd47c42ce94132: workflow removes Groq secrets/model.
+- Latest observed branch head at documentation time: ea7536d1210036a44991bc0d5dfd47c42ce94132.
+
+### Verifikasi
+- Tests/security for the new exact head are pending GitHub Actions at time of this entry; do not reuse earlier green results from 70729bc....
+- No provider call, GitHub push from the worker, scheduled run, Hostless Build, or Hostless LIVE was executed in this session.
+- OpenRouter's explicit free router is the only configured route. This prevents deliberate paid-model fallback in code; it does not prove provider availability or guarantee external account-level quotas/terms remain unchanged. Verify usage and zero-charge behavior before enabling the schedule.
+- PR #81 remains Draft and unmerged. Independent Divisi 01/05 reviews are still absent. No repository settings or secrets were changed.
+
+### NEXT TASK
+1. Verify exact-head tests and security scans for the latest branch commit.
+2. Review the complete worker control flow for failure cleanup, provider error behavior, patch rejection, Git push failure and PR creation failure; add regression coverage.
+3. Divisi 01 independently reviews token scope, child-process isolation and free-only routing; Divisi 05 independently reviews schedule/concurrency and test evidence.
+4. Only after both gates and a verified zero-cost provider path, obtain BOS approval for repository variable/secret configuration and activate. Observe at least three scheduled runs before expanding scope.
+5. Keep PR Draft/disabled until the above acceptance criteria are met.
