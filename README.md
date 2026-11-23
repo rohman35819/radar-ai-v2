@@ -161,3 +161,12 @@ Dashboard menu **Early Gem Scanner** mengambil pool DEX terbaru (jendela provide
 ### API usage and commercial review
 DEX Screener public pair endpoint is used only for on-demand cross-validation by chain and token address. It documents 300 requests/minute; the application enforces stricter local limits and short caching. Review the [DEX Screener API terms](https://docs.dexscreener.com/api/api-terms-and-conditions) before commercializing this integration because the terms restrict using its API to build a product whose primary purpose directly competes with DEX Screener.
 GoPlus free Token Security access requires Console credentials to mint a Bearer token. Keep `GOPLUS_APP_KEY`, `GOPLUS_APP_SECRET`, or `GOPLUS_ACCESS_TOKEN` in Hostless server secrets only. Do not commit credentials or expose them to browser code.
+
+
+## Hostless persistent storage (required)
+Hostless uses a read-only root filesystem. RADAR AI writes `state.json` under `DATA_DIR`; the default `./data` path is therefore not writable on Hostless and produces `EROFS`.
+1. In Hostless, open the app's **Storage → Disks** and attach an existing persistent disk (or create one after checking its displayed cost).
+2. Set its mount path to `/data`.
+3. In app server environment variables, set `DATA_DIR=/data`, then redeploy.
+4. Verify `/api/ready` returns HTTP 200 with `status: ready` and `storage.status: ok`.
+Do not use `/tmp` for RADAR AI state: Hostless clears it when the process starts again.
