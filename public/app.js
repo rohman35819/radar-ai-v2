@@ -20,8 +20,8 @@ const ratio = (v) => v == null || !Number.isFinite(Number(v)) ? '—' : Number(v
 const dateTime = (v) => v ? new Date(v).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}) : 'Belum tersedia';
 const esc = (v) => String(v ?? '—');
 const FLAG = {fdv_unknown:'FDV tidak diketahui',fdv_gt_5x_mcap:'FDV > 5x MCap',volume_gt_mcap:'Volume > MCap',stale:'Data basi'};
-const TITLES = {solscan:'Solana Intelligence',overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
-let data=null, aiGroup=null, aiWorkspace=null, solscanOverview=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false;
+const TITLES = {solscan:'Solana Intelligence',bubblemaps:'Bubble Maps',overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
+let data=null, aiGroup=null, aiWorkspace=null, solscanOverview=null, bubbleMapsConfig=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false;
 let screenerFilters={q:'',trend:'all',sort:'market_cap'},screenerVisible=[];
 try {
  const stored=JSON.parse(localStorage.getItem('radar-watch')||'[]');
@@ -214,6 +214,46 @@ async function runWorkspaceNow(){
   render();toast('AI masih memproses. Buka kembali Ruang Kerja sebentar lagi.');
  }catch(e){toast(e.message||'Gagal menjalankan review AI');}
 }
+const BUBBLEMAPS_CHAINS = [
+ ['solana','Solana'],['eth','Ethereum'],['bsc','BNB Chain'],['base','Base'],['tron','Tron'],['ton','TON'],
+ ['sonic','Sonic'],['avalanche','Avalanche'],['polygon','Polygon'],['monad','Monad'],['aptos','Aptos'],
+ ['arbitrum','Arbitrum'],['hyperevm','HyperEVM'],['robinhood','Robinhood'],['arc','Arc']
+];
+function renderBubbleMaps(){
+ const v=$('#view');v.replaceChildren();
+ v.append(sectionHead('Bubble Maps','Peta distribusi holder dan hubungan transfer dari Bubblemaps V2.'));
+ const chain=el('select',{id:'bubble-chain'},...BUBBLEMAPS_CHAINS.map(([id,name])=>el('option',{value:id},name)));
+ const address=el('input',{id:'bubble-address',type:'text',autocomplete:'off',spellcheck:'false',maxlength:'128',placeholder:'Masukkan contract / token address','aria-label':'Alamat token'});
+ const open=el('button',{class:'secondary-btn',id:'bubble-open',type:'button',disabled:true},'Tampilkan Bubble Map');
+ const status=el('div',{class:'bubble-status muted',id:'bubble-status','role':'status'},'Memeriksa konfigurasi integrasi Bubblemaps…');
+ const map=el('div',{class:'bubble-map-frame',id:'bubble-map-frame'},el('div',{class:'empty-state'},el('b',{},'Pilih token untuk dianalisis'),el('p',{},'Masukkan alamat kontrak token. Gunakan alamat kontrak, bukan simbol ticker, agar aset tidak tertukar.')));
+ const form=el('div',{class:'bubble-controls'},el('label',{},'Blockchain',chain),el('label',{},'Alamat token',address),open);
+ v.append(card(el('div',{class:'bubble-intro'},el('div',{},el('h2',{},'Holder Distribution & Wallet Clusters'),el('p',{class:'muted'},'Visualisasi interaktif holder, konsentrasi supply, dan hubungan transfer antaralamat.')),el('span',{class:'bubble-provider'},'SOURCE · BUBBLEMAPS V2')),form,status,map,
+  el('p',{class:'muted bubble-disclaimer'},'Interpretasi: bubble merepresentasikan holder yang ditampilkan dan garis menunjukkan hubungan transfer yang terindeks. Hubungan tidak membuktikan kepemilikan bersama atau niat membeli. Peta bukan feed transaksi tick-by-tick; periksa waktu pembaruan yang ditampilkan oleh Bubblemaps.'),
+  el('p',{class:'muted bubble-partner-help'},'Integrasi produksi memerlukan Partner ID resmi dan whitelist domain RADAR AI.')));
+ const setStatus=(message,kind='muted')=>{status.textContent=message;status.className='bubble-status '+kind;};
+ const loadConfig=async()=>{
+  try{
+   const response=await fetch('/api/bubblemaps/config',{cache:'no-store'});
+   if(!response.ok)throw new Error('HTTP '+response.status);
+   bubbleMapsConfig=await response.json();
+   if(bubbleMapsConfig.configured){open.disabled=false;setStatus('Integrasi Bubblemaps siap. Data peta akan dimuat langsung dari penyedia.','positive');}
+   else{open.disabled=true;setStatus('Belum aktif: BUBBLEMAPS_PARTNER_ID belum dikonfigurasi. Minta Partner ID dan whitelist radar-ai-v2.hostless.app kepada Bubblemaps.','negative');}
+  }catch{open.disabled=true;setStatus('Konfigurasi integrasi tidak dapat diperiksa. Peta tidak dimuat.','negative');}
+ };
+ open.addEventListener('click',()=>{
+  const chainId=chain.value,tokenAddress=address.value.trim();
+  if(!BUBBLEMAPS_CHAINS.some(([id])=>id===chainId)||!tokenAddress||tokenAddress.length>128||/\\s/.test(tokenAddress)){
+   setStatus('Pilih jaringan dan masukkan alamat token yang valid. Jangan gunakan simbol ticker.','negative');return;
+  }
+  if(!bubbleMapsConfig?.configured||!bubbleMapsConfig.partnerId){setStatus('Partner ID resmi belum tersedia; embed produksi belum dapat dibuka.','negative');return;}
+  const url=new URL('https://iframe.bubblemaps.io/map');
+  url.searchParams.set('chain',chainId);url.searchParams.set('address',tokenAddress);url.searchParams.set('partnerId',bubbleMapsConfig.partnerId);
+  const frame=el('iframe',{src:url.toString(),title:'Bubblemaps holder distribution map',loading:'lazy',referrerpolicy:'no-referrer',allow:'clipboard-write',allowfullscreen:'true'});
+  map.replaceChildren(frame);setStatus('Memuat peta dari Bubblemaps. Waktu komputasi dan data ditampilkan oleh penyedia.','positive');
+ });
+ loadConfig();
+}
 function renderSystem(){
  const v=$('#view');v.replaceChildren();const health=data?.health||{};
  v.append(sectionHead('System Health','Transparansi status sumber data dan runtime.'));
@@ -225,7 +265,7 @@ function renderSystem(){
 function render(){
  $('#page-title').textContent=TITLES[tab]||'RADAR AI';$('#crumb').textContent=(tab||'overview').toUpperCase();
  document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
- if(tab==='overview')renderOverview();else if(tab==='screener')renderScreener();else if(tab==='watch')renderWatch();else if(tab==='analytics')renderAnalytics();else if(tab==='news')renderNews();else if(tab==='unlock')renderUnlock();else if(tab==='alerts')renderAlerts();else if(tab==='ai')renderAI();else if(tab==='workspace')renderWorkspace();else renderSystem();
+ if(tab==='overview')renderOverview();else if(tab==='bubblemaps')renderBubbleMaps();else if(tab==='screener')renderScreener();else if(tab==='watch')renderWatch();else if(tab==='analytics')renderAnalytics();else if(tab==='news')renderNews();else if(tab==='unlock')renderUnlock();else if(tab==='alerts')renderAlerts();else if(tab==='ai')renderAI();else if(tab==='workspace')renderWorkspace();else renderSystem();
 }
 function setSidebarOpen(open){
  const sidebar=$('#sidebar'),toggle=$('#menu-toggle');
