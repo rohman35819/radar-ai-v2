@@ -178,5 +178,5 @@ Dashboard overview menampilkan satu kandidat LONG terbaik bila lolos seluruh fil
 - Data setup memakai mark price dan candle 1 jam yang sudah ditutup. Filter mencakup EMA20/EMA50, kemiringan EMA20, RSI14, ATR14, dan rasio volume 5 candle terhadap median 20 candle sebelumnya.
 - Entry adalah mark price referensi saat scan; Stop Loss = Entry − 1.5 × ATR14; TP1/TP2/TP3 masing-masing = Entry + 1R/2R/3R. R = 1.5 × ATR14.
 - Skor 0–100 adalah indicator confluence, bukan probabilitas profit. Bila tidak ada kandidat yang lolos, UI menampilkan no setup dan tidak memaksakan sinyal.
-- Endpoint publik read-only: `GET /api/market-intelligence/trade-setups`; dibatasi 6 request/menit per IP (dengan guard global). Hasil di-cache 2 menit.
+- Endpoint publik read-only: `GET /api/market-intelligence/trade-setups`; dibatasi 6 request/menit per IP dan 60 request/menit global. Hasil di-cache 2 menit.
 - Pemetaan aset menggunakan ticker unik, bukan contract address; pengguna harus memverifikasi identitas aset dan kondisi pasar. Tidak ada order, wallet transaction, atau live trading.
