@@ -303,7 +303,7 @@ function renderEarlyGems(){
      const result=await response.json();if(!response.ok||!['success','partial'].includes(result.status))throw new Error(result.code||result.message||'GoPlus validation failed');
      const flags=(result.risk_flags||[]).map(flag=>el('span',{class:'flag'},flag.label+' ['+flag.severity+']'));
      const security=result.data||{},known=(key)=>security[key]===undefined?'Tidak diketahui':String(security[key]);
-     const tax=(key)=>security[key]===undefined?'—':(Number(security[key])*100).toFixed(2)+'%';
+     const tax=(key)=>{const n=Number(security[key]);return security[key]===undefined||!Number.isFinite(n)?'—':(n*100).toFixed(2)+'%';};
      const details=el('div',{class:'gem-validation-line'},
       el('span',{},'Open source: '+known('is_open_source')+' · Honeypot: '+known('is_honeypot')),
       el('span',{},'Buy tax: '+tax('buy_tax')+' · Sell tax: '+tax('sell_tax')),
