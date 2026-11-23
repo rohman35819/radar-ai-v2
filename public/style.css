@@ -185,3 +185,30 @@ body{
 .radar-intel{display:grid;gap:16px;margin-top:18px}.radar-intel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}.radar-intel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.radar-intel-card{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:17px;box-shadow:var(--shadow);transition:border-color .25s}.radar-intel-card:hover{border-color:var(--accent)}.radar-intel-card.wide{grid-column:1/-1}.radar-intel-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.radar-intel-title h3{font-size:13px;margin:0}.radar-intel-status{font-size:9px;font-weight:800;letter-spacing:.8px;padding:4px 7px;border-radius:20px;background:var(--panel2);color:var(--muted)}.radar-intel-status.ok{color:var(--green)}.radar-intel-status.partial{color:var(--amber)}.radar-intel-status.off{color:var(--red)}.radar-intel-value{font-size:24px;font-weight:800;letter-spacing:-.7px;margin:5px 0}.radar-intel-sub,.radar-intel-note{font-size:11px;color:var(--muted);line-height:1.6}.radar-intel-note{margin:10px 0 0}.radar-intel-bars{display:grid;gap:9px;margin-top:13px}.radar-intel-bar{display:grid;grid-template-columns:minmax(70px,100px) 1fr auto;align-items:center;gap:9px;font-size:10px}.radar-intel-track{height:7px;background:var(--panel2);border-radius:8px;overflow:hidden}.radar-intel-fill{height:100%;width:var(--bar-width);background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:8px;transition:width .7s ease}.radar-intel-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}.radar-intel-metric{padding:10px;background:var(--panel2);border-radius:9px;min-width:0}.radar-intel-metric small,.radar-intel-metric b{display:block;overflow-wrap:anywhere}.radar-intel-metric small{font-size:9px;color:var(--muted)}.radar-intel-metric b{font-size:13px;margin-top:4px}.radar-intel-foot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:9px;border-top:1px solid var(--line);font-size:9px;color:var(--muted)}.radar-intel-disclaimer{border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:9px;padding:12px 14px;color:var(--muted);font-size:11px;line-height:1.6}.radar-intel-empty{padding:12px;background:var(--panel2);border-radius:9px;color:var(--muted);font-size:11px;line-height:1.6}@media(max-width:760px){.radar-intel-grid{grid-template-columns:1fr}.radar-intel-card.wide{grid-column:auto}.radar-intel-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.radar-intel-bar{grid-template-columns:72px 1fr auto}}@media(prefers-reduced-motion:reduce){.radar-intel-fill,.radar-intel-card{transition:none}}
 
 .radar-intel-provenance{display:grid;gap:6px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);font-size:10px;color:var(--muted);line-height:1.55;overflow-wrap:anywhere}.radar-intel-provenance b{font-size:10px;color:var(--text);letter-spacing:.35px}.radar-intel-provenance span{padding-top:4px;border-top:1px solid var(--line)}
+
+/* Live Coin Scanner */
+.radar-scan{display:grid;gap:14px;margin:18px 0;padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.radar-scan-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.radar-scan-head h2{font-size:18px;margin:5px 0}
+.radar-scan-warning{padding:11px 13px;border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:8px;background:var(--panel2);font-size:11px;line-height:1.6;color:var(--muted)}
+.radar-scan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.radar-scan-card{min-width:0;padding:13px;border:1px solid var(--line);border-radius:11px;background:var(--panel2)}
+.radar-scan-top,.radar-scan-identity{display:flex;align-items:center;gap:9px}
+.radar-scan-top{justify-content:space-between}
+.radar-scan-identity{min-width:0;font-size:13px;font-weight:800}
+.radar-scan-identity>div{min-width:0;overflow-wrap:anywhere}
+.radar-scan-identity small{display:block;font-size:9px;color:var(--muted);font-weight:500}
+.radar-scan-symbol{display:grid;place-items:center;flex:0 0 34px;height:34px;border-radius:50%;background:var(--panel);border:1px solid var(--line);font-size:10px}
+.radar-scan-score{font-size:13px;font-weight:900;color:var(--accent);white-space:nowrap}
+.radar-scan-chart{height:48px;display:flex;align-items:flex-end;gap:2px;margin:10px 0;padding:4px 0;border-bottom:1px solid var(--line);overflow:hidden}
+.radar-scan-chart small{font-size:10px;color:var(--muted)}
+.radar-scan-sparkbar{display:block;flex:1;min-width:2px;height:var(--h);background:var(--accent);opacity:.72;border-radius:2px 2px 0 0}
+.radar-scan-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.radar-scan-metrics>div{min-width:0}
+.radar-scan-metrics small,.radar-scan-metrics b{display:block}
+.radar-scan-metrics small{font-size:9px;color:var(--muted)}
+.radar-scan-metrics b{font-size:11px;overflow-wrap:anywhere}
+.radar-scan-reasons{font-size:10px;color:var(--muted);line-height:1.5;margin-top:10px}
+.radar-scan-whale{font-size:9px;font-weight:800;color:var(--amber);margin-top:6px}
+.radar-scan-time{display:block;margin-top:7px;color:var(--muted);font-size:9px}
+@media(max-width:760px){.radar-scan{padding:13px}.radar-scan-grid{grid-template-columns:1fr}.radar-scan-metrics b{font-size:10px}}
