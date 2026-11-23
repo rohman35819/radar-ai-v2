@@ -2555,3 +2555,36 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - This establishes source/test/security workflow status only. It does not establish provider quota, scheduled worker activation, Hostless build, deployment, or LIVE behavior.
 - Trivy's filesystem scan is not proof of full dependency CVE coverage when no supported lockfile/manifest is available; retain this limitation.
 - PR #81 remains Draft and unmerged. Security and QA independent review, plus BOS's GitHub Actions variable/secret configuration, remain required before enabling.
+
+
+## 76. AUTONOMOUS WORKER SECRET-ISOLATION HARDENING — 24 NOVEMBER 2026
+
+### Routing
+- Lead: Divisi 06 — Agent Platform & Automation.
+- Required independent supporting gates: Divisi 01 — Security & Reliability; Divisi 05 — QA, Testing & DevOps.
+- Scope is limited to PR #81 pilot. No production settings, credentials, merge, deployment, or trading actions were changed.
+
+### Finding and remediation
+- Source review found that the autonomous worker launched `npm test` and Git child processes with the worker's inherited `process.env`. That environment contains `GITHUB_TOKEN` and provider API keys. Although model output cannot invoke tools directly, a model-proposed test file is executed by `npm test`; inheriting credentials into that subprocess would create an avoidable secret-exposure path.
+- Added `safeChildEnv()` in `lib/ai/autonomous-agent.js`. All child processes launched through the worker now receive an explicit environment allowlist (PATH/HOME/CI/temp/locale/platform basics), not GitHub or provider secrets. This includes test execution and Git operations. The worker process itself retains credentials only for its narrowly scoped provider and GitHub API operations.
+- Added a regression test in `test/autonomous-agent.test.js` proving GitHub, Groq, OpenRouter, and worker-control variables are stripped from child environments.
+- No secrets were printed, copied, or changed. No provider request was made.
+
+### Files and commits
+- `lib/ai/autonomous-agent.js`
+- `test/autonomous-agent.test.js`
+- Code commits: `b478399f56e4d1e5b78077a5d82c4b082be75f16` and `b4b2410af0ab53cd7dfb33970b6bc969312b81c7`.
+- Latest observed PR head: `b4b2410af0ab53cd7dfb33970b6bc969312b81c7`; PR #81 remains Draft, open, unmerged, and 15 commits ahead / 0 behind main at the time of verification.
+
+### Validation and remaining gates
+- GitHub Actions exact-head test and security runs for `b4b2410af0ab53cd7dfb33970b6bc969312b81c7` were queued at 23:32:12 UTC on 24 November 2026. Results are pending; no local test was run in this connector-only session.
+- Earlier exact-head green checks on `e14ef4eb2fa64e2916a12ca6e05d8406c5bc5b90` do not certify this newer change.
+- PR #81 still has no independent PR review. Divisi 01 must review the child-process environment isolation and broader credential boundary; Divisi 05 must review the regression test, schedule/manual trigger, concurrency and runtime behavior.
+- Worker remains disabled by default. The workflow's repository variable `AUTONOMOUS_AGENT_ENABLED` defaults to `0`. Do not enable until both independent gates are documented and exact-head checks pass.
+- The worker remains a proposal-only code maintenance pilot. It does not implement durable multi-division queue, shared memory, market-data scheduling, Director runtime, Hostless worker, or automatic merge/deploy.
+
+### Deployment and NEXT TASK
+- GitHub PR code: updated; exact-head CI/security pending.
+- Hostless Build: not applicable to this GitHub Actions worker change and not checked.
+- Hostless LIVE: not checked; no deployment claim.
+- Next: verify exact-head Actions; request and obtain independent Divisi 01/05 reviews; close any findings; then obtain BOS authorization/configuration for the GitHub Actions variable and free-provider secrets. After activation, collect at least three successful scheduled run records before expanding scope.
