@@ -4,6 +4,36 @@ const assert = require('node:assert/strict');
 const { createGoPlusService } = require('../lib/goplus');
 const response = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => data });
 
+test('GoPlus computes top-10 token and LP holder concentration without claiming full coverage', () => {
+  const normalized = normalizeSecurity({
+    holder_count: '2500',
+    owner_percent: '0.03',
+    creator_percent: '0.02',
+    holders: [
+      { address: 'pool', percent: '0.52', is_contract: '1', is_locked: '0' },
+      { address: 'wallet-a', percent: '0.04', is_contract: '0', is_locked: '0' },
+      { address: 'wallet-b', percent: '0.03', is_contract: '0', is_locked: '1' },
+      { address: 'invalid', percent: 'unknown', is_contract: '0', is_locked: '0' }
+    ],
+    lp_holder_count: '2',
+    lp_holders: [
+      { address: 'lp-a', percent: '0.99', is_contract: '0', is_locked: '0' },
+      { address: 'lp-b', percent: '0.01', is_contract: '0', is_locked: '1' }
+    ]
+  });
+  const summary = normalized.holder_concentration;
+  assert.equal(summary.holder_count, 2500);
+  assert.equal(summary.token_holders.sample_size, 3);
+  assert.equal(summary.token_holders.top1_percent, 52);
+  assert.equal(summary.token_holders.top10_reported_percent, 59);
+  assert.equal(summary.token_holders.non_contract_top10_percent, 7);
+  assert.equal(summary.token_holders.contract_top10_percent, 52);
+  assert.equal(summary.token_holders.locked_top10_percent, 3);
+  assert.equal(summary.lp_holders.top10_reported_percent, 100);
+  assert.equal(summary.owner_percent, 3);
+  assert.equal(summary.token_holders.coverage, 'reported_top_10_sample_only');
+});
+
 test('GoPlus requires credentials and never silently bypasses authentication', async () => {
   let calls = 0;
   const service = createGoPlusService({ fetchImpl: async () => { calls++; return response({ code: 1, result: {} }); } });
