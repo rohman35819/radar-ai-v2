@@ -2135,3 +2135,13 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Hostless Build/LIVE and real Binance response from Hostless are unverified. PR/CI status is pending.
 - NEXT TASK: exact-head CI + security scan; Divisi 03 review of derivatives semantics and Divisi 05 QA; then implement GoPlus token-security adapter and GNews/NewsData news adapter as separate, isolated changes. Never infer API activation from environment variable names.
 
+
+
+### 65.1 Exact-head CI evidence and review gate
+- PR #59: https://github.com/rohman35819/radar-ai-v2/pull/59. PR head at validation: `a3020a4e378e23004a7a956ad99055263b381dd8`; base main `0843e2f0080f7933fd13500723da26f8a0f43462`.
+- GitHub Actions test run #647 / ID `45165886402`: completed / success; **110 tests pass, 0 fail**. Includes the four new derivatives tests.
+- GitHub Actions security run #190 / ID `45165886246`: completed / success. Trivy filesystem scan: success; Gitleaks secret detection: success.
+- PR #59 remains Draft/open/unmerged. GitHub initially reported mergeable=false; inspect current mergeability and review status before integration.
+- Independent Divisi 03 (derivatives interpretation) and Divisi 05 (QA) reviews remain pending. No Hostless build/deploy or LIVE API verification has been performed.
+- No test evidence here validates the Hostless environment or upstream Binance response from production; CI uses controlled mocks.
+
