@@ -67,6 +67,39 @@ function summarizeSnapshot(snapshot) {
   };
 }
 
+function summarizeDerivatives(result, http) {
+  const data = result && result.data && typeof result.data === 'object' ? result.data : {};
+  const sources = data.sources && typeof data.sources === 'object' ? data.sources : {};
+  return {
+    http: http || null,
+    status: data.status || null,
+    symbol: data.symbol || 'BTCUSDT',
+    partial: data.partial === true,
+    metrics: {
+      funding: !!data.data?.funding,
+      open_interest: !!data.data?.open_interest,
+      open_interest_history: Array.isArray(data.data?.open_interest_history),
+      taker_flow: Array.isArray(data.data?.taker_flow)
+    },
+    sources: Object.fromEntries(Object.entries(sources).map(([key, value]) => [key, {
+      ok: value?.ok === true,
+      error: value?.error || null
+    }])),
+    error: data.code || result?.error || null
+  };
+}
+
+function summarizeDex(result, http) {
+  const data = result && result.data && typeof result.data === 'object' ? result.data : {};
+  return {
+    http: http || null,
+    status: data.status || null,
+    pair_count: Number.isFinite(Number(data.pair_count)) ? Number(data.pair_count) : null,
+    same_pool_found: data.same_pool_found === true,
+    error: data.code || result?.error || null
+  };
+}
+
 async function main() {
   let host = 'invalid-url';
   try { host = new URL(baseUrl).host; } catch { /* Report invalid base without echoing environment value. */ }
@@ -93,4 +126,4 @@ async function main() {
 }
 
 if (require.main === module) main();
-module.exports = { summarizeSnapshot };
+module.exports = { summarizeSnapshot, summarizeDerivatives, summarizeDex };
