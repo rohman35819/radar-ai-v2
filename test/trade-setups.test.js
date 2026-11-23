@@ -7,9 +7,9 @@ const NOW = 1_800_000_000_000;
 function candles({ rising = true, volumeSpike = true } = {}) {
   const rows = [];
   let price = 100;
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 200; i++) {
     price = rising ? price * (i % 3 === 2 ? 0.9975 : 1.002) : 100;
-    const openTime = NOW - (80 - i) * 60 * 60 * 1000;
+    const openTime = NOW - (200 - i) * 60 * 60 * 1000;
     const closeTime = openTime + 60 * 60 * 1000 - 1;
     const volume = volumeSpike && i >= 75 ? 300 : 100;
     rows.push([openTime, price * 0.999, price * 1.004, price * 0.996, price, volume, closeTime]);
@@ -20,19 +20,19 @@ function response(payload) { return { ok: true, status: 200, json: async () => p
 
 test('trade setup derives entry, stop loss and three risk-multiple targets from closed 1h candles', async () => {
   const calls = [];
+  const rows = candles();
   const service = createTradeSetupService({
     now: () => NOW,
     fetchImpl: async (url) => {
       const parsed = new URL(url); calls.push(parsed.pathname);
       if (parsed.pathname.endsWith('/exchangeInfo')) return response({ symbols: [{ symbol: 'BTCUSDT', baseAsset: 'BTC', quoteAsset: 'USDT', contractType: 'PERPETUAL', status: 'TRADING' }] });
-      if (parsed.pathname.endsWith('/premiumIndex')) return response([{ symbol: 'BTCUSDT', markPrice: '104.2' }]);
+      if (parsed.pathname.endsWith('/premiumIndex')) return response([{ symbol: 'BTCUSDT', markPrice: String(Number(rows[rows.length - 1][4]) * 1.001) }]);
       if (parsed.pathname.endsWith('/klines')) return response(rows);
       throw new Error('unexpected endpoint');
     }
   });
-  const rows = candles();
-  rows.push([NOW, 104, 105, 103, 104.5, 500, NOW + 60 * 60 * 1000]); // current, unclosed candle must be ignored
-  const result = await service.scan([{ id: 'bitcoin', name: 'Bitcoin', symbol: 'btc', market_cap_rank: 1, price_change_percentage_24h: 2, price_change_percentage_7d_in_currency: 4 }]);
+  rows.push([NOW, Number(rows[rows.length - 1][4]), Number(rows[rows.length - 1][4]) * 1.01, Number(rows[rows.length - 1][4]) * 0.99, Number(rows[rows.length - 1][4]) * 1.005, 500, NOW + 60 * 60 * 1000]); // current, unclosed candle must be ignored
+  const result = await service.scan([{ id: 'bitcoin', name: 'Bitcoin', symbol: 'btc', market_cap_rank: 1 }]);
   assert.equal(result.status, 'success');
   assert.equal(result.setup.symbol, 'BTCUSDT');
   assert.equal(result.setup.direction, 'LONG');
@@ -47,7 +47,7 @@ test('trade setup derives entry, stop loss and three risk-multiple targets from 
 
 test('trade setup refuses weak or non-trending candidates instead of inventing a signal', async () => {
   const result = analyzeCandidate(
-    { id: 'bitcoin', name: 'Bitcoin', symbol: 'btc', price_change_percentage_24h: 0, price_change_percentage_7d_in_currency: 0 },
+    { id: 'bitcoin', name: 'Bitcoin', symbol: 'btc' },
     'BTCUSDT', 100, candles({ rising: false, volumeSpike: false }), NOW
   );
   assert.equal(result, null);
