@@ -9,7 +9,7 @@ test('Binance derivatives returns funding, open interest, OI history and taker f
   const calls = [];
   const service = createDerivativesService({ fetchImpl: async (url) => {
     calls.push(url);
-    if (url.includes('premiumIndex')) return response({ symbol: 'BTCUSDT', lastFundingRate: '0.0001' });
+    if (url.includes('premiumIndex')) return response({ symbol: 'BTCUSDT', lastFundingRate: '0.0001', markPrice: '65000' });
     if (url.includes('/openInterest?')) return response({ symbol: 'BTCUSDT', openInterest: '123' });
     if (url.includes('openInterestHist')) return response([{ sumOpenInterestValue: '1000000', timestamp: 1 }]);
     if (url.includes('takerlongshortRatio')) return response([{ buyVol: '10', sellVol: '8', buySellRatio: '1.25', timestamp: 1 }]);
@@ -27,10 +27,12 @@ test('Binance derivatives returns funding, open interest, OI history and taker f
 
 test('derivatives cache prevents duplicate requests and shares in-flight work', async () => {
   let calls = 0;
-  const service = createDerivativesService({ fetchImpl: async () => {
+  const service = createDerivativesService({ fetchImpl: async (url) => {
     calls += 1;
     await new Promise((resolve) => setTimeout(resolve, 5));
-    return response({});
+    if (url.includes('premiumIndex')) return response({ lastFundingRate: '0.0001', markPrice: '65000' });
+    if (url.includes('/openInterest?')) return response({ openInterest: '123' });
+    return response([{ timestamp: 1 }]);
   }});
   const [a, b] = await Promise.all([service.snapshot('ETHUSDT'), service.snapshot('ETHUSDT')]);
   assert.equal(calls, 4);
@@ -42,7 +44,7 @@ test('derivatives cache prevents duplicate requests and shares in-flight work', 
 });
 
 test('derivatives returns partial source health without fabricating missing values', async () => {
-  const service = createDerivativesService({ fetchImpl: async (url) => url.includes('premiumIndex') ? response({ lastFundingRate: '0.01' }) : response({}, 429) });
+  const service = createDerivativesService({ fetchImpl: async (url) => url.includes('premiumIndex') ? response({ lastFundingRate: '0.01', markPrice: '100' }) : response({}, 429) });
   const result = await service.snapshot('SOLUSDT');
   assert.equal(result.status, 'success');
   assert.equal(result.partial, true);
