@@ -2394,14 +2394,15 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - `d6d127d11b5f8d9ffcad8090c3a8342dc14c3949`: market Chat Completions token/schema/retry compatibility.
 - `69a3fc1131ea82c9f72f2037a47fcd70d2548496`: Gemini market retry.
 - `7ee5def64ce70b7c0b6a37aee491d5021f7b9dcc`: market provider regression tests; Actions test run #801 passed.
-- `23fbfe486ebb0139afcbedc52bbf155f2af96892`: validate meeting JSON and correct Gemini secretary prompt. Exact-head test run #803, security run #346, and Hostless monitor run #28 were in progress when this note was written; re-check exact-head results before final handoff.
-- No local npm test was run in this connector-only session. CI is the authoritative executed test evidence. No live provider call was made because Hostless secrets are not exposed to this session.
+- `23fbfe486ebb0139afcbedc52bbf155f2af96892`: validate meeting JSON and correct Gemini secretary prompt. Exact-head GitHub Actions test run #803 completed/success; security run #346 completed/success. Hostless monitor #28 failed on LIVE readiness/snapshot checks.
+- Documentation handoff commit `179567ce70c071589bd0bec940d9cc4543d61433` recorded this work. Exact-head test run #804 completed/success; security run #347 completed/success. Hostless monitor #29 failed on LIVE readiness/snapshot checks; Hostless deployment metadata lookup was skipped because `HOSTLESS_API_KEY` is still not configured.
+- No local npm test was run in this connector-only session. CI is the authoritative executed test evidence: tests #803 and #804 passed; security scans #346 and #347 passed. These verify repository tests/scans only, not provider credentials or live AI responses. No live provider call was made because Hostless secrets are not exposed to this session.
 
 ### Status dan risiko tersisa
 - GitHub main contains the adapter fixes; provider credentials remain configured only in Hostless server environment and were not inspected or changed.
 - Code-level retries improve resilience but cannot fix an invalid/disabled key, exhausted provider quota, unavailable model, account restrictions, or persistent upstream outage. OpenRouter "User not found" may be transient infrastructure; if it persists after one retry, inspect key status and provider status page from the Hostless runtime without printing the key.
 - Gemini high-demand response gets one retry only; if still unavailable, the meeting must show provider failure and continue with remaining valid agents.
-- Hostless production readiness remains separately blocked by the previously recorded `EROFS` / `DATA_DIR` configuration. Do not equate GitHub CI success with successful provider connections or healthy LIVE app.
+- Hostless production readiness remains separately blocked by the previously recorded `EROFS` / `DATA_DIR` configuration. Monitor #29 again failed the LIVE readiness and snapshot checks; deployment SHA lookup remains skipped because `HOSTLESS_API_KEY` is absent. Do not equate GitHub CI success with successful provider connections or healthy LIVE app.
 - No AI provider is counted active unless a valid schema response is received. Meeting completion still requires enough valid agents; no auto-approval or code writes were introduced.
 
 ### NEXT TASK
