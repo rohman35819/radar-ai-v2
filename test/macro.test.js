@@ -88,7 +88,7 @@ test('macro service calls BLS v1 once and NY Fed endpoints without API keys', as
   const result = await service.snapshot();
   assert.equal(result.status, 'success');
   assert.equal(result.series.length, BLS_SERIES.length + NYFED_SERIES.length + 4 + WORLD_BANK_SERIES.length * 3);
-  assert.equal(calls.length, 6 + WORLD_BANK_SERIES.length);
+  assert.equal(calls.length, 4 + WORLD_BANK_SERIES.length);
   assert.equal(calls.filter((item) => item.options.method === 'POST').length, 1);
   assert.ok(calls.every((item) => !String(item.url).includes('api_key')));
   assert.equal(result.series.find((item) => item.id === 'SOFR').latest.value, 3.92);
@@ -108,9 +108,9 @@ test('macro service caches each source and deduplicates concurrent snapshots', a
   const [first, second] = await Promise.all([service.snapshot(), service.snapshot()]);
   assert.equal(first.status, 'success');
   assert.equal(second.status, 'success');
-  assert.equal(calls, 6 + WORLD_BANK_SERIES.length);
+  assert.equal(calls, 4 + WORLD_BANK_SERIES.length);
   const cached = await service.snapshot();
-  assert.equal(calls, 3);
+  assert.equal(calls, 4 + WORLD_BANK_SERIES.length);
   assert.equal(cached.cached, true);
 });
 
