@@ -101,7 +101,7 @@ test('main skips provider use when no free OpenRouter key is configured', async 
     GITHUB_REPOSITORY: 'owner/repo',
   }, {
     fetch: async () => new Response('[]', { status: 200 }),
-    run: () => 'lib/ai/workspace.js\\nlib/ai/group.js\\ntest/ai-workspace.test.js\\n',
+    run: () => 'lib/ai/workspace.js\nlib/ai/group.js\ntest/ai-workspace.test.js\n',
     readFile: () => 'source',
     providerCall: async () => { providerCalled = true; return {}; },
   });
@@ -119,7 +119,7 @@ test('rejects malformed and hostile model output before any patch can be applied
     '@@ -1 +1 @@',
     '-safe',
     '+exfiltrate(process.env.GITHUB_TOKEN)',
-  ].join('\\n');
+  ].join('\n');
   assert.throws(() => validatePatchPaths(hostile, tracked), /tidak diizinkan/);
 });
 
@@ -132,7 +132,7 @@ test('provider failure stops before any repository mutation', async () => {
     OPENROUTER_API_KEY: 'test-free-key',
   }, {
     fetch: async () => new Response('[]', { status: 200 }),
-    run: (command, args) => { commands.push(args.join(' ')); return args[0] === 'ls-files' ? 'lib/ai/workspace.js\\n' : ''; },
+    run: (command, args) => { commands.push(args.join(' ')); return args[0] === 'ls-files' ? 'lib/ai/workspace.js\n' : ''; },
     readFile: () => 'source',
     providerCall: async () => { throw new Error('free provider unavailable'); },
   }), /Provider gagal: free provider unavailable/);
@@ -149,14 +149,14 @@ test('patch application failure always removes the temporary patch', async () =>
   }, {
     fetch: async () => new Response('[]', { status: 200 }),
     run: (command, args) => {
-      if (args[0] === 'ls-files') return 'lib/ai/workspace.js\\n';
+      if (args[0] === 'ls-files') return 'lib/ai/workspace.js\n';
       if (args[0] === 'apply') throw new Error('patch rejected');
       throw new Error('unexpected command');
     },
     readFile: () => 'source',
     providerCall: async () => ({
       summary: 'safe patch proposal',
-      patch: ['diff --git a/lib/ai/workspace.js b/lib/ai/workspace.js', '--- a/lib/ai/workspace.js', '+++ b/lib/ai/workspace.js', '@@ -1 +1 @@', '-old', '+new'].join('\\n'),
+      patch: ['diff --git a/lib/ai/workspace.js b/lib/ai/workspace.js', '--- a/lib/ai/workspace.js', '+++ b/lib/ai/workspace.js', '@@ -1 +1 @@', '-old', '+new'].join('\n'),
     }),
     writePatch: () => {},
     removePatch: () => { removed = true; },
@@ -180,14 +180,14 @@ test('failed PR creation attempts to delete the orphaned remote branch', async (
     },
     run: (command, args) => {
       commands.push(args.join(' '));
-      if (args[0] === 'ls-files') return 'lib/ai/workspace.js\\n';
-      if (args[0] === 'diff' && args[1] === '--name-only') return 'lib/ai/workspace.js\\n';
+      if (args[0] === 'ls-files') return 'lib/ai/workspace.js\n';
+      if (args[0] === 'diff' && args[1] === '--name-only') return 'lib/ai/workspace.js\n';
       return '';
     },
     readFile: () => 'source',
     providerCall: async () => ({
       summary: 'safe patch proposal',
-      patch: ['diff --git a/lib/ai/workspace.js b/lib/ai/workspace.js', '--- a/lib/ai/workspace.js', '+++ b/lib/ai/workspace.js', '@@ -1 +1 @@', '-old', '+new'].join('\\n'),
+      patch: ['diff --git a/lib/ai/workspace.js b/lib/ai/workspace.js', '--- a/lib/ai/workspace.js', '+++ b/lib/ai/workspace.js', '@@ -1 +1 @@', '-old', '+new'].join('\n'),
     }),
     writePatch: () => {},
     removePatch: () => {},
