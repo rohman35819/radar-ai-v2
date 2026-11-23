@@ -321,7 +321,8 @@ function renderEarlyGems(){
    decodePanel.append(el('summary',{},'Decode calldata / signature (GoPlus)'));
    const decodeData=el('textarea',{rows:'3',placeholder:'Tempel transaction input / calldata (0x...)'});
    const decodeSigner=el('input',{type:'text',placeholder:'Signer wallet (opsional)'});
-   const decodeButton=el('button',{class:'mini-btn',type:'button',disabled:goPlusEnabled&&tokenAddress&&String(x.network_id||'')!=='solana'?null:true},'Decode transaksi');
+   const decodeSupported=new Set(['eth','ethereum','bsc','cronos','heco','polygon','polygon_pos','ftm','fantom','kcc','arbitrum','avalanche','avax','1','25','56','128','137','250','321','42161','43114']);
+   const decodeButton=el('button',{class:'mini-btn',type:'button',disabled:goPlusEnabled&&tokenAddress&&decodeSupported.has(String(x.network_id||'').toLowerCase())?null:true},'Decode transaksi');
    const decodeOutput=el('div',{class:'gem-validation-line'},'Masukkan calldata transaksi untuk membaca fungsi dan risiko signature.');
    decodeButton.addEventListener('click',async()=>{
     const calldata=decodeData.value.trim(),signer=decodeSigner.value.trim();
