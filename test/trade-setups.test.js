@@ -30,6 +30,8 @@ test('trade setup derives entry, stop loss and three risk-multiple targets from 
       throw new Error('unexpected endpoint');
     }
   });
+  const rows = candles();
+  rows.push([NOW, 104, 105, 103, 104.5, 500, NOW + 60 * 60 * 1000]); // current, unclosed candle must be ignored
   const result = await service.scan([{ id: 'bitcoin', name: 'Bitcoin', symbol: 'btc', market_cap_rank: 1, price_change_percentage_24h: 2, price_change_percentage_7d_in_currency: 4 }]);
   assert.equal(result.status, 'success');
   assert.equal(result.setup.symbol, 'BTCUSDT');
@@ -40,6 +42,7 @@ test('trade setup derives entry, stop loss and three risk-multiple targets from 
   assert.ok(result.setup.tp3 > result.setup.tp2);
   assert.ok(result.setup.score <= 100);
   assert.ok(calls.includes('/fapi/v1/klines'));
+  assert.ok(Date.parse(result.setup.last_closed_candle) < NOW);
 });
 
 test('trade setup refuses weak or non-trending candidates instead of inventing a signal', async () => {
