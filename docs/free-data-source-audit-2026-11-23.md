@@ -209,3 +209,44 @@ No candidate above has been activated in production by this addendum. No credent
 - Official API docs: https://docs.coinmetrics.io/api/v4 and community offering: https://github.com/coinmetrics/product-docs/blob/master/docs/packages/coin-metrics-community-data.md
 - Community endpoints do not require an API key; published IP limit is 10 requests per 6-second sliding window.
 - Official API docs describe Community API data as free for **non-commercial use** under a Creative Commons license; product docs identify the community dataset. This is not an acceptable production feed for a commercial RADAR service without an alternative written commercial license. Exclude from commercial/customer-facing RADAR. It may be used only in a clearly non-commercial research context after checking the specific dataset license and attribution.
+
+
+## Audit repository open-source untuk komponen RADAR AI — 23 November 2026
+
+### Prinsip pemilihan
+RADAR AI V2 saat ini adalah aplikasi Node.js >=20 dengan `package.json` menyatakan `zero dependencies` dan `UNLICENSED/private`. Karena itu, menambahkan framework besar atau menyalin kode copyleft ke aplikasi inti bukan keputusan otomatis. Open-source tidak berarti data/API gratis, tidak berarti bebas redistribusi data, dan tidak menghilangkan biaya server/node. Kandidat dinilai berdasarkan kecocokan Node, lisensi, status pemeliharaan, risiko operasi, dan apakah fungsi yang sama sudah tersedia di RADAR.
+
+### Shortlist repository dan keputusan
+
+| Repository | Lisensi GitHub | Kegunaan | Kecocokan / risiko | Keputusan RADAR |
+|---|---|---|---|---|
+| [ccxt/ccxt](https://github.com/ccxt/ccxt) | MIT | Unified REST client untuk 100+ exchange, JavaScript/TypeScript dan bahasa lain | Paling relevan untuk adapter CEX multi-venue; core open-source, streaming `watch*` tertentu berada pada CCXT Pro berbayar; tiap exchange tetap memiliki rate limits/terms sendiri | **Kandidat Divisi 03 untuk fase Bybit/multi-exchange**. Jangan tambahkan dependency sekarang: Binance public feed sudah native dan package RADAR sengaja zero-dependency. Uji hanya pada branch terisolasi setelah Divisi 03 menetapkan endpoint/market type |
+| [bennycode/trading-signals](https://github.com/bennycode/trading-signals) | Tidak teridentifikasi oleh metadata lisensi yang diperiksa | Indikator teknikal TypeScript | Repository aktif, tetapi lisensi belum dapat dipastikan dari metadata audit | **HOLD** sampai file LICENSE dan dependency/transitive license diverifikasi |
+| [TA-Lib/ta-lib](https://github.com/TA-Lib/ta-lib) | BSD-3-Clause | Indikator teknikal dan candlestick, native C | Memerlukan native build/binding untuk Node; menambah kompleksitas deploy Hostless dan bukan plug-in murni JS | **Tidak dipasang sekarang**; gunakan sebagai referensi validasi hasil indikator jika diperlukan |
+| [freqtrade/freqtrade](https://github.com/freqtrade/freqtrade) | GPL-3.0 | Bot crypto Python, backtesting, hyperparameter optimization, dry-run, FreqAI | Sangat berguna sebagai benchmark metodologi backtest dan risk controls, tetapi bukan library Node drop-in; GPL-3.0 memerlukan review sebelum integrasi/derivative work ke aplikasi private | **Gunakan sebagai referensi riset terpisah saja**. Jangan salin kode atau embed ke server RADAR tanpa review legal. Backtest tidak membuktikan profit masa depan |
+| [hummingbot/hummingbot](https://github.com/hummingbot/hummingbot) | Apache-2.0 | Framework Python untuk market making/arbitrage dan connectors CEX/DEX | Project standalone dan fokus execution; membutuhkan runtime/operasi tambahan serta berpotensi menempatkan dana pada risiko jika live | **Tunda**. Berguna sebagai referensi arsitektur connector/paper trading, bukan diaktifkan pada RADAR yang masih read-only |
+| [nautechsystems/nautilus_trader](https://github.com/nautechsystems/nautilus_trader) | LGPL-3.0 | Event-driven trading engine dengan core Rust dan deterministic simulation | Kapabilitas backtest/live kuat tetapi stack jauh lebih berat dari Node monolith; perlu review kewajiban LGPL dan service boundary | **Riset fase lanjutan** untuk backtest terisolasi; bukan dependency V2 saat ini |
+| [solana-foundation/solana-web3.js](https://github.com/solana-foundation/solana-web3.js) | MIT | Solana JavaScript SDK untuk RPC, transaksi, account dan program | Cocok jika RADAR perlu parsing transaksi/account lebih dalam; menambah dependency dan public RPC tetap rate-limited | **Kandidat Divisi 03/04** hanya untuk fitur Solana yang belum ditangani Solscan adapter. Jangan duplikasi fetch/RPC yang sudah ada |
+| [anza-xyz/agave](https://github.com/anza-xyz/agave) | Apache-2.0 | Solana validator dan RPC client/node | Self-hosting memerlukan hardware, bandwidth, disk, operasi validator dan sinkronisasi chain | **Tidak layak untuk Hostless saat ini**; pertimbangkan hanya jika ada anggaran infrastruktur dan kebutuhan node sendiri |
+| [rpcpool/yellowstone-grpc](https://github.com/rpcpool/yellowstone-grpc) | AGPL-3.0 | Streaming Solana Geyser/gRPC berlatensi rendah | Membutuhkan Geyser-enabled validator/provider dan ada implikasi AGPL; bukan sumber data mandiri | **HOLD** sampai kebutuhan real-time Solana terbukti, provider/node tersedia, dan Divisi 01/legal menyetujui AGPL boundary |
+| [tradingview/lightweight-charts](https://github.com/tradingview/lightweight-charts) | Apache-2.0 | Financial chart UI ringan berbasis canvas | Hanya visualisasi, bukan data/alpha; wajib mengikuti attribution/license notice; perlu cek apakah chart existing sudah memadai | **Opsional untuk Divisi 02** bila ada gap chart yang terukur; bukan prioritas intelijen |
+| [blockscout/blockscout](https://github.com/blockscout/blockscout) | NOASSERTION pada metadata API | Explorer/indexer untuk jaringan EVM | Lisensi belum dapat dipastikan; deployment membutuhkan database/indexing infra besar | **Tolak untuk integrasi sekarang** sampai lisensi dan biaya infra terverifikasi |
+
+### Prioritas yang benar-benar dapat ditindaklanjuti
+1. **Divisi 03:** buat evaluasi CCXT di branch terisolasi untuk satu adapter Bybit public market-data saja, setelah terms/redistribution per exchange diperiksa. Bandingkan dengan implementasi native; jangan mengganti Binance adapter yang telah terbukti.
+2. **Divisi 04 + Divisi 05:** gunakan Freqtrade sebagai referensi metodologi, lalu rancang backtest internal RADAR yang bebas look-ahead bias, memasukkan fee, funding, slippage, partial fills, delisting/survivorship dan out-of-sample/walk-forward. Jangan mengambil kode GPL.
+3. **Divisi 03/04:** pertimbangkan Solana web3.js hanya untuk kebutuhan parsing account/transaction yang tidak tersedia melalui Solscan. Gunakan exact mint/account signature, pagination dan provenance; public RPC bukan production SLA.
+4. **Divisi 02:** pertimbangkan Lightweight Charts hanya bila chart yang sekarang benar-benar kurang; jangan mengganti UI hanya karena repository populer.
+5. **Divisi 01:** review license notices, dependency supply-chain, network egress/SSRF, rate limits dan secret boundaries sebelum dependency baru.
+6. **Divisi 05:** QA independen, test fixture dan benchmark data sebelum adapter dipromosikan.
+
+### Kebijakan implementasi
+- Tidak ada repository eksternal yang di-clone, dijalankan, atau kodenya disalin ke main dalam audit procurement ini.
+- Tidak ada dependency baru, perubahan runtime, credential, Hostless env, atau permission yang diubah.
+- Lisensi yang tercatat adalah metadata repository saat audit; sebelum memakai kode, periksa file LICENSE pada exact tag/commit yang akan dipakai, lisensi dependency transitif, attribution/NOTICE, dan kewajiban distribusi.
+- Semua adapter data harus tetap read-only, bounded, timeout-protected, cached sesuai terms, dan menampilkan sumber/timestamp/freshness.
+- Tidak ada live order, wallet signing, withdrawal, atau eksekusi dana.
+- Link sumber utama: https://github.com/ccxt/ccxt ; https://github.com/freqtrade/freqtrade ; https://github.com/hummingbot/hummingbot ; https://github.com/nautechsystems/nautilus_trader ; https://github.com/solana-foundation/solana-web3.js ; https://github.com/anza-xyz/agave ; https://github.com/rpcpool/yellowstone-grpc ; https://github.com/tradingview/lightweight-charts ; https://github.com/TA-Lib/ta-lib ; https://github.com/blockscout/blockscout .
+
+### Kesimpulan procurement
+Tidak ada alasan aman untuk menambahkan banyak framework sekaligus ke runtime V2. **CCXT adalah kandidat kode paling praktis untuk evaluasi multi-exchange berikutnya**, sementara Freqtrade/Hummingbot/NautilusTrader berguna sebagai referensi riset/backtest/arsitektur yang berdiri terpisah. Solana web3.js hanya ditambahkan bila ada kebutuhan parsing yang tidak tertangani. Prioritas immediate tetap menyelesaikan sumber data yang sudah diotorisasi, review provider rights, dan memperbaiki blocker storage Hostless sebelum memperbesar beban sistem.
