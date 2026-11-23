@@ -223,3 +223,20 @@ Snapshot yang diverifikasi pada 22 November 2026:
 
 - Latest implementation head `e90db36ebe90c09811c44e51765e5a56fc873250`: GitHub Actions test #649 passed 110/110; security #192 Gitleaks and Trivy filesystem scan succeeded.
 - PR #59 remains Draft/unmerged; Divisi 03/05 reviews and Hostless Build/LIVE validation remain pending.
+
+
+## Change-based testing policy (effective 24 November 2026)
+
+Use targeted testing to reduce cycle time without weakening release safety:
+1. **New or changed code:** run the smallest relevant unit/component/integration tests that exercise the changed behavior. Add or update tests when behavior changes or a defect is fixed.
+2. **Unchanged code:** do not rerun its entire historical test suite solely for repetition when the change has no dependency or behavioral impact on it. Existing green evidence may be referenced with its exact commit/workflow SHA and date; it is not new test evidence for the current change.
+3. **Bug fixes:** reproduce the defect with a focused failing test where practical, apply the fix, then run that test plus directly affected neighboring paths.
+4. **Cross-boundary changes:** when a change touches API contracts, persistence/schema, authentication/authorization, provider adapters, shared utilities, or public data shapes, test both sides of the boundary and the affected integration path.
+5. **Regression scope:** expand beyond the changed file only when dependency/call-graph analysis, shared state, migration impact, or risk indicates an existing feature could be affected. Document why the scope is sufficient.
+6. **Security checks:** run targeted security checks for changes to secrets, auth, permissions, user input, file/network access, dependencies, persistence, or financial actions. Never skip a required security gate merely because the diff is small.
+7. **Pre-release minimum:** run build/syntax checks and smoke tests for changed user-visible/API paths on the candidate build. Production/Hostless behavior still requires separate deployment verification; CI is not LIVE evidence.
+8. **Reporting:** list changed paths, tests actually run, exact pass/fail/skip counts, commit SHA, and any intentionally untested areas with rationale. Never report a skipped test as passed.
+9. **Failure rule:** if a relevant test fails, stop expansion, diagnose and fix the failure first; do not spend time rerunning unrelated unchanged suites. After the fix, rerun the failed test and impacted checks on the new exact head.
+10. **Exceptions:** broad/full-suite runs remain required for release candidates, major refactors, dependency/runtime upgrades, schema migrations, security-sensitive changes, or when targeted scope cannot establish safety.
+
+This policy optimizes test selection; it does not lower acceptance criteria or authorize merging/deployment without required independent review and owner approval.
