@@ -133,6 +133,14 @@ Run `npm run news-check` to test configured RSS/Atom sources and print sanitized
 
 Run `npm run hostless-check` to probe the public `/api/ready` and `/api/snapshot` endpoints. The report contains only HTTP/readiness, storage state, News count and sanitized source health; it never prints response bodies or environment values. Set `RADAR_LIVE_URL` to probe a different public deployment.
 
+## Solana Large Transfer Watch
+
+Market Intelligence provides an on-demand large-transfer view for one explicitly supplied Solana wallet. It uses Solscan Pro API v2.0 `GET /account/transfer/export`, whose CSV includes transfer USD value and token decimals. The UI defaults to a $100,000 threshold and 24-hour window; the user may select a $10,000–$1,000,000 threshold and up to seven days.
+
+The backend validates the Solana base58 address, threshold and time window; limits export size to 5 MiB, caches each address/window for five minutes, caps per-user requests at one per minute and global requests at five per minute, and filters by the USD value reported by Solscan. Exports may contain up to 5,000 rows; if the cap is reached the response flags possible truncation. No extra API key or new environment variable is introduced.
+
+This is a **large transfer detector**, not a smart-money labeler or proof of whale ownership, accumulation, exchange flow, or intent. USD values depend on Solscan's provider valuation. If the existing Solscan plan does not allow the export endpoint, the API returns a plan-access error; no upgrade is requested or assumed.
+
 ## Solana On-Chain Intelligence (Solscan)
 
 - Set `SOLSCAN_API_KEY` in Hostless server-side Environment Variables. The key is sent only from the Node.js backend in the `token` request header; it is never returned to the browser.

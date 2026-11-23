@@ -223,3 +223,10 @@ Snapshot yang diverifikasi pada 22 November 2026:
 
 - Latest implementation head `e90db36ebe90c09811c44e51765e5a56fc873250`: GitHub Actions test #649 passed 110/110; security #192 Gitleaks and Trivy filesystem scan succeeded.
 - PR #59 remains Draft/unmerged; Divisi 03/05 reviews and Hostless Build/LIVE validation remain pending.
+
+
+## 19. Solscan large transfer watch implementation — 23 November 2026
+
+- PR #71 adds a manual per-wallet large USD transfer view via Solscan `/account/transfer/export`, reusing existing `SOLSCAN_API_KEY`; no extra secret. It validates wallet/threshold/window, parses CSV, uses 5m cache and conservative rate limits, and flags the 5,000-row cap.
+- Exact implementation head `35d3c11d3d088f293b45af9810bcfddd652ff169`: GitHub Actions test #766 passed 139/139; security #309 Gitleaks and Trivy passed.
+- This is large transfer detection, not smart-money identification. The export endpoint may be plan-gated; Hostless runtime access and wallet-specific live response remain unverified. PR is Draft/unmerged.
