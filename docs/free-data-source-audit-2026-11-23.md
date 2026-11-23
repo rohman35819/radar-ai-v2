@@ -106,3 +106,10 @@ Inventarisasi sumber data publik tanpa login/kartu kredit, dengan prioritas trad
 4. Divisi 05: fixtures untuk stale, partial, conflicting, revised, missing observations; exact-head CI + regression.
 5. Divisi 08: lanjutkan official ToS review Bybit/Hyperliquid/indexers.
 6. Executive Office: prioritaskan dan koordinasikan independent reviews. Production deployment dan financial actions tetap di approval gates.
+
+
+## CI evidence update (23 November 2026)
+- Exact head tested: c810426d9449c43a5eb8d60927f6c1bf4d499474.
+- GitHub Actions test run #743 / ID 45192843609: npm test **135 passed, 0 failed, 0 skipped**.
+- Security run #286 / ID 45192843607: Gitleaks success, no leaks; Trivy secret scanner success, no findings. Trivy vulnerability scanner did not run because there were zero supported language-specific files. Dependency vulnerability coverage is **NOT AVAILABLE**, not a clean scan.
+- Documentation-only branch; no runtime source adapter was deployed and Hostless Build/LIVE remain unverified.
