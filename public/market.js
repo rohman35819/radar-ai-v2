@@ -297,6 +297,50 @@ async function loadChart() {
     $('#price-chart').replaceChildren(node('div', 'negative', 'Grafik tidak tersedia: ' + safeText(error.message)));
   } finally { chartBusy = false; }
 }
+async function loadDerivatives() {
+  const symbol = String($('#derivatives-symbol').value || '').trim().toUpperCase();
+  const body = $('#derivatives-table');
+  const status = $('#derivatives-status');
+  if (!/^[A-Z0-9]{2,20}USDT$/.test(symbol)) {
+    status.textContent = 'Format pair tidak valid. Contoh: BTCUSDT.';
+    return;
+  }
+  body.replaceChildren();
+  const loading = node('td', 'muted', 'Memuat data Binance Futures…'); loading.colSpan = 3;
+  const loadingRow = node('tr'); loadingRow.append(loading); body.append(loadingRow);
+  try {
+    const response = await fetch('/api/market-intelligence/derivatives?symbol=' + encodeURIComponent(symbol), { cache: 'no-store' });
+    const result = await response.json();
+    if (!response.ok || result.status !== 'success') throw new Error(result.message || result.code || 'Derivatives unavailable');
+    const funding = result.data?.funding || {};
+    const oi = result.data?.open_interest || {};
+    const oiHistory = Array.isArray(result.data?.open_interest_history) ? result.data.open_interest_history : [];
+    const taker = Array.isArray(result.data?.taker_flow) ? result.data.taker_flow : [];
+    const latestOI = oiHistory[oiHistory.length - 1] || {};
+    const latestTaker = taker[taker.length - 1] || {};
+    const rows = [
+      ['Funding rate terakhir', funding.lastFundingRate == null ? null : Number(funding.lastFundingRate) * 100, 'Persentase per periode funding'],
+      ['Mark price', funding.markPrice == null ? null : Number(funding.markPrice), 'Harga mark USD'],
+      ['Open interest kontrak', oi.openInterest == null ? null : Number(oi.openInterest), 'Jumlah kontrak; bukan arah long/short'],
+      ['Open interest value', latestOI.sumOpenInterestValue == null ? null : Number(latestOI.sumOpenInterestValue), 'Nilai USD dari histori 5 menit'],
+      ['Taker buy volume', latestTaker.buyVol == null ? null : Number(latestTaker.buyVol), 'Interval 5 menit'],
+      ['Taker sell volume', latestTaker.sellVol == null ? null : Number(latestTaker.sellVol), 'Interval 5 menit'],
+      ['Taker buy/sell ratio', latestTaker.buySellRatio == null ? null : Number(latestTaker.buySellRatio), 'Di atas 1 berarti buy aggressor lebih besar']
+    ];
+    body.replaceChildren();
+    rows.forEach(([label, value, unit]) => {
+      const tr = node('tr');
+      tr.append(node('td', '', label), node('td', 'number-cell', value == null || !Number.isFinite(value) ? 'N/A' : label.includes('rate') ? value.toFixed(4) + '%' : label.includes('price') ? fmtMoney(value) : fmtNum(value)), node('td', 'muted', unit));
+      body.append(tr);
+    });
+    const failures = Object.entries(result.sources || {}).filter(([, source]) => !source.ok).map(([name, source]) => name + ': ' + source.error);
+    status.textContent = symbol + ' · ' + new Date(result.observed_at).toLocaleString('id-ID') + (result.cached ? ' · cache 5 menit' : '') + (failures.length ? ' · parsial: ' + failures.join(', ') : ' · semua sumber OK');
+  } catch (error) {
+    body.replaceChildren();
+    const tr = node('tr'); const td = node('td', 'negative', safeText(error.message)); td.colSpan = 3; tr.append(td); body.append(tr);
+    status.textContent = 'Data derivatives tidak tersedia. Coba lagi setelah cooldown.';
+  }
+}
 async function loadAICouncilSummary() {
   const target = $('#ai-market-summary');
   try {
@@ -367,6 +411,8 @@ document.querySelectorAll('.side-nav a').forEach((link) => link.addEventListener
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
 window.addEventListener('resize', () => { if (window.innerWidth > 760) setSidebarOpen(false); });
 $('#refresh').addEventListener('click', () => loadMarket(true));
+$('#load-derivatives').addEventListener('click', loadDerivatives);
+$('#derivatives-symbol').addEventListener('keydown', (event) => { if (event.key === 'Enter') loadDerivatives(); });
 $('#coin-search').addEventListener('input', (event) => { search = event.target.value.trim().toLowerCase(); marketRows(); });
 $('#chart-coin').addEventListener('change', loadChart);
 $('#chart-days').addEventListener('change', loadChart);
