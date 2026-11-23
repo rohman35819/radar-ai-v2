@@ -2196,3 +2196,14 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - PR #46 latest code/test head passed. Documentation-only update follows; exact latest HEAD checks must complete before merge.
 - Hostless Build, GoPlus live credential test, deployed SHA and LIVE desktop/mobile visual QA remain unverified.
 - NEXT TASK: confirm documentation-head CI, merge PR #46, then verify Hostless Build and deployed LIVE SHA separately.
+
+
+### 67.3 Final exact-head validation — 23 November 2026
+- Latest PR #46 code/test head: `38e048d99c269a18673b658ca8f12c15fb832e16`.
+- GitHub Actions test run `45173872276`: **132 passed, 0 failed, 0 skipped**.
+- Same exact head security run `45173872164`: **Gitleaks success + Trivy success**.
+- Final UI clarification: DEX liquidity and 24-hour volume are labeled as **pair-level** metrics, not token-only metrics.
+- GoPlus free plan guard: 5 calls/minute, 1,000/day, 5,000/month (based on the provider's published free CU allowance and 25-CU token-security price reference); persistent state counter, on-demand only, 5-minute token cache.
+- PR #59 is merged. PR #46 is ready for merge on top of merge commit `3a3380d60d4d14db860ca503dca63d3d61d45a53`.
+- Hostless Build, deployed SHA, GoPlus credential-backed runtime call, and LIVE desktop/mobile visual QA are still not verified.
+- NEXT TASK: merge PR #46, then verify Hostless build/deployed SHA and confirm GoPlus configuration status from the live dashboard.
