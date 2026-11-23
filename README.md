@@ -133,6 +133,12 @@ Run `npm run news-check` to test configured RSS/Atom sources and print sanitized
 
 Run `npm run hostless-check` to probe the public `/api/ready` and `/api/snapshot` endpoints. The report contains only HTTP/readiness, storage state, News count and sanitized source health; it never prints response bodies or environment values. Set `RADAR_LIVE_URL` to probe a different public deployment.
 
+## Global News Catalyst Scanner (GDELT)
+
+Market Intelligence includes an on-demand global news discovery panel backed by the public GDELT DOC 2.0 API. It requests up to 50 article metadata records matching a fixed crypto/macro catalyst query over the last 24 hours. No API key, account, card, or new environment variable is required.
+
+The backend caches results for 15 minutes, limits upstream calls to at most one every 5 seconds, enforces per-IP limits, validates HTTPS publisher URLs, deduplicates links, and returns stale cached data if GDELT throttles or fails. The UI displays publisher title, domain, language, source country, publication time when provided, and the publisher URL. It does not scrape or republish article body text. Original article content remains with the publisher; GDELT metadata is a discovery signal, not fact verification or a trading signal.
+
 ## Solana On-Chain Intelligence (Solscan)
 
 - Set `SOLSCAN_API_KEY` in Hostless server-side Environment Variables. The key is sent only from the Node.js backend in the `token` request header; it is never returned to the browser.

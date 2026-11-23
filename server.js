@@ -11,6 +11,7 @@ const { createMarketIntelligenceService } = require('./lib/market-intelligence')
 const { createDerivativesService } = require('./lib/derivatives');
 const { createDexScreenerService } = require('./lib/dexscreener');
 const { createGoPlusService } = require('./lib/goplus');
+const { createGdeltService } = require('./lib/gdelt');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
@@ -50,12 +51,13 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService, dexScreenerService, goPlusService } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService, dexScreenerService, goPlusService, gdeltService } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
   const solscanApi = solscanService || createSolscanService();
   const marketIntelligence = marketIntelligenceService || createMarketIntelligenceService({ apiKey: cfg.cgKey });
   const derivatives = derivativesService || createDerivativesService();
   const dexScreener = dexScreenerService || createDexScreenerService();
+  const gdelt = gdeltService || createGdeltService();
   
   const matchesToken = (expectedValue, provided) => {
     if (!expectedValue || typeof provided !== 'string') return false;
@@ -87,6 +89,8 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const dexScreenerGlobalLimited = createRateLimiter({ limit: 240, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerLimited = createRateLimiter({ limit: 30, windowMs: 60000, maxKeys: 1000 });
   const goPlusLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1000 });
+  const gdeltGlobalLimited = createRateLimiter({ limit: 1, windowMs: 5000, maxKeys: 1 });
+  const gdeltLimited = createRateLimiter({ limit: 4, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
     .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
     .catch((error) => {
@@ -249,6 +253,17 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'GOPLUS_UPSTREAM_ERROR';
             const status = Number.isInteger(error.status) ? error.status : 502;
             send(res, status, { status: 'error', code, message: code === 'GOPLUS_NOT_CONFIGURED' ? 'GoPlus gratis tersedia, tetapi kredensial Console belum dikonfigurasi di server.' : code === 'GOPLUS_BUSY' ? 'Antrean GoPlus sedang penuh; coba lagi sebentar.' : code === 'GOPLUS_FREE_QUOTA_DAILY' ? 'Batas kuota gratis GoPlus untuk hari ini tercapai.' : code === 'GOPLUS_FREE_QUOTA_MONTHLY' ? 'Batas kuota gratis GoPlus untuk bulan ini tercapai.' : code === 'GOPLUS_LOCAL_RATE_LIMITED' || code === 'GOPLUS_RATE_LIMITED' ? 'Batas request GoPlus per menit tercapai; coba lagi nanti.' : code.startsWith('GOPLUS_INVALID_') || code === 'GOPLUS_UNSUPPORTED_NETWORK' ? 'Jaringan atau alamat token tidak valid/tidak didukung GoPlus.' : 'Data keamanan GoPlus belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/market-intelligence/news-catalysts' && req.method === 'GET') {
+          if (gdeltGlobalLimited('global') || gdeltLimited(ip)) return send(res, 429, { status: 'error', code: 'GDELT_LOCAL_RATE_LIMITED', message: 'Pencarian berita global dibatasi agar layanan gratis tidak terkena throttle.' }, 'application/json', { 'retry-after': '5', 'cache-control': 'no-store' });
+          gdelt.snapshot().then((payload) => {
+            send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=60' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'GDELT_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            send(res, status, { status: 'error', code, message: code === 'GDELT_RATE_LIMITED' || code === 'GDELT_COOLDOWN' || code === 'GDELT_LOCAL_RATE_LIMITED' ? 'GDELT sedang membatasi permintaan. Tunggu sebelum mencoba lagi.' : 'News catalyst dari GDELT belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }

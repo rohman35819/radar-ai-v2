@@ -2456,3 +2456,43 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 2. Setelah Hostless deployment tersedia, jalankan test provider satu per satu tanpa menampilkan secret: HTTP status, model, latency, valid JSON, token usage, dan sanitized error.
 3. Pastikan Gemini/Groq/OpenRouter/OpenAI benar-benar menyelesaikan rapat 3 putaran serta notulen dengan output lebih lengkap.
 4. Jika provider menolak 4096 karena model cap, gunakan cap per-model yang didokumentasikan; jangan retry berulang tanpa batas.
+
+
+## 74. GLOBAL NEWS CATALYST DISCOVERY + MACRO BACKLOG — 23 NOVEMBER 2026
+
+### Implemented on isolated branch
+- Lead: Divisi 04 — AI Intelligence & Research. Support: Divisi 08 source rights, Divisi 01 API/security, Divisi 02 Market UI, Divisi 05 independent QA.
+- Branch: `feat/gdelt-news-catalyst-scanner`, based on current main at branch creation.
+- Added `lib/gdelt.js`: GDELT DOC 2.0 ArtList query, fixed crypto/macro catalyst terms, 24h window, max 50 article metadata records, strict HTTPS publisher URLs, URL dedupe, parsed GDELT seen date, 15-minute cache, in-flight dedupe, stale fallback and 5-second upstream cooldown.
+- Added on-demand `GET /api/market-intelligence/news-catalysts`, global + per-IP rate limits; no credentials, new environment variables, paid services, article-body scraping or content republishing.
+- Added Global News Catalyst Scanner panel to `public/market.html`, `public/market.js`, `public/market.css`. User action only; no auto-polling. Titles/URLs are rendered as text/links, not HTML.
+- Added `test/gdelt.test.js`, Market UI assertions, package syntax check, README documentation.
+- GDELT is discovery metadata only. Article title/tone/language/source-country are not verified facts; publisher retains original content. One provider call can be throttled; stale/partial states remain visible.
+- Official references: GDELT DOC 2.0 guide https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/ ; endpoint/rate-limit note https://gdeltcloud.com/gdelt-api (secondary observation; production client enforces >=5s spacing, 15m cache).
+
+### Verified current-main data integrations / gaps
+- Binance Futures funding, mark price, OI, OI history and taker flow are merged and were probed successfully on Hostless in the latest recorded monitor. GeckoTerminal indexed new/trending pools and DEX pair validation are present; monitor previously reported 80 pools and exact-pool DEX match. This is not full chain-wide discovery.
+- GoPlus Token Security adapter and quota guard are merged. Latest Hostless diagnostic reported `credentials_configured=false`, usage 0/0; no live security lookup can succeed until BOS configures valid GoPlus Console credentials server-side. Never claim the feature is runtime-active.
+- Solscan wallet endpoint currently returns account, portfolio, token accounts, transactions, transfers, DeFi activities and stake for an explicitly supplied address. There is no validated smart-money label database, broad address discovery, or confirmed USD whale threshold. Do not call raw transfer size a whale signal without token decimals/pricing and entity provenance.
+- Token unlock source remains manual JSON or owner-provided URL. No generally free, no-login, legally cleared, reliable all-chain unlock API was established.
+- Holder/LP fields are normalized from GoPlus when present; no reliable, complete holder concentration feed across every supported chain has been established.
+- Macro candidate PR #65 branch `feat/primary-macro-intelligence` is based on current main (0 behind), exact head `2428483049c5d36e6e997036845e212639d92472`, CI tests 141/141 (run #734), Gitleaks + Trivy passed (run #277). It implements BLS CPI/unemployment/payroll/hourly earnings and NY Fed SOFR/EFFR, with 12h/1h cache and notices. No independent Divisi 04/05 review is recorded; not merged/LIVE.
+- Division 08 audit PR #67 branch `docs/div08-free-data-source-audit-2026-11-23`, exact head `93d65f0dc4e1b3bcfad507b292c71e36c1551fa7`, tests 135/135 (run #750), Gitleaks + Trivy passed (#293). It recommends GDELT, Treasury Fiscal Data, World Bank, BLS/NYFed, ECB/OECD under source-specific terms; it blocks DEX Screener expansion pending legal clearance and FRED pending written permission.
+- Do not merge stale DEX Screener PR #60 or treat its broader feed as approved. Main has only on-demand pair validation and current audit flags product-competition restrictions. Do not merge FRED candidate; written permission required.
+- Latest main HEAD audited: `4a08855cf22c94c18c97ed550de3ba0706095d44`. Historical Hostless monitor: Binance Futures and DEX pair probes success; GeckoTerminal feed healthy; readiness remains HTTP 503 / degraded / EROFS. Deployment SHA unverified without HOSTLESS_API_KEY. Persistent storage fix remains BOS action: attach an existing persistent disk at /data and set DATA_DIR=/data; don't silently use ephemeral storage or create paid disk without approval.
+
+### NEXT TASK
+1. Complete exact-head CI/security for GDELT PR and independent Divisi 05 QA.
+2. Divisi 04/05 review PR #65 BLS + NY Fed; integrate only after current-main exact-head checks and review.
+3. Add Treasury Fiscal Data and World Bank historical macro as separate adapters with explicit publication/observation dates and metadata; avoid look-ahead bias.
+4. Design whale detection from Solscan only after transfer endpoint response shape, decimals/USD price provenance, address ownership labels, and source terms are validated; use explicit watchlists first, not false smart-money attribution.
+5. Resolve GoPlus credential gate and perform one manual on-demand token security lookup; never consume quota from scheduled monitor.
+6. Token unlock automation and broad holder concentration remain blocked pending a lawful reliable source or deterministic on-chain contract coverage.
+7. Keep EROFS/readiness and deployment SHA verification as operational release gates.
+
+
+### 74.1 Exact-head CI and QA evidence
+- Exact implementation head `3b4099c21ee2b16b83c6d206338bf72955ab421d`: test run #753 / ID `45194992249` passed **140/140, 0 failed, 0 skipped**.
+- Security run #296 / ID `45194991927`: Gitleaks and Trivy filesystem scan completed successfully.
+- Earlier test run #752 failed two assertions because fixture `No title` actually contained a non-empty title. The fixture was corrected to an empty title; latest exact-head test suite is green.
+- PR #70 remains Draft/open/unmerged. Independent Divisi 05 QA and Hostless Build/LIVE verification remain pending. CI mocks do not prove live GDELT connectivity.
