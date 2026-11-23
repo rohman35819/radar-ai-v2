@@ -2508,3 +2508,29 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 3. Port PR #43 and #45 manually onto current main; port PR #55 and #57 only as isolated UI/data modules after current API contract review.
 4. Keep PR #55/#57/#43/#45 in Draft until their current-main port and exact-head tests/security/reviews pass.
 5. Resolve Hostless EROFS with BOS-approved persistent storage decision before claiming durable tracking or LIVE readiness.
+
+---
+
+## 75. GEMINI REVIEW MODEL FREE-TIER — 24 NOVEMBER 2026
+
+### Tujuan dan akar masalah
+- Workflow Gemini review sebelumnya tidak menetapkan model secara eksplisit. Run #50 (workflow run ID `45235815317`) gagal pada model `gemini-3.1-pro` karena Google API mengembalikan Free Tier request/token limit = 0 untuk model tersebut; ini bukan bukti bahwa `GEMINI_API_KEY` invalid atau habis.
+- Dokumentasi resmi action `google-github-actions/run-gemini-cli@v0` menyediakan input `gemini_model`; dokumentasi Gemini CLI juga mendukung pemilihan model tertentu.
+
+### Perubahan terisolasi
+- Branch: `fix/gemini-free-tier-model` dari main HEAD `bb4c002c9f3cccae266504131a54583a406dbb5b`.
+- File: `.github/workflows/gemini-assistant.yml`.
+- Menambahkan `gemini_model: gemini-2.5-flash` agar workflow tidak lagi bergantung pada default/model Pro yang sebelumnya terkena kuota nol.
+- Mempertahankan secret reference `GEMINI_API_KEY`, trigger manual komentar `@gemini`, permission workflow, approval mode `plan`, dan daftar tool read-only. Tidak ada secret/key yang dibaca atau diubah.
+- Tidak ada fallback otomatis ke model kedua: bila kuota Flash juga habis, run tetap akan melaporkan kegagalan provider secara transparan; jangan menganggap free-tier quota selalu tersedia.
+
+### Bukti dan status
+- Workflow change commit: `53f8ee130cf523f5b3921d34025f1eb35af3d09d`.
+- Validasi YAML/CI dan exact-head workflow execution: menunggu hasil setelah PR dibuat; belum diklaim lulus.
+- Hostless Build/LIVE: tidak relevan untuk perubahan GitHub Actions ini dan tidak diverifikasi.
+- PR belum dibuat pada saat catatan ini ditulis.
+
+### NEXT TASK
+1. Validasi sintaks YAML dan diff workflow; pastikan tidak ada perubahan permission/tool selain penetapan model.
+2. Buat PR draft untuk review dan jalankan workflow hanya setelah PR tersedia. Konfirmasi model yang dipakai dan hasil API tanpa mencetak key.
+3. Jika `gemini-2.5-flash` juga tidak memiliki kuota pada project BOS, periksa usage/quota Google AI Studio; pertimbangkan `gemini-2.5-flash-lite` hanya setelah kuotanya terverifikasi.
