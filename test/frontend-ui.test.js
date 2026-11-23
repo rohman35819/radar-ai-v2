@@ -35,3 +35,12 @@ test('Membership preview keeps the registration name field hidden in login mode'
   assert.match(membershipHtml,/id="name-field" hidden/);
   assert.match(membershipCss,/#name-field\[hidden\]\s*\{\s*display:\s*none\s*\}/);
 });
+
+
+test('Early Gem GoPlus audit uses the published chain catalog and verifies credentials first',()=>{
+  assert.match(app,/goplus_supported_networks/);
+  assert.match(app,/goPlusChain=goPlusNetworks\.find/);
+  assert.match(app,/GoPlus tidak mendukung chain/);
+  assert.match(app,/\/api\/market-intelligence\/goplus\/status/);
+  assert.match(app,/credentialStatus\.verified/);
+});
