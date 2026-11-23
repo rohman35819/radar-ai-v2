@@ -2145,3 +2145,10 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Independent Divisi 03 (derivatives interpretation) and Divisi 05 (QA) reviews remain pending. No Hostless build/deploy or LIVE API verification has been performed.
 - No test evidence here validates the Hostless environment or upstream Binance response from production; CI uses controlled mocks.
 
+
+
+### 65.2 Final exact-head validation
+- Latest code head: `e90db36ebe90c09811c44e51765e5a56fc873250` (adds explicit `node --check lib/derivatives.js` to the npm test command).
+- GitHub Actions test run #649 / ID `45166095636`: completed / success; **110 passed, 0 failed** on the exact head.
+- Security run #192 / ID `45166095704`: Gitleaks success and Trivy filesystem scan completed successfully.
+- PR #59 remains Draft and unmerged. Independent Divisi 03/05 review and Hostless build/LIVE checks remain pending.
