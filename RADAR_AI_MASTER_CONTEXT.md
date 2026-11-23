@@ -2300,7 +2300,9 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Sumber resmi: https://fred.stlouisfed.org/docs/api/fred/ ; https://fred.stlouisfed.org/docs/api/terms_of_use.html ; https://fred.stlouisfed.org/docs/api/fred/errors.html.
 
 ### QA / deployment
-- Tes service dan route ditambahkan; hasil CI exact-head belum tersedia pada saat dokumentasi ini ditulis.
+- GitHub Actions exact head `3661a2c485c5493a813c97f9556e4d747db73c18`: test run `45188659728` — **141 passed, 0 failed, 0 skipped**.
+- Security run `45188660054`: Gitleaks job success; Trivy job success, tetapi log menyatakan tidak ada supported language-specific files untuk vulnerability scanner (`num=0`, scanner vuln not scanned). Jangan menyebut vulnerability coverage bersih/terverifikasi.
+- PR #64 sudah Ready for Review dan mergeable, tetapi belum merged. Review independen Divisi 01/02/05 belum tercatat.
 - Live FRED credential probe belum dijalankan; keberadaan FRED_API_KEY di Hostless belum dapat dibaca dari GitHub.
-- Hostless readiness tetap memiliki blocker EROFS yang tercatat di section 68/69. Jangan klaim FRED aktif di Live sebelum redeploy dan probe endpoint.
-- NEXT TASK: jalankan exact-head CI/security pada PR, lakukan review independen Divisi 01/02/05, kemudian setelah merge dan Hostless storage blocker selesai, verifikasi /api/market-intelligence/macro dengan key server-side tanpa mengungkap key.
+- Hostless readiness tetap memiliki blocker EROFS yang tercatat di section 68/69. Jangan klaim FRED aktif di Live sebelum storage blocker selesai, redeploy, dan probe endpoint.
+- NEXT TASK: selesaikan review independen Divisi 01/02/05; jika lolos, merge PR #64. Setelah BOS memperbaiki DATA_DIR=/data dan redeploy, verifikasi /api/market-intelligence/macro dengan key server-side tanpa mengungkap key.
