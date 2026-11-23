@@ -175,7 +175,7 @@ Do not use `/tmp` for RADAR AI state: Hostless clears it when the process starts
 ## Trade Setup Scanner (read-only)
 Dashboard overview menampilkan satu kandidat LONG terbaik bila lolos seluruh filter teknikal:
 - Universe berasal dari daftar CoinGecko Market Intelligence; hanya ticker unik yang cocok dengan kontrak Binance USDⓈ-M USDT perpetual berstatus TRADING yang dipertimbangkan.
-- Data setup memakai mark price dan candle 1 jam yang sudah ditutup. Filter mencakup EMA20/EMA50, kemiringan EMA20, RSI14, ATR14, dan rasio volume 5 candle terhadap median 20 candle sebelumnya.
+- Data setup memakai mark price dan candle 1 jam yang sudah ditutup. Filter mencakup EMA20/EMA50, kemiringan EMA20, momentum Binance 24 jam dan 7 hari, RSI14, ATR14, dan rasio volume 5 candle terhadap median 20 candle sebelumnya.
 - Entry adalah mark price referensi saat scan; Stop Loss = Entry − 1.5 × ATR14; TP1/TP2/TP3 masing-masing = Entry + 1R/2R/3R. R = 1.5 × ATR14.
 - Skor 0–100 adalah indicator confluence, bukan probabilitas profit. Bila tidak ada kandidat yang lolos, UI menampilkan no setup dan tidak memaksakan sinyal.
 - Endpoint publik read-only: `GET /api/market-intelligence/trade-setups`; dibatasi 6 request/menit per IP dan 60 request/menit global. Hasil di-cache 2 menit.
