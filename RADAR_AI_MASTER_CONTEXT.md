@@ -2306,3 +2306,16 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Divisi 01: review keamanan adapter kandidat alternatif sebelum implementasi.
 - Divisi 05: QA independen.
 - Jangan mengaktifkan FRED sampai izin tertulis/pengecualian diterima. Prioritas operasional Hostless EROFS/DATA_DIR tetap berlaku sesuai section 68/69.
+
+
+## 72. Marketlight cross-exchange derivatives adapter — 23 November 2026
+- Lead implementation: Division 03 — Market / Trading Intelligence. Supporting procurement: Division 08. Required reviewers: Division 01 Security and Division 05 QA; Division 02 owns any follow-up visual refinement.
+- Added a read-only, no-login Marketlight adapter in `lib/marketlight.js` and endpoint `GET /api/market-intelligence/marketlight?base=BTC&hours=24`.
+- Added an explicit manual-refresh panel to `/market.html` for cross-exchange OI/funding, liquidation summary and Fear & Greed. No background polling of all assets.
+- Only 24 documented base assets and 1/4/12/24-hour liquidation windows are accepted.
+- Adapter safeguards: fixed provider host/path, GET-only, redirect rejection, 8-second timeout, 1 MiB response cap, schema/numeric validation, 5-minute OI/Fear & Greed cache, 60-second liquidation cache, in-flight deduplication, 20-second global request-batch cooldown and per-IP API rate limit.
+- Provider terms/docs: https://marketlight.ai/developers. Public API is documented as CC BY 4.0 including commercial use with visible Marketlight attribution. Dashboard displays attribution. Data is aggregated exchange corroboration, not independent ground truth; funding intervals remain venue-specific.
+- Files: `lib/marketlight.js`, `server.js`, `public/market.html`, `public/marketlight.js`, `test/marketlight.test.js`, `docs/marketlight-integration.md`.
+- No API key/login/card, exchange credential, Hostless env, permission, dependency, trading/order, signing, or withdrawal change.
+- Local `npm test` not run in this session. GitHub Actions for exact final head pending. Hostless Build/Live not checked. No production deployment claim.
+- NEXT TASK: run exact-head CI; fix all failures; obtain Division 01 security and Division 05 independent QA; Division 03 validate actual API response semantics; only then request BOS release approval. Binance public futures expansion remains separate follow-up work.
