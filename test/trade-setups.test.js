@@ -11,7 +11,7 @@ function candles({ rising = true, volumeSpike = true } = {}) {
     price = rising ? price * (i % 3 === 2 ? 0.9975 : 1.002) : 100;
     const openTime = NOW - (200 - i) * 60 * 60 * 1000;
     const closeTime = openTime + 60 * 60 * 1000 - 1;
-    const volume = volumeSpike && i >= 75 ? 300 : 100;
+    const volume = volumeSpike && i >= 195 ? 300 : 100;
     rows.push([openTime, price * 0.999, price * 1.004, price * 0.996, price, volume, closeTime]);
   }
   return rows;
