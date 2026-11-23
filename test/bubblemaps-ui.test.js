@@ -32,3 +32,10 @@ test('Bubble Maps labels transfer relationships carefully and never presents the
   assert.match(app, /tidak membuktikan kepemilikan bersama atau niat membeli/);
   assert.match(app, /jangan gunakan simbol ticker/i);
 });
+
+test('Bubble Maps validates contract addresses by chain instead of accepting ticker symbols', () => {
+  assert.match(app, /function isValidBubbleTokenAddress/);
+  assert.match(app, /\^0x\[a-fA-F0-9\]\{40\}\$/);
+  assert.match(app, /1-9A-HJ-NP-Za-km-z\]\{32,44\}/);
+  assert.match(app, /isValidBubbleTokenAddress\(chainId,tokenAddress\)/);
+});
