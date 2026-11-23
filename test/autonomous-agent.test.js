@@ -108,3 +108,91 @@ test('main skips provider use when no free OpenRouter key is configured', async 
   assert.equal(providerCalled, false);
   assert.equal(result, undefined);
 });
+
+test('rejects malformed and hostile model output before any patch can be applied', () => {
+  assert.throws(() => extractJson('not JSON'), /tidak mengembalikan JSON/);
+  const tracked = new Set(['lib/ai/workspace.js']);
+  const hostile = [
+    'diff --git a/server.js b/server.js',
+    '--- a/server.js',
+    '+++ b/server.js',
+    '@@ -1 +1 @@',
+    '-safe',
+    '+exfiltrate(process.env.GITHUB_TOKEN)',
+  ].join('\\n');
+  assert.throws(() => validatePatchPaths(hostile, tracked), /tidak diizinkan/);
+});
+
+test('provider failure stops before any repository mutation', async () => {
+  const commands = [];
+  await assert.rejects(main({
+    AUTONOMOUS_AGENT_ENABLED: '1',
+    GITHUB_TOKEN: 'test-token',
+    GITHUB_REPOSITORY: 'owner/repo',
+    OPENROUTER_API_KEY: 'test-free-key',
+  }, {
+    fetch: async () => new Response('[]', { status: 200 }),
+    run: (command, args) => { commands.push(args.join(' ')); return args[0] === 'ls-files' ? 'lib/ai/workspace.js\\n' : ''; },
+    readFile: () => 'source',
+    providerCall: async () => { throw new Error('free provider unavailable'); },
+  }), /Provider gagal: free provider unavailable/);
+  assert.deepEqual(commands, ['ls-files']);
+});
+
+test('patch application failure always removes the temporary patch', async () => {
+  let removed = false;
+  await assert.rejects(main({
+    AUTONOMOUS_AGENT_ENABLED: '1',
+    GITHUB_TOKEN: 'test-token',
+    GITHUB_REPOSITORY: 'owner/repo',
+    OPENROUTER_API_KEY: 'test-free-key',
+  }, {
+    fetch: async () => new Response('[]', { status: 200 }),
+    run: (command, args) => {
+      if (args[0] === 'ls-files') return 'lib/ai/workspace.js\\n';
+      if (args[0] === 'apply') throw new Error('patch rejected');
+      throw new Error('unexpected command');
+    },
+    readFile: () => 'source',
+    providerCall: async () => ({
+      summary: 'safe patch proposal',
+      patch: ['diff --git a/lib/ai/workspace.js b/lib/ai/workspace.js', '--- a/lib/ai/workspace.js', '+++ b/lib/ai/workspace.js', '@@ -1 +1 @@', '-old', '+new'].join('\\n'),
+    }),
+    writePatch: () => {},
+    removePatch: () => { removed = true; },
+  }), /patch rejected/);
+  assert.equal(removed, true);
+});
+
+test('failed PR creation attempts to delete the orphaned remote branch', async () => {
+  const commands = [];
+  const requests = [];
+  await assert.rejects(main({
+    AUTONOMOUS_AGENT_ENABLED: '1',
+    GITHUB_TOKEN: 'test-token',
+    GITHUB_REPOSITORY: 'owner/repo',
+    OPENROUTER_API_KEY: 'test-free-key',
+  }, {
+    fetch: async (url, options = {}) => {
+      requests.push(options.method || 'GET');
+      if (!options.method) return new Response('[]', { status: 200 });
+      return new Response(JSON.stringify({ message: 'permission denied' }), { status: 403 });
+    },
+    run: (command, args) => {
+      commands.push(args.join(' '));
+      if (args[0] === 'ls-files') return 'lib/ai/workspace.js\\n';
+      if (args[0] === 'diff' && args[1] === '--name-only') return 'lib/ai/workspace.js\\n';
+      return '';
+    },
+    readFile: () => 'source',
+    providerCall: async () => ({
+      summary: 'safe patch proposal',
+      patch: ['diff --git a/lib/ai/workspace.js b/lib/ai/workspace.js', '--- a/lib/ai/workspace.js', '+++ b/lib/ai/workspace.js', '@@ -1 +1 @@', '-old', '+new'].join('\\n'),
+    }),
+    writePatch: () => {},
+    removePatch: () => {},
+    now: () => new Date('2026-11-24T00:00:00.000Z'),
+  }), /PR gagal: permission denied/);
+  assert.deepEqual(requests, ['GET', 'POST']);
+  assert.ok(commands.some((command) => command.startsWith('push origin --delete ai-dev/autonomous-')));
+});
