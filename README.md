@@ -60,14 +60,16 @@ Batasan:
 
 ## Macroeconomic Intelligence (primary public sources)
 
-RADAR's macro endpoint is `GET /api/market-intelligence/macro`. It combines four monthly U.S. labor/inflation/wage series from the BLS Public Data API v1 and SOFR/EFFR reference rates from the New York Fed Markets API. No provider API key, payment card, or paid plan is required.
+RADAR's macro endpoint is `GET /api/market-intelligence/macro`. It combines four monthly U.S. labor/inflation/wage series from the BLS Public Data API v1, SOFR/EFFR reference rates from the New York Fed Markets API, monthly average Treasury security rates from U.S. Treasury Fiscal Data, and annual GDP growth/CPI inflation/unemployment indicators for the United States, China, and Indonesia from the World Bank Indicators API. No provider API key, payment card, or paid plan is required.
 
 - BLS v1 batches four series in one POST request and does not require registration; BLS documents 25 queries/day, so the backend caches this group for 12 hours. The BLS v2 registered tier is optional and offers higher documented limits.
 - New York Fed returns the latest SOFR and EFFR observations without a key; the backend caches these rates for one hour.
+- U.S. Treasury average interest rates are monthly government debt statistics, not real-time secondary-market yields; the backend caches them for 12 hours and preserves record dates.
+- World Bank provides annual historical indicators for USA, China and Indonesia; the backend caches them for 24 hours. The observation year is not the publication/availability date, so these data are context only and must not be used for look-ahead-sensitive backtests without release-date provenance.
 - Local endpoint rate limit: 5 requests/minute/IP and global; upstream timeouts are 10 seconds; stale data is explicitly marked.
 - Missing/empty observations remain null, never zero. All data is retrieved from the original provider, not FRED.
 
-Attribution and notices are displayed in Market Intelligence. BLS requires a retrieval date and the statement that BLS cannot vouch for downstream data/analysis. New York Fed reference-rate data requires its specific republication disclaimer and non-affiliation notice. Review provider terms before adding other series. Sources: [BLS API](https://www.bls.gov/developers/), [BLS Terms](https://www.bls.gov/developers/termsOfService.htm), [New York Fed Markets API](https://markets.newyorkfed.org/static/docs/markets-api.html), [New York Fed Terms](https://www.newyorkfed.org/privacy/termsofuse.html).
+Attribution and notices are displayed in Market Intelligence. BLS requires a retrieval date and the statement that BLS cannot vouch for downstream data/analysis. New York Fed reference-rate data requires its specific republication disclaimer and non-affiliation notice. Review provider terms before adding other series. Sources: [BLS API](https://www.bls.gov/developers/), [BLS Terms](https://www.bls.gov/developers/termsOfService.htm), [New York Fed Markets API](https://markets.newyorkfed.org/static/docs/markets-api.html), [New York Fed Terms](https://www.newyorkfed.org/privacy/termsofuse.html), [Treasury Fiscal Data API](https://fiscaldata.treasury.gov/api-documentation/), and [World Bank Indicators API](https://datahelpdesk.worldbank.org/knowledgebase/articles/889392).
 
 ## Futures Flow Intelligence (free public market data)
 
