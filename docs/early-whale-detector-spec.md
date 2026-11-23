@@ -214,3 +214,86 @@ The current app uses a native Node HTTP server and zero npm runtime dependencies
 - Keep new routes/modules feature-flagged and default disabled until source credentials/quotas and persistence gates pass.
 - Rollback: disable the feature flag, stop new subscriptions/notifications, retain existing dashboard and market-intelligence routes; no destructive migration.
 - GitHub CI, Hostless Build, and verified LIVE are separate release gates.
+
+
+## 14. BOS requirement: real-time movement alerts and actionable trading plans
+
+The product must notify the user about every **meaningful detected market event** for every asset in the active scan universe. “Every movement” means event-driven market changes, not every raw tick or every repeated snapshot. Raw ticks are aggregated into short windows and material changes generate alerts; this prevents notification floods while preserving a live event timeline.
+
+### 14.1 Movement event coverage
+
+Generate timestamped events for:
+- price change and acceleration (up/down, percentage and observation window);
+- volume change and relative-volume multiple (1m/5m/15m versus comparable baseline);
+- large executed buy/sell flow and verified DEX swaps;
+- buyer/seller count and taker imbalance changes where source semantics support them;
+- liquidity/depth/spread/estimated price-impact changes;
+- breakout, breakdown, volatility expansion and failed breakout;
+- whale accumulation/distribution evidence;
+- token/pool security or holder-concentration risk changes;
+- signal confirmation, score change, invalidation and expiry.
+
+Every event record includes asset identity, venue/pool, observed and received timestamps, window, old/new values, percent/delta, source, freshness, quality, confidence/evidence, and a concise plain-language explanation. If a source is stale, unavailable or uncertain, explicitly say so.
+
+### 14.2 Notification policy
+
+- Telegram and PWA push are both supported delivery channels.
+- All meaningful event classes appear in the in-app live activity feed.
+- User-configurable alert levels: all events, important events only, or high-priority only. BOS default: all meaningful events.
+- Aggregate micro-ticks into 1m/5m event summaries; notify immediately for high-impact events such as confirmed large flow, abrupt liquidity removal, security risk, breakout/breakdown, or setup invalidation.
+- Deduplicate identical events, but do not suppress a materially new event merely because the asset has an active cooldown.
+- Show delivery state (queued/sent/failed), retry safely and preserve the event in the feed if a channel is unavailable.
+- Each alert says whether it is informational, watch, setup-ready, invalidated or risk warning. Never imply that every movement is a buy opportunity.
+
+### 14.3 Standard alert payload
+
+Every movement alert should answer:
+1. Which coin, chain, contract, venue and pool?
+2. What changed, by how much, over what period?
+3. What evidence supports whale/volume/price/liquidity claims?
+4. What could happen next (bullish, bearish, sideways or insufficient evidence), with scenario conditions and confidence label?
+5. Is there a valid trading setup now, or should the user wait/avoid chasing?
+6. If setup-ready: entry zone, maximum chase price, stop-loss/invalidation, TP1, TP2, TP3, estimated risk/reward, setup expiry and key assumptions.
+7. What evidence would cancel the thesis?
+
+### 14.4 Trading-plan calculation contract
+
+A trading plan is conditional scenario analysis, not a promise or a command to buy.
+- Entry zone must be derived from observed support/retest, VWAP/market structure, volatility and executable spread/slippage—not a fixed percentage guess.
+- Provide a maximum chase price. If price has moved beyond it, mark “DO NOT CHASE / WAIT FOR RETEST” and withhold a fresh entry recommendation until recalculated.
+- Stop-loss is tied to structural invalidation and volatility; include the exact price and percentage risk from the proposed entry.
+- TP1/TP2/TP3 are derived from resistance/liquidity levels and risk multiples. Show exact price, percentage gain and planned partial-exit fraction; partials must sum to 100% if all targets are used.
+- Show risk/reward after estimated fees and slippage where data exists. If fee/slippage data is missing, label the calculation gross/estimated.
+- Include setup timestamp, data age, timeframe, scenario horizon, confidence/evidence grade and expiry.
+- If identity, freshness, liquidity, security, or structure gates fail, do not fabricate entry/TP prices. Return “NO TRADE PLAN — insufficient/unsafe data” with reasons.
+- Recalculate on meaningful market events. If the plan changes, send an update showing previous versus new levels and why. Send immediate invalidation when stop/structure/security thesis fails.
+- No auto-trading, exchange order placement, wallet signing, custody or transfer capability.
+
+### 14.5 Example (illustrative only)
+
+```text
+RADAR AI | MOVEMENT UPDATE | EXAMPLE ONLY
+ASSET: COIN/USDT
+PRICE: 0.0250 (+2.4% / 5m)
+VOLUME: 5.8x baseline / 5m
+FLOW: large taker-buy imbalance; whale identity not known (CEX)
+OUTLOOK: bullish continuation conditional on holding VWAP and volume
+SETUP: WAIT FOR RETEST
+ENTRY: 0.0245–0.0250
+MAX CHASE: 0.0255
+STOP / INVALIDATION: 0.0235
+TP1: 0.0270 | TP2: 0.0290 | TP3: 0.0320
+RISK/REWARD: calculated from chosen entry after estimated costs
+CONFIDENCE: evidence grade, not probability of profit
+EXPIRES: recalculated on next material event / timeframe expiry
+```
+
+### 14.6 Additional QA acceptance gates
+
+- Every configured event type is represented in the in-app activity feed and correctly routed to enabled notification channels.
+- Price/volume percentages and time windows match replayed source events and are not mixed across venues or intervals.
+- Notification latency is measured from provider event receipt to delivery; publish p50/p95 and source lag, do not claim “instant” without measurement.
+- Event storms are bounded through aggregation without hiding material events.
+- Entry/stop/targets are reproducible from versioned inputs and calculations; test gaps, slippage, fees, decimals and stale prices.
+- No plan is produced when hard gates fail; “insufficient data” is an accepted result.
+- Backtest/paper results include fees, slippage, missed fills and invalidated setups; never claim expected return from score alone.
