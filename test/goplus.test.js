@@ -109,7 +109,8 @@ test('GoPlus maps newly documented Arc chain and numeric IDs to canonical API pa
   const urls = [];
   const service = createGoPlusService({ accessToken: 'static-token', fetchImpl: async (url) => {
     urls.push(url);
-    return response({ code: 1, result: { [address]: { token_name: 'Arc Test Token' } } });
+    const requestedAddress = new URL(url).searchParams.get('contract_addresses');
+    return response({ code: 1, result: { [requestedAddress]: { token_name: 'Arc Test Token' } } });
   }});
   const byAlias = await service.security({ networkId: 'arc', tokenAddress: address });
   assert.equal(byAlias.chain_id, '5042');
