@@ -2116,3 +2116,22 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - The monitor workflow is now on `main`, so scheduled runs can start. It is **not operationally verified yet** until the owner adds `HOSTLESS_API_KEY` and one real run successfully reads the Hostless deployment API.
 - Owner action still required: add the read-only `deployments:read` API key in GitHub repository Actions Secrets. Do not send the token through chat. Check/set repository variable `HOSTLESS_APP_NAME` only if the Hostless app resource name is not `radar-ai-v2`.
 - Hostless Build and LIVE commit remain separate from GitHub merge/CI and are not yet verified by the new monitor.
+
+
+---
+
+## 65. FREE BINANCE FUTURES FLOW INTELLIGENCE — 23 NOVEMBER 2026
+
+- Lead: Divisi 03 (market derivatives semantics) with Divisi 02 (Market Intelligence UI), Divisi 01 (backend/API safety), Divisi 05 (QA), and Divisi 08 (free-source procurement).
+- Branch: `feat/free-binance-derivatives-scanner`, based on current main at branch creation. Code/docs commits through initial delivery: `40fc454382be4fc9b9d2fc306411fc2e93d7a2da`.
+- Added `lib/derivatives.js` with read-only public Binance USDⓈ-M endpoints: premium index (funding/mark price), current open interest, 5m open-interest history, and 5m taker buy/sell ratio. No API key is required.
+- Added `GET /api/market-intelligence/derivatives?symbol=BTCUSDT`, strict USDT symbol validation, 10s timeout, 5-minute per-symbol cache, in-flight request deduplication, per-source health, partial results and no fabricated zero values.
+- Added a manual pair input/table to `public/market.html` + `public/market.js`; no auto-polling or broad symbol fan-out. Updated package syntax check, unit tests, and README.
+- Exact initial code head before PR/CI: `40fc454382be4fc9b9d2fc306411fc2e93d7a2da`. Tests added: 4 (data, cache/in-flight, partial failure, invalid symbol). GitHub Actions have not yet been checked on this head; do not claim tests passed until exact-head workflow completes.
+- No Hostless environment variable, production deployment, paid service, exchange account permission, order, or financial action was changed.
+- Semantics: OI is not net-long positioning; all open contracts have both sides. Taker ratio measures aggressor-side volume, not whale identity or wallet accumulation. Funding is derivative market context, not a buy/sell recommendation.
+- Official docs checked: Binance USDⓈ-M Futures market data endpoints; GeckoTerminal public API remains approximately 10 calls/minute. This implementation deliberately does not increase GeckoTerminal polling.
+- Remaining gaps, not solved by this PR: wallet/whale identity and labeled wallet tracking; GoPlus/RugCheck contract security; reliable holder concentration; token unlock automation; macroeconomic feeds; GNews/NewsData key integration (the environment variables exist but current `lib/sources.js` RSS parser does not consume them); cross-exchange OI aggregation. These require separate provider adapters, verified free/no-card limits, provenance, and tests.
+- Hostless Build/LIVE and real Binance response from Hostless are unverified. PR/CI status is pending.
+- NEXT TASK: exact-head CI + security scan; Divisi 03 review of derivatives semantics and Divisi 05 QA; then implement GoPlus token-security adapter and GNews/NewsData news adapter as separate, isolated changes. Never infer API activation from environment variable names.
+
