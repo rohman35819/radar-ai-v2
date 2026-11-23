@@ -2306,3 +2306,29 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Divisi 01: review keamanan adapter kandidat alternatif sebelum implementasi.
 - Divisi 05: QA independen.
 - Jangan mengaktifkan FRED sampai izin tertulis/pengecualian diterima. Prioritas operasional Hostless EROFS/DATA_DIR tetap berlaku sesuai section 68/69.
+
+
+---
+
+## 71. PRIMARY MACRO SOURCES — 23 NOVEMBER 2026
+
+### Procurement decision
+- FRED integration is blocked under section 70 pending written permission; do not use FRED API key, FRED content, or FRED cache in RADAR AI.
+- Replacement shortlist selected for implementation: BLS Public Data API v1 (CPI, unemployment, payroll, wages), official U.S. Treasury daily yield-curve XML (3M/2Y/10Y/30Y), and New York Fed Markets API (SOFR/EFFR).
+- BLS v1 is open without registration; BLS docs state 25 queries/day and up to 25 series per query. Backend batches four series into one request and caches the BLS group for 12 hours. BLS terms require retrieval-date attribution and the caveat that BLS cannot vouch for downstream data/analysis.
+- Treasury official XML feed is free and has no API key; request only current calendar year and retain actual observation dates. Empty maturity values must remain null.
+- New York Fed Markets API public endpoints for SOFR/EFFR require no API key. New York Fed Terms allow automated access, storage, business use, and redistribution with required source identifiers and reference-rate disclaimers.
+- No credit card or paid plan is required for these three sources. No FRED_API_KEY is read by main.
+
+### Candidate implementation branch feat/primary-macro-intelligence
+- Backend adapter `lib/macro.js`; endpoint `GET /api/market-intelligence/macro`.
+- Curated series: CUSR0000SA0, LNS14000000, CES0000000001, CES0500000003; Treasury BC_3MONTH/BC_2YEAR/BC_10YEAR/BC_30YEAR; NY Fed SOFR/EFFR.
+- Cache: BLS 12 hours, Treasury and NY Fed 1 hour; 5-minute cooldown on upstream failure; 10-second timeout; 5 req/min local API limit.
+- UI panel includes source attribution, BLS caveat, NY Fed reference-rate disclaimer and non-affiliation statement.
+- Tests cover parsing, missing values, caching, source isolation, and backend route.
+- NEXT TASK: exact-head CI/security, independent review Divisi 01/02/05, then merge only if all gates pass. After deployment, run one controlled live probe for each source and verify timestamps.
+
+### Source documentation
+- BLS API/terms: https://www.bls.gov/developers/ ; https://www.bls.gov/developers/termsOfService.htm
+- Treasury XML feed: https://home.treasury.gov/treasury-daily-interest-rate-xml-feed
+- New York Fed Markets API/terms: https://markets.newyorkfed.org/static/docs/markets-api.html ; https://www.newyorkfed.org/privacy/termsofuse.html
