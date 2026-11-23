@@ -232,3 +232,9 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Macro PR #65 (`feat/primary-macro-intelligence`) is CI-green at exact head `2428483049c5d36e6e997036845e212639d92472`: 141/141 tests; Gitleaks and Trivy pass. Adds BLS + NY Fed data, but independent review and merge remain pending.
 - Procurement audit PR #67 is CI-green at exact head `93d65f0dc4e1b3bcfad507b292c71e36c1551fa7`: 135/135 tests; Gitleaks and Trivy pass. It clears Treasury/World Bank and GDELT for further adapter work subject to dataset attribution/metadata, while FRED is blocked and DEX Screener broader scanner remains compliance-held.
 - Do not claim whale/smart-money labels, full holder concentration, or all-chain token unlock automation. These require provenance and reliable data. Next sequence: GDELT CI/review, PR #65 review, Treasury/World Bank adapters, then Solscan watchlist whale pilot.
+
+
+### 17.1 GDELT exact-head validation
+- Exact implementation head `3b4099c21ee2b16b83c6d206338bf72955ab421d`: test #753 passed 140/140; security #296 Gitleaks + Trivy passed.
+- The first test run failed due a bad fixture that had a non-empty title; corrected and rerun successfully.
+- PR #70 remains Draft/unmerged pending independent Divisi 05 review and Hostless verification.
