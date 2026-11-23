@@ -38,10 +38,12 @@ test('BLS parser keeps monthly observations and skips annual-average records', (
   assert.equal(parsed[0].observations.length, 2);
 });
 
-test('NY Fed parser validates rate observations', () => {
+test('NY Fed parser validates rate observations and keeps missing values null', () => {
   const parsed = parseNyFed(nyFedFixture('SOFR', 3.92), NYFED_SERIES[0]);
   assert.equal(parsed.latest.value, 3.92);
   assert.equal(parsed.latest.volume_in_billions, 3141);
+  const missing = parseNyFed({ refRates: [{ effectiveDate: '2026-11-20', percentRate: null, volumeInBillions: null }] }, NYFED_SERIES[0]);
+  assert.equal(missing.latest, undefined);
 });
 
 test('macro service calls BLS v1 once and NY Fed endpoints without API keys', async () => {
@@ -98,7 +100,9 @@ test('macro service returns partial data without fabricating missing values', as
   assert.equal(result.status, 'success');
   assert.equal(result.partial, true);
   assert.ok(result.series.some((item) => item.id === 'CUSR0000SA0'));
+  assert.ok(result.series.some((item) => item.id === 'SOFR'));
   assert.ok(!result.series.some((item) => item.id === 'EFFR'));
+  assert.equal(result.sources.nyfed_effr.ok, false);
 });
 
 test('macro route returns normalized data without requiring secrets', async (t) => {
