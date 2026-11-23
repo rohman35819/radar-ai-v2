@@ -297,3 +297,68 @@ EXPIRES: recalculated on next material event / timeframe expiry
 - Entry/stop/targets are reproducible from versioned inputs and calculations; test gaps, slippage, fees, decimals and stale prices.
 - No plan is produced when hard gates fail; “insufficient data” is an accepted result.
 - Backtest/paper results include fees, slippage, missed fills and invalidated setups; never claim expected return from score alone.
+
+
+## 15. Live chart and market-state visualization
+
+The scanner detail view must include a genuinely data-driven live chart. Do not use a static illustration, simulated price motion, or decorative animation as a substitute for market data.
+
+### 15.1 Primary chart
+- Live candlesticks with selectable 1m/5m/15m/1h/4h intervals, using the same canonical venue/pool as the selected signal. Clearly label the venue, market type, quote currency and source.
+- Live price line/last-price marker, candle countdown where meaningful, volume histogram, and event markers for large executed trades/swaps, relative-volume spikes, breakouts, failed breakouts, liquidity changes and signal invalidations.
+- Optional overlays: VWAP, EMA 9/21/50/200, support/resistance zones and ATR bands. Indicator values and settings must be inspectable; avoid clutter by allowing overlays to be toggled.
+- Momentum panel: RSI and MACD with divergence annotations only when the pivot rules and timeframe are satisfied.
+- Order-flow panel when supported: taker buy/sell volume, delta/CVD and imbalance. Label CEX taker flow correctly; do not label it as identified whale wallets.
+- Perpetual-only panel when a verified derivatives feed exists: open interest, funding rate, basis and liquidation events. Never infer these from spot data.
+- DEX-only context where available: pool liquidity, swap counts, price impact, decoded swap direction and tracked-wallet evidence. A heatmap/depth view must be omitted when no reliable depth feed exists.
+
+### 15.2 Live-data integrity
+- The visual must update from the server's real provider stream or documented polling cadence, not from client-side interpolation that implies new market events.
+- Display last source timestamp, last received timestamp, connection state, selected provider, timeframe and a visible stale-data warning. Show gaps/disconnects; do not silently draw a continuous line across missing data.
+- Preserve source/venue separation. Do not combine CEX and DEX candles into one synthetic OHLC candle. Cross-venue comparison may be a separate synchronized panel.
+- On reconnect, reconcile candle boundaries and deduplicate event IDs. Mark provisional/current candles as unclosed until provider confirmation.
+- Desktop and mobile layouts must remain legible; mobile can simplify secondary panels but must retain price, volume, freshness and critical event markers.
+- Chart QA must replay recorded streams and verify candle OHLCV, timestamps, event marker placement, reconnect behavior, stale state, interval switching and mobile rendering.
+
+## 16. Bearish exhaustion, reversal risk and short-side evidence
+
+The detector must evaluate both bullish continuation and downside/reversal risk continuously. A bullish score must be reduced or superseded by a bearish warning when price/flow evidence indicates that upward momentum is exhausting. Do not treat one indicator or one large trade as proof of reversal.
+
+### 16.1 Bullish exhaustion / distribution signals
+Detect and explain, where source coverage permits:
+- Price makes a higher high while RSI or MACD momentum makes a lower high (bearish divergence), using confirmed swing pivots and a stated timeframe.
+- Price rises or holds near highs while taker-buy volume/CVD weakens, buy delta fails to lift price, or repeated aggressive buys are absorbed.
+- Relative volume spikes but candle bodies/range expansion and follow-through shrink; repeated upper wicks, failed breakout/reclaim, or close back below breakout/VWAP.
+- Large executed sell flow, decoded DEX sell swaps, rising seller participation, or tracked-wallet distribution; distinguish observed wallet sells from inferred market-wide distribution.
+- Perpetual market warning, only when derivatives data is available: open interest expands while price stalls/falls, funding becomes crowded/positive, basis stretches, long liquidations cluster, or aggressive sell flow increases.
+- Liquidity/depth shifts against continuation, such as bid depth disappearing, spread widening, or executable exit impact rising. An order-book wall alone is not proof of a real seller because displayed orders can be cancelled.
+
+### 16.2 Short-side evidence and wording rules
+- Spot CEX trades do not expose a trader's open short position. A taker-sell trade is executed sell flow, not proof that a whale opened a short.
+- A claim such as “large whale short” is allowed only when the source directly exposes a verifiable derivatives position/trade or a reliably attributed tracked account with documented methodology. Otherwise use precise labels such as “large taker-sell flow”, “bearish derivatives positioning signal”, or “tracked wallet sold”.
+- Funding rate, open interest and liquidation feeds are contextual derivatives evidence, not direct proof of a named whale's position. State source, market and timestamp.
+- DEX spot pools generally do not expose native short positions. Do not invent short activity from transfers, sells, token price drops or wallet balance changes.
+- Where short evidence is unavailable, state “short positioning not observable from available sources”; still report bearish price/flow warnings if independently supported.
+
+### 16.3 Scenario and price-level response
+When BOS asks what a coin's move to a specific price could mean, evaluate that price against current structure and return conditional scenarios:
+- Support holds: conditions for bounce/continuation, confirmation needed, invalidation level and resistance/targets.
+- Support breaks: confirmation by close/volume/flow, next observable support/liquidity zones, downside risk and conditions for a bearish setup.
+- False breakdown/reclaim: evidence required before changing bias back to bullish.
+- If price is between levels or data is weak, say “WAIT / NO CONFIRMED SETUP”. Do not claim a future price or date as certain.
+
+### 16.4 Bias state machine and warning priority
+- Maintain a multi-timeframe state: bullish continuation, bullish weakening, neutral/compression, bearish reversal watch, bearish confirmed, or insufficient data.
+- A bullish setup must be downgraded to “BULLISH EXHAUSTION — REVERSAL RISK” when multiple independent exhaustion signals align. Upgrade to “BEARISH CONFIRMED” only after defined price-structure confirmation (for example, support/VWAP loss or lower-low confirmation) plus corroborating flow/volume evidence.
+- For a high-severity reversal warning, require at least two independent evidence families where possible (price/momentum, executed flow/CVD, derivatives positioning, liquidity/order book, verified tracked-wallet activity). Avoid counting correlated indicators as independent proof.
+- Show bullish evidence and bearish counter-evidence side by side, with each source's freshness and coverage. Explicitly list what would invalidate the bearish warning and what would restore bullish bias.
+- Trigger an immediate Telegram/PWA warning when an active bullish plan is materially invalidated or bearish risk crosses the configured threshold. Update the plan and preserve the prior version in the signal journal.
+
+### 16.5 Additional QA fixtures and acceptance gates
+- Replay bullish continuation, higher-high/lower-RSI divergence, buy-volume absorption, CVD divergence, failed breakout, VWAP loss, support breakdown/reclaim, OI expansion with stalled price, funding extremes and long-liquidation cascades.
+- Verify a spot-only feed never emits a confirmed “whale short” label or displays OI/funding/liquidations as if observed.
+- Verify single-indicator false positives do not trigger confirmed reversal; require pivot confirmation, timeframe labels and multi-source corroboration.
+- Verify stale/missing derivatives data is shown as unavailable and cannot be interpreted as zero or neutral.
+- Verify the live chart does not animate fabricated ticks, blend venues, hide gaps, or display stale data without warning.
+- Verify a specified price level produces conditional support/breakdown/reclaim scenarios, not guaranteed forecasts.
+- Verify bullish-to-bearish state transitions update Telegram, PWA, live feed and trading-plan invalidation exactly once per material event.
