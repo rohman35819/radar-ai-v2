@@ -2257,3 +2257,12 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - GoPlus is deliberately not called by scheduled diagnostics so no GoPlus CU is consumed; monitor reports only whether credentials are configured and the persistent usage counters.
 - Probe output is sanitized to status, available metric flags, pair count, same-pool boolean and normalized error codes; token addresses, provider response bodies, and secrets are not logged.
 - Added tests for both provider summaries. CI result pending on the exact current main head.
+
+
+### 69.2 Exact-head CI and Hostless runtime probe — 23 November 2026
+- Exact code head: f03be48023c88cfa1eb92df151ad86d0aaacb30e. GitHub Actions test run 45180201302: 135 passed, 0 failed, 0 skipped. Security run 45180201385: Gitleaks success and Trivy success.
+- Hostless monitor run 45180201448 (the monitor's overall result is failure because readiness is degraded): provider probes from the actual LIVE host returned Binance Futures BTCUSDT HTTP 200, status success, all four data groups present (funding, current OI, OI history, taker flow), partial=false; DEX Screener HTTP 200, one pair found, exact same_pool_found=true.
+- The same LIVE snapshot reports GeckoTerminal/CoinGecko Onchain enabled, Demo key configured, 80 pools, onchain health ok, trending health ok, last pool feed fetched at 2026-11-23T12:36:11.163Z. This is observed runtime data, not a claim of complete chain coverage.
+- GoPlus credentials_configured=false; usage day_count=0, month_count=0. Scheduled monitor intentionally does not call GoPlus to avoid consuming free quota. The adapter is deployed in the code path but cannot perform security lookups until Hostless receives a valid GoPlus Console app key/secret or access token.
+- LIVE readiness remains HTTP 503 / degraded / storage EROFS. The latest public snapshot still returns HTTP 200 and News is healthy (50 items, two source hosts). Hostless deployment metadata remains unverified because HOSTLESS_API_KEY is absent; API probes verify the endpoints, not the exact deployed Git SHA.
+- NEXT TASK: BOS attaches an existing persistent disk at /data and sets DATA_DIR=/data in Hostless, then redeploys; provide GoPlus Console credentials as server-side Hostless secrets if the free GoPlus check is to be enabled. After storage is fixed, rerun monitor and verify ready=200, deployment SHA, and one controlled GoPlus token-security request. Etherscan/FRED stay deferred.
