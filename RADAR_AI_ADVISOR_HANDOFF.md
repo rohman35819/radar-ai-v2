@@ -203,3 +203,11 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Durable option: attach an existing persistent volume at `/data` and set `DATA_DIR=/data`. A new volume may incur cost: Hostless free pool is shared (512 MiB persistent storage) while the minimum new disk is 1 GiB. Check the cost estimate and obtain owner approval before creating one.
 - No DATA_DIR change or volume provisioning has been executed. Wait for BOS to choose the ephemeral tradeoff or approve a durable storage plan.
 - After the owner-approved change, redeploy and run `npm run hostless-check`; expected `/api/ready` 200 and News health/source status visible.
+
+## 16. Market scanner data gap delivery — 23 November 2026
+
+- BOS requested immediate closure of scanner gaps using genuinely free sources.
+- First isolated delivery is branch `feat/free-binance-derivatives-scanner`: read-only Binance Futures public funding/OI/taker-flow API + Market Intelligence panel; details and limitations are recorded in master context section 65.
+- The delivery is code on a branch, not yet merged or deployed. Exact-head CI, security scan, independent Divisi 03/05 review, and Hostless verification are still pending.
+- Remaining high-priority gaps: wallet/whale identity, contract security, holder distribution, automated token unlock, macro feeds, GNews/NewsData integration. Existing `GNEWS_API_KEY` and `NEWSDATA_API_KEY` variables are not proof those adapters exist; current `lib/sources.js` still uses configured RSS feeds only.
+- Continue one isolated provider at a time; no paid APIs/cards/overage, no key exposure, no automatic trading.
