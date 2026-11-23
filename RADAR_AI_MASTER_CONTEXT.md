@@ -2274,3 +2274,33 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Latest Hostless monitor run 45180358589 re-confirmed live Binance Futures BTCUSDT success (funding, current OI, OI history, taker flow all available) and DEX Screener success (one pair, exact pool match). GeckoTerminal feed remained healthy with 80 indexed pools. GoPlus remains unconfigured and was not called.
 - The only failed monitor gate is readiness: HTTP 503 / degraded / EROFS. Deployment SHA cannot be verified until the read-only HOSTLESS_API_KEY secret is configured. Do not claim a healthy production deployment.
 - Next owner-side steps: attach an existing persistent Hostless disk at /data and set DATA_DIR=/data; if a new disk is needed, review its price and approve before provisioning. Configure GoPlus credentials only if desired, in Hostless server secrets, then perform one manual security lookup. Etherscan and FRED remain deferred.
+
+
+---
+
+## 70. FRED MACROECONOMIC INTELLIGENCE — 23 NOVEMBER 2026
+
+### Keputusan prioritas
+- BOS meminta FRED API diintegrasikan ke backend setelah sebelumnya ditunda. Permintaan terbaru ini menggantikan keputusan penundaan untuk pekerjaan integrasi ini.
+- Lead: Divisi 04 — AI Intelligence & Research. Pendukung: Divisi 01 untuk API key/rate limiting/error sanitization; Divisi 02 untuk panel Market Intelligence dan atribusi/terms; Divisi 05 untuk QA independen.
+- FRED hanya digunakan untuk indikator ekonomi AS sebagai konteks makro. Bukan sinyal trading dan bukan prediksi profit.
+
+### Implementasi kandidat pada branch feat/fred-macro-intelligence
+- Backend adapter `lib/fred.js` membaca `FRED_API_KEY` hanya dari environment server.
+- Endpoint rencana: `GET /api/market-intelligence/macro`.
+- Delapan seri allowlisted: FEDFUNDS, SOFR, DGS10, DGS2, T10Y2Y, CPIAUCSL, UNRATE, M2SL.
+- Cache 30 menit, cooldown error 5 menit, timeout 10 detik, local rate limit 5/min/IP dan global. FRED docs menyatakan batas hingga 120 request/minute sebelum 429.
+- Missing observation dipertahankan sebagai null; partial/stale provider status eksplisit; tidak ada query series ID bebas dari pengguna.
+- UI Market Intelligence menampilkan nilai/tanggal/frekuensi dan disclaimer FRED serta tautan Terms of Use. Tidak ada API key di browser, Git, respons, atau log.
+
+### Persyaratan kepatuhan FRED
+- Tampilkan atribusi FRED dan kalimat: “This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.”
+- Tampilkan tautan FRED API Terms of Use dan pemberitahuan persetujuan pengguna.
+- Series pihak ketiga dapat memiliki batas hak cipta tersendiri; daftar curated harus ditinjau sebelum penggunaan komersial.
+- Sumber resmi: https://fred.stlouisfed.org/docs/api/fred/ ; https://fred.stlouisfed.org/docs/api/terms_of_use.html ; https://fred.stlouisfed.org/docs/api/fred/errors.html.
+
+### QA / deployment
+- Tes service dan route ditambahkan; hasil CI exact-head belum tersedia pada saat dokumentasi ini ditulis.
+- Live FRED credential probe belum dijalankan; keberadaan FRED_API_KEY di Hostless belum dapat dibaca dari GitHub.
+- Hostless readiness tetap memiliki blocker EROFS yang tercatat di section 68/69. Jangan klaim FRED aktif di Live sebelum redeploy dan probe endpoint.
+- NEXT TASK: jalankan exact-head CI/security pada PR, lakukan review independen Divisi 01/02/05, kemudian setelah merge dan Hostless storage blocker selesai, verifikasi /api/market-intelligence/macro dengan key server-side tanpa mengungkap key.
