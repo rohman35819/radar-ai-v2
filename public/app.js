@@ -306,12 +306,20 @@ function renderEarlyGems(){
      const flags=(result.risk_flags||[]).map(flag=>el('span',{class:'flag'},flag.label+' ['+flag.severity+']'));
      const security=result.data||{},known=(key)=>security[key]===undefined?'Tidak diketahui':String(security[key]);
      const tax=(key)=>{const n=Number(security[key]);return security[key]===undefined||!Number.isFinite(n)?'—':(n*100).toFixed(2)+'%';};
+     const concentration=result.holder_concentration||{};
+     const tokenHolders=concentration.token_holders||null;
+     const lpHolders=concentration.lp_holders||null;
+     const share=(value)=>value===null||value===undefined?'—':Number(value).toFixed(2)+'%';
      const details=el('div',{class:'gem-validation-line'},
       el('span',{},'Open source: '+known('is_open_source')+' · Honeypot: '+known('is_honeypot')),
       el('span',{},'Buy tax: '+tax('buy_tax')+' · Sell tax: '+tax('sell_tax')),
-      el('span',{},'Mintable: '+known('is_mintable')+' · Holders: '+known('holder_count')));
+      el('span',{},'Mintable: '+known('is_mintable')+' · Holders: '+known('holder_count')),
+      el('span',{},'Top10 holder sample: '+(tokenHolders?share(tokenHolders.top10_reported_percent):'N/A')+' · Top1: '+(tokenHolders?share(tokenHolders.top1_percent):'N/A')),
+      el('span',{},'Top10 wallet: '+(tokenHolders?share(tokenHolders.non_contract_top10_percent):'N/A')+' · contract: '+(tokenHolders?share(tokenHolders.contract_top10_percent):'N/A')+' · locked: '+(tokenHolders?share(tokenHolders.locked_top10_percent):'N/A')),
+      el('span',{},'LP holder sample: '+(lpHolders?share(lpHolders.top10_reported_percent):'N/A')+' · Owner: '+share(concentration.owner_percent)+' · Creator: '+share(concentration.creator_percent)));
      goPlusResult.replaceChildren(el('b',{},'GoPlus · '+(result.status==='partial'?'DATA PARSIAL':'DATA TERSEDIA')),details,
       ...(flags.length?flags:[el('small',{class:'muted'},'Tidak ada flag positif yang dilaporkan. Field yang kosong tetap tidak diketahui; ini bukan jaminan aman.')]),
+      el('small',{class:'muted'},'Konsentrasi hanya dari sampel top-10 yang dilaporkan GoPlus; kontrak/LP dipisah dari wallet non-kontrak. Ini bukan distribusi holder lengkap atau bukti pemilik beneficial.'),
       el('small',{class:'muted'},'Update '+dateTime(result.observed_at)));
     }catch(error){goPlusResult.textContent='GoPlus: '+String(error.message||'tidak tersedia').slice(0,140);}
     finally{goPlusButton.disabled=false;}
