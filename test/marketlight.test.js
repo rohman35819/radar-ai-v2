@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createMarketlightService, SUPPORTED_BASES, MIN_BATCH_INTERVAL_MS } = require('../lib/marketlight');
+const { createMarketlightService, SUPPORTED_BASES, MIN_BATCH_INTERVAL_MS, CACHE_TTLS } = require('../lib/marketlight');
 
 const payloads = {
   derivatives: { base: 'BTC', updatedMs: 1795450000000, oi: { total: 12500000000, change24h: 0.025, byExchange: [{ exchange: 'Binance', symbol: 'BTCUSDT', usd: 8000000000, change24h: 0.03 }] }, funding: { byExchange: [{ exchange: 'Binance', symbol: 'BTCUSDT', rate: 0.0001, intervalHours: 8 }] } },
@@ -60,6 +60,30 @@ test('Marketlight cache avoids repeated provider requests', async () => {
   assert.equal(fixture.calls.length, 3);
   assert.equal(cached.cached, true);
   assert.equal(cached.status, 'success');
+});
+
+test('Marketlight keeps stale status on subsequent cache hits after upstream failure', async () => {
+  let now = 1795450000000;
+  let failing = false;
+  const fixture = fixtureFetch();
+  const fetchImpl = async (url, options) => failing ? response({ error: true }, 503) : fixture.fetchImpl(url, options);
+  const service = createMarketlightService({ fetchImpl, now: () => now });
+
+  const fresh = await service.snapshot('BTC', 24);
+  assert.equal(fresh.sources.derivatives.ok, true);
+
+  now += CACHE_TTLS.derivatives + 1;
+  failing = true;
+  const fallback = await service.snapshot('BTC', 24);
+  assert.equal(fallback.sources.derivatives.stale, true);
+  assert.equal(fallback.sources.derivatives.ok, false);
+  assert.ok(fallback.data.derivatives);
+
+  now += 1000;
+  const cachedFallback = await service.snapshot('BTC', 24);
+  assert.equal(cachedFallback.sources.derivatives.stale, true);
+  assert.equal(cachedFallback.sources.derivatives.ok, false);
+  assert.ok(cachedFallback.data.derivatives);
 });
 
 test('Marketlight rejects unsupported assets and hours before network access', async () => {
