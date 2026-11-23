@@ -142,3 +142,22 @@ Run `npm run hostless-check` to probe the public `/api/ready` and `/api/snapshot
 - API routes: `GET /api/solscan/overview` and `GET /api/solscan/wallet?address=<base58>`. Wallet queries are rate-limited and validated server-side.
 - Solscan data availability and freshness depend on endpoint coverage, indexing delay, plan permissions, and CU quota. Missing fields remain unavailable (not zero); partial endpoint failures are shown separately.
 - Official API docs: https://pro-api.solscan.io/pro-api-docs/v2.0/docs
+
+
+## Early Gem Scanner — GeckoTerminal
+Dashboard menu **Early Gem Scanner** mengambil pool DEX terbaru (jendela provider sekitar 48 jam) dan pool trending 24 jam melalui CoinGecko Onchain API/GeckoTerminal. Data meliputi chain, DEX, alamat token/pool, umur pool, harga, likuiditas, volume, transaksi, FDV, dan market cap. Pool baru tidak sama dengan token baru dibuat dan feed hanya mencakup pool yang sudah diindeks.
+- `EARLY_GEMS_ENABLED=1`, `ONCHAIN_PAGES=3` (maksimum 10), `ONCHAIN_REFRESH_MIN=60` (10–1440 menit).
+- Memakai `COINGECKO_DEMO_KEY` server-side yang sudah ada; default maksimal 4 request/jam (3 halaman new pools + 1 trending), sekitar 2.880 request/30 hari. Kuota Demo tetap dibagi dengan endpoint CoinGecko lain.
+- Trending merupakan ranking provider, bukan bukti keamanan. Flags hanya menandai kualitas data, bukan audit kontrak atau honeypot detection.
+
+
+## Cross-validation DEX & token security
+- Early Gem Scanner menyediakan validasi on-demand dengan DEX Screener berdasarkan chain ID + alamat token, bukan simbol/nama. Hasil menampilkan pair, likuiditas, volume, perubahan harga, transaksi, dan apakah alamat pool sama dengan GeckoTerminal. Tidak ada pair bukan bukti scam.
+- DEX Screener API tidak membutuhkan API key untuk endpoint publik; aplikasi hanya meminta data saat tombol validasi ditekan dan menyimpan cache 2 menit.
+- GoPlus Token Security bersifat opsional dan hanya dipanggil atas permintaan pengguna. Paket gratis tersedia, tetapi endpoint token-security saat ini mensyaratkan Bearer access token. Konfigurasi server: `GOPLUS_APP_KEY` + `GOPLUS_APP_SECRET` untuk mint token otomatis, atau `GOPLUS_ACCESS_TOKEN` pre-generated. Jangan pernah menaruh nilai ini di frontend/Git.
+- GoPlus dibatasi konservatif 5 panggilan/menit, 1.000/hari, dan 5.000/bulan secara internal (cache 5 menit). Batas internal ini berada di bawah kuota free tier GoPlus: 150.000 CU/bulan, 30.000 CU/hari, 150 CU/menit; endpoint token-security tercantum 25 CU/call. Data kosong/parsial tidak ditampilkan sebagai "aman". Solana API ditandai beta oleh provider.
+
+
+### API usage and commercial review
+DEX Screener public pair endpoint is used only for on-demand cross-validation by chain and token address. It documents 300 requests/minute; the application enforces stricter local limits and short caching. Review the [DEX Screener API terms](https://docs.dexscreener.com/api/api-terms-and-conditions) before commercializing this integration because the terms restrict using its API to build a product whose primary purpose directly competes with DEX Screener.
+GoPlus free Token Security access requires Console credentials to mint a Bearer token. Keep `GOPLUS_APP_KEY`, `GOPLUS_APP_SECRET`, or `GOPLUS_ACCESS_TOKEN` in Hostless server secrets only. Do not commit credentials or expose them to browser code.

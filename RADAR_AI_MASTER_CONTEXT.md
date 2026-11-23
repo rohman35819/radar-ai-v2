@@ -2152,3 +2152,58 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - GitHub Actions test run #649 / ID `45166095636`: completed / success; **110 passed, 0 failed** on the exact head.
 - Security run #192 / ID `45166095704`: Gitleaks success and Trivy filesystem scan completed successfully.
 - PR #59 remains Draft and unmerged. Independent Divisi 03/05 review and Hostless build/LIVE checks remain pending.
+
+
+---
+
+## 66. MARKET DISCOVERY — BINANCE FUTURES + GECKOTERMINAL — 23 NOVEMBER 2026
+- PR #59 Binance USDⓈ-M Futures read-only scanner is included in this branch ancestry. The service has a bounded 100-symbol LRU cache, validates upstream payload shapes, does not cache fully failed snapshots, and exposes funding, mark price, open interest, OI history and taker buy/sell flow. No order endpoints are used.
+- PR #46 GeckoTerminal Early Gem Scanner is rebased/merged with the Binance branch. It uses the existing CoinGecko Demo key server-side, with 3 pages new pools + 1 trending page on a separate 60-minute cadence by default.
+- The GeckoTerminal feed is an indexed pool discovery feed, not all tokens/contracts and not a token launch feed. Trending is provider ranking, not security certification.
+- CI evidence before combined merge: PR #59 prior exact head tests 110/110 and Gitleaks/Trivy secret scans success; after Binance cache hardening a new exact-head CI run is required. PR #46 historical head tests 98/98 and security workflow success, but that old head is not evidence for the combined branch.
+- Hostless Build and LIVE SHA are not verified. No production env values or deployment settings changed.
+- NEXT TASK: add on-demand DEX Screener pair validation and GoPlus optional token security checks with free-tier quota safeguards; validate the combined branch on its exact head; independent QA and Hostless visual verification before merge/deploy.
+
+
+---
+
+## 67. DEX SCREENER + GOPLUS VALIDATION — 23 NOVEMBER 2026
+- Binance Futures PR #59 was merged into `main` as merge commit `3a3380d60d4d14db860ca503dca63d3d61d45a53`. It remains read-only: funding, mark price, current/history open interest, and taker buy/sell volume only; no order endpoints.
+- GeckoTerminal PR #46 is rebased onto the merged Binance main line. It discovers indexed new pools and provider-trending pools from CoinGecko Onchain using the existing server-side Demo key. Default cadence is 60 minutes, 3 new-pool pages plus one trending request; this is pool discovery, not token creation detection.
+- DEX Screener validation is on-demand per pool/token. It queries `/token-pairs/v1/{chainId}/{tokenAddress}`, matches chain + exact token address, displays up to five liquid pairs, and indicates whether the exact pool address matches GeckoTerminal. Pair-level volume/liquidity are not misrepresented as token-only volume; quote-side base metrics remain unknown. Cache identity includes pool address (case-sensitive for Solana), TTL 2 minutes, concurrency cap 50, global 240/min and per-IP 30/min.
+- DEX Screener API public pair endpoint requires no API key and documents 300 requests/minute. Its API terms restrict building a product whose primary purpose competes directly with DEX Screener; RADAR AI is broader multi-source AI intelligence, but legal/commercial review is required before any commercial launch using this feed.
+- GoPlus Token Security integration is optional/on-demand. Free access exists but API requires Bearer token; code can mint it server-side from Console `GOPLUS_APP_KEY` + `GOPLUS_APP_SECRET` using documented SHA-1 signature, or accept a pre-generated `GOPLUS_ACCESS_TOKEN`. EVM and Solana Beta routes are supported. App global limit 20 requests/minute and 5-minute per-token cache. No GoPlus credentials are committed; Hostless credential presence/runtime access remains unverified and the UI stays disabled until configured.
+- Missing GoPlus fields are unknown, not safe. Risk flags are not an audit guarantee. DEX no-pair result is not a scam finding.
+- Etherscan and FRED remain deferred per BOS direction.
+- Current code/test head and exact CI results are recorded in the PR after the final test run. Hostless Build, deployed SHA, and LIVE visual QA remain separate unverified statuses.
+- NEXT TASK: complete exact-head CI for this branch; perform desktop/mobile and endpoint QA on Hostless after deployment; configure GoPlus free Console credentials only if BOS obtains them; validate GoPlus API runtime before enabling.
+
+
+### 67.1 GoPlus free-tier quota guard — 23 November 2026
+- Official GoPlus pricing lists Free Version 150,000 CU/month, 30,000 CU/day, and 150 CU/minute. The token-security API price endpoint documents an example price of 25 CU/call. The separate support page states 30 calls/minute; the application uses the stricter CU-based budget.
+- Local GoPlus limits: 5 calls/minute, 1,000/day, 5,000/month; 5-minute token cache; only on-demand requests. This keeps the configured use below the 150 CU/minute and daily/monthly free-tier budget, leaving headroom for other GoPlus use.
+- Daily/monthly counters are stored in `st.goplusUsage` in `DATA_DIR/state.json` and persisted before the upstream call. If persistence fails, the request fails closed. Cache hits do not consume the internal API call budget.
+- GoPlus token-security access still requires Console credentials to mint Bearer token; credentials are not present in Git. No live credential-backed API request has been verified.
+
+
+### 67.2 Exact-head QA record — 23 November 2026
+- Binance Futures PR #59 merged into `main`: `3a3380d60d4d14db860ca503dca63d3d61d45a53`.
+- GeckoTerminal + DEX Screener + optional GoPlus code/test head: `d28cc54febd32d3d2bea027dc245d9430ba6251a`.
+- GitHub Actions test run `45173666312`: **132 passed, 0 failed, 0 skipped**.
+- Same exact code/test head security run `45173666289`: **Gitleaks success + Trivy success**.
+- GoPlus free-tier budget is now enforced in code: 5 calls/minute, 1,000/day, 5,000/month; counters persist in `state.json` before upstream calls. This is intentionally below the documented CU-based allowance and does not assume GoPlus is configured on Hostless.
+- DEX Screener is on-demand and uses public pair endpoint; API terms need review before any commercial product positioning that could compete directly.
+- PR #46 latest code/test head passed. Documentation-only update follows; exact latest HEAD checks must complete before merge.
+- Hostless Build, GoPlus live credential test, deployed SHA and LIVE desktop/mobile visual QA remain unverified.
+- NEXT TASK: confirm documentation-head CI, merge PR #46, then verify Hostless Build and deployed LIVE SHA separately.
+
+
+### 67.3 Final exact-head validation — 23 November 2026
+- Latest PR #46 code/test head: `38e048d99c269a18673b658ca8f12c15fb832e16`.
+- GitHub Actions test run `45173872276`: **132 passed, 0 failed, 0 skipped**.
+- Same exact head security run `45173872164`: **Gitleaks success + Trivy success**.
+- Final UI clarification: DEX liquidity and 24-hour volume are labeled as **pair-level** metrics, not token-only metrics.
+- GoPlus free plan guard: 5 calls/minute, 1,000/day, 5,000/month (based on the provider's published free CU allowance and 25-CU token-security price reference); persistent state counter, on-demand only, 5-minute token cache.
+- PR #59 is merged. PR #46 is ready for merge on top of merge commit `3a3380d60d4d14db860ca503dca63d3d61d45a53`.
+- Hostless Build, deployed SHA, GoPlus credential-backed runtime call, and LIVE desktop/mobile visual QA are still not verified.
+- NEXT TASK: merge PR #46, then verify Hostless build/deployed SHA and confirm GoPlus configuration status from the live dashboard.
