@@ -149,3 +149,10 @@ Dashboard menu **Early Gem Scanner** mengambil pool DEX terbaru (jendela provide
 - `EARLY_GEMS_ENABLED=1`, `ONCHAIN_PAGES=3` (maksimum 10), `ONCHAIN_REFRESH_MIN=60` (10–1440 menit).
 - Memakai `COINGECKO_DEMO_KEY` server-side yang sudah ada; default maksimal 4 request/jam (3 halaman new pools + 1 trending), sekitar 2.880 request/30 hari. Kuota Demo tetap dibagi dengan endpoint CoinGecko lain.
 - Trending merupakan ranking provider, bukan bukti keamanan. Flags hanya menandai kualitas data, bukan audit kontrak atau honeypot detection.
+
+
+## Cross-validation DEX & token security
+- Early Gem Scanner menyediakan validasi on-demand dengan DEX Screener berdasarkan chain ID + alamat token, bukan simbol/nama. Hasil menampilkan pair, likuiditas, volume, perubahan harga, transaksi, dan apakah alamat pool sama dengan GeckoTerminal. Tidak ada pair bukan bukti scam.
+- DEX Screener API tidak membutuhkan API key untuk endpoint publik; aplikasi hanya meminta data saat tombol validasi ditekan dan menyimpan cache 2 menit.
+- GoPlus Token Security bersifat opsional dan hanya dipanggil atas permintaan pengguna. Paket gratis tersedia, tetapi endpoint token-security saat ini mensyaratkan Bearer access token. Konfigurasi server: `GOPLUS_APP_KEY` + `GOPLUS_APP_SECRET` untuk mint token otomatis, atau `GOPLUS_ACCESS_TOKEN` pre-generated. Jangan pernah menaruh nilai ini di frontend/Git.
+- GoPlus dibatasi 20 panggilan/menit secara global di aplikasi dan hasil cache 5 menit untuk menjaga kuota. Data kosong/parsial tidak ditampilkan sebagai "aman". Solana API ditandai beta oleh provider.
