@@ -26,7 +26,7 @@ PWA menyimpan shell halaman agar dapat dibuka kembali saat offline. Respons API 
 | Token unlock | **Butuh konfigurasi**: tidak ada sumber gratis terverifikasi. Isi `data/unlocks.json` atau `UNLOCKS_URL` (array `[{id (gecko id), symbol, date, amount_usd, pct_supply, source}]`) |
 | Telegram | **Butuh konfigurasi**: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 | CoinGecko Demo key | Disarankan (`COINGECKO_DEMO_KEY`); cek ToS jika komersial |
-| Makro/ekonomi global | **Belum ada** modul khusus; hanya lewat `NEWS_FEEDS` |
+| Makro/ekonomi global | **FRED Macro Intelligence**: 8 seri ekonomi AS melalui endpoint backend, cache 30 menit, API key server-side |
 
 ## Market Intelligence (CoinGecko)
 
