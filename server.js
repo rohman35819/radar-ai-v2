@@ -9,6 +9,7 @@ const sources = require('./lib/sources');
 const { createSolscanService, SolscanError } = require('./lib/solscan');
 const { createMarketIntelligenceService } = require('./lib/market-intelligence');
 const { createDerivativesService } = require('./lib/derivatives');
+const { createMarketlightService } = require('./lib/marketlight');
 const { createDexScreenerService } = require('./lib/dexscreener');
 const { createGoPlusService } = require('./lib/goplus');
 const { analyzeMarket } = require('./lib/ai/gemini');
@@ -50,11 +51,12 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService, dexScreenerService, goPlusService } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService, marketlightService, dexScreenerService, goPlusService } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
   const solscanApi = solscanService || createSolscanService();
   const marketIntelligence = marketIntelligenceService || createMarketIntelligenceService({ apiKey: cfg.cgKey });
   const derivatives = derivativesService || createDerivativesService();
+  const marketlight = marketlightService || createMarketlightService();
   const dexScreener = dexScreenerService || createDexScreenerService();
   
   const matchesToken = (expectedValue, provided) => {
@@ -87,6 +89,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const dexScreenerGlobalLimited = createRateLimiter({ limit: 240, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerLimited = createRateLimiter({ limit: 30, windowMs: 60000, maxKeys: 1000 });
   const goPlusLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1000 });
+  const marketlightLimited = createRateLimiter({ limit: 6, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
     .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
     .catch((error) => {
@@ -216,6 +219,18 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'COINGECKO_UPSTREAM_ERROR';
             const status = Number.isInteger(error.status) ? error.status : 502;
             send(res, status, { status: 'error', code, message: code.startsWith('INVALID_') ? 'ID exchange tidak valid.' : 'Data trading pairs exchange tidak tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/market-intelligence/marketlight' && req.method === 'GET') {
+          if (marketlightLimited(ip)) return send(res, 429, { status: 'error', code: 'MARKETLIGHT_LOCAL_RATE_LIMITED', message: 'Permintaan Marketlight dibatasi agar tetap sesuai kuota publik.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          marketlight.snapshot(url.searchParams.get('base') || 'BTC', url.searchParams.get('hours') || '24').then((payload) => {
+            send(res, payload.status === 'error' ? 502 : 200, payload, 'application/json', { 'cache-control': 'private, max-age=60' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'MARKETLIGHT_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            const message = code === 'MARKETLIGHT_UNSUPPORTED_BASE' ? 'Aset belum didukung Marketlight.' : code === 'MARKETLIGHT_INVALID_HOURS' ? 'Pilih rentang likuidasi 1, 4, 12, atau 24 jam.' : code === 'MARKETLIGHT_LOCAL_COOLDOWN' || code === 'MARKETLIGHT_LOCAL_RATE_LIMITED' ? 'Marketlight sedang dalam jeda kuota. Gunakan cache atau coba lagi sebentar.' : 'Data Marketlight sementara tidak tersedia.';
+            send(res, status, { status: 'error', code, message }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
