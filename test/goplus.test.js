@@ -84,3 +84,41 @@ test('GoPlus usage counters persist after an actual upstream request', async () 
   assert.equal(usageState.month_count, 1);
   assert.equal(persisted, 1);
 });
+
+test('GoPlus Signature Data Decode sends the documented ABI request with Bearer auth', async () => {
+  const calls = [];
+  const service = createGoPlusService({ accessToken: 'decode-token', now: () => Date.parse('2026-11-23T13:00:00Z'),
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return response({ code: 1, result: { method: 'approve', signature_detail: 'Approve token spending', risky_signature: 1, risk: 'Unlimited allowance' } });
+    }
+  });
+  const result = await service.decode({
+    networkId: 'bsc', contractAddress: '0x1111111111111111111111111111111111111111',
+    signer: '0x2222222222222222222222222222222222222222',
+    data: '0xa9059cbb00000000000000000000000011111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000001',
+    transactionType: 'common'
+  });
+  assert.equal(result.status, 'success');
+  assert.equal(result.chain_id, '56');
+  assert.equal(result.result.method, 'approve');
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].url, /\/api\/v1\/abi\/input_decode$/);
+  assert.equal(calls[0].options.method, 'POST');
+  assert.equal(calls[0].options.headers.authorization, 'Bearer decode-token');
+  assert.deepEqual(JSON.parse(calls[0].options.body), {
+    chain_id: '56', contract_address: '0x1111111111111111111111111111111111111111',
+    signer: '0x2222222222222222222222222222222222222222',
+    data: '0xa9059cbb00000000000000000000000011111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000001',
+    transcation_type: 'common'
+  });
+});
+
+test('GoPlus Signature Data Decode rejects unsupported chains and malformed calldata before upstream calls', async () => {
+  let calls = 0;
+  const service = createGoPlusService({ accessToken: 'decode-token', fetchImpl: async () => { calls++; return response({ code: 1, result: {} }); } });
+  await assert.rejects(service.decode({ networkId: 'solana', data: '0x1234' }), (e) => e.code === 'GOPLUS_UNSUPPORTED_NETWORK');
+  await assert.rejects(service.decode({ networkId: 'base', data: '0xxyz' }), (e) => e.code === 'GOPLUS_INVALID_TRANSACTION_DATA');
+  await assert.rejects(service.decode({ networkId: 'base', data: '0x1234', signer: 'not-an-address' }), (e) => e.code === 'GOPLUS_INVALID_SIGNER');
+  assert.equal(calls, 0);
+});
