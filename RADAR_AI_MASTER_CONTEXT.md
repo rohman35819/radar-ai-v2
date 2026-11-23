@@ -2456,3 +2456,50 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 2. Setelah Hostless deployment tersedia, jalankan test provider satu per satu tanpa menampilkan secret: HTTP status, model, latency, valid JSON, token usage, dan sanitized error.
 3. Pastikan Gemini/Groq/OpenRouter/OpenAI benar-benar menyelesaikan rapat 3 putaran serta notulen dengan output lebih lengkap.
 4. Jika provider menolak 4096 karena model cap, gunakan cap per-model yang didokumentasikan; jangan retry berulang tanpa batas.
+
+
+## 82. AI EARLY WHALE DETECTOR — TECHNICAL SPECIFICATION — 23 NOVEMBER 2026
+
+- BOS selected market coverage CEX + DEX, medium-risk profile, Telegram + PWA push notifications, informational/read-only mode.
+- Added `docs/early-whale-detector-spec.md` as the technical specification and staged implementation plan. This is documentation only; no scanner, provider adapter, score engine, notification delivery, or UI is claimed implemented.
+- Existing foundations verified on main: CoinGecko Market Intelligence (hourly cached market context), Solscan Pro v2 integration (Solana indexed intelligence), Telegram configuration documented, Node.js >=20 native HTTP server with no declared runtime dependencies.
+- Important source semantics: Binance public aggTrade exposes executed trade/taker-side context but not beneficial-owner identity; DEX Screener/GeckoTerminal are discovery/pool snapshot/OHLCV sources, not universal wallet-level raw swap feeds; Solscan transfer events must not be treated as proof of market buys.
+- Proposed score weights: relative-volume anomaly 25, large executed buy-flow/verified DEX accumulation 25, price structure 15, liquidity/execution quality 15, token/pool security 10, market regime/cross-source confirmation 10. Hard data-quality/liquidity/security gates suppress signals regardless of score.
+- Proposed stages: (0) provider/source matrix and canonical event contract; (1) CEX adapters; (2) DEX discovery and one decoded swap pilot; (3) deterministic detection/scoring and signal journal; (4) Telegram then PWA push + UI; (5) replay and forward paper evaluation.
+- No paid provider/quota, production secret/configuration change, Hostless storage provisioning, trading endpoint, wallet signing, order execution, transfer, or withdrawal was enabled or approved.
+- Persistence risk remains: existing DATA_DIR/EROFS issue must be resolved and writable durable storage verified before promising persistent signal history/cooldowns.
+- Documentation branch: `docs/early-whale-detector-spec`; specification commit `752891af26588dd89f14f6e8ea92d50e26075e14`.
+- CI for this documentation branch, Hostless Build, and LIVE are not yet verified. No production deployment was attempted.
+- NEXT TASK: review Stage 0 provider capability/ToS/rate-limit and cost matrix with Division 08, validate CEX/DEX semantics with Division 03, then define fixtures and quality gates with Divisions 01/04/05. In parallel, continue the existing Hostless monitor owner prerequisite (read-only `HOSTLESS_API_KEY` secret) and verify DATA_DIR/EROFS from actual Hostless logs/configuration before any durable scanner rollout.
+
+
+---
+
+
+## 83. REAL-TIME MOVEMENT ALERTS & CONDITIONAL TRADING PLAN — 23 NOVEMBER 2026
+
+- BOS clarified the product requirement: every meaningful detected movement for assets in the scan universe should be reported, with a plain-language explanation and conditional outlook; when evidence permits, include entry zone, maximum chase price, stop/invalidation, TP1/TP2/TP3, risk/reward and expiry.
+- “Every movement” is implemented as event-driven material changes, not every raw tick/repeated snapshot. Micro-ticks are aggregated into short-window summaries; significant whale-flow, liquidity/security, breakout/breakdown and invalidation events alert immediately. All meaningful events remain in the in-app live feed.
+- Telegram + PWA push both remain required. Default preference is all meaningful events, with user-configurable all/important/high-priority levels, dedupe and safe retries.
+- Trading plans must be derived from current support/retest, VWAP/structure, volatility, spread, fees and slippage. Include maximum chase price; beyond it advise wait/do not chase. If identity, freshness, liquidity, security or structure gates fail, return “NO TRADE PLAN” rather than inventing prices.
+- Outlook must be conditional (bullish/bearish/sideways/insufficient evidence) with evidence grade and invalidation conditions. Scores are rankings, not win probabilities. TP levels and partial exit fractions must be reproducible and tested.
+- No auto-trading, order placement, wallet signing, custody or transfers. No profit guarantee.
+- Expanded specification in section 14 of `docs/early-whale-detector-spec.md`. Documentation update only; no scanner or notification implementation is claimed.
+- NEXT TASK: implement event schema and replay fixtures for movement events, then validate notification routing/latency and reproducible entry/SL/TP calculations under Division 05 QA gates.
+
+
+---
+
+
+## 84. LIVE CHART, BULLISH EXHAUSTION & BEARISH/SHORT-SIDE WARNINGS — 23 NOVEMBER 2026
+
+- BOS clarified that RADAR must act as both an opportunity radar and a risk radar. A bullish-looking move must be downgraded when evidence shows upward momentum exhaustion, distribution, failed breakout, weakening buy pressure or increasing downside risk.
+- Added a live, data-driven chart requirement to section 15 of `docs/early-whale-detector-spec.md`: real candlesticks, volume, live price marker, event markers, optional VWAP/EMA/support-resistance/ATR, RSI/MACD divergence, CEX taker-flow/CVD where supported, and derivatives OI/funding/liquidation panels only when a verified derivatives feed exists.
+- Chart integrity requirements: real provider updates (no simulated motion), visible source/venue/timeframe and source/receive timestamps, connection/freshness state, explicit gaps, no synthetic mixing of CEX and DEX candles, and replay QA for OHLCV, reconnect, markers, stale state and mobile layout.
+- Added bearish exhaustion detectors: confirmed higher-high/lower-high RSI or MACD divergence; buy-flow/CVD weakening or absorption; volume spike without price follow-through; upper wicks/failed breakout/VWAP loss; executed sell flow or decoded DEX sell swaps; derivatives OI/funding/liquidation context; and weakening bid depth/liquidity where observable.
+- Strict evidence wording: spot CEX taker-sell flow is not proof of an opened short or a whale identity. “Whale short” may be stated only from direct, verifiable derivatives-position/trade data or reliably attributed tracked accounts. Otherwise say “large taker-sell flow”, “bearish derivatives positioning signal”, or “tracked wallet sold”. DEX spot transfers/balance changes are not proof of shorting.
+- Added conditional price-level scenarios (support hold, support break, false breakdown/reclaim), multi-timeframe bias states, evidence/counter-evidence, and multi-family confirmation before a bearish-confirmed label. If short-position data is unavailable, say so explicitly.
+- QA additions cover divergence and absorption fixtures, spot-vs-perpetual capability guards, stale derivatives data, false positives, no fabricated chart motion, venue separation, price-level scenarios and exactly-once alert transitions.
+- Documentation-only update on branch `docs/early-whale-detector-spec`; no live chart, scanner, short detector, derivatives feed or notifications are implemented by this change.
+- QA status: no runtime tests run because only Markdown specification/context changed. GitHub Actions, Hostless Build and LIVE remain separate and are not verified by this documentation update.
+- NEXT TASK: validate source availability and semantics for derivatives open interest/funding/liquidations and CEX/DEX order flow with the owning data/research divisions; then create deterministic replay fixtures for bullish exhaustion, verified short-side evidence and live chart integrity before runtime implementation.
