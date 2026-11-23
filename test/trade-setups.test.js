@@ -8,7 +8,7 @@ function candles({ rising = true, volumeSpike = true } = {}) {
   const rows = [];
   let price = 100;
   for (let i = 0; i < 80; i++) {
-    price = rising ? price * 1.002 : 100;
+    price = rising ? price * (i % 3 === 2 ? 0.9975 : 1.002) : 100;
     const openTime = NOW - (80 - i) * 60 * 60 * 1000;
     const closeTime = openTime + 60 * 60 * 1000 - 1;
     const volume = volumeSpike && i >= 75 ? 300 : 100;
@@ -25,7 +25,7 @@ test('trade setup derives entry, stop loss and three risk-multiple targets from 
     fetchImpl: async (url) => {
       const parsed = new URL(url); calls.push(parsed.pathname);
       if (parsed.pathname.endsWith('/exchangeInfo')) return response({ symbols: [{ symbol: 'BTCUSDT', baseAsset: 'BTC', quoteAsset: 'USDT', contractType: 'PERPETUAL', status: 'TRADING' }] });
-      if (parsed.pathname.endsWith('/premiumIndex')) return response([{ symbol: 'BTCUSDT', markPrice: '116.5' }]);
+      if (parsed.pathname.endsWith('/premiumIndex')) return response([{ symbol: 'BTCUSDT', markPrice: '104.2' }]);
       if (parsed.pathname.endsWith('/klines')) return response(candles());
       throw new Error('unexpected endpoint');
     }
