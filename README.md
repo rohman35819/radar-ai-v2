@@ -156,3 +156,8 @@ Dashboard menu **Early Gem Scanner** mengambil pool DEX terbaru (jendela provide
 - DEX Screener API tidak membutuhkan API key untuk endpoint publik; aplikasi hanya meminta data saat tombol validasi ditekan dan menyimpan cache 2 menit.
 - GoPlus Token Security bersifat opsional dan hanya dipanggil atas permintaan pengguna. Paket gratis tersedia, tetapi endpoint token-security saat ini mensyaratkan Bearer access token. Konfigurasi server: `GOPLUS_APP_KEY` + `GOPLUS_APP_SECRET` untuk mint token otomatis, atau `GOPLUS_ACCESS_TOKEN` pre-generated. Jangan pernah menaruh nilai ini di frontend/Git.
 - GoPlus dibatasi 20 panggilan/menit secara global di aplikasi dan hasil cache 5 menit untuk menjaga kuota. Data kosong/parsial tidak ditampilkan sebagai "aman". Solana API ditandai beta oleh provider.
+
+
+### API usage and commercial review
+DEX Screener public pair endpoint is used only for on-demand cross-validation by chain and token address. It documents 300 requests/minute; the application enforces stricter local limits and short caching. Review the [DEX Screener API terms](https://docs.dexscreener.com/api/api-terms-and-conditions) before commercializing this integration because the terms restrict using its API to build a product whose primary purpose directly competes with DEX Screener.
+GoPlus free Token Security access requires Console credentials to mint a Bearer token. Keep `GOPLUS_APP_KEY`, `GOPLUS_APP_SECRET`, or `GOPLUS_ACCESS_TOKEN` in Hostless server secrets only. Do not commit credentials or expose them to browser code.
