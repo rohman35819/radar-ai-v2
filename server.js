@@ -8,6 +8,7 @@ const { createExchangeService, ExchangeError } = require('./lib/exchanges');
 const sources = require('./lib/sources');
 const { createSolscanService, SolscanError } = require('./lib/solscan');
 const { createMarketIntelligenceService } = require('./lib/market-intelligence');
+const { createDerivativesService } = require('./lib/derivatives');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
@@ -47,10 +48,11 @@ function createRateLimiter({ limit = 60, windowMs = 60000, maxKeys = 5000, sweep
   };
 }
 
-function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService } = {}) {
+function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeService, exchangeAccessToken, solscanService, marketIntelligenceService, derivativesService } = {}) {
   const exchangeApi = exchangeService || createExchangeService();
   const solscanApi = solscanService || createSolscanService();
   const marketIntelligence = marketIntelligenceService || createMarketIntelligenceService({ apiKey: cfg.cgKey });
+  const derivatives = derivativesService || createDerivativesService();
   const matchesToken = (expectedValue, provided) => {
     if (!expectedValue || typeof provided !== 'string') return false;
     const expected = Buffer.from(String(expectedValue));
@@ -205,6 +207,17 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'COINGECKO_UPSTREAM_ERROR';
             const status = Number.isInteger(error.status) ? error.status : 502;
             send(res, status, { status: 'error', code, message: code.startsWith('INVALID_') ? 'ID exchange tidak valid.' : 'Data trading pairs exchange tidak tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/market-intelligence/derivatives' && req.method === 'GET') {
+          derivatives.snapshot(url.searchParams.get('symbol')).then((payload) => {
+            const status = payload.status === 'error' ? 502 : 200;
+            send(res, status, payload, 'application/json', { 'cache-control': 'private, max-age=60' });
+          }).catch((error) => {
+            const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'BINANCE_FUTURES_UPSTREAM_ERROR';
+            const status = Number.isInteger(error.status) ? error.status : 502;
+            send(res, status, { status: 'error', code, message: code === 'INVALID_FUTURES_SYMBOL' ? 'Gunakan pair USDT Futures yang valid, misalnya BTCUSDT.' : code === 'BINANCE_FUTURES_BUSY' ? 'Antrean Binance Futures sedang penuh; coba lagi sebentar.' : 'Data derivatives Binance Futures tidak tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }

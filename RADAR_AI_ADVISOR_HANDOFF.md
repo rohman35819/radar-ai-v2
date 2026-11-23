@@ -203,3 +203,23 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Durable option: attach an existing persistent volume at `/data` and set `DATA_DIR=/data`. A new volume may incur cost: Hostless free pool is shared (512 MiB persistent storage) while the minimum new disk is 1 GiB. Check the cost estimate and obtain owner approval before creating one.
 - No DATA_DIR change or volume provisioning has been executed. Wait for BOS to choose the ephemeral tradeoff or approve a durable storage plan.
 - After the owner-approved change, redeploy and run `npm run hostless-check`; expected `/api/ready` 200 and News health/source status visible.
+
+## 16. Market scanner data gap delivery — 23 November 2026
+
+- BOS requested immediate closure of scanner gaps using genuinely free sources.
+- First isolated delivery is branch `feat/free-binance-derivatives-scanner`: read-only Binance Futures public funding/OI/taker-flow API + Market Intelligence panel; details and limitations are recorded in master context section 65.
+- The delivery is code on a branch, not yet merged or deployed. Exact-head CI, security scan, independent Divisi 03/05 review, and Hostless verification are still pending.
+- Remaining high-priority gaps: wallet/whale identity, contract security, holder distribution, automated token unlock, macro feeds, GNews/NewsData integration. Existing `GNEWS_API_KEY` and `NEWSDATA_API_KEY` variables are not proof those adapters exist; current `lib/sources.js` still uses configured RSS feeds only.
+- Continue one isolated provider at a time; no paid APIs/cards/overage, no key exposure, no automatic trading.
+
+
+### 16.1 CI and review status
+
+- PR #59 exact implementation head `a3020a4e378e23004a7a956ad99055263b381dd8`: GitHub Actions test #647 passed 110/110; security #190 passed Trivy filesystem and Gitleaks.
+- PR remains Draft/unmerged. Divisi 03 and Divisi 05 independent reviews, Hostless build and LIVE verification remain pending.
+
+
+### 16.2 Final exact-head validation
+
+- Latest implementation head `e90db36ebe90c09811c44e51765e5a56fc873250`: GitHub Actions test #649 passed 110/110; security #192 Gitleaks and Trivy filesystem scan succeeded.
+- PR #59 remains Draft/unmerged; Divisi 03/05 reviews and Hostless Build/LIVE validation remain pending.

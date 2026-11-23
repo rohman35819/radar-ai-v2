@@ -58,6 +58,16 @@ Batasan:
 - Data exchange adalah data agregat provider; spread dan trust score bukan audit likuiditas atau keamanan exchange.
 - Tampilkan atribusi **Powered by CoinGecko** saat menggunakan data. Dokumentasi dan paket: https://docs.coingecko.com/ dan https://www.coingecko.com/en/api/pricing.
 
+## Futures Flow Intelligence (free public market data)
+
+Halaman Market Intelligence menambahkan panel **Futures Flow Intelligence**. Pair USDT dapat diperiksa manual melalui `GET /api/market-intelligence/derivatives?symbol=BTCUSDT`. Backend mengambil data publik Binance USDⓈ-M Futures:
+- Funding rate dan mark price dari `/fapi/v1/premiumIndex`.
+- Open interest terkini dari `/fapi/v1/openInterest`.
+- Histori open interest 5 menit dari `/futures/data/openInterestHist`.
+- Taker buy/sell volume dan ratio 5 menit dari `/futures/data/takerlongshortRatio`.
+
+Tidak memerlukan API key. Respons tiap endpoint memiliki status terpisah; kegagalan parsial tetap ditampilkan sebagai N/A, bukan nol. Cache server 5 menit dan fetch hanya saat pengguna meminta pair agar tidak menghabiskan kuota/IP rate limit. Data hanya untuk pair USDⓈ-M USDT yang didukung Binance. Open interest tidak menunjukkan sisi long saja; setiap kontrak memiliki long dan short. Taker flow adalah volume agresor, bukan identitas wallet/whale. Tidak ada order/trading yang dikirim.
+
 ## Exchange Hub (read-only)
 
 Halaman `/trading.html` menyediakan satu antarmuka untuk Binance, Bybit, dan integrasi berikutnya. Koneksi akun berjalan di backend; API key dan secret tidak pernah dikirim ke browser.
