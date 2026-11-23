@@ -32,6 +32,7 @@
       metric('TOTAL OPEN INTEREST', money(oi.total), 'Agregat USD · ' + payload.base),
       metric('PERUBAHAN OI 24J', hasNumber(oi.change24h) ? (Number(oi.change24h) * 100).toFixed(2) + '%' : '—', 'Fraction provider → persen'),
       metric('LIKUIDASI LONG', money(total.long), 'Jendela ' + payload.liquidation_hours + ' jam'),
+      metric('LIKUIDASI SHORT', money(total.short), 'Jendela ' + payload.liquidation_hours + ' jam'),
       metric('FEAR & GREED', hasNumber(fear.value) ? number(fear.value, 0) + ' / 100' : '—', text(fear.label, 'Belum tersedia'))
     );
 
