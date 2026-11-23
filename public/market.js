@@ -304,13 +304,9 @@ async function loadWhaleTransfers() {
   const address = String($('#whale-wallet-address').value || '').trim();
   const threshold = $('#whale-threshold').value;
   const hours = $('#whale-hours').value;
-  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
-    status.textContent = 'Masukkan alamat wallet Solana base58 yang valid.';
-    return;
-  }
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) { status.textContent = 'Masukkan alamat wallet Solana base58 yang valid.'; return; }
   if (button.disabled) return;
-  button.disabled = true;
-  button.textContent = 'Menganalisis…';
+  button.disabled = true; button.textContent = 'Menganalisis…';
   status.textContent = 'Mengambil ekspor transfer Solscan…';
   target.replaceChildren(node('div', 'muted', 'Memuat data transfer bernilai besar…'));
   try {
@@ -325,281 +321,24 @@ async function loadWhaleTransfers() {
       const row = node('article', 'gdelt-item');
       const amount = Number(item.value_usd);
       const heading = node('div', 'whale-transfer-heading');
-      heading.append(node('strong', 'number-cell', Number.isFinite(amount) ? '
-  const symbol = String($('#derivatives-symbol').value || '').trim().toUpperCase();
-  const body = $('#derivatives-table');
-  const status = $('#derivatives-status');
-  if (!/^[A-Z0-9]{2,20}USDT$/.test(symbol)) {
-    status.textContent = 'Format pair tidak valid. Contoh: BTCUSDT.';
-    return;
-  }
-  body.replaceChildren();
-  const loading = node('td', 'muted', 'Memuat data Binance Futures…'); loading.colSpan = 3;
-  const loadingRow = node('tr'); loadingRow.append(loading); body.append(loadingRow);
-  try {
-    const response = await fetch('/api/market-intelligence/derivatives?symbol=' + encodeURIComponent(symbol), { cache: 'no-store' });
-    const result = await response.json();
-    if (!response.ok || result.status !== 'success') throw new Error(result.message || result.code || 'Derivatives unavailable');
-    const funding = result.data?.funding || {};
-    const oi = result.data?.open_interest || {};
-    const oiHistory = Array.isArray(result.data?.open_interest_history) ? result.data.open_interest_history : [];
-    const taker = Array.isArray(result.data?.taker_flow) ? result.data.taker_flow : [];
-    const latestOI = oiHistory[oiHistory.length - 1] || {};
-    const latestTaker = taker[taker.length - 1] || {};
-    const rows = [
-      ['Funding rate terakhir', funding.lastFundingRate == null ? null : Number(funding.lastFundingRate) * 100, 'Persentase per periode funding'],
-      ['Mark price', funding.markPrice == null ? null : Number(funding.markPrice), 'Harga mark dalam USDT'],
-      ['Open interest kontrak', oi.openInterest == null ? null : Number(oi.openInterest), 'Jumlah kontrak; bukan arah long/short'],
-      ['Open interest value', latestOI.sumOpenInterestValue == null ? null : Number(latestOI.sumOpenInterestValue), 'Nilai notional USDT dari histori 5 menit'],
-      ['Taker buy volume', latestTaker.buyVol == null ? null : Number(latestTaker.buyVol), 'Volume aset dasar · interval 5 menit'],
-      ['Taker sell volume', latestTaker.sellVol == null ? null : Number(latestTaker.sellVol), 'Volume aset dasar · interval 5 menit'],
-      ['Taker buy/sell ratio', latestTaker.buySellRatio == null ? null : Number(latestTaker.buySellRatio), 'Di atas 1 berarti volume agresor beli lebih besar']
-    ];
-    body.replaceChildren();
-    rows.forEach(([label, value, unit]) => {
-      const tr = node('tr');
-      tr.append(node('td', '', label), node('td', 'number-cell', value == null || !Number.isFinite(value) ? 'N/A' : label.includes('rate') ? value.toFixed(4) + '%' : label.includes('price') ? fmtMoney(value) : fmtNum(value)), node('td', 'muted', unit));
-      body.append(tr);
-    });
-    const failures = Object.entries(result.sources || {}).filter(([, source]) => !source.ok).map(([name, source]) => name + ': ' + source.error);
-    status.textContent = symbol + ' · ' + new Date(result.observed_at).toLocaleString('id-ID') + (result.cached ? ' · cache 5 menit' : '') + (failures.length ? ' · parsial: ' + failures.join(', ') : ' · semua sumber OK');
-  } catch (error) {
-    body.replaceChildren();
-    const tr = node('tr'); const td = node('td', 'negative', safeText(error.message)); td.colSpan = 3; tr.append(td); body.append(tr);
-    status.textContent = 'Data derivatives tidak tersedia. Coba lagi setelah cooldown.';
-  }
-}
-async function loadAICouncilSummary() {
-  const target = $('#ai-market-summary');
-  try {
-    const response = await fetch('/api/ai/group', { cache: 'no-store' });
-    if (!response.ok) throw new Error('AI Council unavailable');
-    const result = await response.json();
-    const report = result.group?.last;
-    target.replaceChildren();
-    if (!report) return target.append(node('div', 'muted', 'Belum ada laporan AI Council tersimpan. Jalankan rapat dari dashboard utama untuk menampilkan ringkasan di sini.'));
-    const final = report.final || {};
-    target.append(node('div', 'regime-value ' + String(final.decision || 'WAIT').toLowerCase(), safeText(final.decision || 'WAIT')));
-    target.append(node('p', 'summary-fact', safeText(final.summary || 'Tidak ada ringkasan AI.')));
-    target.append(node('small', 'muted', 'Provider: ' + safeText(final.provider) + ' · ' + new Date(report.created_at).toLocaleString('id-ID') + ' · ' + safeText(report.status)));
-    (final.reasons || []).slice(0, 3).forEach((reason) => target.append(node('p', 'summary-fact', '• ' + safeText(reason))));
-  } catch {
-    target.replaceChildren(node('div', 'muted', 'Laporan AI Council belum dapat dimuat.'));
-  }
-}
-function renderAll() {
-  if (!market) return;
-  globalMetrics();
-  marketRows();
-  renderTrending();
-  renderMovers();
-  renderMomentum();
-  renderVolumeActivity();
-  renderRisk();
-  renderSectors();
-  renderExchanges();
-  renderSummary();
-  renderExchangeSelector();
-  loadAICouncilSummary();
-  updateStatus();
-}
-async function loadMarket(force = false) {
-  if (refreshBusy) return;
-  refreshBusy = true;
-  $('#refresh').classList.add('spinning');
-  try {
-    const response = await fetch('/api/market-intelligence', { cache: 'no-store' });
-    const result = await response.json();
-    if (!response.ok && !result.data) throw new Error(result.message || result.code || 'Gagal mengambil data CoinGecko');
-    market = result;
-    renderAll();
-    if (!$('#chart-coin').options.length) await loadChart();
-    if (force) $('#updated').textContent += ' · data memakai cache server 60 menit untuk menjaga kuota Demo';
-  } catch (error) {
-    $('#status').textContent = 'Gagal menghubungkan';
-    $('#side-status').textContent = 'Periksa server';
-    $('#notice').hidden = false;
-    $('#notice').textContent = 'Market Intelligence belum dapat dimuat: ' + safeText(error.message);
-  } finally {
-    refreshBusy = false;
-    $('#refresh').classList.remove('spinning');
-  }
-}
-function setSidebarOpen(open) {
-  const sidebar = $('#sidebar');
-  const toggle = $('#menu-toggle');
-  sidebar.classList.toggle('open', open);
-  document.body.classList.toggle('sidebar-open', open);
-  toggle.setAttribute('aria-expanded', String(open));
-  toggle.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
-}
-$('#menu-toggle').addEventListener('click', () => setSidebarOpen(!$('#sidebar').classList.contains('open')));
-$('#sidebar-backdrop').addEventListener('click', () => setSidebarOpen(false));
-document.querySelectorAll('.side-nav a').forEach((link) => link.addEventListener('click', () => setSidebarOpen(false)));
-document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
-window.addEventListener('resize', () => { if (window.innerWidth > 760) setSidebarOpen(false); });
-$('#refresh').addEventListener('click', () => loadMarket(true));
-$('#load-whale-transfers').addEventListener('click', loadWhaleTransfers);
-$('#load-derivatives').addEventListener('click', loadDerivatives);
-$('#derivatives-symbol').addEventListener('keydown', (event) => { if (event.key === 'Enter') loadDerivatives(); });
-$('#coin-search').addEventListener('input', (event) => { search = event.target.value.trim().toLowerCase(); marketRows(); });
-$('#chart-coin').addEventListener('change', loadChart);
-$('#chart-days').addEventListener('change', loadChart);
-$('#chart-metric').addEventListener('change', loadChart);
-$('#exchange-select').addEventListener('change', () => { $('#exchange-select').dataset.loaded = ''; loadExchangeTickers(); });
-loadMarket();
-setInterval(() => loadMarket(false), 5 * 60 * 1000);
- + amount.toLocaleString('en-US', { maximumFractionDigits: 2 }) : 'Nilai USD tidak tersedia'));
+      heading.append(node('strong', 'number-cell', Number.isFinite(amount) ? 'USD ' + amount.toLocaleString('en-US', { maximumFractionDigits: 2 }) : 'Nilai USD tidak tersedia'));
       heading.append(node('span', 'badge-neutral', String(item.direction || 'unknown').toUpperCase()));
       const signature = String(item.signature || '');
       if (/^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(signature)) {
         const link = node('a', 'gdelt-title', 'Lihat transaksi di Solscan');
-        link.href = 'https://solscan.io/tx/' + encodeURIComponent(signature);
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
+        link.href = 'https://solscan.io/tx/' + encodeURIComponent(signature); link.target = '_blank'; link.rel = 'noopener noreferrer';
         row.append(heading, link);
       } else row.append(heading, node('small', 'muted', 'Signature: ' + safeText(signature)));
-      const token = String(item.token_address || 'Token tidak diketahui');
-      const from = String(item.from || '—'), to = String(item.to || '—');
-      row.append(node('small', 'muted', safeText(token) + ' · ' + safeText(item.time || 'Waktu tidak tersedia')));
-      row.append(node('small', 'muted', 'From: ' + safeText(from) + ' · To: ' + safeText(to)));
+      row.append(node('small', 'muted', safeText(String(item.token_address || 'Token tidak diketahui')) + ' · ' + safeText(item.time || 'Waktu tidak tersedia')));
+      row.append(node('small', 'muted', 'From: ' + safeText(item.from || '—') + ' · To: ' + safeText(item.to || '—')));
       if (item.amount != null) row.append(node('small', 'muted', 'Jumlah token: ' + Number(item.amount).toLocaleString('en-US', { maximumFractionDigits: 8 })));
       target.append(row);
     });
-    status.textContent = result.qualifying_count + ' transfer ≥ 
-  const symbol = String($('#derivatives-symbol').value || '').trim().toUpperCase();
-  const body = $('#derivatives-table');
-  const status = $('#derivatives-status');
-  if (!/^[A-Z0-9]{2,20}USDT$/.test(symbol)) {
-    status.textContent = 'Format pair tidak valid. Contoh: BTCUSDT.';
-    return;
-  }
-  body.replaceChildren();
-  const loading = node('td', 'muted', 'Memuat data Binance Futures…'); loading.colSpan = 3;
-  const loadingRow = node('tr'); loadingRow.append(loading); body.append(loadingRow);
-  try {
-    const response = await fetch('/api/market-intelligence/derivatives?symbol=' + encodeURIComponent(symbol), { cache: 'no-store' });
-    const result = await response.json();
-    if (!response.ok || result.status !== 'success') throw new Error(result.message || result.code || 'Derivatives unavailable');
-    const funding = result.data?.funding || {};
-    const oi = result.data?.open_interest || {};
-    const oiHistory = Array.isArray(result.data?.open_interest_history) ? result.data.open_interest_history : [];
-    const taker = Array.isArray(result.data?.taker_flow) ? result.data.taker_flow : [];
-    const latestOI = oiHistory[oiHistory.length - 1] || {};
-    const latestTaker = taker[taker.length - 1] || {};
-    const rows = [
-      ['Funding rate terakhir', funding.lastFundingRate == null ? null : Number(funding.lastFundingRate) * 100, 'Persentase per periode funding'],
-      ['Mark price', funding.markPrice == null ? null : Number(funding.markPrice), 'Harga mark dalam USDT'],
-      ['Open interest kontrak', oi.openInterest == null ? null : Number(oi.openInterest), 'Jumlah kontrak; bukan arah long/short'],
-      ['Open interest value', latestOI.sumOpenInterestValue == null ? null : Number(latestOI.sumOpenInterestValue), 'Nilai notional USDT dari histori 5 menit'],
-      ['Taker buy volume', latestTaker.buyVol == null ? null : Number(latestTaker.buyVol), 'Volume aset dasar · interval 5 menit'],
-      ['Taker sell volume', latestTaker.sellVol == null ? null : Number(latestTaker.sellVol), 'Volume aset dasar · interval 5 menit'],
-      ['Taker buy/sell ratio', latestTaker.buySellRatio == null ? null : Number(latestTaker.buySellRatio), 'Di atas 1 berarti volume agresor beli lebih besar']
-    ];
-    body.replaceChildren();
-    rows.forEach(([label, value, unit]) => {
-      const tr = node('tr');
-      tr.append(node('td', '', label), node('td', 'number-cell', value == null || !Number.isFinite(value) ? 'N/A' : label.includes('rate') ? value.toFixed(4) + '%' : label.includes('price') ? fmtMoney(value) : fmtNum(value)), node('td', 'muted', unit));
-      body.append(tr);
-    });
-    const failures = Object.entries(result.sources || {}).filter(([, source]) => !source.ok).map(([name, source]) => name + ': ' + source.error);
-    status.textContent = symbol + ' · ' + new Date(result.observed_at).toLocaleString('id-ID') + (result.cached ? ' · cache 5 menit' : '') + (failures.length ? ' · parsial: ' + failures.join(', ') : ' · semua sumber OK');
-  } catch (error) {
-    body.replaceChildren();
-    const tr = node('tr'); const td = node('td', 'negative', safeText(error.message)); td.colSpan = 3; tr.append(td); body.append(tr);
-    status.textContent = 'Data derivatives tidak tersedia. Coba lagi setelah cooldown.';
-  }
-}
-async function loadAICouncilSummary() {
-  const target = $('#ai-market-summary');
-  try {
-    const response = await fetch('/api/ai/group', { cache: 'no-store' });
-    if (!response.ok) throw new Error('AI Council unavailable');
-    const result = await response.json();
-    const report = result.group?.last;
-    target.replaceChildren();
-    if (!report) return target.append(node('div', 'muted', 'Belum ada laporan AI Council tersimpan. Jalankan rapat dari dashboard utama untuk menampilkan ringkasan di sini.'));
-    const final = report.final || {};
-    target.append(node('div', 'regime-value ' + String(final.decision || 'WAIT').toLowerCase(), safeText(final.decision || 'WAIT')));
-    target.append(node('p', 'summary-fact', safeText(final.summary || 'Tidak ada ringkasan AI.')));
-    target.append(node('small', 'muted', 'Provider: ' + safeText(final.provider) + ' · ' + new Date(report.created_at).toLocaleString('id-ID') + ' · ' + safeText(report.status)));
-    (final.reasons || []).slice(0, 3).forEach((reason) => target.append(node('p', 'summary-fact', '• ' + safeText(reason))));
-  } catch {
-    target.replaceChildren(node('div', 'muted', 'Laporan AI Council belum dapat dimuat.'));
-  }
-}
-function renderAll() {
-  if (!market) return;
-  globalMetrics();
-  marketRows();
-  renderTrending();
-  renderMovers();
-  renderMomentum();
-  renderVolumeActivity();
-  renderRisk();
-  renderSectors();
-  renderExchanges();
-  renderSummary();
-  renderExchangeSelector();
-  loadAICouncilSummary();
-  updateStatus();
-}
-async function loadMarket(force = false) {
-  if (refreshBusy) return;
-  refreshBusy = true;
-  $('#refresh').classList.add('spinning');
-  try {
-    const response = await fetch('/api/market-intelligence', { cache: 'no-store' });
-    const result = await response.json();
-    if (!response.ok && !result.data) throw new Error(result.message || result.code || 'Gagal mengambil data CoinGecko');
-    market = result;
-    renderAll();
-    if (!$('#chart-coin').options.length) await loadChart();
-    if (force) $('#updated').textContent += ' · data memakai cache server 60 menit untuk menjaga kuota Demo';
-  } catch (error) {
-    $('#status').textContent = 'Gagal menghubungkan';
-    $('#side-status').textContent = 'Periksa server';
-    $('#notice').hidden = false;
-    $('#notice').textContent = 'Market Intelligence belum dapat dimuat: ' + safeText(error.message);
-  } finally {
-    refreshBusy = false;
-    $('#refresh').classList.remove('spinning');
-  }
-}
-function setSidebarOpen(open) {
-  const sidebar = $('#sidebar');
-  const toggle = $('#menu-toggle');
-  sidebar.classList.toggle('open', open);
-  document.body.classList.toggle('sidebar-open', open);
-  toggle.setAttribute('aria-expanded', String(open));
-  toggle.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
-}
-$('#menu-toggle').addEventListener('click', () => setSidebarOpen(!$('#sidebar').classList.contains('open')));
-$('#sidebar-backdrop').addEventListener('click', () => setSidebarOpen(false));
-document.querySelectorAll('.side-nav a').forEach((link) => link.addEventListener('click', () => setSidebarOpen(false)));
-document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
-window.addEventListener('resize', () => { if (window.innerWidth > 760) setSidebarOpen(false); });
-$('#refresh').addEventListener('click', () => loadMarket(true));
-$('#load-derivatives').addEventListener('click', loadDerivatives);
-$('#derivatives-symbol').addEventListener('keydown', (event) => { if (event.key === 'Enter') loadDerivatives(); });
-$('#coin-search').addEventListener('input', (event) => { search = event.target.value.trim().toLowerCase(); marketRows(); });
-$('#chart-coin').addEventListener('change', loadChart);
-$('#chart-days').addEventListener('change', loadChart);
-$('#chart-metric').addEventListener('change', loadChart);
-$('#exchange-select').addEventListener('change', () => { $('#exchange-select').dataset.loaded = ''; loadExchangeTickers(); });
-loadMarket();
-setInterval(() => loadMarket(false), 5 * 60 * 1000);
- + Number(result.threshold_usd).toLocaleString('en-US') +
-      ' · ' + result.window_hours + ' jam · ' + result.transfer_count + ' baris ekspor · ' +
-      new Date(result.observed_at).toLocaleString('id-ID') + (result.cached ? ' · cache 5 menit' : '') +
-      (result.truncated_possible ? ' · peringatan: batas 5.000 baris tercapai, hasil mungkin terpotong' : '');
+    status.textContent = result.qualifying_count + ' transfer memenuhi ambang USD ' + Number(result.threshold_usd).toLocaleString('en-US') + ' · ' + result.window_hours + ' jam · ' + result.transfer_count + ' baris ekspor · ' + new Date(result.observed_at).toLocaleString('id-ID') + (result.cached ? ' · cache 5 menit' : '') + (result.truncated_possible ? ' · peringatan: batas 5.000 baris tercapai, hasil mungkin terpotong' : '');
   } catch (error) {
     target.replaceChildren(node('div', 'negative', safeText(error.message)));
     status.textContent = 'Data transfer besar tidak tersedia. Periksa akses endpoint Solscan export dan coba kembali setelah cooldown.';
-  } finally {
-    button.disabled = false;
-    button.textContent = 'Analisis transfer';
-  }
+  } finally { button.disabled = false; button.textContent = 'Analisis transfer'; }
 }
 async function loadDerivatives() {
   const symbol = String($('#derivatives-symbol').value || '').trim().toUpperCase();
@@ -715,6 +454,7 @@ document.querySelectorAll('.side-nav a').forEach((link) => link.addEventListener
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
 window.addEventListener('resize', () => { if (window.innerWidth > 760) setSidebarOpen(false); });
 $('#refresh').addEventListener('click', () => loadMarket(true));
+$('#load-whale-transfers').addEventListener('click', loadWhaleTransfers);
 $('#load-derivatives').addEventListener('click', loadDerivatives);
 $('#derivatives-symbol').addEventListener('keydown', (event) => { if (event.key === 'Enter') loadDerivatives(); });
 $('#coin-search').addEventListener('input', (event) => { search = event.target.value.trim().toLowerCase(); marketRows(); });
