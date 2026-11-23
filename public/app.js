@@ -94,7 +94,7 @@ function renderOverview(){
    el('div',{},el('small',{},'JARINGAN'),el('b',{},'Solana Mainnet')),
    el('div',{},el('small',{},'OBSERVASI'),el('b',{},dateTime(solscanOverview?.observed_at)))
   ));
- v.append(movers,market,bottom,solscanPanel);
+ v.append(movers,market,bottom,solscanPanel,window.RadarTradeSetups?.render());
 }
 function renderScreener(){
  const v=$('#view');v.replaceChildren();
