@@ -2306,3 +2306,19 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Divisi 01: review keamanan adapter kandidat alternatif sebelum implementasi.
 - Divisi 05: QA independen.
 - Jangan mengaktifkan FRED sampai izin tertulis/pengecualian diterima. Prioritas operasional Hostless EROFS/DATA_DIR tetap berlaku sesuai section 68/69.
+
+
+---
+
+## 71. DIVISI 08 — AUDIT SUMBER DATA GRATIS & LEGAL — 23 NOVEMBER 2026
+
+- Lead: Divisi 08 Procurement & Tools. Supporting: Divisi 03 (exchange/market semantics), Divisi 04 (news/macro), Divisi 01 (security/compliance), Divisi 05 (independent QA), Executive Office (prioritas/koordinasi).
+- Main HEAD diaudit: 4a08855cf22c94c18c97ed550de3ba0706095d44 (docs(compliance): block FRED integration pending written permission). Branch main; repository publik. Tidak ada login, pendaftaran akun, kartu, pembayaran, secret, atau perubahan Hostless env.
+- Dokumen hasil audit: docs/free-data-source-audit-2026-11-23.md pada branch docs/div08-free-data-source-audit-2026-11-23 (PR menyusul). Dokumen memisahkan endpoint no-auth dari hak komersial/redistribusi/AI/cache; akses publik bukan izin otomatis.
+- Kandidat paling kuat tanpa login: GDELT Project (news/event metadata; unlimited commercial use dengan attribution; DOC API throttle), U.S. Treasury Fiscal Data (open API dan penggunaan komersial/redistribusi diperbolehkan), World Bank Indicators API (no key; default CC BY 4.0 dengan pemeriksaan metadata per dataset), serta BLS dan New York Fed pada PR #65.
+- SEC EDGAR no API key dan RSS menjadi kandidat catalyst issuer/regulatory; implementasi wajib mengikuti fair-access 10 req/s, identifikasi bot/User-Agent dan verifikasi hak konten filing.
+- Binance public market data sudah digunakan untuk futures/entry candidate; Bybit, Hyperliquid dan Kraken belum dipromosikan karena hak komersial/redistribusi belum diselesaikan. OKX melarang penggunaan data untuk competing aggregator/AI commercial use; CoinPaprika keyless non-commercial; DEX Screener direct-competition restriction; CoinGecko Demo tidak memberi commercial rights; DeFiLlama membatasi commercial/republishing; FRED tetap compliance hold sesuai section 70.
+- Risiko existing untuk review Divisi 01/04: CoinGecko Demo, DeFiLlama free API, GeckoTerminal API dan PR #60 DEX Screener. Jangan perluas public display/redistribusi sebelum hak penggunaan dipastikan.
+- Data contract: canonical identity chain+contract atau exchange+market type+symbol; provenance/timestamps wajib; spot/perp/mark/index/OI/funding/rolling volume tidak boleh dicampur; missing values tetap null; konflik sumber terlihat; macro publication time mencegah look-ahead bias. Tidak ada live order.
+- Tes lokal: tidak dijalankan karena working copy Node.js tidak tersedia. Combined status GitHub untuk main HEAD kosong (bukan pass/fail). Hostless build/LIVE tidak diperiksa; EROFS/DATA_DIR tetap blocker. Tidak ada klaim deployment.
+- NEXT TASK: Divisi 04 menyiapkan adapter GDELT metadata/event dan World Bank/Treasury macro secara terisolasi; Divisi 03 memvalidasi field market; Divisi 01 melakukan security + license boundary review; Divisi 05 QA exact-head. Divisi 08 melanjutkan review terms Bybit/Hyperliquid/indexers. Executive Office mengoordinasikan prioritas dan gate review. Jangan merge/deploy sebelum review independen dan approval yang diwajibkan.
