@@ -346,7 +346,7 @@ async function loadMacro() {
   const status = $('#macro-status');
   if (!body || !status) return;
   body.replaceChildren();
-  const loading = node('td', 'muted', 'Memuat data makro dari BLS, US Treasury, dan New York Fed…'); loading.colSpan = 4;
+  const loading = node('td', 'muted', 'Memuat data makro dari BLS dan New York Fed…'); loading.colSpan = 4;
   const loadingRow = node('tr'); loadingRow.append(loading); body.append(loadingRow);
   try {
     const response = await fetch('/api/market-intelligence/macro', { cache: 'no-store' });
@@ -363,7 +363,7 @@ async function loadMacro() {
     if (!(result.series || []).length) { const tr = node('tr'); const td = node('td', 'muted', 'Belum ada observasi makro.'); td.colSpan = 4; tr.append(td); body.append(tr); }
     const failures = Object.entries(result.sources || {}).filter(([, source]) => !source.ok).map(([name]) => name.toUpperCase());
     const stale = (result.series || []).some((item) => item.stale);
-    status.textContent = 'BLS · US Treasury · New York Fed · retrieved ' + new Date(result.observed_at).toLocaleString('id-ID') + (result.cached ? ' · cache aktif' : '') + (stale ? ' · memakai data cache lama' : '') + (failures.length ? ' · sumber bermasalah: ' + failures.join(', ') : ' · sumber tersedia');
+    status.textContent = 'BLS · New York Fed · retrieved ' + new Date(result.observed_at).toLocaleString('id-ID') + (result.cached ? ' · cache aktif' : '') + (stale ? ' · memakai data cache lama' : '') + (failures.length ? ' · sumber bermasalah: ' + failures.join(', ') : ' · sumber tersedia');
   } catch (error) {
     body.replaceChildren();
     const tr = node('tr'); const td = node('td', 'negative', safeText(error.message)); td.colSpan = 4; tr.append(td); body.append(tr);
