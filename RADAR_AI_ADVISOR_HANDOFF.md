@@ -232,3 +232,9 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Sui appears in historical changelog but operational endpoint is not documented/verified; do not mark it supported.
 - Runtime credentials remain unverified until Hostless serves this branch and status returns verified. Hostless EROFS remains separate blocker; persistent disk + `DATA_DIR=/data` are required for durable GoPlus quota counters.
 - NEXT: exact-head CI/security, merge gate, then Hostless deploy/readiness/credential/live UI verification. Rp0; no paid provisioning.
+
+
+### 17.1 GoPlus delivery CI evidence — 23 November 2026
+- Implementation/test head `770122b77685f9cb3f45a49f51a8c2daa03bb0cd`: test run #723 passed **141/141**; security run #266 succeeded (Gitleaks no secrets; Trivy secret scan no issues; dependency vulnerability scan unavailable because no supported manifest/lockfile).
+- PR #62 is ready for review and mergeable, but Divisi 01 credential/security review and Divisi 05 independent QA remain required.
+- Latest known Hostless monitor reports readiness 503/EROFS and GoPlus credentials not configured. No Hostless deployment or live credential test is claimed.
