@@ -2456,3 +2456,55 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 2. Setelah Hostless deployment tersedia, jalankan test provider satu per satu tanpa menampilkan secret: HTTP status, model, latency, valid JSON, token usage, dan sanitized error.
 3. Pastikan Gemini/Groq/OpenRouter/OpenAI benar-benar menyelesaikan rapat 3 putaran serta notulen dengan output lebih lengkap.
 4. Jika provider menolak 4096 karena model cap, gunakan cap per-model yang didokumentasikan; jangan retry berulang tanpa batas.
+
+## 74. PR SYNC & REVIEW BLOCKER REMEDIATION — 24 NOVEMBER 2026
+
+### Repository baseline and method
+- Current main verified at start of remediation: `80624b47d54c498524e41f42f2790b66cf879f32`.
+- Open PR inventory at start: 21 PRs. Main problem was mixed: stale base branches, append-only master-context conflicts, real source-file overlaps, stale tests, and incomplete independent reviews.
+- For branches where three-way compare proved no source overlap (only append-only context, or no overlap), the branch was synchronized using a two-parent merge commit with current main as first parent and the PR head as second parent. The current main tree was preserved; changed feature paths were overlaid; unique handoff sections were retained and renumbered. Branch refs were updated with expected-head checks, not force-pushed.
+- No PR was merged to main and no Hostless configuration, secret, DB, provider entitlement, paid service, wallet permission or trading setting was changed.
+
+### Synchronized branches — exact commits and CI
+- PR #77 Dashboard visual refresh: fixed stale Service Worker test assertion. Old test expected `radar-shell-v12` not to be deleted even though branch uses v13; corrected expected deletion. Commit `3f11e180b74711b79d3b8d4b05accddf57ba592c`. Exact-head test, Gitleaks and Trivy checks all passed.
+- PR #70 GDELT: synchronized at `391982942460dc55e7ddcfa61207af71e411d643`; tests, Gitleaks and Trivy passed. Divisi 08 source review conditional; Divisi 01 SSRF/terms and Divisi 05 QA pending.
+- PR #74 Marketlight: synchronized at `da62f75cc9d16e3c51bbbef78c0d0302457ba61e`; tests, Gitleaks and Trivy passed. Re-audit confirmed current code already implements streamed 1 MiB response cap/cancellation, long+short global liquidation display, provider timestamps and funding interval display; previous review comments were from older head. Still draft pending independent Divisi 01/03/05 and Hostless readiness.
+- PR #71 Solscan transfer watch: synchronized at `0a275c0deba9cfc2119b35cd0e81cc0bdcd30d0e`; tests, Gitleaks and Trivy passed. Solscan Pro transfer-export entitlement remains unverified; no paid upgrade approved. Keep disabled if provider denies access.
+- PR #72 GoPlus holder concentration: synchronized at `f4820a472edfab1a9778daac48f2ca0e07e24f1b`; tests, Gitleaks and Trivy passed. Hostless GoPlus credentials remain unconfigured; do not claim holder/lock data LIVE or spend quota in scheduled probes.
+- PR #65 Macro intelligence: synchronized at `6e96f6f02140483031dd6cbac25f6ce6d738e013`; tests, Gitleaks and Trivy passed. Divisi 04 must verify observation/publication dates, cadence and look-ahead safety; Divisi 01/05 review pending.
+- PR #63 GoPlus Signature Decode: synchronized at `0218520cd7ffb1a478af6091d10ce1f155e39ecd`; tests, Gitleaks and Trivy passed. Independent Divisi 01/03/05 review pending.
+- PR #62 GoPlus chain coverage: synchronized at `21c91500ca586d9ccf1830e2e17ca03312e8c0af`; tests, Gitleaks and Trivy passed. Independent Divisi 01/03/05 review pending.
+- PR #66 trade setup: synchronized at `56d8577c73724a8693c594a97213135b55dd3072`; tests, Gitleaks and Trivy passed. Contract/mint identity validation and Divisi 01/04/05 review remain required.
+- PR #34 Agent Platform schema: synchronized at `516afbb89281bbc95a9135288ea2f27e14958ca5`; exact-head npm test + PostgreSQL 16 migration/observer-role smoke passed; Gitleaks and Trivy passed. Schema only; no worker/runtime/production migration. Independent Divisi 01/05 review remains required.
+- PR #51 Agent Platform Phase 0 docs: synchronized at `2a6f77fdb5c9104c4d2d92549359ea7cb8d1b724`; tests/security passed. Documentation only.
+- PR #56 Early Whale Detector specification: synchronized at `d28441ac12b6b3345268c33d9ca8714544e47b1d`; tests/security passed. Specification only; no detector active.
+- PR #44 Director handoff docs: synchronized at `1472f53a04a701bc339ddb6b6df29ae4e3995da8`; tests/security passed. Docs only.
+- PR #75 change-based testing policy: synchronized at `c12d6ef471e5c6a6313faecd09b4adcdd37ab359`; tests/security passed. Policy explicitly retains security/release gates and full-suite exceptions for high-risk changes.
+- Trivy filesystem/secret job success does not establish dependency CVE coverage where no supported dependency manifest/lockfile is available. Keep this caveat explicit.
+
+### PRs closed as superseded or not approved
+- PR #28 closed: superseded by newer secure provider-registry candidate PR #43 and subsequent mainline AI Workspace changes. Security/cost/SSRF findings remain on PR #43.
+- PR #6 closed: old visual workflow is 428 commits behind, duplicates the newer Hostless monitor, polls LIVE for up to eight minutes on every main push and uses the old `/api/health` contract. If needed, rebuild as bounded manual diagnostic using `/api/ready`.
+- PR #60 closed: broad DEX Screener scanner is stale and overlaps current adapter/routes/tests. Main already contains bounded read-only DEX pair validation; broad scanner remains blocked pending source/terms approval. Do not restore the broader feed without fresh review.
+
+### Remaining true code-conflict ports — not mechanically synchronized
+- PR #55 Executive Trading Intelligence: real overlap in `public/app.js`, `public/index.html`, `public/style.css` and master context; 31 commits ahead / 168 behind at audit. Must port unique panels to current dashboard rather than overwrite main.
+- PR #57 Bubblemaps: real overlap in `.env.example`, README, `lib/ingest.js`, `public/app.js`, `public/index.html`, `public/style.css`, `server.js` and master context; 18 ahead / 168 behind. Port isolated embed to current architecture. Production partner ID/domain whitelist remains a separate prerequisite.
+- PR #45 GitHub App backend gateway: real overlap in `.env.example`, README and `server.js`; unique adapters/tests need controlled integration and permission/secret-boundary QA. No Hostless connection or App secret was verified.
+- PR #43 secure AI provider registry: real overlap in `.env.example`, handoff/master docs, README, `lib/ai/workspace.js`, `server.js`, and tests. Port to latest workspace while preserving 4096 token budget and recent reliability fixes. PR #28 is superseded.
+- These four branches were not force-pushed or tree-overlaid because doing so could erase current main behavior. Detailed file lists and required port/review steps are recorded in PR comments. PR #43 was returned to Draft.
+
+### Shared GoPlus sequencing risk
+- PR #62 and PR #63 both change `lib/goplus.js`, `public/app.js`, `server.js`, and GoPlus tests. Each is individually synchronized to current main and CI-green, but their feature diffs overlap each other. Merge at most one after review, then re-sync/retest the other against the merged head; do not merge both independently without reconciliation.
+
+### Release and review disposition
+- PRs #34, #43, #44, #51, #55, #56, #57, #62, #63, #65, #66, #70, #71, #72, #74 and #77 remain unmerged; drafts are retained where independent review or provider/production gates are missing. PR #75 remains ready for review. PRs #6, #28 and #60 are closed.
+- No independent Divisi 01/05 sign-off was fabricated. Green GitHub CI is not a substitute for source entitlement, independent review, Hostless Build, deployed SHA or LIVE verification.
+- Hostless readiness remains separately blocked by EROFS/DATA_DIR. No deployment claim is made.
+
+### NEXT TASK
+1. Divisi 01/05 review PR #34 schema and PR #74 Marketlight current head; Divisi 03 validates PR #71/72/63/62 data semantics and credentials/entitlements; Divisi 04/05 review PR #65/66/70 signal semantics and QA.
+2. Merge one GoPlus PR (#62 or #63) only after review, then re-sync the other and rerun exact-head CI.
+3. Port PR #43 and #45 manually onto current main; port PR #55 and #57 only as isolated UI/data modules after current API contract review.
+4. Keep PR #55/#57/#43/#45 in Draft until their current-main port and exact-head tests/security/reviews pass.
+5. Resolve Hostless EROFS with BOS-approved persistent storage decision before claiming durable tracking or LIVE readiness.
