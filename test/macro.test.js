@@ -42,8 +42,7 @@ test('NY Fed parser validates rate observations and keeps missing values null', 
   const parsed = parseNyFed(nyFedFixture('SOFR', 3.92), NYFED_SERIES[0]);
   assert.equal(parsed.latest.value, 3.92);
   assert.equal(parsed.latest.volume_in_billions, 3141);
-  const missing = parseNyFed({ refRates: [{ effectiveDate: '2026-11-20', percentRate: null, volumeInBillions: null }] }, NYFED_SERIES[0]);
-  assert.equal(missing.latest, undefined);
+  assert.throws(() => parseNyFed({ refRates: [{ effectiveDate: '2026-11-20', percentRate: null, volumeInBillions: null }] }, NYFED_SERIES[0]), { code: 'NYFED_EMPTY_RESPONSE' });
 });
 
 test('macro service calls BLS v1 once and NY Fed endpoints without API keys', async () => {
