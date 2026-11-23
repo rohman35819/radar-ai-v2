@@ -139,4 +139,4 @@ Run `npm run hostless-check` to probe the public `/api/ready` and `/api/snapshot
 - Configure `BUBBLEMAPS_PARTNER_ID` in the server environment only after Bubblemaps issues a partner ID and whitelists the production domain. The partner ID is public configuration, not an API secret.
 - The `demo` partner ID is for localhost/0.0.0.0 testing only; do not use it on Hostless production. No paid API or provider key is used by the iframe integration.
 - The embed requires a token contract/address and supported chain; ticker symbols are not accepted as asset identity.
-- Map freshness and coverage are provided by Bubblemaps; wallet links indicate indexed transfer relationships, not proof of common beneficial ownership or a market buy.
+- Bubblemaps states maps are refreshed within the last six hours; newly launched tokens may still be delayed. Always inspect the computation timestamp shown in the map. Wallet links indicate indexed transfer relationships, not proof of common beneficial ownership or a market buy.
