@@ -102,7 +102,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
 
   const send = (res, code, body, type = 'application/json', extra = {}) => {
     res.writeHead(code, { 'content-type': type, 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer',
-      'content-security-policy': "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'",
+      'content-security-policy': "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-src https://iframe.bubblemaps.io; frame-ancestors 'none'",
       ...(cfg.corsOrigin ? { 'access-control-allow-origin': cfg.corsOrigin, vary: 'Origin' } : {}), ...extra });
     res.end(type === 'application/json' ? JSON.stringify(body) : body);
   };
@@ -113,6 +113,9 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
       const url = new URL(req.url, 'http://x');
       if (url.pathname.startsWith('/api/')) {
         if (limited(ip)) return send(res, 429, { status: 'error', message: 'Terlalu banyak permintaan' }, 'application/json', { 'retry-after': '60' });
+        if (url.pathname === '/api/bubblemaps/config' && req.method === 'GET') {
+          return send(res, 200, { provider: 'Bubblemaps V2', configured: Boolean(cfg.bubbleMapsPartnerId), partnerId: cfg.bubbleMapsPartnerId || null, source: 'official_iframe' }, 'application/json', { 'cache-control': 'no-store' });
+        }
         if (url.pathname.startsWith('/api/solscan/')) {
           if (solscanLimited(ip)) return send(res, 429, { status: 'error', code: 'SOLSCAN_LOCAL_RATE_LIMITED', message: 'Terlalu banyak permintaan Solscan. Tunggu sebentar.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
           if (url.pathname === '/api/solscan/overview' && req.method === 'GET') {
