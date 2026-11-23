@@ -71,7 +71,7 @@ test('DEX Screener rejects malformed token identifiers before building pair URL'
   assert.equal(pairCalls, 0);
 });
 
-test('DEX Screener score is null when no measurable market data exists', () => {
+test('DEX Screener score is null when no measurable market data exists', async () => {
   const result = await createDexScreenerService({ fetchImpl: async (url) => {
     if (url.endsWith('/token-profiles/latest/v1')) return response([{ chainId: 'solana', tokenAddress: 'D'.repeat(32) }]);
     if (url.endsWith('/token-boosts/latest/v1') || url.endsWith('/token-boosts/top/v1')) return response([]);
