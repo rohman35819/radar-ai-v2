@@ -2318,7 +2318,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 
 ### Implementasi
 - `lib/trade-setups.js`: memilih maksimal 8 ticker unik dari daftar CoinGecko top market yang cocok dengan Binance USDⓈ-M USDT perpetual aktif; memeriksa exchangeInfo, mark price, dan candle 1 jam tertutup.
-- Filter setup LONG: harga di atas EMA20, EMA20 di atas EMA50 dan meningkat, RSI14 48–70, rasio volume 5 candle terhadap median 20 candle minimal 1.1x, ATR% 0.15–6%, harga mark tidak menjauh lebih dari 1.5 ATR dari candle terakhir, dan skor confluence minimal 65/100.
+- Filter setup LONG: harga di atas EMA20, EMA20 di atas EMA50 dan meningkat, RSI14 48–70, momentum Binance 24 jam dan 7 hari positif, rasio volume 5 candle terhadap median 20 candle minimal 1.1x, ATR% 0.15–6%, harga mark tidak menjauh lebih dari 1.5 ATR dari candle terakhir, dan skor confluence minimal 65/100.
 - Level: Entry = Binance mark price saat scan; SL = Entry − 1.5 × ATR14; TP1/TP2/TP3 = Entry + 1R/2R/3R. R = 1.5 × ATR14. Tidak ada probabilitas profit atau order execution.
 - Pair mapping dibatasi ke ticker CoinGecko yang unik dan base asset Binance yang unik. Ini bukan verifikasi contract address; UI memperingatkan pengguna untuk memverifikasi identitas pair.
 - `GET /api/market-intelligence/trade-setups` memanggil data market server-side dan scan Binance publik, dibatasi 6 request/menit/IP dan 60 request/menit global; hasil scan cache 2 menit.
@@ -2331,7 +2331,7 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - CI pada implementasi head awal `b9b4112ca538b1daf9bb3a650dfa118241a279be`: test run #735 lulus 138/138; security run #278 success.
 - Setelah hardening parser candle, neutral RSI, label USDT, dan regression fixture candle berjalan, exact final code/test head `9e8c919d13a0a06fd9a16df311a79d9934d7437f` lulus test run #739: **138 passed, 0 failed, 0 skipped**. Security run #282: Gitleaks no leaks; Trivy secret scan no issues. Trivy vulnerability scanner menyatakan tidak menemukan manifest yang didukung, sehingga dependency CVE coverage **NOT AVAILABLE**, bukan clean dependency scan.
 - Independent Division 05 QA, Hostless Build, dan LIVE visual QA masih menunggu.
-- Data CoinGecko market universe dapat memakai cache upstream; harga mark dan candle berasal dari Binance Futures publik. Tidak ada jaminan fill, harga bisa berubah, dan sinyal dapat kedaluwarsa.
+- Data CoinGecko hanya dipakai untuk universe/nama/rank; momentum 24 jam dan 7 hari, harga mark, serta candle teknikal dihitung dari Binance Futures publik agar tidak bergantung pada cache perubahan harga CoinGecko. Tidak ada jaminan fill, harga bisa berubah, dan sinyal dapat kedaluwarsa.
 - Hostless storage readiness masih diketahui bermasalah EROFS dari audit sebelumnya; perubahan ini tidak mengubah DATA_DIR atau storage config.
 
 ### NEXT TASK
