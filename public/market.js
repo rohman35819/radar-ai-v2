@@ -297,6 +297,43 @@ async function loadChart() {
     $('#price-chart').replaceChildren(node('div', 'negative', 'Grafik tidak tersedia: ' + safeText(error.message)));
   } finally { chartBusy = false; }
 }
+async function loadGdeltNews() {
+  const button = $('#load-gdelt');
+  const target = $('#gdelt-articles');
+  const status = $('#gdelt-status');
+  if (button.disabled) return;
+  button.disabled = true;
+  button.textContent = 'Mencari…';
+  status.textContent = 'Mengambil metadata berita global 24 jam terakhir…';
+  target.replaceChildren(node('div', 'muted', 'Memuat hasil GDELT…'));
+  try {
+    const response = await fetch('/api/market-intelligence/news-catalysts', { cache: 'no-store' });
+    const result = await response.json();
+    if (!response.ok || result.status !== 'success') throw new Error(result.message || result.code || 'GDELT unavailable');
+    target.replaceChildren();
+    const articles = Array.isArray(result.articles) ? result.articles : [];
+    if (!articles.length) target.append(node('div', 'muted', 'Tidak ada artikel yang cocok dalam jendela 24 jam.'));
+    articles.forEach((article) => {
+      const row = node('article', 'gdelt-item');
+      const title = node('a', 'gdelt-title', safeText(article.title));
+      title.href = article.url;
+      title.target = '_blank';
+      title.rel = 'noopener noreferrer';
+      const meta = [article.domain, article.language, article.source_country, article.published_at ? new Date(article.published_at).toLocaleString('id-ID') : null].filter(Boolean).join(' · ');
+      row.append(title, node('small', 'muted', meta || 'Waktu/sumber tidak tersedia'));
+      target.append(row);
+    });
+    status.textContent = result.article_count + ' artikel · ' + new Date(result.observed_at).toLocaleString('id-ID') +
+      (result.cached ? ' · cache 15 menit' : '') + (result.stale ? ' · data cache lama' : '') +
+      (result.error ? ' · upstream: ' + result.error : '') + ' · ' + safeText(result.provider);
+  } catch (error) {
+    target.replaceChildren(node('div', 'negative', safeText(error.message)));
+    status.textContent = 'Pencarian berita belum tersedia. Tunggu cooldown sebelum mencoba lagi.';
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Cari katalis berita';
+  }
+}
 async function loadDerivatives() {
   const symbol = String($('#derivatives-symbol').value || '').trim().toUpperCase();
   const body = $('#derivatives-table');
@@ -411,6 +448,7 @@ document.querySelectorAll('.side-nav a').forEach((link) => link.addEventListener
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
 window.addEventListener('resize', () => { if (window.innerWidth > 760) setSidebarOpen(false); });
 $('#refresh').addEventListener('click', () => loadMarket(true));
+$('#load-gdelt').addEventListener('click', loadGdeltNews);
 $('#load-derivatives').addEventListener('click', loadDerivatives);
 $('#derivatives-symbol').addEventListener('keydown', (event) => { if (event.key === 'Enter') loadDerivatives(); });
 $('#coin-search').addEventListener('input', (event) => { search = event.target.value.trim().toLowerCase(); marketRows(); });
