@@ -2328,10 +2328,11 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 
 ### Validasi dan batas
 - Tes unit mencakup perhitungan entry/SL/TP, penolakan kandidat lemah, dan penolakan ticker ambigu. Fixture tren naik menggunakan candle tertutup sintetis; bukan backtest atau validasi profitabilitas.
-- CI pada implementasi head awal `b9b4112ca538b1daf9bb3a650dfa118241a279be`: test run #735 lulus 138/138; security run #278 success.
-- Setelah hardening parser candle, neutral RSI, label USDT, dan regression fixture candle berjalan, exact final code/test head `9e8c919d13a0a06fd9a16df311a79d9934d7437f` lulus test run #739: **138 passed, 0 failed, 0 skipped**. Security run #282: Gitleaks no leaks; Trivy secret scan no issues. Trivy vulnerability scanner menyatakan tidak menemukan manifest yang didukung, sehingga dependency CVE coverage **NOT AVAILABLE**, bukan clean dependency scan.
+- Exact final implementation/test head `f97942e0e85b7e24238f621672437dee8a4e5766`: GitHub Actions test run #744 **138 passed, 0 failed, 0 skipped**.
+- Security run #287: Gitleaks **no leaks**; Trivy secret scanner **no issues**. Trivy vulnerability scanner menyatakan tidak menemukan manifest yang didukung, sehingga dependency CVE coverage **NOT AVAILABLE**, bukan clean dependency scan.
+- Perbaikan source setelah uji awal: momentum 24 jam/7 hari dihitung dari candle Binance (bukan perubahan CoinGecko yang dapat stale); test fixture lonjakan volume diselaraskan pada 5 candle terakhir.
 - Independent Division 05 QA, Hostless Build, dan LIVE visual QA masih menunggu.
-- Data CoinGecko hanya dipakai untuk universe/nama/rank; momentum 24 jam dan 7 hari, harga mark, serta candle teknikal dihitung dari Binance Futures publik agar tidak bergantung pada cache perubahan harga CoinGecko. Tidak ada jaminan fill, harga bisa berubah, dan sinyal dapat kedaluwarsa.
+- Data CoinGecko hanya dipakai untuk universe/nama/rank; momentum 24 jam dan 7 hari, harga mark, serta candle teknikal dihitung dari Binance Futures publik agar tidak bergantung pada cache perubahan harga CoinGecko. Scanner meminta hingga 200 candle 1 jam agar perubahan 7 hari dapat dihitung dari sumber yang sama. Tidak ada jaminan fill, harga bisa berubah, dan sinyal dapat kedaluwarsa.
 - Hostless storage readiness masih diketahui bermasalah EROFS dari audit sebelumnya; perubahan ini tidak mengubah DATA_DIR atau storage config.
 
 ### NEXT TASK
