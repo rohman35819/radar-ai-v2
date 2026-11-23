@@ -2508,3 +2508,34 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 3. Port PR #43 and #45 manually onto current main; port PR #55 and #57 only as isolated UI/data modules after current API contract review.
 4. Keep PR #55/#57/#43/#45 in Draft until their current-main port and exact-head tests/security/reviews pass.
 5. Resolve Hostless EROFS with BOS-approved persistent storage decision before claiming durable tracking or LIVE readiness.
+
+## 75. AUTONOMOUS DEVELOPMENT PILOT — 23 NOVEMBER 2026
+
+### Division and objective
+- Lead: Divisi 06 — Agent Platform & Automation (pilot implementation); supporting Divisi 04 for model/provider execution, Divisi 01 for security boundaries, and Divisi 05 for independent QA.
+- Objective: introduce a scheduled, bounded code-maintenance worker that can operate while BOS is offline and submit reviewable Draft PRs. This is not a persistent ChatGPT conversation; execution belongs to GitHub Actions.
+
+### Pilot implementation (PR #81)
+- Branch: `feat/autonomous-agent-pilot`.
+- PR: https://github.com/rohman35819/radar-ai-v2/pull/81 (Draft; not merged).
+- Files: `.github/workflows/autonomous-development.yml`, `lib/ai/autonomous-agent.js`, `test/autonomous-agent.test.js`.
+- Schedule: every six hours plus manual dispatch.
+- Providers: Groq first; OpenRouter `openrouter/free` fallback. No OpenAI paid API path. Provider secrets must be configured separately in GitHub Actions; Hostless secrets are not copied or read by this worker.
+- Worker reads the AI workspace/group modules and their tests; a model may propose at most one patch of 3 existing files / 40 KiB. Only existing `lib/ai/*.js` and `test/*.test.js` targets are allowed.
+- Patch validation rejects binary/new/deleted/renamed files, mode changes, path traversal, path substitution, and untracked targets. It runs `git apply --check`, `git diff --check`, and the full `npm test` before pushing a task branch and opening a Draft PR.
+- A single outstanding autonomous Draft PR blocks subsequent worker runs. No auto-merge, deploy, secret/config/permission changes, database migrations, exchange operations, or trading actions.
+- Workflow default is disabled (`AUTONOMOUS_AGENT_ENABLED=0`) until Security (Divisi 01) and QA (Divisi 05) approve the exact implementation and BOS configures the required GitHub Actions variable/secrets. This avoids silently enabling a code-writing worker before review.
+- The worker is a narrow pilot: it does not yet perform broad external web research, modify dashboard/backend outside the AI module, or coordinate multiple concurrent agents.
+
+### Verification status
+- Initial exact-head CI on commit `993da1721e513b1df3559c254972df2962747415` failed two new assertions (new-file rejection message and prompt wording); this was a real failure and was corrected in subsequent commits.
+- Security scans on commit `993da1721e513b1df3559c254972df2962747415` completed successfully. This does not certify the later exact head.
+- Latest implementation commit at time of this note: `9f6ca8bce3fd7bc817ac72ad87292da92db44768`. Exact-head tests/security are pending; do not claim green.
+- No merge, Hostless deployment, or LIVE verification. No worker has run on schedule yet. The feature is not active until PR review/merge and repository configuration are completed.
+
+### Next task
+1. Run exact-head `npm test`, Gitleaks, and Trivy for PR #81; repair any failures.
+2. Divisi 01 independently review patch validation, token handling, workflow permissions, and untrusted model output.
+3. Divisi 05 verify schedule/manual triggers, concurrency, exact-head CI, and PR creation behavior.
+4. BOS configures GitHub Actions secrets `GROQ_API_KEY` and optionally `OPENROUTER_API_KEY`, and repository variable `AUTONOMOUS_AGENT_ENABLED=1`, only after the reviews pass. If free-tier keys are not available, the worker safely skips.
+5. After activation, monitor at least three scheduled cycles before expanding file allowlists or additional agents.
