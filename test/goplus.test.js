@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createGoPlusService } = require('../lib/goplus');
+const { createGoPlusService, GOPLUS_CHAINS, GOPLUS_SUPPORTED_NETWORKS, EVM_CHAINS, validAddress, validTronAddress } = require('../lib/goplus');
 const response = (data, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => data });
 
 test('GoPlus requires credentials and never silently bypasses authentication', async () => {
@@ -83,4 +83,53 @@ test('GoPlus usage counters persist after an actual upstream request', async () 
   assert.equal(usageState.day_count, 1);
   assert.equal(usageState.month_count, 1);
   assert.equal(persisted, 1);
+});
+
+
+test('GoPlus supports every documented Token Security chain ID plus Solana Beta', () => {
+  const address = '0x1111111111111111111111111111111111111111';
+  const numericChains = GOPLUS_CHAINS.filter((chain) => /^\\d+$/.test(chain.id));
+  assert.equal(GOPLUS_CHAINS.length, 38);
+  assert.equal(numericChains.length, 37);
+  assert.equal(GOPLUS_SUPPORTED_NETWORKS.length, 39);
+  for (const chain of numericChains) {
+    assert.equal(validAddress(chain.id, address), true, chain.name + ' numeric chain ID');
+    assert.equal(EVM_CHAINS[chain.id], chain.id);
+    for (const alias of chain.aliases) {
+      assert.equal(validAddress(alias, address), true, chain.name + ' alias ' + alias);
+      assert.equal(EVM_CHAINS[alias], chain.id);
+    }
+  }
+  assert.equal(validAddress('solana', 'So11111111111111111111111111111111111111112'), true);
+  assert.equal(validAddress('sui', address), false);
+});
+
+test('GoPlus maps newly documented Arc chain and numeric IDs to canonical API path', async () => {
+  const address = '0x1111111111111111111111111111111111111111';
+  const urls = [];
+  const service = createGoPlusService({ accessToken: 'static-token', fetchImpl: async (url) => {
+    urls.push(url);
+    return response({ code: 1, result: { [address]: { token_name: 'Arc Test Token' } } });
+  }});
+  const byAlias = await service.security({ networkId: 'arc', tokenAddress: address });
+  assert.equal(byAlias.chain_id, '5042');
+  const byId = await service.security({ networkId: '5042', tokenAddress: '0x2222222222222222222222222222222222222222' });
+  assert.equal(byId.chain_id, '5042');
+  assert.ok(urls.some((url) => url.includes('/token_security/5042?')));
+});
+
+test('GoPlus validates Tron Base58Check addresses and selects the documented Tron route', async () => {
+  const address = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+  let requested = '';
+  assert.equal(validTronAddress(address), true);
+  assert.equal(validAddress('tron', address), true);
+  assert.equal(validTronAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6x'), false);
+  const service = createGoPlusService({ accessToken: 'static-token', fetchImpl: async (url) => {
+    requested = url;
+    return response({ code: 1, result: { [address]: { token_name: 'USD Tether' } } });
+  }});
+  const result = await service.security({ networkId: 'tron', tokenAddress: address });
+  assert.equal(result.status, 'success');
+  assert.equal(result.chain_id, 'tron');
+  assert.match(requested, /\\/token_security\\/tron\\?/);
 });
