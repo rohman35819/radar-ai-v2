@@ -39,3 +39,22 @@ test('Hostless diagnostics distinguish missing configuration from configured fal
   assert.equal(result.goplus.credentials_configured, false);
   assert.equal(result.early_gems.pool_count, 0);
 });
+
+test('Hostless provider diagnostics summarize Binance Futures and DEX without exposing raw payloads', () => {
+  const { summarizeDerivatives, summarizeDex } = require('../scripts/hostless-live-check');
+  const derivatives = summarizeDerivatives({ data: {
+    status: 'success', symbol: 'BTCUSDT', partial: true,
+    data: { funding: {}, open_interest: {}, open_interest_history: [], taker_flow: null },
+    sources: { funding: { ok: true }, taker_flow: { ok: false, error: 'UPSTREAM_ERROR' } }
+  } }, 200);
+  assert.equal(derivatives.status, 'success');
+  assert.equal(derivatives.partial, true);
+  assert.equal(derivatives.metrics.funding, true);
+  assert.equal(derivatives.metrics.taker_flow, false);
+  assert.equal(derivatives.sources.taker_flow.error, 'UPSTREAM_ERROR');
+  const dex = summarizeDex({ data: { status: 'success', pair_count: 0, same_pool_found: false } }, 200);
+  assert.equal(dex.status, 'success');
+  assert.equal(dex.pair_count, 0);
+  assert.equal(dex.same_pool_found, false);
+  assert.equal(JSON.stringify({ derivatives, dex }).includes('tokenAddress'), false);
+});
