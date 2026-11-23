@@ -65,7 +65,7 @@ test('PWA shell menyediakan halaman Market Intelligence dan Exchange Hub serta m
   handlers.activate({ waitUntil: (promise) => { activatePromise = promise; } });
   await activatePromise;
   assert.ok(calls.cacheDeletes.includes('radar-api-v7'));
-  assert.equal(calls.cacheDeletes.includes('radar-shell-v12'), false);
+  assert.equal(calls.cacheDeletes.includes('radar-shell-v12'), true);
   assert.equal(calls.cacheDeletes.includes('other-app-cache'), false);
 });
 
