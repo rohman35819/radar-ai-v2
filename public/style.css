@@ -178,6 +178,35 @@ body{
 
 .news-health{margin:10px 0 14px;padding:12px}.news-health .health-line{margin:4px 0}.news-health-error{margin:8px 0 0;font-size:10px}
 
+/* Early Gem Scanner */
+.gem-status{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:10px}
+.gem-status b{font-size:9px;letter-spacing:.6px}
+.gem-status span{color:var(--muted)}
+.gem-status.good b{color:var(--green)}
+.gem-status.bad b{color:var(--red)}
+.gem-filters{display:grid;grid-template-columns:minmax(180px,1fr) minmax(150px,.45fr) auto}
+.gem-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.gem-card{min-width:0;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.gem-card-top,.gem-footer{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.gem-identity{display:flex;align-items:center;gap:9px;min-width:0}
+.gem-identity b,.gem-identity small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:210px}
+.gem-identity b{font-size:12px}
+.gem-identity small{font-size:9px;color:var(--muted)}
+.gem-label{flex:none;font-size:8px;font-weight:800;letter-spacing:.5px;padding:4px 7px;border:1px solid #4d9be855;border-radius:7px;color:var(--accent)}
+.gem-chain{font-size:9px;color:var(--muted);margin:10px 0}
+.gem-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.gem-metrics small,.gem-metrics b{display:block}
+.gem-metrics small{font-size:8px;letter-spacing:.7px;color:var(--muted)}
+.gem-metrics b{font-size:11px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;margin-top:2px}
+.gem-flags{min-height:27px;padding:5px 0}
+.gem-clean{font-size:9px;color:var(--muted)}
+.gem-footer{border-top:1px solid var(--line);padding-top:9px}
+.gem-footer small{font-size:8px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.gem-footer a{font-size:9px;color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap}
+.gem-links{display:flex;align-items:center;gap:10px;flex:none}
+@media(max-width:900px){.gem-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.gem-filters{grid-template-columns:1fr}.gem-filters input,.gem-filters select,.gem-filters button{grid-column:auto}.gem-card{padding:12px}.gem-identity b,.gem-identity small{max-width:160px}}
+
 
 /* Solscan overview dashboard card */
 .solscan-dashboard-card .detail-grid{margin-top:12px}

@@ -20,9 +20,9 @@ const ratio = (v) => v == null || !Number.isFinite(Number(v)) ? '—' : Number(v
 const dateTime = (v) => v ? new Date(v).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}) : 'Belum tersedia';
 const esc = (v) => String(v ?? '—');
 const FLAG = {fdv_unknown:'FDV tidak diketahui',fdv_gt_5x_mcap:'FDV > 5x MCap',volume_gt_mcap:'Volume > MCap',stale:'Data basi'};
-const TITLES = {solscan:'Solana Intelligence',overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
+const TITLES = {'early-gems':'Early Gem Scanner',solscan:'Solana Intelligence',overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
 let data=null, aiGroup=null, aiWorkspace=null, solscanOverview=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false;
-let screenerFilters={q:'',trend:'all',sort:'market_cap'},screenerVisible=[];
+let screenerFilters={q:'',trend:'all',sort:'market_cap'},screenerVisible=[],earlyGemFilters={q:'',minLiquidity:0};
 try {
  const stored=JSON.parse(localStorage.getItem('radar-watch')||'[]');
  if(Array.isArray(stored))watch=[...new Set(stored.filter(x=>typeof x==='string'&&x.length>0&&x.length<=128))];
@@ -214,6 +214,77 @@ async function runWorkspaceNow(){
   render();toast('AI masih memproses. Buka kembali Ruang Kerja sebentar lagi.');
  }catch(e){toast(e.message||'Gagal menjalankan review AI');}
 }
+function renderEarlyGems(){
+ const v=$('#view');v.replaceChildren();
+ const all=Array.isArray(data?.early_gems)?data.early_gems:[];
+ const health=data?.health?.onchain||null,meta=data?.early_gems_meta||null;
+ const enabled=data?.config_needed?.early_gems_enabled!==false;
+ const feedAgeMs=meta?.fetched_at?Date.now()-Date.parse(meta.fetched_at):Infinity;
+ const staleAfterMs=Math.max(30,Number(data?.config_needed?.onchain_refresh_min)||60)*1.5*60*1000;
+ const feedStale=!enabled||!Number.isFinite(feedAgeMs)||feedAgeMs>staleAfterMs;
+ const chains=new Set(all.map(x=>x.network_id).filter(Boolean));
+ const totalVolume=all.reduce((sum,x)=>sum+(Number(x.volume_24h_usd)||0),0);
+ const liquid=all.filter(x=>Number(x.liquidity_usd)>=5000).length;
+ const fresh=all.filter(x=>x.age_hours!==null&&Number.isFinite(Number(x.age_hours))&&Number(x.age_hours)<=24).length;
+ v.append(sectionHead('Early Gem Scanner','Pool DEX baru dari jaringan yang diindeks GeckoTerminal; bukan daftar semua token yang pernah dibuat.',
+  el('span',{class:'muted'},meta?.fetched_at?'Update '+dateTime(meta.fetched_at):'Belum ada sinkronisasi')));
+ v.append(el('div',{class:'stats-grid'},
+  statCard('POOL TERDETEKSI',all.length,'Maksimal '+(meta?.pool_count||all.length)+' pool dalam feed','✧'),
+  statCard('JARINGAN',chains.size,'Network berbeda pada hasil','◈'),
+  statCard('VOLUME 24 JAM',money(totalVolume),'Agregat pool yang tampil','⇅'),
+  statCard('TRENDING POOL',all.filter(x=>x.is_trending).length,'Likuiditas ≥ $5K: '+liquid+' · umur ≤ 24j: '+fresh,'⌁')));
+ const status=el('div',{class:'gem-status '+(health?.ok&&!feedStale?'good':health?'bad':'muted')},
+  el('b',{},!enabled?'● FEED DISABLED':health?.ok&&!feedStale?'● ON-CHAIN FEED ONLINE':health?.ok?'● FEED STALE':health?'● ON-CHAIN FEED ERROR':'● MENUNGGU SINKRONISASI'),
+  el('span',{},!enabled?'EARLY_GEMS_ENABLED=0; feed on-chain dinonaktifkan.':health?.error?'Kode: '+health.error:meta?.trending_error?'Pool baru aktif; trending feed gagal ('+meta.trending_error+').':feedStale&&meta?'Data on-chain lebih dari 30 menit; cek jadwal refresh server.':(meta?'Sumber: '+(meta.source||'CoinGecko Onchain / GeckoTerminal')+' · Jendela pool baru hingga 48 jam':'Pastikan CoinGecko Demo API key tersedia dan refresh server berhasil.')));
+ v.append(status);
+ const controls=el('div',{class:'filter-panel gem-filters'},
+  el('input',{id:'gem-q',type:'search',placeholder:'Cari token, simbol, chain, atau DEX…',value:earlyGemFilters.q}),
+  el('select',{id:'gem-liquidity'},
+   el('option',{value:'0'},'Semua likuiditas'),
+   el('option',{value:'5000'},'Likuiditas ≥ $5K'),
+   el('option',{value:'25000'},'Likuiditas ≥ $25K'),
+   el('option',{value:'100000'},'Likuiditas ≥ $100K')),
+  el('button',{class:'secondary-btn',onclick:()=>{earlyGemFilters={q:'',minLiquidity:0};renderEarlyGems();}},'Reset filter'));
+ const results=el('div',{class:'gem-grid',id:'gem-results'});
+ const updateResults=()=>{
+  earlyGemFilters={q:$('#gem-q').value,minLiquidity:Number($('#gem-liquidity').value)||0};
+  const q=earlyGemFilters.q.trim().toLowerCase();
+  const rows=all.filter(x=>(!q||[x.symbol,x.token_name,x.network,x.dex,x.pool_name,x.token_address].some(value=>String(value||'').toLowerCase().includes(q)))
+   &&(earlyGemFilters.minLiquidity===0||(Number(x.liquidity_usd)||0)>=earlyGemFilters.minLiquidity));
+  results.replaceChildren();
+  if(!rows.length){results.append(empty(all.length?'Tidak ada pool yang cocok':'Belum ada data pool','Ubah filter atau periksa status sumber on-chain di atas.'));return;}
+  rows.forEach(x=>{
+   const flags=(x.risk_flags||[]).map(flag=>({liquidity_unknown:'Likuiditas N/A',liquidity_low:'Likuiditas rendah',volume_unknown:'Volume N/A',volume_low:'Volume rendah',market_cap_unverified:'Market cap belum diverifikasi',trade_count_unknown:'Jumlah transaksi N/A'}[flag]||flag));
+   const age=x.age_hours!==null&&Number.isFinite(Number(x.age_hours))?(Number(x.age_hours)<1?Math.max(1,Math.round(Number(x.age_hours)*60))+' menit lalu':Number(x.age_hours)<48?Number(x.age_hours).toFixed(1)+' jam lalu':(Number(x.age_hours)/24).toFixed(1)+' hari lalu'):'Umur pool N/A';
+   const link=typeof x.pool_url==='string'&&x.pool_url.startsWith('https://www.geckoterminal.com/')?x.pool_url:null;
+   const tokenLink=typeof x.token_url==='string'&&x.token_url.startsWith('https://www.geckoterminal.com/')?x.token_url:null;
+   const tokenAddress=String(x.token_address||'');
+   const item=el('article',{class:'gem-card'},
+    el('div',{class:'gem-card-top'},
+     el('div',{class:'gem-identity'},el('span',{class:'coin-avatar'},esc(x.symbol).slice(0,3)),el('div',{},el('b',{},esc(x.symbol)),el('small',{},esc(x.token_name)))),
+     el('span',{class:'gem-label'},esc(x.is_trending&&x.discovery_label!=='TRENDING'?'NEW + TRENDING':x.discovery_label||'RECENT POOL'))),
+    el('div',{class:'gem-chain'},esc(x.network)+' · '+esc(x.dex)+' · '+age),
+    el('div',{class:'gem-metrics'},
+     el('div',{},el('small',{},'LIKUIDITAS'),el('b',{},money(x.liquidity_usd))),
+     el('div',{},el('small',{},'VOLUME 24J'),el('b',{},money(x.volume_24h_usd))),
+     el('div',{},el('small',{},'HARGA'),el('b',{},x.price_usd==null?'—':Number(x.price_usd).toPrecision(6)+' USD')),
+     el('div',{},el('small',{},'FDV / MCAP'),el('b',{},money(x.market_cap_usd)+' / '+money(x.fdv_usd))),
+     el('div',{},el('small',{},'PERUBAHAN 24J'),el('b',{},pct(x.price_change_24h_pct))),
+     el('div',{},el('small',{},'BUY / SELL 24J'),el('b',{},(x.buys_24h??'—')+' / '+(x.sells_24h??'—')))),
+    flags.length?el('div',{class:'gem-flags'},...flags.map(flag=>el('span',{class:'flag'},flag))):el('div',{class:'gem-flags'},el('span',{class:'gem-clean'},'Tidak ada flag kualitas data')),
+    el('div',{class:'gem-footer'},el('small',{title:tokenAddress},'CA: '+(tokenAddress?tokenAddress.slice(0,8)+'…'+tokenAddress.slice(-6):'N/A')),el('div',{class:'gem-links'},tokenLink?el('a',{href:tokenLink,target:'_blank',rel:'noopener noreferrer'},'Token ↗'):null,link?el('a',{href:link,target:'_blank',rel:'noopener noreferrer'},'Pool ↗'):null)));
+   results.append(item);
+  });
+  $('#gem-count').textContent=rows.length+' pool ditampilkan';
+ };
+ v.append(controls,el('div',{class:'result-meta'},el('b',{id:'gem-count'},'Memuat…'),el('span',{class:'muted'},'Feed lintas-chain · maksimum 10 halaman API')),results,
+  card(el('b',{},'Catatan risiko & cakupan'),
+   el('p',{class:'muted'},'Pool baru bukan bukti token baru dibuat. Feed ini menampilkan pool DEX yang telah terindeks (jendela data sekitar 48 jam), bukan seluruh kontrak token di semua blockchain. Token tanpa pool likuid, chain yang belum didukung, atau pool yang belum terindeks tidak akan muncul.'),
+   el('p',{class:'muted'},'Flag hanya menunjukkan data yang kosong/rendah; ini bukan audit kontrak, pemeriksaan honeypot, verifikasi pemilik, analisis holder, atau rekomendasi beli. Market cap yang tidak diverifikasi tetap ditampilkan sebagai N/A.')));
+ $('#gem-liquidity').value=String(earlyGemFilters.minLiquidity);
+ ['gem-q','gem-liquidity'].forEach(id=>$('#'+id).addEventListener(id==='gem-q'?'input':'change',updateResults));
+ updateResults();
+}
 function renderSystem(){
  const v=$('#view');v.replaceChildren();const health=data?.health||{};
  v.append(sectionHead('System Health','Transparansi status sumber data dan runtime.'));
@@ -225,7 +296,7 @@ function renderSystem(){
 function render(){
  $('#page-title').textContent=TITLES[tab]||'RADAR AI';$('#crumb').textContent=(tab||'overview').toUpperCase();
  document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
- if(tab==='overview')renderOverview();else if(tab==='screener')renderScreener();else if(tab==='watch')renderWatch();else if(tab==='analytics')renderAnalytics();else if(tab==='news')renderNews();else if(tab==='unlock')renderUnlock();else if(tab==='alerts')renderAlerts();else if(tab==='ai')renderAI();else if(tab==='workspace')renderWorkspace();else renderSystem();
+ if(tab==='overview')renderOverview();else if(tab==='screener')renderScreener();else if(tab==='early-gems')renderEarlyGems();else if(tab==='watch')renderWatch();else if(tab==='analytics')renderAnalytics();else if(tab==='news')renderNews();else if(tab==='unlock')renderUnlock();else if(tab==='alerts')renderAlerts();else if(tab==='ai')renderAI();else if(tab==='workspace')renderWorkspace();else renderSystem();
 }
 function setSidebarOpen(open){
  const sidebar=$('#sidebar'),toggle=$('#menu-toggle');

@@ -142,3 +142,10 @@ Run `npm run hostless-check` to probe the public `/api/ready` and `/api/snapshot
 - API routes: `GET /api/solscan/overview` and `GET /api/solscan/wallet?address=<base58>`. Wallet queries are rate-limited and validated server-side.
 - Solscan data availability and freshness depend on endpoint coverage, indexing delay, plan permissions, and CU quota. Missing fields remain unavailable (not zero); partial endpoint failures are shown separately.
 - Official API docs: https://pro-api.solscan.io/pro-api-docs/v2.0/docs
+
+
+## Early Gem Scanner — GeckoTerminal
+Dashboard menu **Early Gem Scanner** mengambil pool DEX terbaru (jendela provider sekitar 48 jam) dan pool trending 24 jam melalui CoinGecko Onchain API/GeckoTerminal. Data meliputi chain, DEX, alamat token/pool, umur pool, harga, likuiditas, volume, transaksi, FDV, dan market cap. Pool baru tidak sama dengan token baru dibuat dan feed hanya mencakup pool yang sudah diindeks.
+- `EARLY_GEMS_ENABLED=1`, `ONCHAIN_PAGES=3` (maksimum 10), `ONCHAIN_REFRESH_MIN=60` (10–1440 menit).
+- Memakai `COINGECKO_DEMO_KEY` server-side yang sudah ada; default maksimal 4 request/jam (3 halaman new pools + 1 trending), sekitar 2.880 request/30 hari. Kuota Demo tetap dibagi dengan endpoint CoinGecko lain.
+- Trending merupakan ranking provider, bukan bukti keamanan. Flags hanya menandai kualitas data, bukan audit kontrak atau honeypot detection.
