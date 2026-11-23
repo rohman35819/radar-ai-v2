@@ -297,6 +297,49 @@ async function loadChart() {
     $('#price-chart').replaceChildren(node('div', 'negative', 'Grafik tidak tersedia: ' + safeText(error.message)));
   } finally { chartBusy = false; }
 }
+async function loadWhaleTransfers() {
+  const button = $('#load-whale-transfers');
+  const target = $('#whale-transfer-results');
+  const status = $('#whale-transfer-status');
+  const address = String($('#whale-wallet-address').value || '').trim();
+  const threshold = $('#whale-threshold').value;
+  const hours = $('#whale-hours').value;
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) { status.textContent = 'Masukkan alamat wallet Solana base58 yang valid.'; return; }
+  if (button.disabled) return;
+  button.disabled = true; button.textContent = 'Menganalisis…';
+  status.textContent = 'Mengambil ekspor transfer Solscan…';
+  target.replaceChildren(node('div', 'muted', 'Memuat data transfer bernilai besar…'));
+  try {
+    const query = new URLSearchParams({ address, min_usd: threshold, hours });
+    const response = await fetch('/api/solscan/whale-transfers?' + query.toString(), { cache: 'no-store' });
+    const result = await response.json();
+    if (!response.ok || result.status !== 'success') throw new Error(result.message || result.code || 'Solscan export unavailable');
+    target.replaceChildren();
+    const transfers = Array.isArray(result.transfers) ? result.transfers : [];
+    if (!transfers.length) target.append(node('div', 'muted', 'Tidak ditemukan transfer dengan nilai USD yang memenuhi ambang pada periode ini.'));
+    transfers.forEach((item) => {
+      const row = node('article', 'gdelt-item');
+      const amount = Number(item.value_usd);
+      const heading = node('div', 'whale-transfer-heading');
+      heading.append(node('strong', 'number-cell', Number.isFinite(amount) ? 'USD ' + amount.toLocaleString('en-US', { maximumFractionDigits: 2 }) : 'Nilai USD tidak tersedia'));
+      heading.append(node('span', 'badge-neutral', String(item.direction || 'unknown').toUpperCase()));
+      const signature = String(item.signature || '');
+      if (/^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(signature)) {
+        const link = node('a', 'gdelt-title', 'Lihat transaksi di Solscan');
+        link.href = 'https://solscan.io/tx/' + encodeURIComponent(signature); link.target = '_blank'; link.rel = 'noopener noreferrer';
+        row.append(heading, link);
+      } else row.append(heading, node('small', 'muted', 'Signature: ' + safeText(signature)));
+      row.append(node('small', 'muted', safeText(String(item.token_address || 'Token tidak diketahui')) + ' · ' + safeText(item.time || 'Waktu tidak tersedia')));
+      row.append(node('small', 'muted', 'From: ' + safeText(item.from || '—') + ' · To: ' + safeText(item.to || '—')));
+      if (item.amount != null) row.append(node('small', 'muted', 'Jumlah token: ' + Number(item.amount).toLocaleString('en-US', { maximumFractionDigits: 8 })));
+      target.append(row);
+    });
+    status.textContent = result.qualifying_count + ' transfer memenuhi ambang USD ' + Number(result.threshold_usd).toLocaleString('en-US') + ' · ' + result.window_hours + ' jam · ' + result.transfer_count + ' baris ekspor · ' + new Date(result.observed_at).toLocaleString('id-ID') + (result.cached ? ' · cache 5 menit' : '') + (result.truncated_possible ? ' · peringatan: batas 5.000 baris tercapai, hasil mungkin terpotong' : '');
+  } catch (error) {
+    target.replaceChildren(node('div', 'negative', safeText(error.message)));
+    status.textContent = 'Data transfer besar tidak tersedia. Periksa akses endpoint Solscan export dan coba kembali setelah cooldown.';
+  } finally { button.disabled = false; button.textContent = 'Analisis transfer'; }
+}
 async function loadDerivatives() {
   const symbol = String($('#derivatives-symbol').value || '').trim().toUpperCase();
   const body = $('#derivatives-table');
@@ -411,6 +454,7 @@ document.querySelectorAll('.side-nav a').forEach((link) => link.addEventListener
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
 window.addEventListener('resize', () => { if (window.innerWidth > 760) setSidebarOpen(false); });
 $('#refresh').addEventListener('click', () => loadMarket(true));
+$('#load-whale-transfers').addEventListener('click', loadWhaleTransfers);
 $('#load-derivatives').addEventListener('click', loadDerivatives);
 $('#derivatives-symbol').addEventListener('keydown', (event) => { if (event.key === 'Enter') loadDerivatives(); });
 $('#coin-search').addEventListener('input', (event) => { search = event.target.value.trim().toLowerCase(); marketRows(); });

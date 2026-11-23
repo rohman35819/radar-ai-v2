@@ -2508,3 +2508,17 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 3. Port PR #43 and #45 manually onto current main; port PR #55 and #57 only as isolated UI/data modules after current API contract review.
 4. Keep PR #55/#57/#43/#45 in Draft until their current-main port and exact-head tests/security/reviews pass.
 5. Resolve Hostless EROFS with BOS-approved persistent storage decision before claiming durable tracking or LIVE readiness.
+
+## 88. SOLSCAN LARGE TRANSFER WATCH — 23 NOVEMBER 2026
+
+- Lead: Divisi 03 (on-chain intelligence); support Divisi 01 API/security, Divisi 02 UI, Divisi 04 research, Divisi 05 QA.
+- PR #71 branch `feat/solscan-large-transfer-watch`; implementation head `35d3c11d3d088f293b45af9810bcfddd652ff169`.
+- Added `GET /api/solscan/whale-transfers?address=<base58>&min_usd=100000&hours=24`, using documented Solscan Pro API v2.0 `GET /account/transfer/export` CSV (up to 5,000 rows, documented 10 requests/minute). It returns USD value, amount, decimals, flow, time, from/to, token and transaction signature.
+- Backend validates base58 wallet, threshold $1k-$1bn, 1-168h window; CSV parser handles quoted fields/newlines; max 5MiB response; per-wallet/window cache 5m; local limits one request/minute/IP and five/minute global. No extra API key/secret; reuses `SOLSCAN_API_KEY`.
+- Added manual Market Intelligence panel; user must supply a wallet address. Thresholds $10k/$50k/$100k/$500k/$1m; windows 6h/24h/72h/7d. No automatic polling or background scan.
+- Semantics: this detects **large transfers for a supplied wallet**, not an identified whale, smart-money wallet, beneficial owner, accumulation, or intent. USD values are Solscan's reported valuation. Export cap may truncate and is flagged. Endpoint access may be plan-gated; Hostless key access to export has not been verified.
+- Exact-head GitHub Actions test #766 / ID `45196373587`: 139 passed, 0 failed, 0 skipped. Security #309 / ID `45196373590`: Gitleaks and Trivy filesystem scan passed.
+- Earlier test #765 failed because UI source was temporarily malformed during insertion; `public/market.js` was restored from current main and the complete function was added. Latest exact-head CI is green.
+- No Hostless deployment, API key change, wallet connection, Phantom integration, or trading action was performed.
+- Official docs: https://pro-api.solscan.io/pro-api-docs/v2.0/referen/v2-account-transfer-export (5,000 max rows; 10 req/min; CSV includes Value/Decimals); https://pro-api.solscan.io/pro-api-docs/v2.0/referen/v2-account-transfer .
+- NEXT TASK: verify export endpoint access with a controlled user-supplied wallet on Hostless after merge/deploy; then design a labeled watchlist and Phantom connection only with explicit wallet consent. Do not label wallets as smart money without source provenance and a track record.
