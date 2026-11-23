@@ -58,6 +58,21 @@ Batasan:
 - Data exchange adalah data agregat provider; spread dan trust score bukan audit likuiditas atau keamanan exchange.
 - Tampilkan atribusi **Powered by CoinGecko** saat menggunakan data. Dokumentasi dan paket: https://docs.coingecko.com/ dan https://www.coingecko.com/en/api/pricing.
 
+## DEX Screener Scanner (tanpa API key)
+
+Halaman Market Intelligence memiliki panel DEX Screener yang mengambil profil token terbaru dan daftar token boosted/top-boosted, lalu memperkaya token dengan pool/pair metrics lintas-chain. Backend menggunakan endpoint publik resmi tanpa autentikasi: `/token-profiles/latest/v1`, `/token-boosts/latest/v1`, `/token-boosts/top/v1`, dan `/tokens/v1/{chainId}/{tokenAddresses}` (maksimal 30 alamat per panggilan enrichment).
+
+- Endpoint RADAR: `GET /api/dexscreener/scanner`.
+- Cache server 2 menit, deduplikasi chain + token address, maksimal empat grup chain dan 30 token per grup untuk membatasi upstream calls.
+- Local route limit: 8 request/menit/IP; API global tetap berlaku.
+- Data meliputi harga USD, volume 24 jam, likuiditas, buy/sell 24 jam, perubahan harga, market cap/FDV bila tersedia, pool age, DEX/pair, profile/boost labels.
+- RADAR Activity Score adalah heuristik transparan dari buy/sell share, volume/liquidity, pool liquidity dan perubahan 24 jam. Ini bukan probabilitas profit, audit token, atau rekomendasi beli.
+- Profile/boost feeds mengandung visibilitas promosi/boost dan tidak boleh dianggap sebagai organic trending. Data whale/wallet identity tidak disediakan oleh DEX Screener.
+- Field yang tidak tersedia tetap null/N/A; pair belum terindeks tidak dianggap bernilai nol.
+- Atribusi UI: Powered by DEX Screener. Tidak ada API key, environment variable, dependency runtime, atau perubahan Hostless yang diperlukan.
+
+Dokumentasi resmi: https://docs.dexscreener.com/api/reference.
+
 ## Exchange Hub (read-only)
 
 Halaman `/trading.html` menyediakan satu antarmuka untuk Binance, Bybit, dan integrasi berikutnya. Koneksi akun berjalan di backend; API key dan secret tidak pernah dikirim ke browser.
