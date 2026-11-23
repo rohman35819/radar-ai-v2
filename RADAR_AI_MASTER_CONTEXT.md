@@ -2508,3 +2508,44 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 3. Port PR #43 and #45 manually onto current main; port PR #55 and #57 only as isolated UI/data modules after current API contract review.
 4. Keep PR #55/#57/#43/#45 in Draft until their current-main port and exact-head tests/security/reviews pass.
 5. Resolve Hostless EROFS with BOS-approved persistent storage decision before claiming durable tracking or LIVE readiness.
+
+## 88. PRIMARY MACRO SOURCES — 23 NOVEMBER 2026
+
+### Procurement decision
+- FRED integration is blocked under section 70 pending written permission; do not use FRED API key, FRED content, or FRED cache in RADAR AI.
+- Replacement selected for implementation: BLS Public Data API v1 (CPI, unemployment, payroll, wages) and New York Fed Markets API (SOFR/EFFR). Treasury yield-curve feed was excluded from the initial release because its specific redistribution/use terms were not yet verified.
+- BLS v1 is open without registration; BLS docs state 25 queries/day and up to 25 series per query. Backend batches four series into one request and caches the BLS group for 12 hours. BLS terms require retrieval-date attribution and the caveat that BLS cannot vouch for downstream data/analysis.
+- Treasury daily yield XML has no API key, but its source-specific reuse terms were not sufficiently verified in this pass; do not include it until a compliance review confirms rights.
+- New York Fed Markets API public endpoints for SOFR/EFFR require no API key. New York Fed Terms allow automated access, storage, business use, and redistribution with required source identifiers and reference-rate disclaimers.
+- No credit card or paid plan is required for the two selected sources. No FRED_API_KEY is read by main.
+
+### Candidate implementation branch feat/primary-macro-intelligence
+- Backend adapter `lib/macro.js`; endpoint `GET /api/market-intelligence/macro`.
+- Curated series: BLS CUSR0000SA0, LNS14000000, CES0000000001, CES0500000003; New York Fed SOFR/EFFR.
+- Cache: BLS 12 hours, NY Fed 1 hour; 5-minute cooldown on upstream failure; 10-second timeout; 5 req/min local API limit.
+- UI panel includes source attribution, BLS caveat, NY Fed reference-rate disclaimer and non-affiliation statement.
+- Tests cover parsing, missing values, caching, source isolation, and backend route.
+- NEXT TASK: exact-head CI/security, independent review Divisi 01/02/05, then merge only if all gates pass. After deployment, run one controlled live probe for each source and verify timestamps.
+
+### Source documentation
+- BLS API/terms: https://www.bls.gov/developers/ ; https://www.bls.gov/developers/termsOfService.htm
+- Treasury XML feed: https://home.treasury.gov/treasury-daily-interest-rate-xml-feed
+- New York Fed Markets API/terms: https://markets.newyorkfed.org/static/docs/markets-api.html ; https://www.newyorkfed.org/privacy/termsofuse.html
+
+
+---
+
+
+
+## 89. EXPANDED FREE MACRO INTELLIGENCE — 23 NOVEMBER 2026
+
+- Lead: Divisi 04; source procurement by Divisi 08; backend/security Divisi 01; Market UI Divisi 02; independent QA Divisi 05.
+- PR #65 branch `feat/primary-macro-intelligence`; exact implementation head `c7afdc5e8e3ff24fbca3f189757d7edb4c4953db`.
+- Existing BLS v1 + NY Fed SOFR/EFFR adapter expanded with U.S. Treasury Fiscal Data average Treasury Bills/Notes/Bonds/TIPS rates and World Bank annual GDP growth/CPI inflation/unemployment for USA, China and Indonesia.
+- Treasury data cache 12h; World Bank cache 24h; existing BLS 12h and NY Fed 1h. No key/login/card, no new environment variables, no FRED.
+- Macro parser preserves source, series/country identity, observation date, units and annual/monthly/daily frequency. Missing observations stay null. Partial upstream failure does not discard healthy feeds.
+- Explicit semantics: Treasury average debt rates are monthly government statistics, not real-time secondary-market yields. World Bank observation year is not publication/availability date; do not use for look-ahead-sensitive backtests without release-date provenance.
+- Exact-head GitHub Actions test run #762 / ID `45195440278`: 143 passed, 0 failed, 0 skipped. Security run #305 / ID `45195440263`: Gitleaks and Trivy filesystem scan succeeded.
+- PR #65 is open, non-draft, mergeable at the recorded head, but independent Divisi 04/05 review is not recorded. Hostless Build/LIVE and upstream runtime connectivity are not verified. Do not claim macro sources active in production.
+- Official references: BLS https://www.bls.gov/developers/ ; New York Fed https://markets.newyorkfed.org/static/docs/markets-api.html ; Treasury https://fiscaldata.treasury.gov/api-documentation/ ; World Bank https://datahelpdesk.worldbank.org/knowledgebase/articles/889392 .
+- NEXT TASK: independent Divisi 04 semantic/source review and Divisi 05 QA; then integrate, deploy only through normal release gate, and verify live endpoint. World Bank release dates must be added before any historical macro backtest. Add BEA only after terms and series are reviewed.
