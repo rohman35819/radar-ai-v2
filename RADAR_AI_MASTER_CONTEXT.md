@@ -2306,3 +2306,34 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Divisi 01: review keamanan adapter kandidat alternatif sebelum implementasi.
 - Divisi 05: QA independen.
 - Jangan mengaktifkan FRED sampai izin tertulis/pengecualian diterima. Prioritas operasional Hostless EROFS/DATA_DIR tetap berlaku sesuai section 68/69.
+
+
+---
+
+## 71. TRADE SETUP SCANNER — ENTRY / STOP LOSS / TP1–TP3 — 23 NOVEMBER 2026
+
+### Tujuan dan gap yang ditemukan
+- BOS menegaskan dashboard harus menampilkan satu koin hasil scan dengan harga entry/beli, TP1, TP2, dan TP3. Audit menemukan PR #55 hanya memiliki Live Coin Scanner dengan momentum/volume score; tidak menghitung entry, stop loss, atau target profit, dan PR #55 masih Draft/unmerged.
+- Implementasi baru dibuat terisolasi pada branch `feat/trade-setup-entry-tp`, berbasis main HEAD `4a08855cf22c94c18c97ed550de3ba0706095d44`. Tidak mengubah atau menggabungkan PR #55.
+
+### Implementasi
+- `lib/trade-setups.js`: memilih maksimal 8 ticker unik dari daftar CoinGecko top market yang cocok dengan Binance USDⓈ-M USDT perpetual aktif; memeriksa exchangeInfo, mark price, dan candle 1 jam tertutup.
+- Filter setup LONG: harga di atas EMA20, EMA20 di atas EMA50 dan meningkat, RSI14 48–70, rasio volume 5 candle terhadap median 20 candle minimal 1.1x, ATR% 0.15–6%, harga mark tidak menjauh lebih dari 1.5 ATR dari candle terakhir, dan skor confluence minimal 65/100.
+- Level: Entry = Binance mark price saat scan; SL = Entry − 1.5 × ATR14; TP1/TP2/TP3 = Entry + 1R/2R/3R. R = 1.5 × ATR14. Tidak ada probabilitas profit atau order execution.
+- Pair mapping dibatasi ke ticker CoinGecko yang unik dan base asset Binance yang unik. Ini bukan verifikasi contract address; UI memperingatkan pengguna untuk memverifikasi identitas pair.
+- `GET /api/market-intelligence/trade-setups` memanggil data market server-side dan scan Binance publik, dibatasi 6 request/menit/IP + guard global; hasil scan cache 2 menit.
+- Dashboard overview menampilkan satu setup terbaik, atau pesan no-setup bila tidak ada kandidat lolos. Entry, SL, TP1, TP2, TP3 dan indikator utama ditampilkan sebagai angka terpisah.
+- Tidak ada secret baru, transaksi, wallet action, order, atau perubahan izin exchange.
+- Files: `lib/trade-setups.js`, `server.js`, `public/trade-setups.js`, `public/index.html`, `public/app.js`, `public/style.css`, `test/trade-setups.test.js`, `package.json`, `README.md`, master context.
+
+### Validasi dan batas
+- Tes unit mencakup perhitungan entry/SL/TP, penolakan kandidat lemah, dan penolakan ticker ambigu. Fixture tren naik menggunakan candle tertutup sintetis; bukan backtest atau validasi profitabilitas.
+- Exact-head GitHub Actions, test suite penuh, security scans, independent Division 05 QA, Hostless Build, dan LIVE visual QA masih menunggu.
+- Data CoinGecko market universe dapat memakai cache upstream; harga mark dan candle berasal dari Binance Futures publik. Tidak ada jaminan fill, harga bisa berubah, dan sinyal dapat kedaluwarsa.
+- Hostless storage readiness masih diketahui bermasalah EROFS dari audit sebelumnya; perubahan ini tidak mengubah DATA_DIR atau storage config.
+
+### NEXT TASK
+1. Jalankan exact-head npm test dan security scans pada branch ini; perbaiki kegagalan.
+2. Minta review independen Divisi 05 untuk formula indikator, contract mapping, route rate-limit, dan UI desktop/mobile.
+3. Verifikasi endpoint dan hasil no-setup/setup pada Hostless setelah storage EROFS diperbaiki; jangan mengklaim LIVE sebelum deployed SHA dan UI terverifikasi.
+4. Setelah QA, ajukan PR untuk review; jangan merge otomatis dan jangan aktifkan trading.
