@@ -2322,3 +2322,10 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Data contract: canonical identity chain+contract atau exchange+market type+symbol; provenance/timestamps wajib; spot/perp/mark/index/OI/funding/rolling volume tidak boleh dicampur; missing values tetap null; konflik sumber terlihat; macro publication time mencegah look-ahead bias. Tidak ada live order.
 - Tes lokal: tidak dijalankan karena working copy Node.js tidak tersedia. Combined status GitHub untuk main HEAD kosong (bukan pass/fail). Hostless build/LIVE tidak diperiksa; EROFS/DATA_DIR tetap blocker. Tidak ada klaim deployment.
 - NEXT TASK: Divisi 04 menyiapkan adapter GDELT metadata/event dan World Bank/Treasury macro secara terisolasi; Divisi 03 memvalidasi field market; Divisi 01 melakukan security + license boundary review; Divisi 05 QA exact-head. Divisi 08 melanjutkan review terms Bybit/Hyperliquid/indexers. Executive Office mengoordinasikan prioritas dan gate review. Jangan merge/deploy sebelum review independen dan approval yang diwajibkan.
+
+
+### 71.1 CI evidence — 23 November 2026
+- GitHub Actions test run #743 / ID 45192843609 on exact code/documentation head c810426d9449c43a5eb8d60927f6c1bf4d499474: completed/success. npm test: 135 passed, 0 failed, 0 skipped.
+- Security run #286 / ID 45192843607 on the same exact head: Gitleaks completed/success, no leaks found. Trivy job completed/success and secret scanner reported no issues. Trivy vulnerability scan did NOT run because the repository contained zero supported language-specific dependency files; dependency vulnerability coverage remains NOT AVAILABLE (not a clean vulnerability scan).
+- These checks validate the documentation branch snapshot only; no runtime data source was integrated and no Hostless Build/LIVE verification was performed.
+- After recording this evidence, a documentation-only follow-up commit will be created; CI for that resulting exact head must be checked separately.
