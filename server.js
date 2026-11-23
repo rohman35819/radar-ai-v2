@@ -84,6 +84,8 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const reportHour = Math.max(0, Math.min(23, Number(process.env.AI_REPORT_HOUR || 9)));
   const limited = createRateLimiter({ limit: 60, windowMs: 60000, maxKeys: 5000 });
   const solscanLimited = createRateLimiter({ limit: 10, windowMs: 60000, maxKeys: 1000 });
+  const solscanWhaleGlobalLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1 });
+  const solscanWhaleLimited = createRateLimiter({ limit: 1, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerGlobalLimited = createRateLimiter({ limit: 240, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerLimited = createRateLimiter({ limit: 30, windowMs: 60000, maxKeys: 1000 });
   const goPlusLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1000 });
@@ -130,6 +132,34 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             solscanApi.overview().then((overview) => {
               send(res, overview.configured ? 200 : 503, overview, 'application/json', { 'cache-control': 'no-store' });
             }).catch(() => send(res, 502, { configured: true, ok: false, code: 'SOLSCAN_UNAVAILABLE' }, 'application/json', { 'cache-control': 'no-store' }));
+            return;
+          }
+          if (url.pathname === '/api/solscan/whale-transfers' && req.method === 'GET') {
+            if (solscanWhaleGlobalLimited('global') || solscanWhaleLimited(ip)) return send(res, 429, { status: 'error', code: 'SOLSCAN_WHALE_LOCAL_RATE_LIMITED', message: 'Pemantauan transfer besar dibatasi maksimal satu pencarian per menit per pengguna.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+            solscanApi.whaleTransfers({
+              address: url.searchParams.get('address'),
+              minUsd: url.searchParams.get('min_usd') || '100000',
+              hours: url.searchParams.get('hours') || '24'
+            }).then((payload) => {
+              send(res, 200, payload, 'application/json', { 'cache-control': 'private, max-age=60' });
+            }).catch((error) => {
+              const known = error instanceof SolscanError;
+              const code = known ? error.code : 'SOLSCAN_EXPORT_FAILED';
+              const status = known ? error.status : 502;
+              const messages = {
+                INVALID_SOLANA_ADDRESS: 'Alamat Solana tidak valid. Periksa format base58.',
+                SOLSCAN_API_KEY_NOT_CONFIGURED: 'SOLSCAN_API_KEY belum dikonfigurasi di server.',
+                SOLSCAN_AUTH_FAILED: 'Solscan menolak API key. Periksa key dan status aktivasi.',
+                SOLSCAN_PLAN_ACCESS_DENIED: 'Paket Solscan belum mengizinkan endpoint transfer export.',
+                SOLSCAN_RATE_LIMITED: 'Batas permintaan Solscan tercapai.',
+                SOLSCAN_TIMEOUT: 'Ekspor transfer Solscan melewati batas waktu.',
+                SOLSCAN_EXPORT_TOO_LARGE: 'Ekspor terlalu besar. Persempit jendela waktu.',
+                SOLSCAN_INVALID_WHALE_THRESHOLD: 'Ambang USD harus antara 1.000 dan 1.000.000.000.',
+                SOLSCAN_INVALID_WHALE_WINDOW: 'Jendela waktu harus 1 sampai 168 jam.',
+                SOLSCAN_WHALE_LOCAL_RATE_LIMITED: 'Tunggu satu menit sebelum memeriksa alamat ini lagi.'
+              };
+              send(res, status, { status: 'error', code, message: messages[code] || 'Ekspor transfer besar Solscan gagal.' }, 'application/json', { 'cache-control': 'no-store' });
+            });
             return;
           }
           if (url.pathname === '/api/solscan/wallet' && req.method === 'GET') {
