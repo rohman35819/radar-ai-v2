@@ -39,11 +39,11 @@ test('workspace review asks each configured provider independently', async () =>
   assert.equal(calls.length, 13);
   const groqRequest = calls.find((call) => call.url.includes('api.groq.com'));
   const openaiRequest = calls.find((call) => call.url.includes('api.openai.com'));
-  assert.equal(groqRequest.body.max_completion_tokens, 1800);
+  assert.equal(groqRequest.body.max_completion_tokens, 4096);
   assert.equal(groqRequest.body.max_tokens, undefined);
   assert.equal(groqRequest.body.response_format.type, 'json_schema');
   assert.equal(groqRequest.body.response_format.json_schema.strict, true);
-  assert.equal(openaiRequest.body.max_completion_tokens, 1800);
+  assert.equal(openaiRequest.body.max_completion_tokens, 4096);
   assert.equal(openaiRequest.body.max_tokens, undefined);
   assert.equal(openaiRequest.body.temperature, undefined);
 });
