@@ -15,6 +15,9 @@ Inventarisasi sumber data publik tanpa login/kartu kredit, dengan prioritas trad
 | New York Fed Markets API | Tidak perlu | Ikuti dokumentasi; gunakan cache/frekuensi wajar | Automated access, download/store/use/copy/distribute/derivative works untuk personal/business dengan attribution + disclaimer | Layak; disiapkan di PR #65 |
 | U.S. Treasury Fiscal Data API | Tidak perlu akun/token | Open API; filter/pagination | Gratis tanpa pembatasan untuk copy/adapt/redistribute, komersial/non-komersial; jangan menyiratkan endorsement | Layak untuk adapter makro |
 | World Bank Indicators API v2 | Tidak perlu API key/login | Hampir 16.000 indikator; kuota tetap tidak dinyatakan di docs yang ditinjau | Default dataset World Bank CC BY 4.0 termasuk komersial dengan atribusi; dataset pihak ketiga bisa berbeda | Layak untuk macro-regime historis; periksa metadata per indikator |
+| ECB Data Portal SDMX API | Tidak perlu akun untuk public REST data | API SDMX 2.1; batas teknis mengikuti layanan | Statistik publik ECB/ESCB gratis untuk reuse komersial/non-komersial dengan atribusi; jangan mengubah statistik/metadata; third-party data dikecualikan tanpa izin | Layak untuk EUR rates, FX, yield curves, monetary/financial statistics; filter metadata/source |
+| OECD Data Explorer API | Tidak perlu akun wajib; registrasi sukarela | API gratis; rate limiting berlaku, angka tetap tidak dipublikasikan pada halaman yang ditinjau | Terms mengizinkan extract/download/copy/adapt/distribute/share/embed untuk tujuan apa pun termasuk komersial, kecuali dataset/indikator pihak ketiga atau metadata dengan pembatasan | Layak untuk macro regime & leading indicators; periksa metadata |
+| IMF Data API / statistical datasets | Beberapa akses API memakai beta portal account | API SDMX tersedia, akses/portal dapat memerlukan account | IMF meminta izin untuk potensi commercial reuse; melarang bulk automated download tanpa izin dan penggunaan konten untuk training LLM tanpa izin | HOLD; jangan gunakan untuk RADAR tanpa izin tertulis |
 | GDELT Project DOC API/data files | Tidak perlu akun/API key | DOC API perlu throttle; jeda minimal 5 detik; raw files periodik | Unlimited/unrestricted academic, commercial, governmental use tanpa biaya; redistribusi dengan citation + link GDELT; hak artikel asli tetap milik publisher | Layak untuk news/event discovery + tone metadata; jangan salin isi artikel |
 | SEC EDGAR data.sec.gov + RSS | Tidak perlu API key | Maksimum 10 req/detik; efisien dan bot harus teridentifikasi | SEC FAQ menyatakan government-created content dan public EDGAR filing content bebas diakses dan digunakan ulang; pengecualian sangat terbatas (mis. stock art). User-Agent harus mencantumkan identitas dan email kontak valid | Layak untuk filing catalyst setelah email kontak proyek ditetapkan |
 | Solana public RPC | Tidak perlu login/API key | Shared endpoint, 429/403, no SLA | Dokumentasi Solana menyatakan public RPC bukan untuk aplikasi produksi | Dev/fallback ringan saja, bukan produksi/whale history |
@@ -62,12 +65,26 @@ Inventarisasi sumber data publik tanpa login/kartu kredit, dengan prioritas trad
 - NY Fed: https://markets.newyorkfed.org/static/docs/markets-api.html dan https://www.newyorkfed.org/privacy/termsofuse.html
 - PR #65 menyiapkan BLS CPI, unemployment, payroll, hourly earnings; NY Fed SOFR/EFFR. PR #65 belum merged dan masih menunggu review independen serta readiness Hostless.
 
-### 5. SEC EDGAR — company/regulatory catalysts
+### 5. ECB + OECD — monetary and macro cross-check
+- ECB SDMX API: https://data.ecb.europa.eu/help/getting-data-web-services-sdmx-0
+- ECB reuse policy: https://www.ecb.europa.eu/stats/ecb_statistics/governance_and_quality_framework/html/usage_policy.en.html
+- OECD API: https://www.oecd.org/en/data/insights/data-explainers/2024/09/api.html
+- OECD terms: https://www.oecd.org/en/about/terms-conditions.html
+- No API key or mandatory login for public endpoints; OECD API registration is voluntary.
+- ECB permits free reuse of publicly released statistics for commercial/non-commercial purposes when source is quoted; do not modify statistics/metadata; third-party data requires originator permission. Useful fields include EUR reference FX rates, euro-area yield curves, policy/market rates and monetary statistics.
+- OECD API is free; Terms permit extraction, download, copying, adaptation, distribution and embedding for any purpose including commercial use, unless dataset metadata or third-party ownership imposes restrictions. Useful macro/leading indicators, but lower frequency than market data.
+- Both are macro-regime/context feeds, not intraday entry triggers. Preserve release/observation dates, source metadata and revisions.
+
+### 6. SEC EDGAR — company/regulatory catalysts
 - Docs: https://www.sec.gov/about/developer-resources
 - No API key untuk data.sec.gov submissions/XBRL endpoints dan RSS.
 - Fair access: max 10 req/sec total; efisien; identifikasi client dan jangan jalankan unclassified crawler.
 - Use: filings issuer relevan untuk exchange, miner, ETF sponsor, stablecoin dan material disclosures. Simpan metadata filing, accession number, filed date, accepted timestamp, original URL. Jangan anggap dokumen issuer otomatis menjadi public-domain data.
 - Sebelum implementasi: konfirmasi User-Agent/contact requirement, field coverage, source ownership dan retention.
+
+### Excluded/held sources
+- IMF: official copyright terms allow special treatment for published statistical Data, but request written permission for potential commercial reuse; prohibit systematic automated downloading without explicit permission and LLM training without permission. Do not add to RADAR unless permission is obtained.
+- FAOSTAT: API documentation includes authenticated login; its database terms prohibit use of datasets to promote a commercial enterprise/product/service. Not suitable for RADAR commercial product.
 
 ## Existing integrations dan compliance actions
 
