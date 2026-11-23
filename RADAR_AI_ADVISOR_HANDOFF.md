@@ -223,3 +223,41 @@ Snapshot yang diverifikasi pada 22 November 2026:
 
 - Latest implementation head `e90db36ebe90c09811c44e51765e5a56fc873250`: GitHub Actions test #649 passed 110/110; security #192 Gitleaks and Trivy filesystem scan succeeded.
 - PR #59 remains Draft/unmerged; Divisi 03/05 reviews and Hostless Build/LIVE validation remain pending.
+
+
+## 23. Agent Platform — trusted audit writer boundary (22 November 2026)
+
+- PR #18, #29, #32 were closed as superseded; PR #34 is the current schema-only hardening branch based on main 6b30a57a630d830ba84fba76410696cd616a60a9.
+- Runtime role is observer-only: SELECT registry, no task queue/dependency access, no audit INSERT/UPDATE/DELETE/TRUNCATE, no owner membership. This prevents untrusted worker actor spoofing until a trusted SECURITY DEFINER audit writer is designed.
+- Owner-context audit trigger still rejects UPDATE/DELETE. No hash-chain is claimed.
+- Rp0, concurrency=1, divisions 01–08, max attempts=3, bounded payloads. PostgreSQL 16 tests are ephemeral CI only.
+- P2 worker queue semantics, approval queue, kill switch, memory provenance/retention and Hostless deployment remain unimplemented. No worker runtime is active.
+- PR #34 remains draft; CI run #479 passed 94/94 + PostgreSQL migration/observer smoke on PR head c33a5efb788b7001a28a9f6eaf49f0f4f98ed3f4; security run #28 passed Gitleaks/Trivy. Independent Divisi 01/05 review is still pending. Issue #30 stays open.
+
+
+## 24. AI Workspace provider registry review — PR #28 (22 November 2026)
+
+- PR #28 remains draft and stale-base; static review comment #6012276684 lists cost/SSRF/privacy blockers.
+- Custom providers auto-join by default, risking unapproved paid calls; require explicit participant opt-in and zero-cost/approved cost policy.
+- Custom base URL fetch follows redirects while carrying bearer authorization; reject redirects, normalize/validate URL and IP forms, and address DNS rebinding.
+- Sanitize raw upstream provider errors and redact/allowlist context before forwarding to external providers.
+- Require tests for opt-in, free-cost guard, redirects/private IPv6, error redaction, and secret-bearing context. No credentials or real provider API calls used.
+
+
+## 25. PR #34 current status — observer-only audit boundary (22 November 2026)
+- Current candidate: PR #34, branch `feat/agent-platform-schema-hardening-v4`; prior #18/#29/#32 are superseded.
+- Exact code head before test matcher fix: `c33a5efb788b7001a28a9f6eaf49f0f4f98ed3f4`; Test #479 / ID `45023420021` and Security #28 / ID `45023420025` completed/success.
+- Observer-only CI role can SELECT registry only. It cannot insert audit events, access task_queue/dependencies, mutate/truncate audit, or inherit table-owner membership. Trusted actor-bound audit writer is intentionally deferred.
+- The double-escaped negative GRANT matcher was corrected on the branch at commit `afd6ce5143d06ebb7076d9e0dd0d0af97e554ada`; verify new exact-head CI.
+- PR remains draft pending independent Divisi 01 security review and Divisi 05 QA. No DB adapter, queue runtime, scheduler, worker, approval queue, kill switch or memory is active.
+- Stage 0/1, default paused, Rp0, no Hostless provisioning. Continue runtime queue gates only after schema sign-off.
+
+
+
+## 26. PR #34 final audit snapshot — 22 November 2026
+- Current schema-only candidate: PR #34, branch `feat/agent-platform-schema-hardening-v4`, exact audited head `06677547526569aa1ddfde36b7cf3989cf670037`.
+- Exact-head Test #488 / ID `45023561623` passed npm tests + PostgreSQL 16 migration + observer-role smoke. Exact-head Security #32 / ID `45023561634` passed Gitleaks/Trivy jobs. Trivy vuln scanner has no supported manifest/lockfile; dependency vulnerability coverage unavailable, while secret scan reports no issues.
+- Double-escaped negative GRANT matcher was fixed; exact-head Test #488 passed after the fix.
+- PR #34 remains draft pending independent Divisi 01 security review and Divisi 05 QA review. Issue #30 tracks sign-off and P2 runtime gates.
+- Schema only: no DB adapter, queue runtime, scheduler, worker, approval queue, kill switch or persistent memory. Rp0, Stage 0/1, default paused, no Hostless provisioning.
+- NEXT: Divisi 01/05 independent review; merge schema only after sign-off; P2 runtime and Divisi 07 memory remain separate tasks.
