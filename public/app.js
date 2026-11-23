@@ -293,7 +293,7 @@ function renderEarlyGems(){
    });
    validation.append(dexButton);
    const goPlusEnabled=Boolean(data?.config_needed?.goplus_enabled);
-   const goPlusButton=el('button',{class:'mini-btn',type:'button',disabled:!goPlusEnabled,title:goPlusEnabled?'Periksa risiko kontrak GoPlus':'Atur GOPLUS_ACCESS_TOKEN atau GOPLUS_APP_KEY + GOPLUS_APP_SECRET di Hostless'},goPlusEnabled?'Audit GoPlus':'GoPlus belum diatur');
+   const goPlusButton=el('button',{class:'mini-btn',type:'button',disabled:goPlusEnabled?null:true,title:goPlusEnabled?'Periksa risiko kontrak GoPlus':'Atur GOPLUS_ACCESS_TOKEN atau GOPLUS_APP_KEY + GOPLUS_APP_SECRET di Hostless'},goPlusEnabled?'Audit GoPlus':'GoPlus belum diatur');
    const goPlusResult=el('div',{class:'gem-validation-result'},goPlusEnabled?'Audit GoPlus belum dijalankan.':'GoPlus gratis tersedia; konfigurasi kredensial Console server-side diperlukan.');
    goPlusButton.addEventListener('click',async()=>{
     goPlusButton.disabled=true;goPlusResult.textContent='Memeriksa keamanan token GoPlus…';
