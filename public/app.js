@@ -304,6 +304,9 @@ function renderEarlyGems(){
    goPlusButton.addEventListener('click',async()=>{
     goPlusButton.disabled=true;goPlusResult.textContent='Memeriksa keamanan token GoPlus…';
     try{
+     const credentialResponse=await fetch('/api/market-intelligence/goplus/status',{cache:'no-store'});
+     const credentialStatus=await credentialResponse.json();
+     if(!credentialResponse.ok||!credentialStatus.verified)throw new Error(credentialStatus.error_code||'GOPLUS_CREDENTIALS_NOT_VERIFIED');
      const query=new URLSearchParams({network:String(x.network_id||''),token:tokenAddress});
      const response=await fetch('/api/market-intelligence/goplus?'+query.toString(),{cache:'no-store'});
      const result=await response.json();if(!response.ok||!['success','partial'].includes(result.status))throw new Error(result.code||result.message||'GoPlus validation failed');
