@@ -238,7 +238,7 @@ function renderBubbleMaps(){
  const map=el('div',{class:'bubble-map-frame',id:'bubble-map-frame'},el('div',{class:'empty-state'},el('b',{},'Pilih token untuk dianalisis'),el('p',{},'Masukkan alamat kontrak token. Gunakan alamat kontrak, bukan simbol ticker, agar aset tidak tertukar.')));
  const form=el('div',{class:'bubble-controls'},el('label',{},'Blockchain',chain),el('label',{},'Alamat token',address),open);
  v.append(card(el('div',{class:'bubble-intro'},el('div',{},el('h2',{},'Holder Distribution & Wallet Clusters'),el('p',{class:'muted'},'Visualisasi interaktif holder, konsentrasi supply, dan hubungan transfer antaralamat.')),el('span',{class:'bubble-provider'},'SOURCE · BUBBLEMAPS V2')),form,status,map,
-  el('p',{class:'muted bubble-disclaimer'},'Interpretasi: bubble merepresentasikan holder yang ditampilkan dan garis menunjukkan hubungan transfer yang terindeks. Hubungan tidak membuktikan kepemilikan bersama atau niat membeli. Peta bukan feed transaksi tick-by-tick; periksa waktu pembaruan yang ditampilkan oleh Bubblemaps.'),
+  el('p',{class:'muted bubble-disclaimer'},'Interpretasi: bubble merepresentasikan holder yang ditampilkan dan garis menunjukkan hubungan transfer yang terindeks. Hubungan tidak membuktikan kepemilikan bersama atau niat membeli. Peta bukan feed transaksi tick-by-tick. Dokumentasi Bubblemaps menyebut peta diperbarui dalam rentang maksimum enam jam, tetapi token baru dapat mengalami keterlambatan; selalu periksa waktu komputasi yang tampil di peta.'),
   el('p',{class:'muted bubble-partner-help'},'Integrasi produksi memerlukan Partner ID resmi dan whitelist domain RADAR AI.')));
  const setStatus=(message,kind='muted')=>{status.textContent=message;status.className='bubble-status '+kind;};
  const loadConfig=async()=>{
