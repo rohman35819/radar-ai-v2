@@ -155,7 +155,7 @@ Dashboard menu **Early Gem Scanner** mengambil pool DEX terbaru (jendela provide
 - Early Gem Scanner menyediakan validasi on-demand dengan DEX Screener berdasarkan chain ID + alamat token, bukan simbol/nama. Hasil menampilkan pair, likuiditas, volume, perubahan harga, transaksi, dan apakah alamat pool sama dengan GeckoTerminal. Tidak ada pair bukan bukti scam.
 - DEX Screener API tidak membutuhkan API key untuk endpoint publik; aplikasi hanya meminta data saat tombol validasi ditekan dan menyimpan cache 2 menit.
 - GoPlus Token Security bersifat opsional dan hanya dipanggil atas permintaan pengguna. Paket gratis tersedia, tetapi endpoint token-security saat ini mensyaratkan Bearer access token. Konfigurasi server: `GOPLUS_APP_KEY` + `GOPLUS_APP_SECRET` untuk mint token otomatis, atau `GOPLUS_ACCESS_TOKEN` pre-generated. Jangan pernah menaruh nilai ini di frontend/Git.
-- GoPlus dibatasi 20 panggilan/menit secara global di aplikasi dan hasil cache 5 menit untuk menjaga kuota. Data kosong/parsial tidak ditampilkan sebagai "aman". Solana API ditandai beta oleh provider.
+- GoPlus dibatasi konservatif 5 panggilan/menit, 1.000/hari, dan 5.000/bulan secara internal (cache 5 menit). Batas internal ini berada di bawah kuota free tier GoPlus: 150.000 CU/bulan, 30.000 CU/hari, 150 CU/menit; endpoint token-security tercantum 25 CU/call. Data kosong/parsial tidak ditampilkan sebagai "aman". Solana API ditandai beta oleh provider.
 
 
 ### API usage and commercial review
