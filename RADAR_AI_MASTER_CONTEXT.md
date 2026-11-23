@@ -2147,3 +2147,19 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - No auto-trading, order placement, wallet signing, custody or transfers. No profit guarantee.
 - Expanded specification in section 14 of `docs/early-whale-detector-spec.md`. Documentation update only; no scanner or notification implementation is claimed.
 - NEXT TASK: implement event schema and replay fixtures for movement events, then validate notification routing/latency and reproducible entry/SL/TP calculations under Division 05 QA gates.
+
+
+---
+
+## 67. LIVE CHART, BULLISH EXHAUSTION & BEARISH/SHORT-SIDE WARNINGS — 23 NOVEMBER 2026
+
+- BOS clarified that RADAR must act as both an opportunity radar and a risk radar. A bullish-looking move must be downgraded when evidence shows upward momentum exhaustion, distribution, failed breakout, weakening buy pressure or increasing downside risk.
+- Added a live, data-driven chart requirement to section 15 of `docs/early-whale-detector-spec.md`: real candlesticks, volume, live price marker, event markers, optional VWAP/EMA/support-resistance/ATR, RSI/MACD divergence, CEX taker-flow/CVD where supported, and derivatives OI/funding/liquidation panels only when a verified derivatives feed exists.
+- Chart integrity requirements: real provider updates (no simulated motion), visible source/venue/timeframe and source/receive timestamps, connection/freshness state, explicit gaps, no synthetic mixing of CEX and DEX candles, and replay QA for OHLCV, reconnect, markers, stale state and mobile layout.
+- Added bearish exhaustion detectors: confirmed higher-high/lower-high RSI or MACD divergence; buy-flow/CVD weakening or absorption; volume spike without price follow-through; upper wicks/failed breakout/VWAP loss; executed sell flow or decoded DEX sell swaps; derivatives OI/funding/liquidation context; and weakening bid depth/liquidity where observable.
+- Strict evidence wording: spot CEX taker-sell flow is not proof of an opened short or a whale identity. “Whale short” may be stated only from direct, verifiable derivatives-position/trade data or reliably attributed tracked accounts. Otherwise say “large taker-sell flow”, “bearish derivatives positioning signal”, or “tracked wallet sold”. DEX spot transfers/balance changes are not proof of shorting.
+- Added conditional price-level scenarios (support hold, support break, false breakdown/reclaim), multi-timeframe bias states, evidence/counter-evidence, and multi-family confirmation before a bearish-confirmed label. If short-position data is unavailable, say so explicitly.
+- QA additions cover divergence and absorption fixtures, spot-vs-perpetual capability guards, stale derivatives data, false positives, no fabricated chart motion, venue separation, price-level scenarios and exactly-once alert transitions.
+- Documentation-only update on branch `docs/early-whale-detector-spec`; no live chart, scanner, short detector, derivatives feed or notifications are implemented by this change.
+- QA status: no runtime tests run because only Markdown specification/context changed. GitHub Actions, Hostless Build and LIVE remain separate and are not verified by this documentation update.
+- NEXT TASK: validate source availability and semantics for derivatives open interest/funding/liquidations and CEX/DEX order flow with the owning data/research divisions; then create deterministic replay fixtures for bullish exhaustion, verified short-side evidence and live chart integrity before runtime implementation.
