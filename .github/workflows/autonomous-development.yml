@@ -31,7 +31,7 @@ jobs:
       - name: Run guarded autonomous worker
         env:
           AUTONOMOUS_AGENT_ENABLED: ${{ vars.AUTONOMOUS_AGENT_ENABLED || '0' }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-20b' }}
