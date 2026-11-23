@@ -24,7 +24,7 @@
    const cap=validNum(coin.market_cap)?Number(coin.market_cap):null,volume=validNum(coin.total_volume)?Number(coin.total_volume):null;
    const turnover=cap>0&&volume!==null?volume/cap*100:null;
    const spike=Boolean(vol?.spike),multiple=validNum(vol?.x)?Number(vol.x):null;
-   const score=(h1!==null&&h1>0?20:0)+(h24!==null&&h24>0?15:0)+(d7!==null&&d7>0?10:0)+(spike?35:0)+(multiple!==null&&multiple>=1.5?15:0)+(turnover!==null&&turnover>=10?10:0);
+   const score=Math.min(100,(h1!==null&&h1>0?20:0)+(h24!==null&&h24>0?15:0)+(d7!==null&&d7>0?10:0)+(spike?35:0)+(multiple!==null&&multiple>=1.5?15:0)+(turnover!==null&&turnover>=10?10:0));
    const reasons=[];if(h1!==null&&h1>0)reasons.push('Momentum 1J');if(h24!==null&&h24>0)reasons.push('Harga 24J positif');if(spike)reasons.push('Volume Binance 10m spike');else if(multiple!==null&&multiple>=1.5)reasons.push('Volume 10m di atas median');if(turnover!==null&&turnover>=10)reasons.push('Turnover tinggi');
    return {coin,h1,h24,d7,turnover,vol,spike,multiple,score,reasons};
   }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,8);
