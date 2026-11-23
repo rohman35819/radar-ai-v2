@@ -160,3 +160,38 @@ Inventarisasi sumber data publik tanpa login/kartu kredit, dengan prioritas trad
 5. Probe Marketlight and Jupiter under controlled limits after terms/security checks.
 
 No candidate above has been activated in production by this addendum. No credentials, accounts, payment methods, Hostless environment, or trading permissions were changed.
+
+
+## Additional free trading sources — reviewed after initial audit
+
+### Marketlight public derivatives API — approved for controlled use with attribution
+- Docs: https://marketlight.ai/developers
+- No login, sign-up, API key or card; read-only GET JSON.
+- API documentation explicitly states CC BY 4.0, including commercial use, provided RADAR credits Marketlight and links to marketlight.ai.
+- Coverage: 24 coins; liquidations from Binance/Bybit/OKX; open interest and funding across seven venues; hourly/daily history; Fear & Greed and weekly reports.
+- Freshness: liquidation summary/hourly cache 60 seconds; cross-venue OI/funding cache 5 minutes; Fear & Greed cache 5 minutes. Provider asks clients to keep calls to a few per minute.
+- Accuracy caveat: this is an aggregator of exchange feeds, not an independent venue. Use for cross-check/coverage, not as the sole source. Verify updatedMs/ts, venue, funding intervalHours and coverage; do not mix 1h Hyperliquid funding with 8h venue funding. Keep CC BY attribution visible.
+- Initial API endpoint probe: web access reached the documented JSON endpoints (HTTP response body was not parsed by the browsing interface); this is not a full schema/accuracy/live production verification.
+
+### Jupiter Tokens API v2 — keyless prototype only; production hold
+- Docs: https://developers.jup.ag/docs/tokens and https://developers.jup.ag/
+- No sign-up access at 0.5 requests/second; a free API key raises the rate to 1 request/second but requires developer registration. No payment required for free tier.
+- Potential token metadata, verified lists, organic score and market/liquidity information can help Solana token discovery. These scores are provider-defined discovery signals, not independent security audits.
+- API-specific data reuse/redistribution terms were not located/confirmed in this review. Keep it probe-only; do not persist, publish, or use it in production scoring until Division 08 confirms rights and Division 01 reviews endpoint security. No account/key registration was performed.
+
+### Binance USDⓈ-M Futures — expand existing source before adding another vendor
+- Official docs: https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data
+- Existing main adapter (lib/derivatives.js) already calls current funding/mark, current open interest, open-interest history and taker long/short flow.
+- Additional no-auth endpoints worth adding:
+  - GET /fapi/v1/fundingRate — funding history.
+  - GET /futures/data/globalLongShortAccountRatio — all-trader account-count ratio.
+  - GET /fapi/v1/depth — bounded order-book snapshot.
+  - GET /fapi/v1/markPriceKlines and /fapi/v1/indexPriceKlines — mark/index price history.
+- Do not add top-trader long/short account/position ratio endpoints in the no-login task: official docs mark those as MARKET_DATA and require X-MBX-APIKEY. Those require account/API key setup and are excluded.
+- Semantic guardrail: global long/short ratio is account counts, not wallet balances or whale flows. Order-book depth is a snapshot, not executed volume. Preserve raw exchange fields and timestamps.
+- Prioritize these incremental Binance fields over duplicating already-present sources.
+
+### Additional exclusions / holds
+- Hyperliquid Info API is public and documented, but the Foundation non-validating node is best-effort with no guarantees for availability, latency, performance or completeness and must not be the sole/authoritative source for trading or time-sensitive activity. API data rights/redistribution were not confirmed. Do not rely on it as primary source.
+- Coinbase public exchange endpoints exist, but Coinbase Institutional identifies authorized redistribution partners for exchange market data. Do not republish Coinbase market data in RADAR without the relevant market-data permission.
+- Bybit public market endpoints may not require authentication, but the API terms prohibit unapproved redistribution/commercial exploitation/competing use. Keep out of public-facing RADAR unless a permitted personal-only scope or written permission is confirmed.
