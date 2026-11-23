@@ -88,7 +88,7 @@ test('GoPlus usage counters persist after an actual upstream request', async () 
 
 test('GoPlus supports every documented Token Security chain ID plus Solana Beta', () => {
   const address = '0x1111111111111111111111111111111111111111';
-  const numericChains = GOPLUS_CHAINS.filter((chain) => /^\\d+$/.test(chain.id));
+  const numericChains = GOPLUS_CHAINS.filter((chain) => Number.isInteger(Number(chain.id)));
   assert.equal(GOPLUS_CHAINS.length, 38);
   assert.equal(numericChains.length, 37);
   assert.equal(GOPLUS_SUPPORTED_NETWORKS.length, 39);
