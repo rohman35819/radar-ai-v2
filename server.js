@@ -87,6 +87,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const dexScreenerGlobalLimited = createRateLimiter({ limit: 240, windowMs: 60000, maxKeys: 1000 });
   const dexScreenerLimited = createRateLimiter({ limit: 30, windowMs: 60000, maxKeys: 1000 });
   const goPlusLimited = createRateLimiter({ limit: 5, windowMs: 60000, maxKeys: 1000 });
+  const goPlusStatusLimited = createRateLimiter({ limit: 2, windowMs: 60000, maxKeys: 1000 });
   const doRefresh = () => (busy = busy || ingest.refresh(st, cfg, src)
     .then((result) => { storageChecked = true; storageErrorCode = null; return result; })
     .catch((error) => {
@@ -238,6 +239,15 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             const code = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'DEXSCREENER_UPSTREAM_ERROR';
             const status = Number.isInteger(error.status) ? error.status : 502;
             send(res, status, { status: 'error', code, message: code === 'DEXSCREENER_BUSY' ? 'Validasi DEX sedang sibuk; coba lagi sebentar.' : code.startsWith('DEXSCREENER_INVALID_') || code === 'DEXSCREENER_UNSUPPORTED_NETWORK' ? 'Jaringan atau alamat token tidak valid/tidak didukung.' : 'Validasi DEX Screener belum tersedia.' }, 'application/json', { 'cache-control': 'no-store' });
+          });
+          return;
+        }
+        if (url.pathname === '/api/market-intelligence/goplus/status' && req.method === 'GET') {
+          if (goPlusStatusLimited('global') || goPlusStatusLimited(ip)) return send(res, 429, { status: 'error', code: 'GOPLUS_STATUS_RATE_LIMITED', message: 'Pemeriksaan kredensial dibatasi; coba lagi nanti.' }, 'application/json', { 'retry-after': '60', 'cache-control': 'no-store' });
+          goPlus.verifyCredentials().then((payload) => {
+            send(res, 200, { status: payload.verified ? 'verified' : payload.configured ? 'unverified' : 'not_configured', ...payload }, 'application/json', { 'cache-control': 'no-store' });
+          }).catch(() => {
+            send(res, 200, { status: 'unverified', configured: Boolean(process.env.GOPLUS_ACCESS_TOKEN || (process.env.GOPLUS_APP_KEY && process.env.GOPLUS_APP_SECRET)), verified: false, error_code: 'GOPLUS_CREDENTIAL_CHECK_FAILED' }, 'application/json', { 'cache-control': 'no-store' });
           });
           return;
         }
