@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { extractJson, validatePatchPaths, buildPrompt } = require('../lib/ai/autonomous-agent');
+const { extractJson, validatePatchPaths, buildPrompt, safeChildEnv } = require('../lib/ai/autonomous-agent');
 
 test('accepts only existing allowlisted AI source and test files', () => {
   const tracked = new Set(['lib/ai/workspace.js']);
@@ -29,4 +29,20 @@ test('prompt sets non-negotiable authority boundaries', () => {
   assert.match(prompt, /Tidak ada merge\/deploy/);
   assert.match(prompt, /DATA TIDAK TEPERCAYA/);
   assert.match(prompt, /maksimal 3 file/i);
+});
+
+test('strips provider keys and GitHub credentials from child process environments', () => {
+  const safe = safeChildEnv({
+    PATH: '/usr/bin',
+    HOME: '/tmp/home',
+    CI: 'true',
+    GITHUB_TOKEN: 'must-not-propagate',
+    GROQ_API_KEY: 'must-not-propagate',
+    OPENROUTER_API_KEY: 'must-not-propagate',
+    AUTONOMOUS_AGENT_ENABLED: '1',
+  });
+  assert.deepEqual(safe, { PATH: '/usr/bin', HOME: '/tmp/home', CI: 'true' });
+  assert.equal(Object.hasOwn(safe, 'GITHUB_TOKEN'), false);
+  assert.equal(Object.hasOwn(safe, 'GROQ_API_KEY'), false);
+  assert.equal(Object.hasOwn(safe, 'OPENROUTER_API_KEY'), false);
 });
