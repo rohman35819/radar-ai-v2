@@ -223,3 +223,10 @@ Snapshot yang diverifikasi pada 22 November 2026:
 
 - Latest implementation head `e90db36ebe90c09811c44e51765e5a56fc873250`: GitHub Actions test #649 passed 110/110; security #192 Gitleaks and Trivy filesystem scan succeeded.
 - PR #59 remains Draft/unmerged; Divisi 03/05 reviews and Hostless Build/LIVE validation remain pending.
+
+
+## 20. GoPlus holder concentration and lock events — 23 November 2026
+
+- PR #72 adds top-1/top-10 holder concentration, separates non-contract wallet vs contract/LP share, and displays provider-reported locked_detail end dates for top-10 token/LP holders only.
+- Exact head `48a3cec600858e920a9585e399db448b2fb103b8`: GitHub Actions test #776 passed 137/137; security #319 Gitleaks and Trivy passed.
+- No new API call or secret. GoPlus Hostless credential gate remains; do not claim LIVE. Top10 sample and known lock details are not a full holder distribution or token unlock calendar.
