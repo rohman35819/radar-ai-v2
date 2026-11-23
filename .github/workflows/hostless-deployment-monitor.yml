@@ -1,6 +1,8 @@
 name: Hostless deployment monitor
 
 on:
+  push:
+    branches: [main]
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
@@ -23,11 +25,14 @@ jobs:
       RADAR_LIVE_URL: ${{ vars.RADAR_LIVE_URL || 'https://radar-ai-v2.hostless.app' }}
     steps:
       - name: Validate monitor configuration
+        id: config
         shell: bash
         run: |
           if [[ -z "$HOSTLESS_API_KEY" ]]; then
-            echo "::error::Missing GitHub Actions secret HOSTLESS_API_KEY (Hostless deployments:read only)."
-            exit 1
+            echo "::warning::Missing HOSTLESS_API_KEY; Hostless deployment metadata check will be skipped. Add a read-only deployments:read token to GitHub Actions secrets."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
           fi
           if [[ ! "$HOSTLESS_APP_NAME" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$ ]]; then
             echo "::error::HOSTLESS_APP_NAME is invalid."
@@ -37,6 +42,7 @@ jobs:
           echo "LIVE URL: $RADAR_LIVE_URL"
 
       - name: Read latest Hostless deployment
+        if: steps.config.outputs.enabled == 'true'
         id: deployment
         shell: bash
         run: |
@@ -112,6 +118,16 @@ jobs:
           if (succeeded && commit && !sameCommit) process.exit(1);
           NODE
 
+      - name: Check out repository for LIVE snapshot probe
+        if: always()
+        uses: actions/checkout@v7
+
+      - name: Verify LIVE snapshot and news sources
+        if: always() && steps.live.outputs.http == '200'
+        env:
+          RADAR_LIVE_URL: ${{ env.RADAR_LIVE_URL }}
+        run: node scripts/hostless-live-check.js
+
       - name: Verify public LIVE readiness
         if: always()
         id: live
@@ -123,17 +139,14 @@ jobs:
             -o "$RUNNER_TEMP/radar-ready.json" \
             -w "%{http_code}" "$RADAR_LIVE_URL/api/ready")
           echo "http=$code" >> "$GITHUB_OUTPUT"
-          if [[ "$code" != "200" ]]; then
-            echo "::error::RADAR AI LIVE readiness returned HTTP $code."
-            echo "### LIVE readiness" >> "$GITHUB_STEP_SUMMARY"
-            echo "Failed: HTTP $code" >> "$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
+          echo "HTTP_CODE=$code" >> "$GITHUB_ENV"
           node -e "
             const fs = require('node:fs');
-            const data = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/radar-ready.json', 'utf8'));
-            console.log(JSON.stringify({status:data.status, storage:data.storage || null}));
-            if (data.status !== 'ready') process.exit(1);
+            let data = null;
+            try { data = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/radar-ready.json', 'utf8')); } catch {}
+            const safe = { http: process.env.HTTP_CODE || '', status: data && data.status || null, storage: data && data.storage ? { status: data.storage.status || null, code: data.storage.code || null } : null };
+            console.log(JSON.stringify(safe));
+            const lines = ['### LIVE readiness', '', '| Field | Result |', '|---|---|', '| HTTP | ' + safe.http + ' |', '| API status | ' + (safe.status || 'unavailable') + ' |', '| Storage | ' + (safe.storage && safe.storage.status || 'unknown') + ' |', '| Storage code | ' + (safe.storage && safe.storage.code || 'none') + ' |'];
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\\n') + '\\n');
+            if (Number(safe.http) !== 200 || safe.status !== 'ready') process.exit(1);
           "
-          echo "### LIVE readiness" >> "$GITHUB_STEP_SUMMARY"
-          echo "Healthy: HTTP 200 and API reports ready." >> "$GITHUB_STEP_SUMMARY"
