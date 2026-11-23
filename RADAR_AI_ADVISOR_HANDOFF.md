@@ -211,3 +211,9 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - The delivery is code on a branch, not yet merged or deployed. Exact-head CI, security scan, independent Divisi 03/05 review, and Hostless verification are still pending.
 - Remaining high-priority gaps: wallet/whale identity, contract security, holder distribution, automated token unlock, macro feeds, GNews/NewsData integration. Existing `GNEWS_API_KEY` and `NEWSDATA_API_KEY` variables are not proof those adapters exist; current `lib/sources.js` still uses configured RSS feeds only.
 - Continue one isolated provider at a time; no paid APIs/cards/overage, no key exposure, no automatic trading.
+
+
+### 16.1 CI and review status
+
+- PR #59 exact implementation head `a3020a4e378e23004a7a956ad99055263b381dd8`: GitHub Actions test #647 passed 110/110; security #190 passed Trivy filesystem and Gitleaks.
+- PR remains Draft/unmerged. Divisi 03 and Divisi 05 independent reviews, Hostless build and LIVE verification remain pending.
