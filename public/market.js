@@ -27,7 +27,7 @@ let dexScanner = null;
 let dexSearch = '';
 let dexBusy = false;
 function changeNode(value) {
-  const span = node('span', Number(value) >= 0 ? 'positive' : 'negative', fmtPct(value));
+  const span = node('span', value === null || value === undefined ? 'muted' : (Number(value) >= 0 ? 'positive' : 'negative'), fmtPct(value));
   return span;
 }
 function globalMetrics() {
@@ -367,7 +367,7 @@ async function loadDexScanner(force = false) {
   try {
     const response = await fetch('/api/dexscreener/scanner', { cache: 'no-store' });
     const result = await response.json();
-    if (!response.ok && !result.data) throw new Error(result.message || result.code || 'DEX Screener unavailable');
+    if (!response.ok || result.status !== 'success') throw new Error(result.message || result.code || 'DEX Screener unavailable');
     dexScanner = result;
     renderDexScanner();
     const sourceCount = Object.values(result.sources || {}).filter((source) => source.ok).length;
