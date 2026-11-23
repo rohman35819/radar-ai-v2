@@ -56,7 +56,7 @@
           ['TAKE PROFIT 3 · 3R', setup.tp3, 'target']
         ].forEach(([label, value, kind]) => {
           const box = node('div', 'trade-setup-level ' + kind);
-          box.append(node('small', '', label), node('b', '', fmt(value)));
+          box.append(node('small', '', label), node('b', '', fmt(value) + ' USDT'));
           levels.append(box);
         });
         content.append(levels);
