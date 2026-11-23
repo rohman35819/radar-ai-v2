@@ -341,6 +341,35 @@ async function loadDerivatives() {
     status.textContent = 'Data derivatives tidak tersedia. Coba lagi setelah cooldown.';
   }
 }
+async function loadFred() {
+  const body = $('#fred-table');
+  const status = $('#fred-status');
+  if (!body || !status) return;
+  body.replaceChildren();
+  const loading = node('td', 'muted', 'Memuat indikator makro FRED…'); loading.colSpan = 4;
+  const loadingRow = node('tr'); loadingRow.append(loading); body.append(loadingRow);
+  try {
+    const response = await fetch('/api/market-intelligence/macro', { cache: 'no-store' });
+    const result = await response.json();
+    if (!response.ok || result.status !== 'success') throw new Error(result.message || (result.status === 'unconfigured' ? 'FRED_API_KEY belum dikonfigurasi di backend.' : result.code) || 'FRED unavailable');
+    body.replaceChildren();
+    (result.series || []).forEach((item) => {
+      const latest = item.latest || {};
+      const tr = node('tr');
+      const value = latest.value == null || !Number.isFinite(Number(latest.value)) ? 'N/A' : Number(latest.value).toLocaleString('en-US', { maximumFractionDigits: 4 }) + (item.units === 'Percent' ? '%' : '');
+      tr.append(node('td', '', safeText(item.title)), node('td', 'number-cell', value), node('td', '', safeText(latest.date || '—')), node('td', 'muted', safeText(item.frequency || '—')));
+      body.append(tr);
+    });
+    if (!(result.series || []).length) { const tr = node('tr'); const td = node('td', 'muted', 'Belum ada observasi FRED.'); td.colSpan = 4; tr.append(td); body.append(tr); }
+    const failures = Object.entries(result.sources || {}).filter(([, source]) => !source.ok).map(([id]) => id);
+    const stale = (result.series || []).some((item) => item.stale);
+    status.textContent = 'FRED · ' + new Date(result.observed_at).toLocaleString('id-ID') + (result.cached ? ' · cache 30 menit' : '') + (stale ? ' · memakai data cache lama' : '') + (failures.length ? ' · sumber bermasalah: ' + failures.join(', ') : ' · sumber tersedia');
+  } catch (error) {
+    body.replaceChildren();
+    const tr = node('tr'); const td = node('td', 'negative', safeText(error.message)); td.colSpan = 4; tr.append(td); body.append(tr);
+    status.textContent = 'Data makro belum tersedia. Periksa FRED_API_KEY dan status layanan.';
+  }
+}
 async function loadAICouncilSummary() {
   const target = $('#ai-market-summary');
   try {
@@ -412,6 +441,7 @@ document.addEventListener('keydown', (event) => { if (event.key === 'Escape') se
 window.addEventListener('resize', () => { if (window.innerWidth > 760) setSidebarOpen(false); });
 $('#refresh').addEventListener('click', () => loadMarket(true));
 $('#load-derivatives').addEventListener('click', loadDerivatives);
+$('#load-fred').addEventListener('click', loadFred);
 $('#derivatives-symbol').addEventListener('keydown', (event) => { if (event.key === 'Enter') loadDerivatives(); });
 $('#coin-search').addEventListener('input', (event) => { search = event.target.value.trim().toLowerCase(); marketRows(); });
 $('#chart-coin').addEventListener('change', loadChart);
@@ -419,4 +449,5 @@ $('#chart-days').addEventListener('change', loadChart);
 $('#chart-metric').addEventListener('change', loadChart);
 $('#exchange-select').addEventListener('change', () => { $('#exchange-select').dataset.loaded = ''; loadExchangeTickers(); });
 loadMarket();
+loadFred();
 setInterval(() => loadMarket(false), 5 * 60 * 1000);
