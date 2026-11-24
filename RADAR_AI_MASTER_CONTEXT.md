@@ -3173,3 +3173,41 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Corrected the policy to accept scoped docs/*, chore/*, ci/*, security/*, test/* and refactor/* branches in addition to feat/*, fix/* and exp/* for PRs targeting develop.
 - PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
 - Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
+
+---
+
+## 110. DASHBOARD FRESHNESS, SOURCE ATTRIBUTION & DATA STATE — 25 NOVEMBER 2026
+
+> Catatan penomoran: bagian 109 ditambahkan oleh PR #106 pada branch `fix/sidebar-drawer-scroll`. Branch ini berbasis `develop` sebelum PR tersebut merged, sehingga bagian ini memakai nomor 110. Saat integrasi, rapikan urutan nomor tanpa menghapus isi salah satu bagian.
+
+### Routing dan ruang lingkup
+- Lead: Divisi 02 — UI/UX & Frontend. Tidak ada perubahan backend, kontrak API, exchange, trading, withdrawal, atau secret.
+- Melanjutkan prioritas §82/§85: audit dan perbaikan dashboard data freshness, source attribution, timestamp, connection status, serta loading/empty/error state.
+- Branch kerja: `feat/dashboard-freshness` dari `develop` SHA `4b37426f519ba91483f11a37a0023180134f9c62`. Sidebar tidak disentuh.
+
+### Perubahan
+- `public/app.js`:
+  - Helper `ageLabel()` menghitung umur `last_ok` dari data server (`baru saja` / menit / jam / hari); tanpa timestamp menampilkan `—`.
+  - Helper `connectionState()` membedakan `MENGHUBUNGKAN`, `GAGAL MEMUAT`, `KONEKSI TERPUTUS`, `DATA BASI`, dan `TERHUBUNG` secara eksklusif dari `data`, `loadFailed`, `snapshotReachable`, dan `data.stale`.
+  - Helper `sourceFootnote()` menampilkan sumber `/api/snapshot`, timestamp `last_ok`, dan umur data. Dipasang pada Ringkasan, Screener, News, Unlock, dan Alerts.
+  - Ringkasan menampilkan loading/error state sebelum snapshot pertama; status chip memakai warna sesuai `connectionState()`.
+  - Empty state tabel token membedakan gagal memuat, menunggu data, dan hasil filter kosong.
+  - News menampilkan waktu ambil snapshot di samping status per-sumber; Unlock membedakan sumber belum dikonfigurasi (`config_needed.unlock_source=true`) dari sumber aktif tanpa jadwal.
+  - `updateStatus()` kini konsisten dengan `connectionState()` dan selalu dipanggil setelah `load()`, termasuk saat gagal. `load()` masih mengembalikan `snapshotOk` seperti sebelumnya.
+- `public/style.css`: menambah `.freshness-note` dan `.state-panel` (responsif melalui layout grid yang sudah ada).
+- `test/frontend-ui.test.js`: satu regression test untuk helper di atas, sumber `/api/snapshot`, penggunaan `data.stale`/`snapshotReachable`, absennya `Math.random`, dan keberadaan kelas CSS baru.
+
+### Pengujian dan commit
+- Commit kode: `47cd00f89b0e74f883ac4e5a44c00ced3e99dc92` (`feat: show truthful dashboard freshness, source and state`).
+- `node --check public/app.js`: lulus. `node --test test/frontend-ui.test.js`: 4 pass, 0 fail. `npm test`: 194 pass, 0 fail, 0 skipped. `git diff --check`: bersih.
+- Self-review menemukan dan memperbaiki satu kesalahan interpretasi `config_needed.unlock_source` sebelum commit: nilai `true` berarti sumber **belum** tersedia.
+- Tidak ada data simulasi, angka buatan, atau klaim koneksi aktif tanpa bukti dari field snapshot.
+
+### Status dan NEXT TASK
+- GitHub: branch `feat/dashboard-freshness`; belum di-push/PR pada saat catatan ini dibuat. PR #106 (sidebar) tetap berdiri sendiri dan tidak di-merge.
+- Hostless Build/LIVE: tidak dicek; tidak ada deployment. QA browser desktop/mobile belum dilakukan.
+- NEXT TASK:
+  1. Push branch dan buat PR ke `develop`; verifikasi exact-head test/security dan branch-source policy. Jangan merge sebelum gate lulus.
+  2. QA browser: status koneksi, umur data, empty/loading/error state, dan atribusi sumber di Ringkasan/Screener/News/Unlock/Alerts pada desktop dan mobile.
+  3. Lanjutkan audit fungsi tersisa yang tercatat di §23/§25: Watchlist, Analytics, AI Council/Workspace, System Health, serta PWA cache sesuai perubahan UI ini.
+  4. Selesaikan gate PR #106 secara terpisah; koordinasikan penomoran bagian 109/110 saat integrasi ke `develop`.
