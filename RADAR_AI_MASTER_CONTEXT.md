@@ -3174,7 +3174,6 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
 - Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
 
-
 ## 111. CLOUD AUTONOMOUS WORKER PILOT — 25 NOVEMBER 2026
 
 **Status: Stage 1 worker hardening merged to develop; not yet released to main or verified running with Groq.**
@@ -3224,3 +3223,71 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Files changed: `GROK.md` (new), `AGENTS.md`, `RADAR_AI_MASTER_CONTEXT.md`, `RADAR_AI_SHARED_MEMORY.md`.
 
 **NEXT TASK:** verify exact-head branch-source, test and security workflows for the updated documentation PR. After merge, configure Grok's project/custom instructions to read `GROK.md` at every new conversation and verify repository access. Do not claim automatic startup until tested.
+
+---
+
+## 114. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
+
+> Catatan penomoran: bagian ini awalnya ditulis sebagai §109 pada branch `fix/sidebar-drawer-scroll` sebelum `develop` menerima §111 (cloud worker) dan §112 (shared memory). Dinomorkan ulang menjadi §113 saat branch diperbarui ke `develop` terbaru; isi aslinya dipertahankan.
+
+### Routing dan tujuan
+- Lead: Divisi 02 — UI/UX & Frontend. QA: Divisi 05 (temporary override aktif; QA browser belum dilakukan).
+- Melanjutkan NEXT TASK §20.4 butir 3–5: swipe hanya menggerakkan `.side-nav`, backdrop/Menu/Escape menutup drawer, konten utama tidak ikut bergeser.
+- Branch isolasi: `fix/sidebar-drawer-scroll` dari `develop` SHA `4b37426f519ba91483f11a37a0023180134f9c62`.
+
+### Akar masalah
+- `public/style.css` memuat dua generasi aturan `.sidebar`: blok lama memberi `overflow-y:auto`, `overscroll-behavior:contain`, dan lebar `min(82vw,300px)`; blok baru memberi `overflow:hidden`, `overscroll-behavior:none`, dan lebar `min(84vw,320px)`.
+- Media query 760px lama juga mendefinisikan ulang `.sidebar` dan `.sidebar.open` (lebar 260px, transisi `.22s`). Aturan lawas menjadi deklarasi mati yang saling bertabrakan dan melemahkan kepemilikan scroll yang tunggal.
+
+### Perubahan
+- `public/style.css`: blok sidebar lawas dan duplikasi aturan drawer pada media 760px dihapus. Tersisa satu blok struktural `.sidebar` sebagai sumber tunggal (`height:100dvh`, `overflow:hidden`, `overscroll-behavior:none`) dengan `.side-nav` sebagai satu-satunya kontainer scroll (`flex:1 1 0`, `min-height:0`, `overflow-y:auto`, `overscroll-behavior-y:contain`, `touch-action:pan-y`). Menambahkan `.main-shell{min-width:0}` pada media mobile. Aturan warna/tema dan lebar responsif yang tidak bertabrakan dipertahankan.
+- `public/index.html` dan `public/app.js`: tidak diubah. Markup backdrop, `aria-controls`/`aria-expanded`, dan pengendali backdrop/Menu/Escape/resize sudah sesuai §20.2 dan kini diverifikasi oleh regression test.
+- `test/frontend-ui.test.js`: dua test baru — tidak ada `.sidebar` dengan `overflow-y:auto`, tepat satu `.sidebar.open`, `.side-nav` memiliki kelima properti scroll, kontrol penutup drawer terikat, dan shell utama tetap fixed. Test menu lama diperluas dengan `early-gems`, `market.html`, dan `solscan.html`.
+- Tidak ada perubahan API/backend/exchange/withdrawal; tidak ada secret dalam diff.
+
+### Pengujian dan commit
+- Commit kode dan tes: `fcbbf8aec65a3fe88fc35e92132e85c71a1fff49` (`fix: consolidate sidebar scroll rules and add drawer regression tests`).
+- `npm test` pada branch ini dengan Node v24.22.3: **195 pass, 0 fail, 0 skipped**.
+- `node --test test/frontend-ui.test.js`: **5 pass, 0 fail**.
+- `git diff --stat` sebelum commit: 2 file diubah, +43/-26.
+- Commit dokumentasi bagian ini: SHA dicatat pada pembaruan status berikutnya.
+
+### Status dan NEXT TASK
+- GitHub: branch `fix/sidebar-drawer-scroll` sudah **di-push** ke origin dengan upstream tracking; `origin/develop` tetap `4b37426f519ba91483f11a37a0023180134f9c62`. Posisi perubahan ada di branch kerja, bukan `main`/`develop`. Belum ada merge.
+- PR ke `develop`: **belum berhasil dibuat**. `POST /repos/rohman35819/radar-ai-v2/pulls` ditolak HTTP 403 `Resource not accessible by personal access token`; kredensial git yang tersedia hanya berhak membaca PR. Tidak ada secret yang dibuka/diubah. Tautan pembuatan manual: https://github.com/rohman35819/radar-ai-v2/pull/new/fix/sidebar-drawer-scroll
+- Hostless Build/LIVE: tidak dicek; **tidak ada deployment**.
+- QA browser/perangkat: **belum dilakukan**. Gesture nyata, scroll chaining iOS/Android, dan kemungkinan pergeseran layout saat `body.sidebar-open{overflow:hidden}` menghilangkan scrollbar masih harus diuji langsung.
+
+### Pembaruan CI exact-head — 25 November 2026
+- HEAD `d77f93e8f5c9ac52914dab14c9a8d840460c8118` (commit dokumentasi): workflow `RADAR AI tests` run #1034 (ID `45458181042`) **completed / success**. Job `test` sukses pada `npm test`, migrasi Agent Platform, queue/lease/retry/approval/kill-switch, serta migrasi memory dengan RLS/privilege/provenance smoke. Job `Branch source policy` skipped karena ini event push, bukan PR; dua langkah diagnostik Hostless LIVE skipped dan bersifat non-blocking.
+- HEAD kode `fcbbf8aec65a3fe88fc35e92132e85c71a1fff49`: tidak ada run push terpisah, tetapi kode yang sama terangkum pada HEAD dokumentasi yang diuji run #1034.
+- Combined commit status API masih `pending` dengan nol status legacy; bukti CI diambil dari daftar dan job Actions, bukan dari status check lama.
+- Security scan GitHub **belum berjalan** pada branch ini: `.github/workflows/security.yml` hanya memicu PR ke `main`/`develop` dan push ke `main`/`develop`, bukan `fix/**`. `gitleaks` dan `trivy` tidak terpasang lokal; pemeriksaan pola pada diff tidak menemukan literal secret, tetapi ini bukan pengganti Gitleaks/Trivy.
+- Tidak ada merge, Hostless check, atau klaim LIVE.
+- Upaya kedua membuat PR dengan payload minimal (title/head/base saja) masih ditolak **HTTP 403 `Resource not accessible by personal access token`**. Respons GitHub mencantumkan `x-accepted-github-permissions: pull_requests=write`, artinya izin tersebut **dibutuhkan tetapi tidak dimiliki** oleh kredensial yang tersedia. Tidak ada `gh`, konfigurasi `~/.config/gh`, token environment, atau resource MCP sebagai alternatif; kredensial tidak diubah atau dibagikan.
+- Karena tidak ada event PR, job `Branch source policy` dan security Gitleaks/Trivy **tidak dapat dipantau**; keduanya baru berjalan setelah PR benar-benar dibuat. Kueri PR open dengan head `fix/sidebar-drawer-scroll` dan base `develop` mengembalikan 0 PR.
+
+- NEXT TASK:
+  1. Pemilik/maintainer membuat PR ke `develop` lewat GitHub UI atau token berizin `pull_requests: write`: https://github.com/rohman35819/radar-ai-v2/pull/new/fix/sidebar-drawer-scroll . Setelah PR ada, verifikasi head SHA PR mencakup `fcbbf8aec65a3fe88fc35e92132e85c71a1fff49` (kode+test) dan `d77f93e8f5c9ac52914dab14c9a8d840460c8118` (dokumentasi), lalu pantau `Branch source policy`, test, Gitleaks, dan Trivy pada event PR. Jangan merge sebelum seluruhnya lulus.
+  2. Selesaikan security scan Gitleaks/Trivy sebelum integrasi; jangan merge hanya dengan CI test yang hijau.
+  3. QA ponsel: buka Menu, swipe daftar menu sampai item terbawah; pastikan hanya `.side-nav` bergerak; tutup drawer lalu swipe halaman utama; uji backdrop, tombol Menu, dan Escape.
+  4. QA desktop: wheel/trackpad pada daftar menu dan pastikan konten utama tidak ikut bergeser, termasuk saat scroll lock aktif.
+  5. Jika perangkat masih meneruskan gesture, terapkan opsi §20.4 butir 5 (accordion/rail navigasi) tanpa menghapus menu atau fitur.
+
+### Revalidasi terhadap `develop` terbaru — 25 November 2026 (supersedes status di atas)
+- `origin/develop` telah maju dari `4b37426f519ba91483f11a37a0023180134f9c62` ke `c9c3a1403b19e5fe52250d0354e03bf7a1af1319` (cloud worker + shared memory). **PR #106 kini benar-benar terbuka** (`fix/sidebar-drawer-scroll` → `develop`); catatan lama "PR belum dibuat / kueri 0 PR" dinyatakan **superseded** oleh fakta ini.
+- Branch `fix/sidebar-drawer-scroll` digabung dengan `origin/develop` menggunakan merge commit biasa (bukan force-reset), sehingga PR mengikuti basis integrasi terbaru. Konflik hanya terjadi pada dokumen master; bagian sidebar dinomorkan ulang menjadi §114 agar tidak bentrok dengan §111 (cloud worker), §112 (shared memory) dan §113 (Grok charter). Tidak ada konflik pada `public/style.css` maupun `test/frontend-ui.test.js`.
+- Pengujian lokal setelah revalidasi (Node v24.22.3): `npm test` **196 pass, 0 fail, 0 skipped**; `git diff --check` bersih; tidak ada marker konflik yang tersisa. Belum ada CI exact-head untuk HEAD setelah merge ini.
+- Tidak ada perubahan kredensial, exchange, trading, atau konfigurasi produksi. Hostless Build/LIVE tidak dicek.
+- NEXT TASK: setelah push, verifikasi CI exact-head PR #106 (test, Branch source policy, Gitleaks, Trivy), lanjutkan QA perangkat Android/iOS/desktop, dan merge hanya bila seluruh gate lulus.
+
+### Verifikasi gate exact-head setelah revalidasi — 25 November 2026
+- HEAD PR `b3161df12ccbc8da53409b2b5582867ac44d3bae`: workflow `RADAR AI tests` run `45470390605` **completed / success** dengan job `Branch source policy` **success** dan job `test` **success**; workflow `RADAR AI security scans` run `45470390762` **completed / success**.
+- `GET /compare/c9c3a14...b3161df` melaporkan status `ahead`, `ahead_by=5`, `behind_by=0`; merge lokal dari `origin/develop` ke branch ini adalah fast-forward tanpa konflik. Namun API merge PR sempat mengembalikan HTTP 405 `Pull Request has merge conflicts` dengan `mergeable=false` / `mergeable_state=dirty`; status ini perlu dihitung ulang oleh GitHub sebelum merge.
+- Tidak ada perubahan kode pada pembaruan ini; Hostless Build/LIVE dan QA perangkat tetap belum diverifikasi.
+
+### Revalidasi kedua terhadap `develop` `b26d8b4` — 25 November 2026
+- `develop` maju lagi dengan PR #111 (refresh shared memory handoff) dan charter Grok (§113). Itu menjelaskan `mergeable=false` / `mergeable_state=dirty` yang dilaporkan GitHub setelah push pertama: basis PR bergeser, bukan konflik pada kode.
+- Branch `fix/sidebar-drawer-scroll` digabung lagi dengan `origin/develop` `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`. Konflik hanya pada dokumen master; bagian sidebar dinomorkan ulang menjadi §114 agar tidak bentrok dengan §113 (Grok charter). Tidak ada perubahan pada `public/style.css` atau `test/frontend-ui.test.js`.
+- Gate CI telah lolos pada HEAD lama `b3161df` (test, Branch source policy, security scans), tetapi **tidak boleh dipakai untuk HEAD baru**. CI exact-head harus dijalankan ulang setelah push ini sebelum merge dipertimbangkan.
+- Hostless Build/LIVE dan QA perangkat masih belum diverifikasi. Tidak ada kredensial, exchange, trading, atau konfigurasi produksi yang diubah.
