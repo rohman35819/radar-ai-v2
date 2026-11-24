@@ -3174,9 +3174,48 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
 - Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
 
+
+## 111. CLOUD AUTONOMOUS WORKER PILOT — 25 NOVEMBER 2026
+
+**Status: Stage 1 worker hardening merged to develop; not yet released to main or verified running with Groq.**
+
+- BOS requested a cloud-based autonomous worker so Android/Termux does not need to remain open and drain the phone battery.
+- Audit found an existing GitHub Actions workflow scheduled every two hours plus a narrowly scoped autonomous patch worker. It uses an ephemeral GitHub-hosted runner, validates a patch against a three-file allowlist, runs `npm test`, and opens a Draft PR. It is periodic automation, not a continuously running process.
+- Audit found PostgreSQL Agent Platform migrations `001_agent_platform.sql` and `002_queue_operations.sql` already define registry, durable queue, leases/heartbeat/retry, audit, approvals and pause/kill switch. They are not active: platform defaults paused/kill=true; worker concurrency=1; daily budget USD 0; control/queue functions are revoked from service_role and runtime roles. No production DB worker credentials or grants were added.
+- PR #108 merged to `develop` as `02fea51fc440db3d611e3490e5a89662a951f742`: opt-in Groq provider support, default-off `GROQ_AUTONOMOUS_ENABLED`, explicit OpenRouter Free-only fallback, checkout from `develop`, and Draft PRs targeting `develop` with a `fix/*` branch (replacing the old policy-incompatible `ai-dev/*` → `main` route).
+- Added `docs/AUTONOMOUS_AGENT_RUNTIME.md` describing staged rollout, queue security, operational limits, activation gates and rollback.
+- Exact PR-head CI on `665a2492c541534eb96340f0719f352a06f2390f`: RADAR AI tests SUCCESS (run #45466754679, including npm test and disposable PostgreSQL Agent Platform/queue/Memory migration smoke); Gitleaks SUCCESS and Trivy SUCCESS (run #45466754825); Branch source policy SUCCESS. PR #108 merged only after these checks passed.
+- The default branch `main` was still at SHA `0f8521a4ab2399f80a102af4e422b2586d32e437` when checked. Therefore the updated workflow and Groq provider support are on `develop`, not yet on the default branch; the updated schedule is not active until a normal release PR reaches `main`.
+- Groq activation is deliberately NOT enabled. GitHub Actions secret `GROQ_API_KEY` and repository variable `GROQ_AUTONOMOUS_ENABLED=1` must only be configured after BOS reviews provider billing/quota and explicitly authorizes activation. No paid service or VPS was provisioned.
+- Phone/Termux can be off while a GitHub-hosted scheduled job runs. The worker runs only on its schedule/manual dispatch; it is not 24/7 between runs. GitHub Actions and provider connectivity are still required.
+- Files delivered: `lib/ai/autonomous-agent.js`, `test/autonomous-agent.test.js`, `.github/workflows/autonomous-development.yml`, `docs/AUTONOMOUS_AGENT_RUNTIME.md`, this master context.
+- Hostless Build/LIVE: not changed and not re-verified; no production deployment is claimed.
+- Rollback: revert PR #108 or release revert; set `AUTONOMOUS_AGENT_ENABLED=0` to pause the scheduled worker or `GROQ_AUTONOMOUS_ENABLED=0` to disable Groq.
+
+**NEXT TASK:** update the shared AI memory handoff when PR #107 is integrated; then prepare a normal develop-to-main release PR and verify exact-head CI before activating the updated schedule. Run a controlled manual worker test after release. Keep Groq disabled until BOS explicitly authorizes provider usage. Then implement a least-privilege queue adapter against the existing PostgreSQL schema in a non-production test environment before considering production activation.
+
+
+## 112. SINGLE SHARED AI MEMORY — NO CHAT ARCHIVING (BOS DIRECTIVE — 25 NOVEMBER 2026)
+
+**Decision:** BOS wants every AI contributor to join a new chat/session already understanding RADAR AI, without storing conversations or filling GitHub with chat logs. This is a standing project-wide rule.
+
+- `RADAR_AI_SHARED_MEMORY.md` is the one compact, shared cross-agent handoff for ChatGPT, Groq/OpenCode and future agents.
+- The shared file stores only distilled durable context: project identity, architecture/contracts, durable decisions and rationale, approved working preferences, verified current state, blockers, and the next actionable task.
+- No conversations with BOS or any other person, raw transcripts, chat exports, routine prompts/responses, chain-of-thought/reasoning logs, or message-by-message histories may be saved in the shared memory or elsewhere in the repository (including master context, README, issues, PR bodies, commit messages or docs).
+- The master context remains technical project documentation and durable engineering history only. It is not a second shared-memory dump and must not contain conversation transcripts.
+- All agents must read the shared memory first at new-session startup, then `AGENTS.md` and the relevant master-context sections, then verify current repository/PR/CI/deployment state. A memory snapshot never replaces live verification.
+- Update the shared memory only when a durable fact or handoff materially changes. Rewrite stale status in place, remove/supersede obsolete facts, and target under 12 KB. Do not append each interaction.
+- Agent-native private memory is optional and product-specific. The shared file remains the only common cross-agent handoff. Do not claim a new AI product will auto-read it unless that product's repository access/startup mechanism is configured and verified.
+- No secrets, credentials, tokens, passwords, sensitive account data, or unnecessary personal identifiers in shared memory or repository docs.
+- This policy does not create a background worker or guarantee 24/7 execution. Cloud runtime status is tracked separately in section 111 and `docs/AUTONOMOUS_AGENT_RUNTIME.md`.
+
+**Current implementation note (25 November 2026):** PR #107 contains an earlier version of this policy but is stale/diverged from current `develop` (2 commits behind). This replacement PR re-applies the shared memory and startup rules against current `develop`; do not merge the stale PR #107 as-is. PR #106 remains an independent frontend drawer change with device QA still outstanding. PR #108 and #109 are merged to `develop`; cloud worker code is still not released to `main`, and Groq remains disabled.
+
+**NEXT TASK:** merge this shared-memory policy PR after exact-head checks; then close/supersede stale PR #107. Continue with current master-context NEXT TASK: validate PR #106 against latest develop and complete device/browser QA; prepare the normal release from develop to main for the phone-free worker only after exact-head release checks. Keep Groq disabled until BOS explicitly approves provider usage.
+
 ---
 
-## 109. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
+## 117. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
 
 ### Routing dan tujuan
 - Lead: Divisi 02 — UI/UX & Frontend. QA: Divisi 05 (temporary override aktif; QA browser belum dilakukan).
@@ -3221,9 +3260,9 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   3. QA ponsel: buka Menu, swipe daftar menu sampai item terbawah; pastikan hanya `.side-nav` bergerak; tutup drawer lalu swipe halaman utama; uji backdrop, tombol Menu, dan Escape.
   4. QA desktop: wheel/trackpad pada daftar menu dan pastikan konten utama tidak ikut bergeser, termasuk saat scroll lock aktif.
   5. Jika perangkat masih meneruskan gesture, terapkan opsi §20.4 butir 5 (accordion/rail navigasi) tanpa menghapus menu atau fitur.
-## 110. DASHBOARD FRESHNESS, SOURCE ATTRIBUTION & DATA STATE — 25 NOVEMBER 2026
+## 118. DASHBOARD FRESHNESS, SOURCE ATTRIBUTION & DATA STATE — 25 NOVEMBER 2026
 
-> Catatan penomoran: bagian 109 ditambahkan oleh PR #106 pada branch `fix/sidebar-drawer-scroll`. Branch ini berbasis `develop` sebelum PR tersebut merged, sehingga bagian ini memakai nomor 110. Saat integrasi, rapikan urutan nomor tanpa menghapus isi salah satu bagian.
+> Catatan penomoran: bagian ini berasal dari branch PR #106 (`fix/sidebar-drawer-scroll`, awalnya §109, lalu §113 pada branch PR tersebut) dan dinomorkan ulang menjadi §117 saat branch integrasi digabung dengan `develop` yang sudah memuat §111 (cloud worker) dan §112 (shared memory). Isi asli dipertahankan; tidak ada penghapusan riwayat.
 
 ### Routing dan ruang lingkup
 - Lead: Divisi 02 — UI/UX & Frontend. Tidak ada perubahan backend, kontrak API, exchange, trading, withdrawal, atau secret.
@@ -3256,7 +3295,7 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   1. Buat PR ke `develop` lewat GitHub UI/token berizin `pull_requests: write` (tautan di atas), lalu verifikasi head SHA PR memuat `47cd00f89b0e74f883ac4e5a44c00ced3e99dc92` (kode+test) dan commit dokumentasi, serta pantau test, Gitleaks/Trivy, dan branch-source policy pada event PR. Jangan merge sebelum gate lulus.
   2. QA browser: status koneksi, umur data, empty/loading/error state, dan atribusi sumber di Ringkasan/Screener/News/Unlock/Alerts pada desktop dan mobile.
   3. Lanjutkan audit fungsi tersisa yang tercatat di §23/§25: Watchlist, Analytics, AI Council/Workspace, System Health, serta PWA cache sesuai perubahan UI ini.
-  4. Selesaikan gate PR #106 secara terpisah; koordinasikan penomoran bagian 109/110 saat integrasi ke `develop`.
+  4. Selesaikan gate PR #106 secara terpisah; koordinasikan penomoran bagian 117/118 saat integrasi ke `develop`.
 
 ### Lanjutan 25 November 2026 — interaksi, token workspace, dan aksesibilitas
 - Lead: Divisi 02 — UI/UX & Frontend. Tidak ada perubahan backend, kontrak API, kredensial, exchange, trading, atau deployment.
@@ -3276,9 +3315,9 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write` (https://github.com/rohman35819/radar-ai-v2/pull/new/feat/dashboard-freshness), verifikasi head memuat `b6a21c35ff231ec216f69a92466b53f460a17eca`, lalu pantau gate test/Gitleaks/Trivy/branch-source policy. Jangan merge sebelum gate lulus.
   2. QA browser: ketik di filter Screener/Early Gems saat auto-refresh 2 menit dan pastikan fokus/kursor tidak hilang; uji kolom token Workspace, toggle, penghapusan setelah request, dan respons 403.
   3. Lanjutkan audit loading/error/empty state pada `market.html`, `solscan.html`, dan `membership.html` memakai pola yang sama tanpa mengubah kontrak backend.
-## 111. MARKET INTELLIGENCE — WAKTU & STATUS JUJUR (25 NOVEMBER 2026)
+## 119. MARKET INTELLIGENCE — WAKTU & STATUS JUJUR (25 NOVEMBER 2026)
 
-> Catatan penomoran: bagian 109 (PR #106) dan 110 (branch `feat/dashboard-freshness`) berada pada branch lain yang belum terintegrasi ke `develop`. Rapikan urutan saat integrasi tanpa menghapus isi salah satu bagian.
+> Catatan penomoran: bagian 117 (PR #106) dan 118 (branch `feat/dashboard-freshness`) berada pada branch lain. Pada branch integrasi ini dinomorkan ulang dari §109/§110 agar tidak bentrok dengan §111/§112 di `develop`; isi dipertahankan.
 
 ### Routing dan ruang lingkup
 - Lead: Divisi 02 — UI/UX & Frontend. Branch `fix/market-truthful-state` dari `develop` SHA `4b37426f519ba91483f11a37a0023180134f9c62`.
@@ -3302,10 +3341,10 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - NEXT TASK:
   1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write`, verifikasi head `c0e88a6...`, lalu jalankan gate test/Gitleaks/Trivy/branch-source policy.
   2. QA browser Market Intelligence: ganti exchange dengan cepat untuk memastikan tabel tidak menampilkan hasil usang; uji respons tanpa `updated_at`.
-  3. Terapkan pola freshness jujur yang sama pada `solscan.html` dan `membership.html`, lalu selesaikan konflik penomoran §109/§110/§111 saat integrasi ke `develop`.
-## 112. SOLSCAN — WAKTU OBSERVASI JUJUR & AKSESIBILITAS (25 NOVEMBER 2026)
+  3. Terapkan pola freshness jujur yang sama pada `solscan.html` dan `membership.html`, lalu selesaikan konflik penomoran §117/§118/§119 saat integrasi ke `develop`.
+## 120. SOLSCAN — WAKTU OBSERVASI JUJUR & AKSESIBILITAS (25 NOVEMBER 2026)
 
-> Catatan penomoran: bagian 109, 110, dan 111 berada pada branch lain yang belum terintegrasi ke `develop`. Rapikan urutan saat integrasi tanpa menghapus isi bagian mana pun.
+> Catatan penomoran: bagian 117, 118, dan 119 berada pada branch lain. Dinomorkan ulang dari §109/§110/§111 pada branch integrasi agar tidak bentrok dengan §111/§112 di `develop`; isi dipertahankan.
 
 ### Routing dan ruang lingkup
 - Lead: Divisi 02 — UI/UX & Frontend. Branch `fix/solscan-truthful-observability` dari `develop` SHA `4b37426f519ba91483f11a37a0023180134f9c62`.
@@ -3329,17 +3368,17 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - NEXT TASK:
   1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write`, verifikasi head `02b4f3b...`, lalu jalankan gate test/Gitleaks/Trivy/branch-source policy.
   2. Terapkan pola waktu jujur yang sama pada `membership.html`/`membership.js` dan `command.html` bila ada field timestamp yang tidak divalidasi.
-  3. Koordinasikan integrasi empat branch frontend (`feat/dashboard-freshness`, `fix/market-truthful-state`, `fix/solscan-truthful-observability`, dan PR #106) ke `develop`: selesaikan konflik dokumen §109–§112 dan jalankan suite penuh pada HEAD gabungan sebelum merge.
+  3. Koordinasikan integrasi empat branch frontend (`feat/dashboard-freshness`, `fix/market-truthful-state`, `fix/solscan-truthful-observability`, dan PR #106) ke `develop`: selesaikan konflik dokumen §117–§120 dan jalankan suite penuh pada HEAD gabungan sebelum merge.
 
 ---
 
-## 113. INTEGRASI FRONTEND TERVERIFIKASI — 25 NOVEMBER 2026
+## 121. INTEGRASI FRONTEND TERVERIFIKASI — 25 NOVEMBER 2026
 
 - Branch integrasi: `integration/frontend-ux-20261125` dari `develop` SHA `4b37426f519ba91483f11a37a0023180134f9c62`. Menggabungkan `fix/sidebar-drawer-scroll`, `feat/dashboard-freshness`, `fix/market-truthful-state`, dan `fix/solscan-truthful-observability`. Tidak ada push langsung ke `develop` atau `main`.
 - Konflik diselesaikan secara eksplisit, bukan dengan membuang salah satu sisi:
   - `test/frontend-ui.test.js`: dua regression test sidebar dan delapan test dashboard/freshness/aksesibilitas digabung dengan satu pembacaan stylesheet bersama (`styleCss=css`).
   - `README.md`: hitungan dan deskripsi fitur digabung menjadi 206 test case pada 25 file.
-  - `RADAR_AI_MASTER_CONTEXT.md`: bagian §109, §110, §111, dan §112 semuanya dipertahankan; marker konflik dihapus setelah isi kedua sisi disatukan.
+  - `RADAR_AI_MASTER_CONTEXT.md`: bagian §117, §118, §119, dan §120 semuanya dipertahankan; marker konflik dihapus setelah isi kedua sisi disatukan.
 - Verifikasi pada working tree gabungan (Node v24.22.3): `npm test` **206 pass, 0 fail, 0 skipped**; `node --check public/app.js`, `public/market.js`, dan `public/solscan.js` lulus; `git diff --check` bersih; pencarian marker konflik tidak menemukan sisa.
 - HEAD gabungan setelah tiga merge: `8f900a6c000c2fd27369f22808a4bcceb8067cf5` (merge `fix/solscan-truthful-observability`). Catatan ini menjadi commit dokumentasi berikutnya.
 - Status GitHub: branch integrasi siap di-PR ke `develop`, tetapi `POST /pulls` masih ditolak HTTP 403 karena kredensial tidak memiliki izin `pull_requests: write`. Gate PR (test exact-head, branch-source policy, Gitleaks, Trivy) belum dapat dijalankan sebelum PR ada. Tidak ada secret yang dibuka atau diubah.
@@ -3351,7 +3390,7 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ---
 
-## 114. PWA SHELL v13 — 25 NOVEMBER 2026
+## 122. PWA SHELL v13 — 25 NOVEMBER 2026
 
 - Audit lanjutan: `membership.html`/`membership.js` dan `command.js` tidak memiliki field timestamp yang divalidasi secara mentah, sehingga tidak ada perubahan yang diperlukan untuk pola waktu jujur pada dua halaman itu.
 - Temuan nyata: seluruh aset UI gabungan telah berubah (`app.js`, `index.html`, `style.css`, `market.*`, `solscan.*`), tetapi `public/sw.js` masih memakai `radar-shell-v12`. Karena strategi cache-first, pengguna PWA yang sudah terpasang akan terus menerima aset lama. Selain itu `/solscan.html`, `/solscan.js`, dan `/solscan.css` tidak pernah masuk daftar precache shell.
@@ -3359,3 +3398,14 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Pengujian: `node --check public/sw.js` lulus; `node --test test/service-worker.test.js` 5 pass, 0 fail; `npm test` **207 pass, 0 fail, 0 skipped**; `git diff --check` bersih. README diselaraskan ke 207/25.
 - Risiko: versi cache baru hanya efektif setelah service worker terpasang dan diperbarui di perangkat; QA browser/PWA offline belum dilakukan. Hostless Build/LIVE tidak dicek.
 - NEXT TASK: verifikasi pada perangkat bahwa PWA mengambil `radar-shell-v13` dan halaman Solscan dapat dibuka offline; setelah itu prioritaskan pembuatan PR integrasi dengan token berizin `pull_requests: write`.
+
+---
+
+## 123. REVALIDASI INTEGRASI FRONTEND TERHADAP `develop` TERBARU — 25 NOVEMBER 2026
+
+- Branch `integration/frontend-ux-20261125` menggabungkan `origin/develop` `c9c3a1403b19e5fe52250d0354e03bf7a1af1319` (cloud worker + shared memory) melalui merge commit biasa. Tidak ada push langsung ke `develop` atau `main`.
+- Konflik hanya pada dokumen master: bagian frontend dinomorkan ulang menjadi §117–§122 agar tidak bentrok dengan §111 (cloud worker) dan §112 (shared memory) yang sudah ada di `develop`. Semua isi dipertahankan; marker konflik dihapus. Tidak ada konflik pada file kode, CSS, atau test.
+- Pengujian lokal pada HEAD gabungan (Node v24.22.3): `npm test` **208 pass, 0 fail, 0 skipped** (25 file); `git diff --check` bersih. README diselaraskan ke 208/25.
+- PR #106 juga telah direvalidasi terhadap `develop` terbaru: head `b3161df12ccbc8da53409b2b5582867ac44d3bae`, base `c9c3a1403b19e5fe52250d0354e03bf7a1af1319`, `mergeable=true`, CI test/security berjalan. Bagian sidebar pada PR #106 memakai §113; duplikasi dengan §117 akan dikonsolidasikan saat kedua PR masuk `develop`.
+- Hostless Build/LIVE tidak dicek. QA browser/perangkat belum dilakukan. Groq tetap disabled; tidak ada kredensial yang dibuka atau diubah.
+- NEXT TASK: pantau CI exact-head PR #106 dan branch integrasi, selesaikan QA drawer/freshness/PWA pada desktop dan ponsel, lalu masing-masing di-PR ke `develop` hanya setelah seluruh gate lulus. Setelah itu lanjutkan rencana rilis `develop` → `main` untuk cloud worker.

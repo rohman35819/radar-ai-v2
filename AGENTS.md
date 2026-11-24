@@ -1,6 +1,6 @@
 # Instructions for AI contributors
 
-Before doing any work in this repository, read `RADAR_AI_MASTER_CONTEXT.md` completely.
+Before doing any work in this repository, read `RADAR_AI_SHARED_MEMORY.md` first, then read this `AGENTS.md` and `RADAR_AI_MASTER_CONTEXT.md` completely. The shared memory is the compact cross-agent handoff; the master context is technical project documentation, not a conversation archive.
 
 Treat it as the project handoff and operating guide. Then inspect the latest `main` commit and the actual files relevant to the task. The master document can be stale; verify before acting.
 
@@ -210,3 +210,19 @@ BOS authorizes AI contributors to propose and adopt additional repository engine
 ## Branch source policy clarification (24 November 2026)
 
 The develop integration lane accepts not only feature/fix/validated experiment branches, but also scoped maintenance branches: docs/*, chore/*, ci/*, security/*, test/*, and refactor/*. These categories are necessary for safe repository governance, documentation, workflow, testing and maintenance changes. The main source restriction remains develop or hotfix/* only. The workflow check is the technical enforcement; this list must stay synchronized with .github/workflows/test.yml.
+
+
+## Shared AI memory — mandatory for every agent (BOS directive — 25 November 2026)
+
+**One shared memory, no conversation archive.** `RADAR_AI_SHARED_MEMORY.md` is the single compact, cross-agent handoff for ChatGPT, Groq/OpenCode, and every future AI contributor.
+
+1. At the start of every new chat/session/task, read `RADAR_AI_SHARED_MEMORY.md` first, then this file and the relevant sections of `RADAR_AI_MASTER_CONTEXT.md`. Verify live GitHub state, code, PRs, CI and deployment before acting; memory is a handoff, not live telemetry.
+2. Store only distilled, durable project context in the shared memory: stable product/architecture facts, decisions and their rationale, approved working preferences, current verified status, blockers, and the next actionable task.
+3. **Never store conversations with BOS or any other person, raw transcripts, chat exports, routine prompts/responses, thought/reasoning logs, or message-by-message histories** in the shared memory, master context, README, issues, PR descriptions, commit messages, or other repository files. Do not turn GitHub into a chat archive.
+4. Do not copy the same memory into multiple files. The shared memory is the cross-agent handoff; the master context contains durable technical documentation, architecture, decisions, test evidence and change records only—not dialogue.
+5. Update memory only when a durable fact changes or a handoff materially changes. Rewrite/summarize stale status in place; do not append every task or conversation. Keep it compact (target under 12 KB). Put detailed technical specifications in a focused design document only when needed.
+6. Never store credentials, API keys, tokens, passwords, private personal data, sensitive account information, or unnecessary identifying information.
+7. Each AI may use its own private/native memory if the product supports it, but it is optional and never replaces the shared file. All agents must leave the shared memory understandable to a newly joining AI without requiring access to previous chats.
+8. If an agent cannot access the shared file or current repository, it must state that limitation honestly and request repository access—not ask BOS to retell the project or paste old conversations.
+
+**Completion standard:** after a meaningful task, update the shared memory with only the durable result and next task; do not paste the conversation or a verbose activity diary.
