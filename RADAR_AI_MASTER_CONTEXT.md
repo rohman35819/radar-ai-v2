@@ -3213,6 +3213,18 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 **NEXT TASK:** merge this shared-memory policy PR after exact-head checks; then close/supersede stale PR #107. Continue with current master-context NEXT TASK: validate PR #106 against latest develop and complete device/browser QA; prepare the normal release from develop to main for the phone-free worker only after exact-head release checks. Keep Groq disabled until BOS explicitly approves provider usage.
 
+## 113. GROK AUTONOMOUS ENGINEERING CHARTER — 25 NOVEMBER 2026
+
+- Added `GROK.md` as the dedicated startup and operating charter for Grok/xAI assistants contributing to RADAR AI V2.
+- Updated `AGENTS.md` to require Grok sessions to read the shared memory, AGENTS, complete master context and GROK charter before acting, verify live repository/CI state, resume NEXT TASK, perform bounded research/experiments, implement safe work, test, self-review and document.
+- Charter distinguishes Grok (xAI assistant) from Groq (inference provider), keeps provider activation opt-in, and preserves existing cost, secrets, branch, CI, production and financial safety gates.
+- Repository instructions do not automatically configure Grok's client or guarantee it can read GitHub. BOS/Grok workspace must have repository access and a startup/project instruction pointing to these files. No always-on execution is implied.
+- Change scope: documentation/governance only; no runtime code, provider activation, secrets, production data, Hostless deployment or trading behavior changed.
+- Validation: file content checked on the working branch; exact CI status must be checked on the PR head. No application test result is claimed for this documentation-only change.
+- Files changed: `GROK.md` (new), `AGENTS.md`, `RADAR_AI_MASTER_CONTEXT.md`, `RADAR_AI_SHARED_MEMORY.md`.
+
+**NEXT TASK:** verify exact-head branch-source, test and security workflows for the updated documentation PR. After merge, configure Grok's project/custom instructions to read `GROK.md` at every new conversation and verify repository access. Do not claim automatic startup until tested.
+
 ---
 
 ## 117. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
@@ -3404,8 +3416,13 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ## 123. REVALIDASI INTEGRASI FRONTEND TERHADAP `develop` TERBARU — 25 NOVEMBER 2026
 
 - Branch `integration/frontend-ux-20261125` menggabungkan `origin/develop` `c9c3a1403b19e5fe52250d0354e03bf7a1af1319` (cloud worker + shared memory) melalui merge commit biasa. Tidak ada push langsung ke `develop` atau `main`.
-- Konflik hanya pada dokumen master: bagian frontend dinomorkan ulang menjadi §117–§122 agar tidak bentrok dengan §111 (cloud worker) dan §112 (shared memory) yang sudah ada di `develop`. Semua isi dipertahankan; marker konflik dihapus. Tidak ada konflik pada file kode, CSS, atau test.
+- Konflik hanya pada dokumen master: bagian frontend dinomorkan ulang menjadi §117–§122 agar tidak bentrok dengan §111 (cloud worker), §112 (shared memory), dan §113 (Grok charter) yang sudah ada di `develop`. Semua isi dipertahankan; marker konflik dihapus. Tidak ada konflik pada file kode, CSS, atau test.
 - Pengujian lokal pada HEAD gabungan (Node v24.22.3): `npm test` **208 pass, 0 fail, 0 skipped** (25 file); `git diff --check` bersih. README diselaraskan ke 208/25.
-- PR #106 juga telah direvalidasi terhadap `develop` terbaru: head `b3161df12ccbc8da53409b2b5582867ac44d3bae`, base `c9c3a1403b19e5fe52250d0354e03bf7a1af1319`, `mergeable=true`, CI test/security berjalan. Bagian sidebar pada PR #106 memakai §113; duplikasi dengan §117 akan dikonsolidasikan saat kedua PR masuk `develop`.
+- PR #106 juga telah direvalidasi terhadap `develop` terbaru: head `8106edbf209a61f01769affc5fb8994c6979d64a`, base `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`, `mergeable=true`; CI exact-head pada HEAD baru masih berjalan. Bagian sidebar pada PR #106 memakai §114; duplikasi dengan §117 akan dikonsolidasikan saat kedua PR masuk `develop`.
 - Hostless Build/LIVE tidak dicek. QA browser/perangkat belum dilakukan. Groq tetap disabled; tidak ada kredensial yang dibuka atau diubah.
 - NEXT TASK: pantau CI exact-head PR #106 dan branch integrasi, selesaikan QA drawer/freshness/PWA pada desktop dan ponsel, lalu masing-masing di-PR ke `develop` hanya setelah seluruh gate lulus. Setelah itu lanjutkan rencana rilis `develop` → `main` untuk cloud worker.
+
+### Revalidasi ketiga — `develop` `b26d8b4` — 25 November 2026
+- `develop` kembali maju setelah PR #111 (refresh shared-memory handoff) dan charter Grok (§113). Branch integrasi digabung dengan `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`; konflik terjadi hanya pada `RADAR_AI_MASTER_CONTEXT.md` dan `RADAR_AI_SHARED_MEMORY.md`, keduanya disatukan tanpa membuang isi. Bagian frontend tetap §117–§122 (tidak bentrok dengan §113 Grok).
+- `RADAR_AI_SHARED_MEMORY.md` ditulis ulang menjadi ringkasan durable terkini (develop b26d8b4, status PR #106/#108–#111, integrasi frontend, batas token untuk PR creation, dan NEXT TASK). Ukuran file tetap di bawah 12 KB.
+- Pengujian lokal pada HEAD gabungan ini tercatat pada commit integrasi berikutnya; tidak ada klaim CI/Hostless/LIVE sebelum diverifikasi terpisah.

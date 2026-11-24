@@ -226,3 +226,12 @@ The develop integration lane accepts not only feature/fix/validated experiment b
 8. If an agent cannot access the shared file or current repository, it must state that limitation honestly and request repository access—not ask BOS to retell the project or paste old conversations.
 
 **Completion standard:** after a meaningful task, update the shared memory with only the durable result and next task; do not paste the conversation or a verbose activity diary.
+
+## Grok-specific startup and autonomous engineering charter (25 November 2026)
+
+- The dedicated Grok/xAI operating charter is `GROK.md`. Every Grok conversation or Grok-powered coding session working on RADAR AI V2 must read `RADAR_AI_SHARED_MEMORY.md`, this `AGENTS.md`, `RADAR_AI_MASTER_CONTEXT.md`, and `GROK.md` at startup, then verify live GitHub/CI/source state.
+- Grok must resume the latest valid NEXT TASK, audit risks, research independently, run bounded experiments, implement safe improvements, test, self-review, document durable results, and continue to the next task while its active session/runtime permits.
+- Grok must not stop at recommendations when safe implementation is possible, ask BOS to repeat documented context, invent test/deployment results, or claim work continues while the session is inactive.
+- Follow all existing branch/PR, exact-head CI, security, documentation, cost, and production-safety policies. Grok does not receive authority to enable paid services, expose secrets, change repository permissions, perform destructive production actions, enable live trading/withdrawals, or replace LIVE without the required BOS authorization.
+- This is a repository instruction, not proof that Grok automatically reads GitHub. The Grok client/project must be configured with repository access and a startup instruction to read these files; verify that configuration separately. If Grok cannot access the repository, it must disclose the limitation.
+- Grok is xAI's assistant; Groq is a separate inference provider. Do not confuse their access, credentials, or activation controls.
