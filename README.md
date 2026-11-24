@@ -170,3 +170,13 @@ Hostless uses a read-only root filesystem. RADAR AI writes `state.json` under `D
 3. In app server environment variables, set `DATA_DIR=/data`, then redeploy.
 4. Verify `/api/ready` returns HTTP 200 with `status: ready` and `storage.status: ok`.
 Do not use `/tmp` for RADAR AI state: Hostless clears it when the process starts again.
+
+
+## AI provider usage transparency
+
+- `GET /api/ai/usage` returns sanitized provider configuration/status, RADAR-observed request and token counters for the current Asia/Jakarta day, last-call timestamp, and allowlisted rate-limit response headers.
+- The endpoint never returns API keys, raw provider error messages, prompts, or model responses.
+- `ACTIVE` means the most recent observed provider request succeeded within 24 hours; `LIMITED` means the latest observed response was HTTP 429; `ERROR` means the latest observed request failed; `UNKNOWN` means there is no recent observed call or the provider did not supply usage data; `NOT_CONFIGURED` means the server environment has no key configured.
+- Token counts are recorded only when the provider response supplies usage metadata. Rate-limit headers are recorded only when present. Unknown account-level daily quotas remain null; RADAR does not estimate or invent provider limits.
+- Counters include requests made by RADAR AI Council, AI Workspace, scheduled AI runs, and the direct Gemini test route. They are persisted with RADAR state; persistence depends on the configured storage adapter.
+- These are RADAR-observed requests, not necessarily the provider account's total usage across other applications or API keys.
