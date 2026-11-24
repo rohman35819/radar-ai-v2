@@ -2787,3 +2787,14 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Security: ditemukan Gitleaks false positive di PR #84 pada fixture `test/memory-store.test.js:31` yang berisi string contoh `OPENAI_API_KEY=`; file tersebut berada di branch PR, bukan main. Belum ada bukti credential nyata bocor. Divisi 07 perlu mengganti fixture menjadi placeholder sintetis yang tidak menyerupai secret, lalu rerun scan.
 - Batasan: uji live membuktikan endpoint dan provider dapat diakses pada saat pemeriksaan, tetapi belum membuktikan persistensi melewati restart proses. Uji restart yang aman masih diperlukan; jangan menambahkan endpoint publik untuk memaksa restart.
 - NEXT TASK: tunggu CI pada dua commit monitor; rerun Hostless live monitor dengan gate baru; buat uji adapter Supabase mocked untuk read/upsert/hydration; rancang uji persistence-after-restart tanpa mengganggu layanan Live.
+
+
+## 85. Uji adapter Supabase dan gate live — 24 November 2026 (Asia/Jakarta)
+
+- Perluasan monitor pada `scripts/hostless-live-check.js` dan test gate di `test/hostless-live-check.test.js` telah melewati GitHub Actions pada commit `1a931a889a17d2b8684327a86ab18e42e3cd0342`: RADAR AI tests SUCCESS, security scans SUCCESS, Hostless deployment monitor SUCCESS.
+- Monitor terbaru menampilkan semua lima gate bernilai true: storage, snapshot, news, Binance Futures, dan DEX Screener. LIVE readiness HTTP 200, status ready, storage ok.
+- Menambahkan uji adapter Supabase di `test/radar.test.js`: simulasi REST upsert lalu load untuk membuktikan payload dan timestamp dapat dipulihkan; uji HTTP 503 harus dipropagasi sebagai error dan tidak diam-diam mengosongkan state.
+- Commit pengujian Supabase: `aefd5a0a4ed63e8d3956856c5266ed86dfb0c204`; perbaikan assertion metode GET: `271298355701603054de9803bb07e401d36d82b5`.
+- Status CI untuk commit `27129835` masih berjalan saat catatan ini ditulis. Jangan menganggap tes adapter sudah lulus sampai run selesai.
+- Pengujian ini memakai mock fetch; ini bukan bukti bahwa restart proses Hostless sudah diuji. Persistensi lintas restart live masih belum dibuktikan secara langsung.
+- NEXT TASK: pastikan CI commit `27129835` lulus; jika lulus, rancang verifikasi restart yang tidak mengganggu production (mis. deployment/restart terkontrol oleh pemilik atau uji cold-start di environment staging). Setelah itu lanjut audit dashboard data freshness dan Exchange Hub read-only.
