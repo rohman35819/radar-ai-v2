@@ -80,8 +80,8 @@ jobs:
               '',
               '::warning::Deployment metadata could not be interpreted. LIVE readiness, storage, snapshot, and provider checks continue independently.'
             ];
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\\n') + '\\n');
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'status=UNKNOWN\\ncommit=not-reported\\nid=not-reported\\nsame_commit=false\\npending=false\\nfailed=false\\nsucceeded=false\\n');
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n') + '\n');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'status=UNKNOWN\ncommit=not-reported\nid=not-reported\nsame_commit=false\npending=false\nfailed=false\nsucceeded=false\n');
             console.warn('Hostless deployment metadata UNKNOWN; continuing with independent LIVE checks.');
             process.exit(0);
           }
