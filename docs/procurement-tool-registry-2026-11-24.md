@@ -86,3 +86,26 @@ Registry ini mencegah riset dan integrasi berulang. Status akses, hak penggunaan
 - Division 05: fixtures for delayed/revised/missing observations and exact-head QA.
 - Division 06: scheduler/queue only after procurement registry and worker permissions are defined.
 - No new source was integrated or deployed in this registry update.
+
+
+## Additional candidate review — Jupiter Tokens API and exchange API terms (24 Nov 2026)
+
+### Jupiter Tokens API v2 — high technical value, compliance HOLD
+- Official docs: https://developers.jup.ag/docs/tokens
+- Technical access: keyless at 0.5 requests/second; free API key at 1 request/second without payment according to the current pricing/setup pages. Endpoints include /search, /tag, /recent, and toporganicscore/toptraded/toptrending intervals. Up to 100 mints can be resolved in one search request.
+- Valuable fields: verification status, organicScore, holderCount, market cap, liquidity, 5m/1h/6h/24h buy/sell statistics, mint/freeze authority status and top-holder percentage. Use mint address, never symbol, as identity. Organic Score is relative, not an absolute measure or guarantee of safety.
+- Legal ambiguity: the published SDK & API License Agreement states a fee-bearing, non-transferable, non-sublicensable license and says fees may be notified through the portal; use/access can be treated as consent to fees. Its definition of API appears routing-focused while the Token API documentation links to this agreement. Because the exact free-tier commercial/display rights for Tokens API are not unambiguous, do not integrate into production or use an account/key until Jupiter confirms in writing that Tokens API v2 free tier is $0 for RADAR's intended internal/commercial use and clarifies output/display rights.
+- Legal source: https://developers.jup.ag/docs/legal/sdk-api-license-agreement
+- Decision: **HOLD pending written clarification**. Technical value is high, but no cost/terms risk is accepted.
+
+### Bybit public API — not recommended for a competing commercial analytics product
+- Official API Terms PDF: https://www.bybit.com/common-static/compliance/legal/BYBIT/df1923006718fbba8ba70d7d762b9866.pdf
+- Terms restrict repackaging/reselling service data, commercial exploitation, and use to replicate/compete with Bybit products/services. Public endpoint availability does not remove these restrictions.
+- Decision: **REJECT for production RADAR analytics without written permission**. Do not add Bybit public market feeds merely because they are technically accessible.
+
+### Hyperliquid API — technical candidate, rights not yet cleared
+- Official docs: https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api
+- Public API documentation is available and uses the mainnet API host https://api.hyperliquid.xyz; docs list public info endpoints and SDK options.
+- No clear, affirmative commercial redistribution/API data license was established in this review.
+- Decision: **HOLD** until official data-use terms and rate limits are verified; keep any future probe read-only and bounded.
+
