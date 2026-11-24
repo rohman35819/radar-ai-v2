@@ -3041,3 +3041,24 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 - A token-shaped fixture is assembled at runtime in the memoryKey test so Gitleaks can scan source without a synthetic credential literal.
 - No schema/API/production behavior changes beyond stricter rejection of invalid proposals. No production memory activation, credentials, Hostless config, worker, scheduler or trading action.
 - NEXT: exact-head Node tests, PostgreSQL 16 migration/privilege smoke, Gitleaks and Trivy; merge only if all pass.
+
+
+## 103. KEBIJAKAN REGENERASI BRANCH LAMA & KEMAJUAN TEKNOLOGI — ARAHAN BOS (24 NOVEMBER 2026)
+
+**Status: AKTIF.** Setiap branch lama yang tertinggal dari main, konflik, atau sulit di-merge boleh dibuatkan branch baru dari SHA `main` terbaru. Regenerasi bertujuan menyelesaikan pekerjaan lama lebih cepat dan aman, bukan membuang ide, sumber, data, atau fungsi yang sudah direncanakan.
+
+1. **Basis bersih:** branch regenerasi wajib dibuat dari `main` terbaru, bukan dari branch lama. Gunakan nama yang dapat dilacak, misalnya `regen/pr-<nomor>-<tujuan>` atau `feat/<tujuan>-latest-main`.
+2. **Branch lama menjadi spesifikasi:** audit deskripsi PR, seluruh diff/patch, commit, komentar/review, tes, dokumentasi, issue terkait, serta dokumentasi resmi provider/sumber data. Buat peta migrasi setiap kebutuhan lama menuju file/modul/tes baru atau alasan pengecualiannya.
+3. **Kesetaraan fungsi wajib:** pertahankan seluruh ide, tujuan, sumber data, provider/API, endpoint, skema, field, parameter, konfigurasi, aturan bisnis, alur pemrosesan, output, kebutuhan dashboard/UI, penanganan error, rate limit, atribusi, dan tes yang masih relevan. Pertahankan identitas dan provenance sumber data. Jangan diam-diam menghapus fitur, mengganti sumber, melemahkan validasi, atau mengubah makna fungsi.
+4. **Adaptasi, bukan salin buta:** kode harus disesuaikan dengan arsitektur dan interface `main` terbaru. Perubahan perilaku hanya boleh dilakukan dengan alasan teknis yang jelas, dokumentasi, dan tes.
+5. **Boleh lebih maju dari branch lama:** tambahkan teknologi, provider, library, sumber data, enrichment, caching, reliability, observability, keamanan, performa, otomasi, dan UX yang lebih baik jika kompatibel serta memberi manfaat nyata. Prioritaskan gratis/open-source, lisensi aman, standar terbuka, dan menghindari vendor lock-in. Pengembangan tambahan tidak boleh menghilangkan kemampuan lama yang wajib.
+6. **Pengadaan dan keamanan:** periksa status layanan, kuota gratis, syarat pendaftaran/API key, lisensi, privasi, kualitas data, atribusi, reliability, dan fallback. Tidak boleh mengaktifkan layanan berbayar atau mengeluarkan biaya tanpa persetujuan BOS. Secret tidak boleh masuk frontend, log, fixture, commit, atau chat.
+7. **Uji kesetaraan:** sebelum PR regenerasi dianggap selesai, cocokkan implementasi dengan peta migrasi. Semua fungsi lama wajib terpasang atau dinyatakan terblokir dengan bukti. Tambahkan tes untuk fungsi lama dan teknologi baru; jalankan pemeriksaan exact-head yang relevan: unit, integration, build, security, dan data-source validation. Tes hijau saja tidak membuktikan seluruh fungsi lama telah terbawa.
+8. **Integritas sumber/data:** validasi schema, satuan, timestamp/zona waktu, chain/network, identitas token/pool, pagination, freshness, duplikasi, nilai kosong/kedaluwarsa, error API, dan rate limit. Jangan mengarang data pasar atau intelijen yang tidak tersedia.
+9. **Jejak pekerjaan:** PR baru wajib menautkan PR/issue sumber dan menjelaskan fitur yang dipertahankan, perubahan perilaku, teknologi tambahan, status sumber/API, hasil tes, risiko, dan rollback. PR/branch lama menjadi referensi historis sampai pengganti diverifikasi. Penutupan/supersede harus disertai komentar alasan dan tautan pengganti; jangan hapus sejarah atau branch lama saat regenerasi.
+10. **Batas antrean:** maksimal 3 PR aktif dalam pengerjaan intensif. Regenerasi mengikuti prioritas; selesaikan atau putuskan pekerjaan aktif sebelum membuka antrean baru. Beberapa PR lama boleh digabung dalam satu PR baru jika fungsi dan acceptance criteria kompatibel, tetapi jejak setiap PR sumber harus tetap jelas.
+11. **Gate risiko tetap berlaku:** keamanan autentikasi/otorisasi, privilege, secret, migrasi database produksi, tindakan destruktif, eksekusi trading/finansial, dan tindakan produksi irreversible tetap mengikuti kontrol serta persetujuan BOS yang berlaku. Kebijakan ini bukan izin aktivasi produksi/deployment.
+12. **Pelaporan transparan:** laporkan terpisah status audit/pemetaan, porting, tes, merge, deployment, dan verifikasi LIVE. Menyalin ide ke branch baru tidak berarti fitur telah terimplementasi.
+
+**Penerapan awal:** gunakan kebijakan ini untuk pekerjaan backlog/issue #95 dan PR lama yang masih relevan. Lakukan inventarisasi ulang terhadap kondisi GitHub terkini sebelum memilih sumber migrasi; jangan mengandalkan jumlah atau status PR dari audit sebelumnya tanpa refresh.
+
