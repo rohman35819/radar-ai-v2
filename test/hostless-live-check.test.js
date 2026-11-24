@@ -58,3 +58,43 @@ test('Hostless provider diagnostics summarize Binance Futures and DEX without ex
   assert.equal(dex.same_pool_found, false);
   assert.equal(JSON.stringify({ derivatives, dex }).includes('tokenAddress'), false);
 });
+
+const { evaluateHealth } = require('../scripts/hostless-live-check');
+const healthyReport = () => ({
+  ready: { http: 200, status: 'ready', storage: { status: 'ok', code: null } },
+  snapshot: { http: 200, status: 'success', stale: false, last_ok: '2026-11-24T13:00:00.000Z',
+    news_count: 2, news_health: { ok: true }, news_sources: [{ host: 'example.org', ok: true, count: 2 }] },
+  provider_probes: {
+    binance_futures: { http: 200, status: 'success', partial: false,
+      metrics: { funding: true, open_interest: true, open_interest_history: true, taker_flow: true },
+      sources: { funding: { ok: true }, open_interest: { ok: true }, open_interest_history: { ok: true }, taker_flow: { ok: true } } },
+    dex_screener: { http: 200, status: 'success', pair_count: 1, same_pool_found: true }
+  }
+});
+
+test('live gate accepts ready storage and complete provider probes', () => {
+  assert.deepEqual(evaluateHealth(healthyReport()), {
+    storage: true, snapshot: true, news: true, binance_futures: true, dex_screener: true
+  });
+});
+test('live gate rejects storage errors and stale snapshots', () => {
+  const report = healthyReport();
+  report.ready.storage = { status: 'error', code: 'EROFS' };
+  assert.equal(evaluateHealth(report).storage, false);
+  report.ready.storage = { status: 'ok', code: null };
+  report.snapshot.stale = true;
+  assert.equal(evaluateHealth(report).snapshot, false);
+});
+test('live gate rejects partial Futures metrics and failed sources', () => {
+  const report = healthyReport();
+  report.provider_probes.binance_futures.partial = true;
+  assert.equal(evaluateHealth(report).binance_futures, false);
+  report.provider_probes.binance_futures.partial = false;
+  report.provider_probes.binance_futures.sources.taker_flow.ok = false;
+  assert.equal(evaluateHealth(report).binance_futures, false);
+});
+test('live gate rejects unvalidated DEX pool responses', () => {
+  const report = healthyReport();
+  report.provider_probes.dex_screener.same_pool_found = false;
+  assert.equal(evaluateHealth(report).dex_screener, false);
+});
