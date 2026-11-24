@@ -66,7 +66,7 @@ test('Drawer controls close the drawer and the main shell stays fixed',()=>{
   assert.match(html,/id="menu-toggle"[^>]*aria-controls="sidebar"[^>]*aria-expanded="false"/);
   assert.match(html,/id="sidebar-backdrop"[^>]*aria-label="Tutup menu"/);
   assert.match(app,/\$\('#sidebar-backdrop'\)\.addEventListener\('click',closeSidebar\)/);
-  assert.match(app,/event\.key==='Escape'[\s\S]*?closeSidebar\(\)/);
+  assert.match(app,/event\.key!=='Escape'\)return;if\(\$\('#token-chart-modal'\)\)closeTokenChart\(\);else if\(\$\('#sidebar'\)[\s\S]*?closeSidebar\(\)/);
   assert.match(app,/window\.addEventListener\('resize',\(\)=>\{if\(window\.innerWidth>760\)closeSidebar\(\);\}\)/);
   assert.match(app,/document\.body\.classList\.toggle\('sidebar-open',open\)/);
   assert.match(app,/toggle\.setAttribute\('aria-expanded',String\(open\)\)/);
@@ -140,5 +140,23 @@ test('Setiap token memiliki tombol buka web dengan URL yang dibangun aman',()=>{
   assert.match(app,/externalLinkNode\(u\)/,'tombol hadir pada jadwal unlock');
   assert.match(app,/Grafik token ↗/);
   assert.match(styleCss,/\.token-actions \.web-btn/);
-  assert.match(styleCss,/min-width:625px/,'kolom aksi cukup lebar untuk tiga tombol');
+  assert.match(styleCss,/min-width:680px/,'kolom aksi cukup lebar untuk tombol web dan grafik');
+});
+
+test('Grafik internal token tersedia on-demand tanpa menambah route backend',()=>{
+  assert.match(app,/const validCoinId=\(token\)=>\{/);
+  assert.match(app,/\/api\/market-intelligence\/chart\?coin=/);
+  assert.match(app,/AbortSignal\.timeout\(15000\)/);
+  assert.match(app,/const chartSeriesStats=\(series/);
+  assert.match(app,/createElementNS/);
+  assert.match(app,/polyline/);
+  assert.match(app,/chartCache\.set\(key,payload\)/);
+  assert.match(app,/chartCache\.size>=20/);
+  assert.match(app,/Grafik tidak dapat dimuat/);
+  assert.match(app,/Data historis belum tersedia/);
+  assert.ok((app.match(/chartButton\(t\)/g)||[]).length>=3,'grafik hadir di tabel token dan kedua kolom mover');
+  assert.match(app,/closeTokenChart/);
+  assert.match(app,/aria-modal':'true'/);
+  assert.match(styleCss,/\.chart-modal/);
+  assert.match(styleCss,/min-width:680px/,'kolom aksi cukup lebar untuk empat tombol');
 });

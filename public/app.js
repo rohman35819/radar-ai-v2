@@ -96,6 +96,106 @@ const safeExternalLink=(value)=>{
     return url.protocol==='http:'||url.protocol==='https:'?url.href:null;
   }catch{return null;}
 };
+// Grafik internal: memakai endpoint yang sudah ada di server, tanpa route/backend baru.
+const validCoinId=(token)=>{
+  const id=String(token?.id||token?.gecko_id||'');
+  return /^[a-z0-9][a-z0-9-]{0,79}$/.test(id)?id:null;
+};
+const chartCache=new Map();
+let chartTrigger=null;
+const chartSeriesStats=(series,width=720,height=260,pad=24)=>{
+  const values=[];
+  for(const point of Array.isArray(series)?series:[]){
+    if(Array.isArray(point)&&Number.isFinite(Number(point[0]))&&Number.isFinite(Number(point[1])))
+      values.push([Number(point[0]),Number(point[1])]);
+  }
+  if(values.length<2)return null;
+  let min=Infinity,max=-Infinity;
+  for(const [,price] of values){if(price<min)min=price;if(price>max)max=price;}
+  const span=max-min||1,step=Math.max(1,Math.floor(values.length/400));
+  const sampled=values.filter((_,index)=>index%step===0||index===values.length-1);
+  const points=sampled.map(([,price],index)=>{
+   const x=pad+index/(sampled.length-1)*(width-pad*2);
+   const y=height-pad-(price-min)/span*(height-pad*2);
+   return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  return {min,max,last:values[values.length-1][1],points,count:values.length};
+};
+function closeTokenChart(){
+  const modal=$('#token-chart-modal');
+  if(modal)modal.remove();
+  if(chartTrigger&&typeof chartTrigger.focus==='function')chartTrigger.focus({preventScroll:true});
+  chartTrigger=null;
+}
+function drawTokenChart(target,series,meta){
+  target.replaceChildren();
+  const stats=chartSeriesStats(series);
+  if(!stats){target.append(el('div',{class:'empty-state'},el('b',{},'Data historis belum tersedia'),el('p',{},'Server belum mengembalikan cukup titik harga untuk rentang ini.')));return null;}
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 720 260');
+  svg.setAttribute('role','img');
+  svg.setAttribute('aria-label','Grafik historis harga USD');
+  const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+  line.setAttribute('points',stats.points);
+  line.setAttribute('fill','none');
+  line.setAttribute('stroke','currentColor');
+  line.setAttribute('stroke-width','2.5');
+  line.setAttribute('stroke-linejoin','round');
+  svg.append(line);
+  target.append(svg);
+  const stamp=meta?.updated_at?dateTime(meta.updated_at):'Waktu tidak tersedia';
+  target.append(el('p',{class:'muted'},'Terendah '+(money(stats.min))+' · Tertinggi '+money(stats.max)+' · Terakhir '+money(stats.last)+' · '+stats.count+' titik · '+stamp+(meta?.stale?' · DATA CACHE LAMA':'')));
+  return stats;
+}
+async function loadTokenChart(id,days,modal){
+  const body=modal.querySelector('#token-chart-body'),metaNode=modal.querySelector('#token-chart-meta');
+  const key=id+':'+days;
+  const render=(payload)=>{
+   const stats=drawTokenChart(body,payload?.data?.prices,payload);
+   metaNode.textContent=stats?'Harga USD · '+(payload.days||days)+' hari':(payload?.stale?'Data cache lama; Titik harga tidak mencukupi.':'Titik harga tidak mencukupi.');
+   modal.querySelectorAll('[data-chart-days]').forEach(button=>button.classList.toggle('on',String(button.dataset.chartDays)===String(days)));
+  };
+  if(chartCache.has(key)){render(chartCache.get(key));return;}
+  body.replaceChildren(el('div',{class:'state-panel'},'Memuat histori harga dari server…'));
+  metaNode.textContent='Mengambil data historis dengan cache server.';
+  try{
+   const response=await fetch('/api/market-intelligence/chart?coin='+encodeURIComponent(id)+'&days='+encodeURIComponent(days),{cache:'no-store',signal:AbortSignal.timeout(15000)});
+   const payload=await response.json();
+   if(!response.ok||payload?.status!=='success')throw new Error(payload?.code||payload?.message||('HTTP '+response.status));
+   if(chartCache.size>=20)chartCache.delete(chartCache.keys().next().value);
+   chartCache.set(key,payload);
+   if($('#token-chart-modal')===modal)render(payload);
+  }catch(error){
+   if($('#token-chart-modal')!==modal)return;
+   body.replaceChildren(el('div',{class:'state-panel'},el('b',{},'Grafik tidak dapat dimuat'),el('p',{class:'muted'},esc(error?.message||'Sumber data tidak tersedia.')),el('button',{class:'secondary-btn',onclick:()=>loadTokenChart(id,days,modal)},'Coba lagi')));
+   metaNode.textContent='Gagal memuat dari /api/market-intelligence/chart.';
+  }
+}
+function openTokenChart(token,trigger=null){
+  const id=validCoinId(token);
+  if(!id){toast('Grafik belum tersedia untuk token tanpa identifier CoinGecko yang valid.');return;}
+  const existing=$('#token-chart-modal');if(existing)existing.remove();
+  chartTrigger=trigger||null;
+  const symbol=esc(token.symbol||id);
+  const modal=el('div',{class:'chart-modal',id:'token-chart-modal',role:'dialog','aria-modal':'true','aria-label':'Grafik harga '+symbol},
+   el('div',{class:'chart-backdrop',onclick:closeTokenChart}),
+   el('div',{class:'chart-panel'},
+    el('div',{class:'chart-head'},el('div',{},el('div',{class:'eyebrow'},'GRAFIK INTERNAL / COINGECKO'),el('h2',{},symbol)),el('button',{class:'icon-btn',type:'button','aria-label':'Tutup grafik',onclick:closeTokenChart},'×')),
+    el('div',{class:'chart-range'},...['7','30','90'].map(days=>el('button',{class:'mini-btn',type:'button','data-chart-days':days,'aria-label':'Rentang '+days+' hari',onclick:()=>loadTokenChart(id,days,modal)},days+' hari'))),
+    el('p',{class:'muted',id:'token-chart-meta'},'Menyiapkan grafik…'),
+    el('div',{class:'chart-body',id:'token-chart-body'},el('div',{class:'state-panel'},'Memulai permintaan data…')),
+    el('p',{class:'muted'},'Sumber: /api/market-intelligence/chart · harga historis CoinGecko (cache server 1 jam). Grafik adalah data historis, bukan saran transaksi.')
+   )
+  );
+  document.body.append(modal);
+  modal.querySelector('.chart-head button').focus();
+  loadTokenChart(id,'7',modal);
+}
+const chartButton=(token)=>{
+ if(!validCoinId(token))return null;
+ const symbol=esc(token.symbol||'token');
+ return el('button',{class:'mini-btn chart-btn',type:'button',title:'Grafik internal','aria-label':'Lihat grafik internal '+symbol,onclick:(event)=>openTokenChart(token,event.currentTarget)},'▤');
+};
 try {
  const stored=JSON.parse(localStorage.getItem('radar-watch')||'[]');
  if(Array.isArray(stored))watch=[...new Set(stored.filter(x=>typeof x==='string'&&x.length>0&&x.length<=128))];
@@ -120,7 +220,7 @@ function tokenRow(t,showDetail=false){
   pctPill(t.change_24h),
   el('div',{class:'token-metric'},money(t.market_cap)),
   el('div',{class:'token-metric'},money(t.volume_24h)),
-  el('div',{class:'token-actions'},el('button',{class:'mini-btn '+(favorite?'saved':''),title:'Watchlist','aria-label':favorite?'Hapus '+esc(t.symbol)+' dari watchlist':'Tambahkan '+esc(t.symbol)+' ke watchlist',onclick:()=>toggleWatch(t.id)},favorite?'★':'☆'),showDetail?el('button',{class:'mini-btn',title:'Detail','aria-label':'Lihat detail '+esc(t.symbol),onclick:()=>{expanded=expanded===t.id?null:t.id;render();}},'ⓘ'):null,externalLinkNode(t))
+  el('div',{class:'token-actions'},el('button',{class:'mini-btn '+(favorite?'saved':''),title:'Watchlist','aria-label':favorite?'Hapus '+esc(t.symbol)+' dari watchlist':'Tambahkan '+esc(t.symbol)+' ke watchlist',onclick:()=>toggleWatch(t.id)},favorite?'★':'☆'),showDetail?el('button',{class:'mini-btn',title:'Detail','aria-label':'Lihat detail '+esc(t.symbol),onclick:()=>{expanded=expanded===t.id?null:t.id;render();}},'ⓘ'):null,chartButton(t),externalLinkNode(t))
  );
  if(showDetail && expanded===t.id) row.append(tokenDetail(t));
  return row;
@@ -160,8 +260,8 @@ function renderOverview(){
   statCard('MARKET BREADTH',s.count?Math.round(s.positive/s.count*100)+'%':'—',s.positive+' naik · '+s.negative+' turun','⌁',s.positive>=s.negative?'positive':'negative')
  ));
  const movers=card(sectionHead('Top Movers','Pergerakan terbesar berdasarkan data 24 jam',el('button',{class:'text-btn',onclick:()=>navigate('screener')},'Buka screener →')),el('div',{class:'mover-grid'},
-  el('div',{class:'mover-column'},el('div',{class:'column-label positive'},'▲ GAINERS'),...topTokens('change_24h',-1,5).map(t=>el('div',{class:'mover-row'},el('b',{},esc(t.symbol)),pctPill(t.change_24h),externalLinkNode(t)))),
-  el('div',{class:'mover-column'},el('div',{class:'column-label negative'},'▼ LOSERS'),...topTokens('change_24h',1,5).map(t=>el('div',{class:'mover-row'},el('b',{},esc(t.symbol)),pctPill(t.change_24h),externalLinkNode(t))))
+  el('div',{class:'mover-column'},el('div',{class:'column-label positive'},'▲ GAINERS'),...topTokens('change_24h',-1,5).map(t=>el('div',{class:'mover-row'},el('b',{},esc(t.symbol)),pctPill(t.change_24h),chartButton(t),externalLinkNode(t)))),
+  el('div',{class:'mover-column'},el('div',{class:'column-label negative'},'▼ LOSERS'),...topTokens('change_24h',1,5).map(t=>el('div',{class:'mover-row'},el('b',{},esc(t.symbol)),pctPill(t.change_24h),chartButton(t),externalLinkNode(t))))
  ));
  const market=card(sectionHead('Market Watch','Token dengan aktivitas volume tertinggi',el('button',{class:'text-btn',onclick:()=>navigate('analytics')},'Analitik →')),tokenTable(topTokens('volume_24h',-1,6),6));
  const bottom=el('div',{class:'two-col'},card(sectionHead('AI Council','Ringkasan rapat analisis terakhir'),aiGroup?.last?el('div',{class:'ai-summary'},el('div',{class:'row-between'},el('b',{},'Keputusan grup'),el('span',{class:'decision '+String(aiGroup.last.final?.decision||'WAIT').toLowerCase()},aiGroup.last.final?.decision||'WAIT')),el('p',{},aiGroup.last.final?.summary||'Belum ada ringkasan.'),el('small',{class:'muted'},dateTime(aiGroup.last.created_at)),el('button',{class:'text-btn',onclick:()=>navigate('ai')},'Lihat analisis →')):empty('Belum ada analisis','Laporan AI muncul setelah proses terjadwal berhasil.')),
@@ -538,7 +638,7 @@ $('#refresh').addEventListener('click',refreshNow);
 $('#theme').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;try{localStorage.setItem('radar-theme-v2',next);}catch{}});
 $('#menu-toggle').addEventListener('click',()=>setSidebarOpen(!$('#sidebar').classList.contains('open')));
 $('#sidebar-backdrop').addEventListener('click',closeSidebar);
-document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('#sidebar').classList.contains('open'))closeSidebar();});
+document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if($('#token-chart-modal'))closeTokenChart();else if($('#sidebar').classList.contains('open'))closeSidebar();});
 window.addEventListener('resize',()=>{if(window.innerWidth>760)closeSidebar();});
 try{const saved=localStorage.getItem('radar-theme-v2');if(saved)document.documentElement.dataset.theme=saved;}catch{}
 load();setInterval(load,120000);

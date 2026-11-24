@@ -3483,3 +3483,17 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Uji jangkauan tautan: `curl` dengan User-Agent curl default mendapat 403 (proteksi bot); dengan User-Agent browser, `https://www.coingecko.com/en/coins/bitcoin` mengembalikan **HTTP 200**. Ini bukti URL dapat dibuka di browser, bukan jaminan konten tertentu.
 - Batasan: ini adalah navigasi ke situs pihak ketiga; data di sana bukan data RADAR dan tetap tunduk pada kebijakan/ToS situs tersebut. Tidak ada kredensial atau data privat yang dikirim. QA klik pada browser/perangkat nyata belum dilakukan.
 - NEXT TASK: QA klik tombol di desktop/mobile, termasuk token tanpa `id` (tombol tidak muncul) dan perilaku tab baru; bila BOS ingin grafik internal, rancang modul grafik terpisah dengan sumber data terverifikasi.
+
+---
+
+## 131. GRAFIK INTERNAL TOKEN DI DASHBOARD — 25 NOVEMBER 2026
+
+- Permintaan BOS: selain tombol web yang sudah ada, tambahkan grafik internal di RADAR. Tombol web eksternal **dipertahankan** sebagai pelengkap, bukan diganti.
+- Keputusan teknis: memakai ulang endpoint backend yang sudah ada `GET /api/market-intelligence/chart?coin=<id>&days=7|30|90` (cache server 1 jam, validasi `SAFE_COIN_ID`). **Tidak ada route/backend baru**, tidak ada kredensial baru, dan permintaan hanya terjadi saat tombol ditekan (on-demand).
+- Implementasi di `public/app.js`: `validCoinId()` menyaring identifier sesuai batas server (maks. 80 karakter); `chartButton()` muncul di tabel token dan kedua kolom Top Movers; `openTokenChart()` membuat dialog `role="dialog" aria-modal="true"` dengan backdrop, tombol tutup, pilihan rentang 7/30/90 hari, dan fokus keyboard; `loadTokenChart()` memuat data dengan `AbortSignal.timeout(15000)` serta cache memori maksimal 20 entri; `drawTokenChart()` merender SVG `polyline` (downsample maks. 400 titik) beserta statistik terendah/tertinggi/terakhir, jumlah titik, `updated_at`, dan penanda `stale`.
+- State jujur: loading, empty state (titik < 2), error state dengan tombol coba lagi, dan atribusi sumber `/api/market-intelligence/chart` (CoinGecko, cache 1 jam). Tidak ada data simulasi angka harga.
+- Aksesibilitas & CSS: Escape menutup grafik lebih dulu sebelum drawer; fokus dikembalikan ke tombol pemicu; modal responsif; kolom aksi dilebarkan menjadi 122px dan `min-width` tabel 680px untuk empat tombol.
+- Pengujian: `node --test test/dashboard-runtime.test.js test/frontend-ui.test.js` 20 pass, 0 fail; `npm test` **219 pass, 0 fail, 0 skipped**; `git diff --check` bersih. Uji runtime mencakup validasi identifier, perhitungan statistik/koordinat, render SVG, dan empty state.
+- Verifikasi endpoint nyata: server lokal (port 38712, `DATA_DIR` sementara) mengembalikan `status=success`, `coin_id=bitcoin`, `days=7`, **169 titik harga**, `cached=true`, `stale=false`, `updated_at=2026-11-24T20:38:13.830Z`. Ini bukti endpoint, bukan bukti tampilan browser.
+- Batasan: QA klik/visual di browser desktop dan ponsel belum dilakukan; Hostless Build/LIVE tidak dicek. Grafik memakai data historis pihak ketiga melalui server RADAR dan bukan saran transaksi.
+- NEXT TASK: QA interaksi modal (buka, ganti rentang, Escape, backdrop, error/empty) pada browser nyata setelah PR tersedia; evaluasi perluasan grafik ke Early Gem bila ada endpoint on-chain yang terverifikasi.

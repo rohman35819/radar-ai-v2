@@ -62,3 +62,5 @@
 - Local HTTP smoke (integration branch, temp DATA_DIR, port 38711): 19/19 probed assets/routes returned 200; strict CSP and nosniff confirmed; `/api/health` ok on writable temp storage. Not browser QA and not evidence about Hostless production mount.
 
 - Each scanned token now has an external "open web" button built from validated CoinGecko ids (allowlisted pattern, no API-provided URLs), placed in token tables, Top Movers and unlock rows; Early Gem chart links are clearly labeled. 215/215 tests pass; link reachability 200 with a browser UA. External chart data is third-party, not RADAR data.
+
+- Internal token chart added as on-demand modal using the existing `/api/market-intelligence/chart` endpoint (no new backend route, no credentials). Reuses validated CoinGecko ids, 7/30/90 day ranges, cached in memory (max 20), SVG chart with stats and honest loading/error/empty states. External web button remains. Full suite 219/219 pass; live endpoint returned 169 BTC/7d price points. Browser QA still pending.

@@ -108,7 +108,7 @@ function loadDashboard() {
   const source = fs.readFileSync(require.resolve('../public/app.js'), 'utf8');
   const probe = `
     globalThis.__t = {
-      connectionState, ageLabel, dateTime, externalCoinUrl, externalLinkNode, safeExternalLink, renderPreservingFocus,
+      connectionState, ageLabel, dateTime, validCoinId, chartSeriesStats, drawTokenChart, externalCoinUrl, externalLinkNode, safeExternalLink, renderPreservingFocus,
       setRender: (fn) => { render = fn; },
       setState: (s) => {
         if ('data' in s) data = s.data;
@@ -177,6 +177,54 @@ test('Tombol web token dibangun dari identifier yang tervalidasi', () => {
   assert.equal(link.attributes.target, '_blank');
   assert.equal(link.attributes.rel, 'noopener noreferrer');
   assert.equal(t.externalLinkNode({}), null, 'token tanpa identifier tidak membuat tautan');
+});
+
+test('Identifier grafik divalidasi sesuai batas endpoint server', () => {
+  const { context } = loadDashboard();
+  const t = context.__t;
+  assert.equal(t.validCoinId({ id: 'bitcoin' }), 'bitcoin');
+  assert.equal(t.validCoinId({ gecko_id: 'ethereum' }), 'ethereum');
+  for (const bad of ['../admin', 'BTC', 'a_b', '', null, undefined, 'x'.repeat(81)]) {
+    assert.equal(t.validCoinId({ id: bad }), null, 'identifier ditolak: ' + bad);
+  }
+});
+
+test('chartSeriesStats menghitung statistik dan koordinat dari data historis', () => {
+  const { context } = loadDashboard();
+  const t = context.__t;
+  const series = [[1000, 10], [2000, 20], [3000, 15], [4000, 30]];
+  const stats = t.chartSeriesStats(series, 720, 260, 24);
+  assert.equal(stats.min, 10);
+  assert.equal(stats.max, 30);
+  assert.equal(stats.last, 30);
+  assert.equal(stats.count, 4);
+  assert.equal(stats.points.split(' ').length, 4);
+  assert.match(stats.points, /^24\.0,/);
+  assert.equal(t.chartSeriesStats([[1, 2]]), null, 'satu titik bukan grafik');
+  assert.equal(t.chartSeriesStats([['x', 'y'], [2, 3]]), null, 'data rusak diabaikan');
+});
+
+test('drawTokenChart merender SVG dan statistik, serta empty state untuk data kurang', () => {
+  const { context, FakeElement } = loadDashboard();
+  const t = context.__t;
+  const target = new FakeElement('div');
+  const stats = t.drawTokenChart(target, [[1000, 10], [2000, 20], [3000, 15]], { updated_at: new Date('2026-11-25T00:00:00.000Z').toISOString() });
+  assert.equal(stats.min, 10);
+  assert.equal(stats.max, 20);
+  assert.equal(stats.last, 15);
+  const svg = target.children.find((child) => child instanceof FakeElement && child.tagName === 'SVG');
+  assert.ok(svg, 'SVG dibuat');
+  const polyline = svg.children.find((child) => child.tagName === 'POLYLINE');
+  assert.match(polyline.attributes.points, /,/);
+  const hasText = (node, needle) => {
+    if (String(node.textContent || '').includes(needle)) return true;
+    return (node.children || []).some((child) => child instanceof FakeElement && hasText(child, needle));
+  };
+  assert.ok(target.children.some((child) => hasText(child, 'Terendah')), 'statistik ditampilkan');
+
+  const emptyTarget = new FakeElement('div');
+  assert.equal(t.drawTokenChart(emptyTarget, [[1, 2]], {}), null);
+  assert.ok(emptyTarget.children.some((child) => hasText(child, 'Data historis belum tersedia')), 'empty state ditampilkan');
 });
 
 test('renderPreservingFocus mengembalikan fokus, kursor, dan scroll setelah DOM diganti', () => {
