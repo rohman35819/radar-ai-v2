@@ -3205,3 +3205,19 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 **Implementation status:** Policy/documentation only. This text does not grant new GitHub token scopes, enable a scheduled/background worker, or change GitHub branch protection. Groq can use only the capabilities actually granted to its execution environment; permission failures must be reported honestly.
 
 **NEXT TASK:** use this delegation for the next Groq/OpenCode engineering cycle: continue the highest-priority unfinished repository task, create tested PRs without a numeric quota, and independently verify exact-head CI and deployment state.
+
+## 110. SHARED AI PROJECT MEMORY — ALL AGENTS (BOS DIRECTIVE — 25 NOVEMBER 2026)
+
+**Status: ACTIVE, project-wide.** All current and future AI agents working on RADAR AI—including ChatGPT, Groq/OpenCode and any additional AI—must use one compact shared project memory so a new conversation can recover the durable context without retaining an ever-growing transcript.
+
+- **Shared handoff:** RADAR_AI_SHARED_MEMORY.md is the common, concise memory for every AI. Read it at the start of each new chat/session, then read AGENTS.md, relevant master-context sections, and verify current GitHub/code state.
+- **No transcript archive:** do not save raw conversations, every prompt/response, or routine chat logs to GitHub. Do not create a growing archive of chats. Store only distilled durable information: project identity, stable owner preferences, architecture/contracts, important decisions, verified current state, blockers, and next actions.
+- **Rolling memory, not append-only:** update the shared memory only after meaningful durable changes. Rewrite/summarize stale status, mark superseded decisions, and remove obsolete operational snapshots. Keep the file compact, target under 12 KB. Put detailed technical history in the master context or a focused document only when it is genuinely necessary for engineering traceability.
+- **Cross-agent consistency:** all agents follow the same memory policy. Private/native memory in a particular AI product may help that agent, but it is not shared, cannot be relied upon by other agents, and is not the source of truth.
+- **Safety/privacy:** never store API keys, tokens, passwords, private personal data, or sensitive account information in any memory file.
+- **Freshness:** memory is a handoff snapshot, not live truth. Before making decisions, verify current branch HEAD, PR state, exact-head CI/security checks, relevant implementation and Hostless build/LIVE state independently.
+- **Continuity without background claims:** reading shared memory at a new session does not mean an AI is running continuously between chats. Do not claim always-on operation unless the required scheduler, workers, durable queue/state, audit, permission gateway, budgets, approval gates and kill switch are actually implemented and verified.
+
+**Implementation note:** this policy adds one small curated memory file, not conversation storage. Its size target is under 12 KB; no raw transcript archive or runtime memory service is being created by this documentation change.
+
+**NEXT:** maintain the compact shared memory as the durable cross-agent handoff, then continue the highest-priority verified repository task.
