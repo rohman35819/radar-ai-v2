@@ -180,3 +180,14 @@ Do not use `/tmp` for RADAR AI state: Hostless clears it when the process starts
 - Token counts are recorded only when the provider response supplies usage metadata. Rate-limit headers are recorded only when present. Unknown account-level daily quotas remain null; RADAR does not estimate or invent provider limits.
 - Counters include requests made by RADAR AI Council, AI Workspace, scheduled AI runs, and the direct Gemini test route. They are persisted with RADAR state; persistence depends on the configured storage adapter.
 - These are RADAR-observed requests, not necessarily the provider account's total usage across other applications or API keys.
+
+
+## Bounded AI provider request queue
+
+- All RADAR AI provider HTTP requests share one process-wide FIFO queue.
+- Hard limits: at most **2 active provider requests** and **12 waiting requests** (14 total in the process).
+- When all 14 slots are occupied, new provider calls are rejected with `AI_QUEUE_FULL`; they are not silently added to an unbounded backlog. Existing queued requests continue in FIFO order until slots become available.
+- Queue-full rejections are not counted as provider API usage because no provider request was sent.
+- `GET /api/ai/queue` reports active, waiting, total, capacity, oldest wait, and process-lifetime completed/rejected counters. The AI Council displays the same status.
+- Counters reset when the server process restarts. The queue itself is in-memory and intentionally does not replay stale provider requests after a restart.
+- The cap applies across Gemini, Groq, OpenRouter, and OpenAI calls, including AI Council and AI Workspace. It limits simultaneous calls and waiting work; it does not change provider account quotas or daily usage caps.
