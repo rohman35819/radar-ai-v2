@@ -2834,3 +2834,93 @@ Pada setiap siklus dua jam, discovery mencakup:
 - PR disposition: (1) merge only when relevant, based on latest main, exact-head checks pass, required independent reviews pass, and rollback/impact are understood; (2) close stale, duplicate, superseded, abandoned, irreparably conflicting, or low-value PRs after preserving any unique useful work; (3) keep blocked PRs only when a named dependency, owner, and next review condition are recorded. Closing a PR removes it from the active queue; it does not delete its GitHub history or automatically delete its branch.
 - Before opening a new PR, inspect the existing queue and reuse/update an appropriate active PR when scope and ownership match. Prefer one PR per coherent feature/owner; avoid stacking unrelated changes and multiple PRs editing the same files.
 - Every new RADAR conversation must read this policy from the latest main AGENTS.md and RADAR_AI_MASTER_CONTEXT.md, inspect current open PRs, and continue the existing queue. Do not rely on chat memory or old PR counts. Report the current active count, any exception and its reason, and the next actionable PR.
+
+## 88. AI provider usage transparency — 24 November 2026 (Asia/Jakarta)
+
+- Audit Divisi 06 menemukan bahwa main sudah memiliki empat provider adapter (Gemini, Groq, OpenRouter, OpenAI), AI Council/Workspace, serta counter GoPlus; tetapi belum ada telemetry pemakaian/kuota terpadu untuk provider AI. AI orchestration tidak sama dengan quota management.
+- Implementasi awal pada branch `feat/ai-provider-usage-observability` menambahkan `lib/ai/usage.js` untuk pencatatan request per provider per hari Asia/Jakarta, token input/output/total hanya jika usage metadata disediakan, status request terakhir, dan header rate-limit yang di-allowlist.
+- Instrumentasi mencakup AI Council, AI Workspace (termasuk putaran diskusi dan sekretaris), scheduled AI runs, dan direct Gemini test. HTTP errors, malformed responses, serta network/timeout failures ikut dicatat sebagai percobaan gagal; retry berikutnya dicatat terpisah. Counter disimpan di RADAR state melalui adapter persistence yang sudah ada.
+- Endpoint `GET /api/ai/usage` mengembalikan status sanitasi tanpa key, raw error, prompt, atau isi respons. Panel status ditambahkan pada halaman AI Council.
+- Definisi status: ACTIVE = panggilan teramati terakhir sukses dalam 24 jam; LIMITED = respons terakhir HTTP 429; ERROR = panggilan terakhir gagal; UNKNOWN = belum ada panggilan teramati dalam 24 jam atau metadata tidak tersedia; NOT_CONFIGURED = env key tidak ditemukan. Status adalah hasil panggilan terakhir, bukan health probe kontinu.
+- Batas transparansi: token count hanya tersedia jika provider menyertakan usage metadata; rate-limit hanya jika response menyertakan header yang dikenal. Account-level daily quota Gemini/Groq/OpenAI dan sisa request harian OpenRouter belum dibaca oleh implementasi ini; field quota tetap null/N/A, tidak dibuat perkiraan. Counter RADAR tidak mencakup pemakaian key yang sama dari aplikasi lain.
+- Perubahan README mendokumentasikan endpoint dan batas interpretasi. Tidak ada secret, provider key, permission, model, dependency, atau konfigurasi produksi yang diubah.
+- File branch: `lib/ai/usage.js`, `lib/ai/chat-completions.js`, `lib/ai/gemini.js`, `lib/ai/groq.js`, `lib/ai/openrouter.js`, `lib/ai/openai.js`, `lib/ai/workspace.js`, `server.js`, `public/app.js`, `test/ai-usage.test.js`, `README.md`, dan master context ini.
+- Code/test head `e326684467ae7d29c6ae5fbeecf7c1824794ec95` telah lulus GitHub Actions: RADAR AI tests SUCCESS, 168 passed / 0 failed (run `45405418894`); Gitleaks SUCCESS dan Trivy SUCCESS (run `45405418920`). PR #87 Draft: https://github.com/rohman35819/radar-ai-v2/pull/87. Commit dokumentasi lanjutan dapat mengubah PR head; verifikasi ulang exact-head CI sebelum integrasi. Branch belum merge ke main. Tes lokal tidak dijalankan karena tidak tersedia working copy/runtime repository dalam sesi ini; GitHub Actions exact code/test head lulus; independent Divisi 01/05 review masih pending. Test baru memverifikasi forwarding callback dari Groq, OpenRouter, dan OpenAI adapters. Satu security run pada intermediate commit sempat gagal karena Gitleaks melaporkan invalid revision range (bukan temuan secret); exact-head scan berikutnya lulus. Hostless Build/Live tidak diperiksa dan tidak ada klaim deployment.
+- NEXT TASK: jalankan CI pada exact PR head; perbaiki setiap test/syntax failure; Divisi 01 review endpoint exposure, secret handling, persistence and rate-limit metadata; Divisi 05 QA status transitions, Jakarta daily reset, AI Council/Workspace UI and no-regression. Setelah gates lulus, minta integrasi sesuai kebijakan Owner; berikutnya evaluasi endpoint usage resmi per provider untuk account-level quotas tanpa mengubah key/permission dan tanpa menambah biaya.
+
+
+## 89. Batas antrean permintaan AI provider — 24 November 2026 (Asia/Jakarta)
+
+- Divisi 06 (Agent Platform & Automation) menindaklanjuti risiko request provider AI yang menumpuk ketika AI Council, AI Workspace, dan pemanggilan manual berjalan bersamaan.
+- Menambahkan satu antrean FIFO global process-wide di `lib/ai/request-queue.js`, dipakai oleh adapter chat-completions (Groq/OpenRouter/OpenAI), Gemini, dan jalur provider AI Workspace.
+- Hard cap awal: **2 request provider aktif bersamaan + maksimal 12 request menunggu = 14 request total**. Angka ini sengaja konservatif untuk menahan burst; bukan klaim kuota/rate limit provider.
+- Ketika 14 slot penuh, request baru ditolak secara eksplisit dengan kode `AI_QUEUE_FULL` / status 503. Tidak ada antrean tersembunyi atau unbounded backlog. Request yang sudah diterima diproses FIFO sampai slot tersedia. Caller harus mencoba kembali setelah antrean turun; request yang ditolak tidak dianggap telah diterima.
+- Timeout provider dimulai saat request memperoleh slot, bukan saat masih menunggu, sehingga waktu antre tidak menghabiskan timeout upstream. Retry memperoleh slot baru dan tidak menahan slot selama jeda retry.
+- Penolakan karena antrean penuh tidak dicatat sebagai pemakaian API provider karena tidak ada HTTP call ke provider.
+- Menambahkan `GET /api/ai/queue` dengan counter active/pending/total/capacity/oldest wait/completed/rejected serta panel antrean pada AI Council.
+- Counter dan antrean saat ini in-memory per proses; counter kembali nol dan request pending tidak diputar ulang setelah restart. Ini sengaja menghindari replay request AI lama/stale. Ini **bukan** durable job queue untuk seluruh otomasi divisi; pembatasan ini khusus outbound request AI provider.
+- README menjelaskan batas, status, dan semantik. File perubahan pada PR #87 mencakup `lib/ai/request-queue.js`, adapter AI `lib/ai/chat-completions.js`, `lib/ai/gemini.js`, `lib/ai/workspace.js`, `server.js`, `public/app.js`, `test/ai-request-queue.test.js`, README, dan master context.
+- PR #87 tetap Draft dan belum merge ke main. Exact PR head `83db17bf505333fa7d20a8e54610108e46977f2e` lulus GitHub Actions: `npm test` 172 passed / 0 failed (run `45410577116`); Gitleaks dan Trivy SUCCESS (run `45410577023`). Test khusus membuktikan 2 concurrent, FIFO, 12 waiting, penolakan request ke-13 saat penuh, dan tidak mencatat queue rejection sebagai provider usage. Local npm test tidak dijalankan karena sesi tidak memiliki working copy repository. Tidak ada perubahan Hostless/production, secret, provider key, model, atau permission.
+- NEXT TASK: minta review independen Divisi 01 untuk endpoint/status leakage dan error handling, serta Divisi 05 untuk concurrency, FIFO, overflow, timeout, retry, dan AI Council UI. Setelah review selesai, evaluasi apakah limit per provider perlu dibedakan berdasarkan rate-limit headers yang benar-benar teramati; jangan menaikkan hard cap tanpa data. Hostless build/live belum diverifikasi dan belum ada deployment.
+
+## 90. Audit keamanan dan perbaikan lifecycle antrean PR #87 — 24 November 2026 (Asia/Jakarta)
+
+### Divisi dan akar masalah
+- Lead: Divisi 04 — AI Intelligence & Research. Supporting: Divisi 01 — Security & Reliability; Divisi 05 — QA, Testing & DevOps.
+- Audit terhadap PR #87 menemukan bahwa slot queue sebelumnya hanya membungkus pemanggilan `fetch()`. Slot dilepas saat response headers diterima, sementara `response.json()` masih membaca body di luar queue. Karena itu batas dua request aktif belum mencakup seluruh lifecycle HTTP.
+- Endpoint telemetry/queue memang publik karena dipakai panel AI Council. Kontrak yang dipertahankan adalah data operasional tersanitasi saja; API key, authorization header, prompt, isi response, dan raw error tidak boleh dikembalikan. Header rate-limit dan label model diperlakukan sebagai input tidak tepercaya.
+
+### Perbaikan pada branch PR #87
+- `lib/ai/chat-completions.js`, `lib/ai/gemini.js`, dan kedua jalur provider di `lib/ai/workspace.js`: slot queue sekarang menahan fetch serta pembacaan response body JSON sampai selesai. Timeout tetap melekat pada fetch/body; retry dan jeda retry tidak menahan slot.
+- `lib/ai/usage.js`: hanya nilai header rate-limit ringkas yang diawali digit dan berisi karakter allowlist yang disimpan; nilai kosong dan teks arbitrer ditolak. Label model dibatasi pola karakter aman.
+- `test/ai-request-queue.test.js`: tes regresi menahan dua response body, memastikan request ketiga belum dikirim sampai salah satu body selesai dibaca.
+- `test/ai-usage.test.js`: tes nilai header kosong/berbahaya dan label model yang tidak valid.
+- `README.md`: menjelaskan bahwa slot mencakup pembacaan body dan batas queue berlaku per proses, bukan lintas semua instance.
+
+### Validasi dan koreksi CI
+- Commit implementasi + tes: `dddf1d1b003a209e8dcb8d6f70fe6e8f1712cf6b`. CI pertama: security scan SUCCESS, tetapi test gagal 2/174 karena sanitizer mengembalikan header kosong dan nilai teks non-numerik. Kegagalan ini dipertahankan sebagai temuan dan diperbaiki; tidak dianggap lulus.
+- Commit koreksi sanitizer: `06e00d12539c5c29756a7ff40cbc7967c1a2bf2d`.
+- GitHub Actions test run `45417261072` pada exact code head tersebut: SUCCESS, **174 passed / 0 failed**. Log membuktikan tes lifecycle body-response queue dan dua tes sanitasi header/model lulus.
+- Security run `45417261088` pada exact code head: SUCCESS. Gitleaks: no leaks found. Trivy secret scanner: no issues detected. Ini tidak boleh ditafsirkan sebagai bukti audit dependency vulnerability jika workflow tidak menemukan manifest yang didukung.
+- Commit dokumentasi README setelah hasil code-head CI: `db3e5c03eb1a4834c6547a8410021a4b9b592318`. Exact-head CI untuk perubahan dokumentasi berikutnya tetap wajib diperiksa setelah master context diperbarui.
+- Tes lokal tidak dijalankan karena sesi tidak memiliki working copy Node.js; hasil yang diklaim berasal dari GitHub Actions saja.
+
+### Status integrasi dan batas risiko
+- PR #87: Draft/open/unmerged. Branch telah diselaraskan dengan main terbaru `cdf276fed8c313f3b9f0f272d15ead838053fb11`; compare terakhir sebelum pembaruan dokumentasi menunjukkan ahead 48 / behind 0 dan mergeable=true. Commit merge mempertahankan PR head lama sebagai parent kedua.
+- Review independen Divisi 01 dan Divisi 05 belum ada. Audit oleh implementer ini bukan pengganti independent review dan bukan approval untuk merge.
+- Endpoint `/api/ai/usage` dan `/api/ai/queue` tetap publik dan menampilkan counter/status operasional yang memang dipakai panel; tidak ada auth baru ditambahkan. Independent Security harus menilai apakah tingkat detail publik tersebut dapat diterima untuk deployment RADAR.
+- Queue tetap in-memory per proses, tidak durable, dan tidak lintas-instance. Restart menghapus pending requests/counters. Ini bukan durable autonomous job queue.
+- Tidak ada perubahan Hostless, secret, provider key, provider permission, billing, atau trading. Hostless Build/LIVE tidak diperiksa dan tidak ada deployment claim.
+
+### NEXT TASK
+1. Periksa exact-head CI setelah dokumentasi PR diperbarui; jika ada kegagalan, perbaiki sebelum melanjutkan.
+2. Dapatkan independent Divisi 01 review khusus endpoint publik, metadata rate-limit, model label, persistence, dan error handling.
+3. Dapatkan independent Divisi 05 review concurrency seluruh adapter, FIFO/overflow, timeout/retry, regression coverage, serta AI Council UI.
+4. Jangan merge PR #87 sampai kedua review independen menyatakan lolos dan exact-head checks hijau. Tetap Draft selama gate belum dipenuhi.
+5. Setelah PR #87 ditutup dengan aman, klasifikasikan backlog PR terbuka sesuai WIP policy (maksimal 3 active non-emergency PR) sebelum memulai PR implementasi berikutnya.
+
+## 91. PR #87 — verifikasi regresi AI Workspace dan exact-head CI — 24 November 2026
+
+- Perluasan audit menambahkan tes khusus AI Workspace, bukan hanya adapter chat-completions. Untuk coverage tersebut, `requestCompatible` diekspor dari `lib/ai/workspace.js` sebagai helper internal yang dapat diuji.
+- Commit `f22141926f8d1f83f880b78c6343565579eb0a4b`: slot queue menahan response-body read pada jalur AI Workspace compatible.
+- Commit `f1526bae345216bb2c9679566e69e7bc61c9271d` dan `b0fcd0086e3ccc7db3dae61e3ac9639d089bb704`: menambahkan test akses helper dan membuktikan request ketiga menunggu selama dua response body Workspace belum selesai.
+- Commit `ae08f24aee1f72fc9e49a372a44075113bc24124`: mempertahankan response metadata saat parsing JSON Workspace gagal.
+- Audit tes kemudian menemukan catch handler belum menyalin `error.response` ke variabel response luar. Run `45418385404` pada SHA `761e46a58d8d46920adb83cfd76629eebaf9f7e7` gagal **1 dari 177 test**: status HTTP 200 hilang menjadi null. Kegagalan ini tidak disembunyikan.
+- Commit `5448767610539057f4f3c7cdb0adbe9d03e161e8` memperbaiki propagation response metadata. Commit `f518b06494035e0a8b9ee4a2e1c415cbb49f52ef`, `db7b2707844836fbe9ef7d6587476172b04cb6f9`, dan `761e46a58d8d46920adb83cfd76629eebaf9f7e7` menambahkan klasifikasi dan regression tests untuk malformed HTTP 200 serta metadata Workspace.
+- Exact implementation head `5448767610539057f4f3c7cdb0adbe9d03e161e8`: GitHub Actions test run `45418689793` SUCCESS, **177 passed / 0 failed**. Log secara eksplisit menunjukkan tiga tes queue/body Workspace dan malformed-response classification lulus.
+- Exact-head security run `45418689798` SUCCESS: Gitleaks no leaks; Trivy secret scan no findings. Dependency vulnerability coverage tetap tidak boleh diklaim dari hasil secret scanner.
+- Tes lokal tidak dijalankan; bukti hanya dari GitHub Actions. Perubahan belum dideploy ke Hostless dan tidak ada live claim.
+
+### Status PR dan NEXT TASK
+- PR #87 masih Draft/open/unmerged. Semua perubahan kode, test, README, dan master context tetap pada branch PR; main tidak diubah oleh task ini.
+- Independent Divisi 01 Security dan Divisi 05 QA masih belum mengirim review. Tes hijau dan audit implementer tidak menggantikan dua review independen tersebut.
+- Public endpoint `/api/ai/usage` dan `/api/ai/queue` tetap menjadi item review Security: tentukan apakah counter/status operasional dan rate-limit metadata layak tetap publik atau harus dibatasi.
+- NEXT TASK: verifikasi CI pada exact head setelah pembaruan dokumentasi ini; dapatkan independent Divisi 01/05 review; tutup semua temuan; baru pertimbangkan merge. Tetap Draft sampai seluruh gate terpenuhi. Setelah #87 selesai, klasifikasikan backlog PR terbuka terhadap WIP limit maksimal 3 active non-emergency PR sebelum mengambil PR berikutnya.
+
+## 92. Status independent review PR #87 — 24 November 2026
+
+- Menggunakan workflow read-only yang sudah tersedia di `.github/workflows/gemini-assistant.yml` melalui komentar `@gemini /review` pada PR #87. Run: `45419290196`.
+- Workflow gagal sebelum menghasilkan review. Log menunjukkan Gemini CLI memilih `gemini-3.1-pro`, lalu menerima HTTP 429 dan 503; Free Tier request/input-token quota untuk model tersebut tercatat limit 0. Log meminta retry sekitar 17 jam kemudian.
+- Tidak ada hasil review Gemini yang boleh dianggap sebagai approval atau temuan review. Tidak ada layanan berbayar, model berbayar, atau konfigurasi produksi yang dipakai untuk memaksa review.
+- Daftar requested reviewers PR #87 masih kosong; tidak ada review independen Divisi 01 atau Divisi 05. Implementer audit dan CI hijau tidak menggantikan review independen.
+- NEXT TASK: tunggu reviewer independen Divisi 01 dan 05; workflow Gemini boleh dicoba lagi setelah kuota free tier pulih tanpa mengubah model ke layanan berbayar. Jangan merge/mark ready sebelum review yang diwajibkan diterima.
