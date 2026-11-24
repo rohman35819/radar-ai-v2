@@ -132,12 +132,34 @@ async function main() {
       goplus: 'NOT_CALLED: credential status only; scheduled monitor does not consume GoPlus quota'
     }
   };
+  const checks = evaluateHealth(report);
+  report.checks = checks;
   process.stdout.write(JSON.stringify(report, null, 2) + '\n');
-  const newsHealth = snapshot.data && snapshot.data.health && snapshot.data.health.news;
-  const newsHealthy = !!(newsHealth && newsHealth.ok === true && Array.isArray(snapshot.data.news) && snapshot.data.news.length > 0
-    && Array.isArray(snapshot.data.health.news_sources) && snapshot.data.health.news_sources.some((source) => source.ok === true));
-  if (ready.http !== 200 || snapshot.http !== 200 || !newsHealthy) process.exitCode = 1;
+  if (Object.values(checks).some((ok) => ok !== true)) process.exitCode = 1;
+}
+
+function evaluateHealth(report) {
+  const ready = report && report.ready || {};
+  const snapshot = report && report.snapshot || {};
+  const providers = report && report.provider_probes || {};
+  const storageOk = ready.http === 200 && ready.status === 'ready'
+    && ready.storage && ready.storage.status === 'ok' && !ready.storage.code;
+  const snapshotOk = snapshot.http === 200 && snapshot.status === 'success'
+    && snapshot.stale === false && !!snapshot.last_ok;
+  const newsOk = snapshot.news_health && snapshot.news_health.ok === true
+    && Number(snapshot.news_count) > 0 && Array.isArray(snapshot.news_sources)
+    && snapshot.news_sources.some((source) => source.ok === true && Number(source.count) > 0);
+  const futures = providers.binance_futures || {};
+  const futuresOk = futures.http === 200 && futures.status === 'success' && futures.partial === false
+    && futures.metrics && futures.metrics.funding === true && futures.metrics.open_interest === true
+    && futures.metrics.open_interest_history === true && futures.metrics.taker_flow === true
+    && futures.sources && Object.keys(futures.sources).length >= 4
+    && Object.values(futures.sources).every((source) => source && source.ok === true);
+  const dex = providers.dex_screener || {};
+  const dexOk = dex.http === 200 && dex.status === 'success'
+    && Number(dex.pair_count) > 0 && dex.same_pool_found === true;
+  return { storage: !!storageOk, snapshot: !!snapshotOk, news: !!newsOk, binance_futures: !!futuresOk, dex_screener: !!dexOk };
 }
 
 if (require.main === module) main();
-module.exports = { summarizeSnapshot, summarizeDerivatives, summarizeDex };
+module.exports = { summarizeSnapshot, summarizeDerivatives, summarizeDex, evaluateHealth };
