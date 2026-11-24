@@ -25,9 +25,9 @@
 - Do not claim always-on/background autonomy unless scheduler, durable queue/state, workers, permissions, audit, budgets, approval gates and kill switch are implemented and verified.
 
 ## Verified project handoff — 25 November 2026
-- `develop` HEAD: `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`; `main` HEAD: `0f8521a4ab2399f80a102af4e422b2586d32e437` at last check. Re-check before action.
-- PRs #108 (cloud-worker hardening), #109 (status), #110 (single shared memory) and #111 (handoff refresh) are merged to `develop`. PR #107 was closed as superseded; do not revive it. Exact-head tests, disposable PostgreSQL smoke, Gitleaks, Trivy and branch-source policy passed for PR #108.
-- PR #106 (mobile sidebar drawer) was revalidated onto `develop` `b26d8b4`: head `8106edbf209a61f01769affc5fb8994c6979d64a`, `mergeable=true`; exact-head CI was running at last check. Local `npm test` 196/196 pass, `git diff --check` clean. Device/browser QA still outstanding. Do not merge until the new head's CI passes.
+- `develop` HEAD: `ee53b04d39e51f5f95f88a2c02ff38a30c4cc638`; `main` HEAD: `0f8521a4ab2399f80a102af4e422b2586d32e437` at last check. Re-check before action.
+- PRs #106 (mobile sidebar drawer), #108 (cloud-worker hardening), #109 (status), #110 (single shared memory) and #111 (handoff refresh) are merged to `develop`. PR #107 was closed as superseded; do not revive it. PR #106 merged at `ee53b04` after exact-head tests, Branch source policy and security scans passed; Android/iOS/browser device QA remains outstanding.
+- Exact-head tests, disposable PostgreSQL smoke, Gitleaks, Trivy and branch-source policy passed for PR #108.
 - Frontend integration branch `integration/frontend-ux-20261125` combines `develop` with dashboard freshness/state/a11y, Market Intelligence truthfulness, Solscan observation-time truthfulness and PWA shell v13. Last measured local suite: 208/208 pass, 25 files (before the final `b26d8b4` merge; re-run after branch updates). PR creation is blocked: this token returns HTTP 403 for `POST /pulls`, although `PUT /pulls/{n}/merge` is reachable.
 - Cloud worker hardening exists on `develop`, not yet released to `main`. GitHub Actions worker is periodic (every two hours), not continuous 24/7. It can run without the phone/Termux, but the workflow must reach default branch `main` before scheduled runs use the new version.
 - Groq provider support is opt-in and OFF by default. Do not configure `GROQ_API_KEY` or enable `GROQ_AUTONOMOUS_ENABLED=1` without BOS explicitly approving after quota/billing review. OpenRouter fallback is pinned to `openrouter/free`.
@@ -40,7 +40,7 @@
 - Grok is xAI's assistant; Groq is a separate inference provider. Groq provider activation remains OFF unless BOS explicitly approves.
 
 ## Next actions
-1. Verify exact-head CI for PR #106 head `8106edb` (test, Branch source policy, Gitleaks, Trivy); merge only after all gates pass, then complete Android/iOS/browser drawer QA.
+1. Complete Android/iOS/browser drawer QA for the now-merged PR #106; fix forward with a new PR if gesture/scroll issues remain on real devices.
 2. Have BOS/maintainer create a PR for `integration/frontend-ux-20261125` with a `pull_requests: write` token: https://github.com/rohman35819/radar-ai-v2/pull/new/integration/frontend-ux-20261125
 3. Prepare a normal `develop` → `main` release PR for the cloud worker; verify exact-head release checks. Keep Groq disabled.
 4. After release, run a controlled manual worker test; later design a least-privilege non-production adapter to the existing PostgreSQL queue before any production activation.

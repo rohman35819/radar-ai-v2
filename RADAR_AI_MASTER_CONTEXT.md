@@ -3174,7 +3174,6 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
 - Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
 
-
 ## 111. CLOUD AUTONOMOUS WORKER PILOT — 25 NOVEMBER 2026
 
 **Status: Stage 1 worker hardening merged to develop; not yet released to main or verified running with Groq.**
@@ -3227,7 +3226,9 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ---
 
-## 117. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
+## 114. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
+
+> Catatan penomoran: bagian ini awalnya ditulis sebagai §109 pada branch `fix/sidebar-drawer-scroll` sebelum `develop` menerima §111 (cloud worker) dan §112 (shared memory). Dinomorkan ulang menjadi §114 setelah PR #106 di-merge ke `develop`; isi aslinya dipertahankan.
 
 ### Routing dan tujuan
 - Lead: Divisi 02 — UI/UX & Frontend. QA: Divisi 05 (temporary override aktif; QA browser belum dilakukan).
@@ -3274,7 +3275,7 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   5. Jika perangkat masih meneruskan gesture, terapkan opsi §20.4 butir 5 (accordion/rail navigasi) tanpa menghapus menu atau fitur.
 ## 118. DASHBOARD FRESHNESS, SOURCE ATTRIBUTION & DATA STATE — 25 NOVEMBER 2026
 
-> Catatan penomoran: bagian ini berasal dari branch PR #106 (`fix/sidebar-drawer-scroll`, awalnya §109, lalu §113 pada branch PR tersebut) dan dinomorkan ulang menjadi §117 saat branch integrasi digabung dengan `develop` yang sudah memuat §111 (cloud worker) dan §112 (shared memory). Isi asli dipertahankan; tidak ada penghapusan riwayat.
+> Catatan penomoran: bagian ini berasal dari branch `feat/dashboard-freshness` (awalnya §110) dan dinomorkan ulang menjadi §118 saat branch integrasi digabung dengan `develop` yang sudah memuat §111–§114. Isi asli dipertahankan.
 
 ### Routing dan ruang lingkup
 - Lead: Divisi 02 — UI/UX & Frontend. Tidak ada perubahan backend, kontrak API, exchange, trading, withdrawal, atau secret.
@@ -3353,7 +3354,7 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - NEXT TASK:
   1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write`, verifikasi head `c0e88a6...`, lalu jalankan gate test/Gitleaks/Trivy/branch-source policy.
   2. QA browser Market Intelligence: ganti exchange dengan cepat untuk memastikan tabel tidak menampilkan hasil usang; uji respons tanpa `updated_at`.
-  3. Terapkan pola freshness jujur yang sama pada `solscan.html` dan `membership.html`, lalu selesaikan konflik penomoran §117/§118/§119 saat integrasi ke `develop`.
+  3. Terapkan pola freshness jujur yang sama pada `solscan.html` dan `membership.html`, lalu selesaikan konflik penomoran §118/§119/§120 saat integrasi ke `develop`.
 ## 120. SOLSCAN — WAKTU OBSERVASI JUJUR & AKSESIBILITAS (25 NOVEMBER 2026)
 
 > Catatan penomoran: bagian 117, 118, dan 119 berada pada branch lain. Dinomorkan ulang dari §109/§110/§111 pada branch integrasi agar tidak bentrok dengan §111/§112 di `develop`; isi dipertahankan.
@@ -3380,7 +3381,7 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - NEXT TASK:
   1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write`, verifikasi head `02b4f3b...`, lalu jalankan gate test/Gitleaks/Trivy/branch-source policy.
   2. Terapkan pola waktu jujur yang sama pada `membership.html`/`membership.js` dan `command.html` bila ada field timestamp yang tidak divalidasi.
-  3. Koordinasikan integrasi empat branch frontend (`feat/dashboard-freshness`, `fix/market-truthful-state`, `fix/solscan-truthful-observability`, dan PR #106) ke `develop`: selesaikan konflik dokumen §117–§120 dan jalankan suite penuh pada HEAD gabungan sebelum merge.
+  3. Koordinasikan integrasi empat branch frontend (`feat/dashboard-freshness`, `fix/market-truthful-state`, `fix/solscan-truthful-observability`, dan PR #106) ke `develop`: selesaikan konflik dokumen §118–§120 dan jalankan suite penuh pada HEAD gabungan sebelum merge.
 
 ---
 
@@ -3390,7 +3391,7 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Konflik diselesaikan secara eksplisit, bukan dengan membuang salah satu sisi:
   - `test/frontend-ui.test.js`: dua regression test sidebar dan delapan test dashboard/freshness/aksesibilitas digabung dengan satu pembacaan stylesheet bersama (`styleCss=css`).
   - `README.md`: hitungan dan deskripsi fitur digabung menjadi 206 test case pada 25 file.
-  - `RADAR_AI_MASTER_CONTEXT.md`: bagian §117, §118, §119, dan §120 semuanya dipertahankan; marker konflik dihapus setelah isi kedua sisi disatukan.
+  - `RADAR_AI_MASTER_CONTEXT.md`: bagian §118, §119, dan §120 semuanya dipertahankan; sidebar tetap §114 dari `develop`; marker konflik dihapus setelah isi kedua sisi disatukan.
 - Verifikasi pada working tree gabungan (Node v24.22.3): `npm test` **206 pass, 0 fail, 0 skipped**; `node --check public/app.js`, `public/market.js`, dan `public/solscan.js` lulus; `git diff --check` bersih; pencarian marker konflik tidak menemukan sisa.
 - HEAD gabungan setelah tiga merge: `8f900a6c000c2fd27369f22808a4bcceb8067cf5` (merge `fix/solscan-truthful-observability`). Catatan ini menjadi commit dokumentasi berikutnya.
 - Status GitHub: branch integrasi siap di-PR ke `develop`, tetapi `POST /pulls` masih ditolak HTTP 403 karena kredensial tidak memiliki izin `pull_requests: write`. Gate PR (test exact-head, branch-source policy, Gitleaks, Trivy) belum dapat dijalankan sebelum PR ada. Tidak ada secret yang dibuka atau diubah.
@@ -3416,13 +3417,18 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ## 123. REVALIDASI INTEGRASI FRONTEND TERHADAP `develop` TERBARU — 25 NOVEMBER 2026
 
 - Branch `integration/frontend-ux-20261125` menggabungkan `origin/develop` `c9c3a1403b19e5fe52250d0354e03bf7a1af1319` (cloud worker + shared memory) melalui merge commit biasa. Tidak ada push langsung ke `develop` atau `main`.
-- Konflik hanya pada dokumen master: bagian frontend dinomorkan ulang menjadi §117–§122 agar tidak bentrok dengan §111 (cloud worker), §112 (shared memory), dan §113 (Grok charter) yang sudah ada di `develop`. Semua isi dipertahankan; marker konflik dihapus. Tidak ada konflik pada file kode, CSS, atau test.
+- Konflik hanya pada dokumen master: bagian frontend (kecuali sidebar) dinomorkan ulang menjadi §118–§122 agar tidak bentrok dengan §111 (cloud worker), §112 (shared memory), dan §113 (Grok charter) yang sudah ada di `develop`. Semua isi dipertahankan; marker konflik dihapus. Tidak ada konflik pada file kode, CSS, atau test.
 - Pengujian lokal pada HEAD gabungan (Node v24.22.3): `npm test` **208 pass, 0 fail, 0 skipped** (25 file); `git diff --check` bersih. README diselaraskan ke 208/25.
-- PR #106 juga telah direvalidasi terhadap `develop` terbaru: head `8106edbf209a61f01769affc5fb8994c6979d64a`, base `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`, `mergeable=true`; CI exact-head pada HEAD baru masih berjalan. Bagian sidebar pada PR #106 memakai §114; duplikasi dengan §117 akan dikonsolidasikan saat kedua PR masuk `develop`.
+- PR #106 juga telah direvalidasi terhadap `develop` terbaru: head `8106edbf209a61f01769affc5fb8994c6979d64a`, base `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`, `mergeable=true`; CI exact-head pada HEAD baru masih berjalan. Bagian sidebar pada PR #106 memakai §114 dan telah di-merge; duplikat §117 pada branch integrasi dihapus.
 - Hostless Build/LIVE tidak dicek. QA browser/perangkat belum dilakukan. Groq tetap disabled; tidak ada kredensial yang dibuka atau diubah.
 - NEXT TASK: pantau CI exact-head PR #106 dan branch integrasi, selesaikan QA drawer/freshness/PWA pada desktop dan ponsel, lalu masing-masing di-PR ke `develop` hanya setelah seluruh gate lulus. Setelah itu lanjutkan rencana rilis `develop` → `main` untuk cloud worker.
 
 ### Revalidasi ketiga — `develop` `b26d8b4` — 25 November 2026
-- `develop` kembali maju setelah PR #111 (refresh shared-memory handoff) dan charter Grok (§113). Branch integrasi digabung dengan `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`; konflik terjadi hanya pada `RADAR_AI_MASTER_CONTEXT.md` dan `RADAR_AI_SHARED_MEMORY.md`, keduanya disatukan tanpa membuang isi. Bagian frontend tetap §117–§122 (tidak bentrok dengan §113 Grok).
+- `develop` kembali maju setelah PR #111 (refresh shared-memory handoff) dan charter Grok (§113). Branch integrasi digabung dengan `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`; konflik terjadi hanya pada `RADAR_AI_MASTER_CONTEXT.md` dan `RADAR_AI_SHARED_MEMORY.md`, keduanya disatukan tanpa membuang isi. Bagian frontend tetap §118–§122; sidebar mengikuti §114 dari `develop` (tidak bentrok dengan §113 Grok).
 - `RADAR_AI_SHARED_MEMORY.md` ditulis ulang menjadi ringkasan durable terkini (develop b26d8b4, status PR #106/#108–#111, integrasi frontend, batas token untuk PR creation, dan NEXT TASK). Ukuran file tetap di bawah 12 KB.
 - Pengujian lokal pada HEAD gabungan ini tercatat pada commit integrasi berikutnya; tidak ada klaim CI/Hostless/LIVE sebelum diverifikasi terpisah.
+
+### Penutup integrasi — PR #106 merged — 25 November 2026
+- PR #106 (`fix/sidebar-drawer-scroll` → `develop`) berhasil di-merge melalui API GitHub dengan `merge_method=merge`; `merge_commit_sha` `ee53b04d39e51f5f95f88a2c02ff38a30c4cc638`. Sebelum merge: `mergeable=true`, `mergeable_state=clean`, job `test` dan `Branch source policy` sukses pada run `45471504331`, security scans sukses pada run `45471504258`. Status lama "CI masih berjalan" dinyatakan **superseded**.
+- Branch integrasi kembali digabung dengan `develop` `ee53b04`. Duplikat bagian sidebar §117 dihapus; `develop` memakai §114 dari PR #106, sedangkan perubahan frontend lain tetap §118–§122. `RADAR_AI_SHARED_MEMORY.md` diperbarui dengan status PR #106 merged.
+- QA perangkat Android/iOS/desktop untuk drawer **masih belum dilakukan**; merge bukan bukti perilaku gesture benar di perangkat nyata. Hostless Build/LIVE tidak dicek.
