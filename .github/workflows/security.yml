@@ -2,9 +2,9 @@ name: RADAR AI security scans
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   push:
-    branches: [main]
+    branches: [main, develop]
   schedule:
     - cron: "23 2 * * 1"
 
