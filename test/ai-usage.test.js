@@ -96,7 +96,7 @@ test('daily provider counters follow Asia/Jakarta day boundary, not UTC midnight
   const state = emptyUsageState();
   recordProviderUsage(state, 'gemini', {
     ok: true, statusCode: 200,
-    usage: { prompt_tokens: 9, candidatesTokenCount: 4, total_tokens: 13 }
+    usage: { prompt_tokens: 9, completion_tokens: 4, total_tokens: 13 }
   }, new Date('2026-11-24T20:00:00.000Z'));
   const view = getProviderUsageSnapshot(state, { GEMINI_API_KEY: 'configured' }, Date.parse('2026-11-24T20:05:00.000Z'));
   assert.equal(view.providers.gemini.requests_today, 1);
