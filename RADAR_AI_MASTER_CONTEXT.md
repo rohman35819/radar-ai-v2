@@ -3031,3 +3031,12 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 - Deployment metadata tetap UNKNOWN karena GitHub Actions tidak memiliki `HOSTLESS_API_KEY` dan `HOSTLESS_APP_NAME` tidak valid/terkonfigurasi. Karena itu deployed SHA dan kesesuaian deployment dengan main belum dapat diverifikasi; jangan klaim deployment metadata atau Build sukses.
 - Pemulihan storage/readiness LIVE terindikasi berhasil pada probe ini, tetapi status deployment/build dan kestabilan jangka panjang masih harus dipastikan setelah konfigurasi metadata Hostless diperbaiki.
 - NEXT: BOS/maintainer menambahkan read-only Hostless deployments API key dan mengoreksi HOSTLESS_APP_NAME melalui GitHub Actions secrets/variables; jalankan ulang monitor untuk verifikasi deployment ID/status/SHA. Jangan mengirim key melalui chat.
+
+
+## 101. DIVISI 07 — MEMORY IDENTIFIER & INPUT VALIDATION HARDENING (24 NOVEMBER 2026)
+
+- Follow-up review of PR #98 found remaining secret-handling gaps in the merged memory adapter: secret-like values in memory_key/scope_id/source_revision were not scanned, and artifactRefs shape/length validation occurred after secret scanning.
+- Validate memory_key once, validate artifactRefs type/count/element bounds before scanning, then scan memory_key, scope_id, title, summary, content, source_ref, source_revision and every artifact reference before persistence.
+- Added tests for secrets in identifiers/source revisions, malformed/oversized artifact references, and Supabase URL path/query/fragment rejection.
+- No schema/API/production behavior changes beyond stricter rejection of invalid proposals. No production memory activation, credentials, Hostless config, worker, scheduler or trading action.
+- NEXT: exact-head Node tests, PostgreSQL 16 migration/privilege smoke, Gitleaks and Trivy; merge only if all pass.
