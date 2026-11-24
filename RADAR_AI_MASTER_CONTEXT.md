@@ -3212,3 +3212,15 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 **Current implementation note (25 November 2026):** PR #107 contains an earlier version of this policy but is stale/diverged from current `develop` (2 commits behind). This replacement PR re-applies the shared memory and startup rules against current `develop`; do not merge the stale PR #107 as-is. PR #106 remains an independent frontend drawer change with device QA still outstanding. PR #108 and #109 are merged to `develop`; cloud worker code is still not released to `main`, and Groq remains disabled.
 
 **NEXT TASK:** merge this shared-memory policy PR after exact-head checks; then close/supersede stale PR #107. Continue with current master-context NEXT TASK: validate PR #106 against latest develop and complete device/browser QA; prepare the normal release from develop to main for the phone-free worker only after exact-head release checks. Keep Groq disabled until BOS explicitly approves provider usage.
+
+## 113. GROK AUTONOMOUS ENGINEERING CHARTER — 25 NOVEMBER 2026
+
+- Added `GROK.md` as the dedicated startup and operating charter for Grok/xAI assistants contributing to RADAR AI V2.
+- Updated `AGENTS.md` to require Grok sessions to read the shared memory, AGENTS, complete master context and GROK charter before acting, verify live repository/CI state, resume NEXT TASK, perform bounded research/experiments, implement safe work, test, self-review and document.
+- Charter distinguishes Grok (xAI assistant) from Groq (inference provider), keeps provider activation opt-in, and preserves existing cost, secrets, branch, CI, production and financial safety gates.
+- Repository instructions do not automatically configure Grok's client or guarantee it can read GitHub. BOS/Grok workspace must have repository access and a startup/project instruction pointing to these files. No always-on execution is implied.
+- Change scope: documentation/governance only; no runtime code, provider activation, secrets, production data, Hostless deployment or trading behavior changed.
+- Validation: file content checked on the working branch; exact CI status must be checked on the PR head. No application test result is claimed for this documentation-only change.
+- Files changed: `GROK.md` (new), `AGENTS.md`, `RADAR_AI_MASTER_CONTEXT.md`, `RADAR_AI_SHARED_MEMORY.md`.
+
+**NEXT TASK:** verify exact-head branch-source, test and security workflows for the updated documentation PR. After merge, configure Grok's project/custom instructions to read `GROK.md` at every new conversation and verify repository access. Do not claim automatic startup until tested.
