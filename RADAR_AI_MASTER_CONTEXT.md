@@ -3291,3 +3291,15 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Branch `fix/sidebar-drawer-scroll` digabung lagi dengan `origin/develop` `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`. Konflik hanya pada dokumen master; bagian sidebar dinomorkan ulang menjadi §114 agar tidak bentrok dengan §113 (Grok charter). Tidak ada perubahan pada `public/style.css` atau `test/frontend-ui.test.js`.
 - Gate CI telah lolos pada HEAD lama `b3161df` (test, Branch source policy, security scans), tetapi **tidak boleh dipakai untuk HEAD baru**. CI exact-head harus dijalankan ulang setelah push ini sebelum merge dipertimbangkan.
 - Hostless Build/LIVE dan QA perangkat masih belum diverifikasi. Tidak ada kredensial, exchange, trading, atau konfigurasi produksi yang diubah.
+
+---
+
+## 127. VERIFIKASI IZIN API EXCHANGE HUB — 25 NOVEMBER 2026
+
+- Lead: Divisi 03 — Exchange & Trading Systems (dikerjakan otomatis oleh Direktur R&D karena tidak ada penantian divisi). Tidak ada perubahan backend, endpoint order, kredensial, trading, atau withdrawal.
+- Temuan keamanan: `public/trading.js` menganggap `api_permissions.available===true` sebagai bukti read-only. Padahal field tersebut hanya menyatakan endpoint izin merespons; bila field boolean izin tidak dikembalikan, UI tetap mencetak "Izin API Key terverifikasi: ... nonaktif". Ini klaim keamanan yang tidak terbukti.
+- Perbaikan: status read-only hanya dinyatakan bila **semua** field izin relevan secara eksplisit `false` (Binance: spot/futures/withdrawals/internal_transfer/universal_transfer; Bybit: `read_only===true` plus spot/contract/withdrawals/transfers false). Jika tidak, status jadi `IZIN BELUM TERVERIFIKASI`, bukan `READ-ONLY`.
+- Temuan kedua: `new Date(data.checked_at)` tidak divalidasi sehingga bisa merender `Invalid Date` pada panel akun dan ticker. Ditambahkan `formatObserved()` yang menampilkan pesan jujur bila timestamp tidak ada/tidak valid.
+- Pengujian: dua assertion regresi baru di `test/exchange-ui.test.js`. `node --test test/exchange-ui.test.js` 12 pass, 0 fail; `npm test` **198 pass, 0 fail, 0 skipped**; `git diff --check` bersih. README diselaraskan ke 198/25.
+- Risiko: perubahan tampilan/status saja; tidak mengubah keputusan backend dan tidak mengaktifkan order. Verifikasi langsung di dashboard exchange oleh pemilik tetap wajib sebelum menganggap API key aman.
+- NEXT TASK: PR ke `develop`, verifikasi exact-head test/security/branch-source, lalu QA UI Exchange Hub dengan response tanpa field izin untuk memastikan status tidak mengklaim read-only.

@@ -1,6 +1,11 @@
 'use strict';
 const form=document.getElementById('position-form');
 const fmt=n=>Number.isFinite(n)?n.toLocaleString('en-US',{maximumFractionDigits:6}):'—';
+const formatObserved=(value)=>{
+  if(!value)return 'waktu pemeriksaan tidak tersedia dari server';
+  const date=new Date(value);
+  return Number.isFinite(date.getTime())?date.toLocaleString('id-ID'):'waktu pemeriksaan tidak valid';
+};
 const exchangeCopy={
  Binance:{description:'Spot dan USDⓈ-M Futures. Baca saldo dan posisi melalui API read-only server-side.',note:'Kredensial Binance dibaca dari environment server. API Secret tidak pernah dikirim ke browser.'},
  Bybit:{description:'Unified Wallet dan Linear Derivatives. Baca saldo dan posisi melalui API read-only server-side.',note:'Bybit menggunakan signature V5 di server. Kredensial tidak pernah dikirim atau disimpan di browser.'}
@@ -135,7 +140,12 @@ function renderAccount(data){
   apiPermissions.read_only!==true||Boolean(apiPermissions.spot_trading)||Boolean(apiPermissions.contract_trading)||
   Boolean(apiPermissions.withdrawals)||Boolean(apiPermissions.transfers));
  const tradingPermissionEnabled=spotTradingEnabled||futuresTradingEnabled||binanceWithdrawalsEnabled||binanceTransferEnabled||bybitWriteEnabled;
- const permissionUnknown=!permissionCheckAvailable;
+ // "available=true" hanya berarti endpoint merespons. Klaim read-only baru valid
+ // bila setiap field izin yang relevan secara eksplisit bernilai false.
+ const binancePermissionsExplicit=permissionCheckAvailable&&['spot_trading','futures_trading','withdrawals','internal_transfer','universal_transfer'].every(key=>apiPermissions[key]===false);
+ const bybitPermissionsExplicit=permissionCheckAvailable&&apiPermissions.read_only===true&&['spot_trading','contract_trading','withdrawals','transfers'].every(key=>apiPermissions[key]===false);
+ const permissionsExplicit=data.exchange==='bybit'?bybitPermissionsExplicit:binancePermissionsExplicit;
+ const permissionUnknown=!permissionCheckAvailable||!permissionsExplicit;
  const permissionWarning=data.exchange==='bybit'
   ?[apiPermissions.read_only!==true?'API Key tidak read-only':'',apiPermissions.spot_trading?'Spot Trading':'',
     apiPermissions.contract_trading?'Contract Trading':'',apiPermissions.withdrawals?'Withdrawal':'',
@@ -154,7 +164,7 @@ function renderAccount(data){
     :apiPermissions.read_only===true
      ?'Izin API Key Bybit terverifikasi read-only; permission trading, transfer, dan withdrawal tidak terdeteksi.'
      :'Status permission Bybit belum memenuhi kriteria read-only.';
- document.getElementById('account-checked-at').textContent=(permissionStatus?permissionStatus+' ':'')+(bybitPermissionDetails?'Rincian permission Bybit: '+bybitPermissionDetails+'. ':'')+'Terakhir diperiksa: '+new Date(data.checked_at).toLocaleString()+' · RADAR hanya membaca data; tidak ada order, transfer, atau withdrawal.';
+ document.getElementById('account-checked-at').textContent=(permissionStatus?permissionStatus+' ':'')+(bybitPermissionDetails?'Rincian permission Bybit: '+bybitPermissionDetails+'. ':'')+'Terakhir diperiksa: '+formatObserved(data.checked_at)+' · RADAR hanya membaca data; tidak ada order, transfer, atau withdrawal.';
  document.getElementById('account-checked-at').classList.toggle('account-warning',tradingPermissionEnabled||permissionUnknown||!positionsAvailable);
  accountConnected=true;
  refreshAccountButton.disabled=false;
@@ -189,7 +199,7 @@ function renderMarket(data){
  const quote=data.futures||data.spot;
  const entry=document.getElementById('entry');
  if(quote&&quote.last_price>0&&!entry.value)entry.value=String(quote.last_price);
- marketFeedback.textContent='Harga '+data.symbol+' diperbarui · '+new Date(data.checked_at).toLocaleTimeString()+' · data publik.';
+ marketFeedback.textContent='Harga '+data.symbol+' diperbarui · '+formatObserved(data.checked_at)+' · data publik.';
 }
 marketButton.addEventListener('click',async()=>{
  const requestedExchange=activeExchange;

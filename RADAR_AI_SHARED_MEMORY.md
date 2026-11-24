@@ -45,3 +45,5 @@
 2. Rebase/revalidate PR #106 against current develop and complete mobile/browser device QA before merging.
 3. Prepare a normal `develop` → `main` release PR for the cloud worker; verify exact-head release checks. Keep Groq disabled.
 4. After release, run a controlled manual worker test; later design a least-privilege non-production adapter to the existing PostgreSQL queue before any production activation.
+
+- Exchange Hub now treats missing permission fields as "izin belum terverifikasi" instead of claiming read-only; checked_at is validated before display. Isolated branch `fix/exchange-permission-truthfulness`; 198/198 tests pass. No trading/withdrawal change.

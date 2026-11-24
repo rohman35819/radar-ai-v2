@@ -86,3 +86,21 @@ test('Exchange Hub never labels an unverified API key as read-only', () => {
   assert.ok(!js.includes('READ-ONLY / IZIN BELUM TERVERIFIKASI'));
   assert.ok(js.includes('PERINGATAN / PERMISSION API AKTIF'));
 });
+
+test('Exchange Hub hanya mengklaim read-only bila semua field izin bernilai false secara eksplisit', () => {
+  const start = js.indexOf('const apiPermissions=account.api_permissions');
+  assert.ok(start >= 0, 'permission block exists');
+  const source = js.slice(start, start + 2200);
+  assert.match(source, /binancePermissionsExplicit=permissionCheckAvailable&&\[[^\]]+\]\.every\(key=>apiPermissions\[key\]===false\)/);
+  assert.match(source, /bybitPermissionsExplicit=permissionCheckAvailable&&apiPermissions\.read_only===true&&\[[^\]]+\]\.every\(key=>apiPermissions\[key\]===false\)/);
+  assert.match(source, /const permissionUnknown=!permissionCheckAvailable\|\|!permissionsExplicit/);
+  assert.doesNotMatch(source, /const permissionUnknown=!permissionCheckAvailable;/);
+});
+
+test('Exchange Hub tidak menampilkan Invalid Date untuk checked_at yang tidak tersedia', () => {
+  assert.match(js, /const formatObserved=\(value\)=>\{/);
+  assert.match(js, /Number\.isFinite\(date\.getTime\(\)\)/);
+  assert.doesNotMatch(js, /new Date\(data\.checked_at\)\.toLocaleString\(\)/);
+  assert.doesNotMatch(js, /new Date\(data\.checked_at\)\.toLocaleTimeString\(\)/);
+  assert.ok((js.match(/formatObserved\(data\.checked_at\)/g) || []).length >= 2);
+});
