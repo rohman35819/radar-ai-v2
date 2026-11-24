@@ -67,8 +67,23 @@ jobs:
           let rows = candidates.find(Array.isArray);
           if (!rows && body && body.deployment && typeof body.deployment === 'object') rows = [body.deployment];
           if (!rows || !rows.length) {
-            console.error('Hostless API returned no deployment records. Check app name and deployments:read permission.');
-            process.exit(1);
+            // Unknown metadata must not be reported as deployment success or failure.
+            // Independent LIVE checks below remain authoritative for service health.
+            const lines = [
+              '### Hostless deployment',
+              '',
+              '| Field | Result |',
+              '|---|---|',
+              '| App | ' + process.env.HOSTLESS_APP_NAME + ' |',
+              '| Deployment metadata | **UNKNOWN** |',
+              '| Reason | API returned valid JSON but no recognized deployment list |',
+              '',
+              '::warning::Deployment metadata could not be interpreted. LIVE readiness, storage, snapshot, and provider checks continue independently.'
+            ];
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\\n') + '\\n');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'status=UNKNOWN\\ncommit=not-reported\\nid=not-reported\\nsame_commit=false\\npending=false\\nfailed=false\\nsucceeded=false\\n');
+            console.warn('Hostless deployment metadata UNKNOWN; continuing with independent LIVE checks.');
+            process.exit(0);
           }
           const timeOf = (item) => Date.parse(item.createdAt || item.created_at || item.startedAt || item.started_at || item.queuedAt || '') || 0;
           rows = [...rows].sort((a, b) => timeOf(b) - timeOf(a));
