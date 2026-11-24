@@ -23,6 +23,7 @@ let market = null;
 let chartBusy = false;
 let search = '';
 let refreshBusy = false;
+let tickerRequest = 0;
 function changeNode(value) {
   const span = node('span', Number(value) >= 0 ? 'positive' : 'negative', fmtPct(value));
   return span;
@@ -150,12 +151,14 @@ async function loadExchangeTickers() {
   const id = $('#exchange-select').value;
   const body = $('#exchange-tickers');
   if (!id || !body) return;
+  const requestId = ++tickerRequest;
   body.replaceChildren();
   const loading = node('td', 'muted', 'Memuat trading pairs…'); loading.colSpan = 6;
   const row = node('tr'); row.append(loading); body.append(row);
   try {
     const response = await fetch('/api/market-intelligence/exchange-tickers?exchange=' + encodeURIComponent(id), { cache: 'no-store' });
     const result = await response.json();
+    if (requestId !== tickerRequest) return;
     if (!response.ok || result.status !== 'success') throw new Error(result.message || result.code || 'Ticker unavailable');
     const tickers = (result.data?.tickers || []).slice(0, 20);
     body.replaceChildren();
@@ -170,9 +173,14 @@ async function loadExchangeTickers() {
       body.append(tr);
     });
     if (!tickers.length) { const tr = node('tr'); const td = node('td', 'muted', 'Tidak ada pair tersedia.'); td.colSpan = 6; tr.append(td); body.append(tr); }
-    $('#exchange-ticker-status').textContent = tickers.length + ' pair ditampilkan · diperbarui ' + new Date(result.updated_at).toLocaleString('id-ID') + (result.stale ? ' · DATA CACHE LAMA' : '');
+    const observedAt = result.updated_at ? new Date(result.updated_at) : null;
+    const timeText = observedAt && Number.isFinite(observedAt.getTime())
+      ? 'diperbarui ' + observedAt.toLocaleString('id-ID')
+      : 'waktu pembaruan tidak tersedia';
+    $('#exchange-ticker-status').textContent = tickers.length + ' pair ditampilkan · ' + timeText + (result.stale ? ' · DATA CACHE LAMA' : '');
     $('#exchange-select').dataset.loaded = id;
   } catch (error) {
+    if (requestId !== tickerRequest) return;
     body.replaceChildren(); const tr = node('tr'); const td = node('td', 'negative', safeText(error.message)); td.colSpan = 6; tr.append(td); body.append(tr);
     $('#exchange-ticker-status').textContent = 'Data pair belum tersedia; periksa kuota dan akses CoinGecko.';
     $('#exchange-select').dataset.loaded = id;
@@ -243,10 +251,12 @@ function updateStatus() {
   const total = Object.keys(sources).length;
   const ok = Object.values(sources).filter((source) => source.ok).length;
   const stale = Object.values(sources).some((source) => source.stale);
-  $('#status').textContent = total && ok === total ? 'Data terhubung' : ok ? 'Data parsial' : 'Sumber gagal';
-  $('#side-status').textContent = ok + '/' + total + ' sumber aktif';
-  $('#freshness').textContent = stale ? 'DATA SEBAGIAN LAMA' : ok === total ? 'DATA TERHUBUNG' : 'DATA PARSIAL';
-  $('#updated').textContent = 'Pembaruan: ' + new Date(market?.updated_at || Date.now()).toLocaleString('id-ID');
+  const parsed = market?.updated_at ? new Date(market.updated_at) : null;
+  const hasUpdatedAt = Boolean(parsed && Number.isFinite(parsed.getTime()));
+  $('#status').textContent = !total ? 'Menunggu data' : ok === total ? 'Data terhubung' : ok ? 'Data parsial' : 'Sumber gagal';
+  $('#side-status').textContent = total ? ok + '/' + total + ' sumber aktif' : 'Menunggu sumber';
+  $('#freshness').textContent = !total ? 'MENUNGGU DATA' : !hasUpdatedAt ? 'WAKTU TIDAK TERSEDIA' : stale ? 'DATA SEBAGIAN LAMA' : ok === total ? 'DATA TERHUBUNG' : 'DATA PARSIAL';
+  $('#updated').textContent = hasUpdatedAt ? 'Pembaruan: ' + parsed.toLocaleString('id-ID') : 'Waktu pembaruan tidak tersedia dari server';
   const errors = Object.entries(sources).filter(([, value]) => !value.ok).map(([name, value]) => name + ': ' + (value.error || 'unavailable'));
   $('#notice').hidden = !errors.length;
   $('#notice').textContent = errors.length ? 'Sebagian feed tidak tersedia: ' + errors.join(' · ') + '. Data cache lama dapat ditampilkan.' : '';

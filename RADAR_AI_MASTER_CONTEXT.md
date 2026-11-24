@@ -3276,3 +3276,30 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write` (https://github.com/rohman35819/radar-ai-v2/pull/new/feat/dashboard-freshness), verifikasi head memuat `b6a21c35ff231ec216f69a92466b53f460a17eca`, lalu pantau gate test/Gitleaks/Trivy/branch-source policy. Jangan merge sebelum gate lulus.
   2. QA browser: ketik di filter Screener/Early Gems saat auto-refresh 2 menit dan pastikan fokus/kursor tidak hilang; uji kolom token Workspace, toggle, penghapusan setelah request, dan respons 403.
   3. Lanjutkan audit loading/error/empty state pada `market.html`, `solscan.html`, dan `membership.html` memakai pola yang sama tanpa mengubah kontrak backend.
+## 111. MARKET INTELLIGENCE — WAKTU & STATUS JUJUR (25 NOVEMBER 2026)
+
+> Catatan penomoran: bagian 109 (PR #106) dan 110 (branch `feat/dashboard-freshness`) berada pada branch lain yang belum terintegrasi ke `develop`. Rapikan urutan saat integrasi tanpa menghapus isi salah satu bagian.
+
+### Routing dan ruang lingkup
+- Lead: Divisi 02 — UI/UX & Frontend. Branch `fix/market-truthful-state` dari `develop` SHA `4b37426f519ba91483f11a37a0023180134f9c62`.
+- Tidak ada perubahan backend, kontrak API, kredensial, exchange, trading, atau deployment.
+
+### Temuan dan perbaikan
+- `public/market.js` `updateStatus()` memakai `Date.now()` sebagai fallback bila `updated_at` tidak ada, dan mengklaim 'Data terhubung' ketika jumlah sumber nol (`0 === 0`). Keduanya menyajikan waktu/status seolah data aktual. Sekarang: tanpa timestamp menampilkan `WAKTU TIDAK TERSEDIA` / `Waktu pembaruan tidak tersedia dari server`; tanpa sumber menampilkan `Menunggu data` / `MENUNGGU DATA`; timestamp tidak valid terdeteksi dengan `Number.isFinite(parsed.getTime())`.
+- `loadExchangeTickers()` merender `new Date(result.updated_at)` tanpa pengecekan sehingga menghasilkan `Invalid Date` bila field tidak ada; kini memakai teks `waktu pembaruan tidak tersedia`.
+- Race condition: permintaan ticker lama dapat menimpa UI setelah pengguna mengganti exchange. Ditambahkan `tickerRequest` / `requestId`; respons usang diabaikan sebelum menyentuh DOM, baik pada jalur sukses maupun error.
+- `public/market.html`: `aria-label` pada tombol refresh dan `role="status" aria-live="polite"` pada `#notice`.
+
+### Pengujian
+- `node --check public/market.js` lulus; `node --test test/market-ui.test.js` 6 pass, 0 fail; `npm test` **196 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
+- Tiga test regresi baru: larangan `Date.now()` sebagai timestamp dan klaim 'terhubung' saat nol sumber; penolakan respons ticker usang serta teks waktu tidak tersedia; aksesibilitas `#notice` dan tombol refresh.
+- README diselaraskan dari 99/12 menjadi 196/24 test case.
+
+### Status dan NEXT TASK
+- Commit kode: `c0e88a64246bd1801f4ada558e91122d331fc848` (`fix: report truthful market freshness and ignore stale ticker responses`).
+- GitHub: branch belum di-PR karena kredensial yang tersedia tetap menolak `POST /pulls` (HTTP 403 `Resource not accessible by personal access token`). Tautan manual: https://github.com/rohman35819/radar-ai-v2/pull/new/fix/market-truthful-state . Tidak ada secret yang dibuka/diubah.
+- Hostless Build/LIVE: tidak dicek; tidak ada deployment dari perubahan ini. QA browser desktop/mobile belum dilakukan. Ini perubahan source-level yang sudah diuji otomatis, bukan klaim lulus QA visual.
+- NEXT TASK:
+  1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write`, verifikasi head `c0e88a6...`, lalu jalankan gate test/Gitleaks/Trivy/branch-source policy.
+  2. QA browser Market Intelligence: ganti exchange dengan cepat untuk memastikan tabel tidak menampilkan hasil usang; uji respons tanpa `updated_at`.
+  3. Terapkan pola freshness jujur yang sama pada `solscan.html` dan `membership.html`, lalu selesaikan konflik penomoran §109/§110/§111 saat integrasi ke `develop`.
