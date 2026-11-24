@@ -214,5 +214,5 @@ test('failed PR creation attempts to delete the orphaned remote branch', async (
     now: () => new Date('2026-11-24T00:00:00.000Z'),
   }), /PR gagal: permission denied/);
   assert.deepEqual(requests, ['GET', 'POST']);
-  assert.ok(commands.some((command) => command.startsWith('push origin --delete ai-dev/autonomous-')));
+  assert.ok(commands.some((command) => command.startsWith('push origin --delete fix/ai-autonomous-')));
 });
