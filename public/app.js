@@ -180,7 +180,7 @@ function renderAI(){
   usageTarget.replaceChildren(...items.map(item=>{
    const status=item.status||'UNKNOWN';
    const color=status==='ACTIVE'?'positive':(status==='LIMITED'||status==='UNKNOWN'?'warning':'negative');
-   const tokenText=item.total_tokens_today===null?'Token: N/A':('Token hari ini: '+Number(item.total_tokens_today).toLocaleString('id-ID')+' (input '+Number(item.input_tokens_today||0).toLocaleString('id-ID')+' / output '+Number(item.output_tokens_today||0).toLocaleString('id-ID')+')');
+   const tokenText=item.total_tokens_today===null?'Token: N/A':('Token hari ini: '+Number(item.total_tokens_today).toLocaleString('id-ID')+' (input '+(item.input_tokens_today===null?'N/A':Number(item.input_tokens_today).toLocaleString('id-ID'))+' / output '+(item.output_tokens_today===null?'N/A':Number(item.output_tokens_today).toLocaleString('id-ID'))+')');
    const quotaText=item.quota_remaining===null?'Sisa kuota akun: tidak tersedia dari sumber yang terhubung':('Sisa kuota akun: '+item.quota_remaining+(item.quota_limit===null?'':' / '+item.quota_limit));
    const limits=Object.entries(item.rate_limits||{}).map(([k,val])=>k.replace('x-ratelimit-','').replaceAll('-',' ')+': '+val).join(' · ');
    return el('div',{class:'row-between ai-provider-row'},
