@@ -2898,3 +2898,21 @@ Pada setiap siklus dua jam, discovery mencakup:
 3. Dapatkan independent Divisi 05 review concurrency seluruh adapter, FIFO/overflow, timeout/retry, regression coverage, serta AI Council UI.
 4. Jangan merge PR #87 sampai kedua review independen menyatakan lolos dan exact-head checks hijau. Tetap Draft selama gate belum dipenuhi.
 5. Setelah PR #87 ditutup dengan aman, klasifikasikan backlog PR terbuka sesuai WIP policy (maksimal 3 active non-emergency PR) sebelum memulai PR implementasi berikutnya.
+
+## 91. PR #87 — verifikasi regresi AI Workspace dan exact-head CI — 24 November 2026
+
+- Perluasan audit menambahkan tes khusus AI Workspace, bukan hanya adapter chat-completions. Untuk coverage tersebut, `requestCompatible` diekspor dari `lib/ai/workspace.js` sebagai helper internal yang dapat diuji.
+- Commit `f22141926f8d1f83f880b78c6343565579eb0a4b`: slot queue menahan response-body read pada jalur AI Workspace compatible.
+- Commit `f1526bae345216bb2c9679566e69e7bc61c9271d` dan `b0fcd0086e3ccc7db3dae61e3ac9639d089bb704`: menambahkan test akses helper dan membuktikan request ketiga menunggu selama dua response body Workspace belum selesai.
+- Commit `ae08f24aee1f72fc9e49a372a44075113bc24124`: mempertahankan response metadata saat parsing JSON Workspace gagal.
+- Audit tes kemudian menemukan catch handler belum menyalin `error.response` ke variabel response luar. Run `45418385404` pada SHA `761e46a58d8d46920adb83cfd76629eebaf9f7e7` gagal **1 dari 177 test**: status HTTP 200 hilang menjadi null. Kegagalan ini tidak disembunyikan.
+- Commit `5448767610539057f4f3c7cdb0adbe9d03e161e8` memperbaiki propagation response metadata. Commit `f518b06494035e0a8b9ee4a2e1c415cbb49f52ef`, `db7b2707844836fbe9ef7d6587476172b04cb6f9`, dan `761e46a58d8d46920adb83cfd76629eebaf9f7e7` menambahkan klasifikasi dan regression tests untuk malformed HTTP 200 serta metadata Workspace.
+- Exact implementation head `5448767610539057f4f3c7cdb0adbe9d03e161e8`: GitHub Actions test run `45418689793` SUCCESS, **177 passed / 0 failed**. Log secara eksplisit menunjukkan tiga tes queue/body Workspace dan malformed-response classification lulus.
+- Exact-head security run `45418689798` SUCCESS: Gitleaks no leaks; Trivy secret scan no findings. Dependency vulnerability coverage tetap tidak boleh diklaim dari hasil secret scanner.
+- Tes lokal tidak dijalankan; bukti hanya dari GitHub Actions. Perubahan belum dideploy ke Hostless dan tidak ada live claim.
+
+### Status PR dan NEXT TASK
+- PR #87 masih Draft/open/unmerged. Semua perubahan kode, test, README, dan master context tetap pada branch PR; main tidak diubah oleh task ini.
+- Independent Divisi 01 Security dan Divisi 05 QA masih belum mengirim review. Tes hijau dan audit implementer tidak menggantikan dua review independen tersebut.
+- Public endpoint `/api/ai/usage` dan `/api/ai/queue` tetap menjadi item review Security: tentukan apakah counter/status operasional dan rate-limit metadata layak tetap publik atau harus dibatasi.
+- NEXT TASK: verifikasi CI pada exact head setelah pembaruan dokumentasi ini; dapatkan independent Divisi 01/05 review; tutup semua temuan; baru pertimbangkan merge. Tetap Draft sampai seluruh gate terpenuhi. Setelah #87 selesai, klasifikasikan backlog PR terbuka terhadap WIP limit maksimal 3 active non-emergency PR sebelum mengambil PR berikutnya.
