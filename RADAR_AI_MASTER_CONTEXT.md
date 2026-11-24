@@ -3173,3 +3173,39 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Corrected the policy to accept scoped docs/*, chore/*, ci/*, security/*, test/* and refactor/* branches in addition to feat/*, fix/* and exp/* for PRs targeting develop.
 - PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
 - Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
+
+---
+
+## 109. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
+
+### Routing dan tujuan
+- Lead: Divisi 02 — UI/UX & Frontend. QA: Divisi 05 (temporary override aktif; QA browser belum dilakukan).
+- Melanjutkan NEXT TASK §20.4 butir 3–5: swipe hanya menggerakkan `.side-nav`, backdrop/Menu/Escape menutup drawer, konten utama tidak ikut bergeser.
+- Branch isolasi: `fix/sidebar-drawer-scroll` dari `develop` SHA `4b37426f519ba91483f11a37a0023180134f9c62`.
+
+### Akar masalah
+- `public/style.css` memuat dua generasi aturan `.sidebar`: blok lama memberi `overflow-y:auto`, `overscroll-behavior:contain`, dan lebar `min(82vw,300px)`; blok baru memberi `overflow:hidden`, `overscroll-behavior:none`, dan lebar `min(84vw,320px)`.
+- Media query 760px lama juga mendefinisikan ulang `.sidebar` dan `.sidebar.open` (lebar 260px, transisi `.22s`). Aturan lawas menjadi deklarasi mati yang saling bertabrakan dan melemahkan kepemilikan scroll yang tunggal.
+
+### Perubahan
+- `public/style.css`: blok sidebar lawas dan duplikasi aturan drawer pada media 760px dihapus. Tersisa satu blok struktural `.sidebar` sebagai sumber tunggal (`height:100dvh`, `overflow:hidden`, `overscroll-behavior:none`) dengan `.side-nav` sebagai satu-satunya kontainer scroll (`flex:1 1 0`, `min-height:0`, `overflow-y:auto`, `overscroll-behavior-y:contain`, `touch-action:pan-y`). Menambahkan `.main-shell{min-width:0}` pada media mobile. Aturan warna/tema dan lebar responsif yang tidak bertabrakan dipertahankan.
+- `public/index.html` dan `public/app.js`: tidak diubah. Markup backdrop, `aria-controls`/`aria-expanded`, dan pengendali backdrop/Menu/Escape/resize sudah sesuai §20.2 dan kini diverifikasi oleh regression test.
+- `test/frontend-ui.test.js`: dua test baru — tidak ada `.sidebar` dengan `overflow-y:auto`, tepat satu `.sidebar.open`, `.side-nav` memiliki kelima properti scroll, kontrol penutup drawer terikat, dan shell utama tetap fixed. Test menu lama diperluas dengan `early-gems`, `market.html`, dan `solscan.html`.
+- Tidak ada perubahan API/backend/exchange/withdrawal; tidak ada secret dalam diff.
+
+### Pengujian dan commit
+- Commit kode dan tes: `fcbbf8aec65a3fe88fc35e92132e85c71a1fff49` (`fix: consolidate sidebar scroll rules and add drawer regression tests`).
+- `npm test` pada branch ini dengan Node v24.22.3: **195 pass, 0 fail, 0 skipped**.
+- `node --test test/frontend-ui.test.js`: **5 pass, 0 fail**.
+- `git diff --stat` sebelum commit: 2 file diubah, +43/-26.
+- Commit dokumentasi bagian ini: SHA dicatat pada pembaruan status berikutnya.
+
+### Status dan NEXT TASK
+- GitHub: commit lokal pada branch `fix/sidebar-drawer-scroll`; **belum di-push, belum PR, belum merge** ke `develop`/`main`.
+- Hostless Build/LIVE: tidak dicek; **tidak ada deployment**.
+- QA browser/perangkat: **belum dilakukan**. Gesture nyata, scroll chaining iOS/Android, dan kemungkinan pergeseran layout saat `body.sidebar-open{overflow:hidden}` menghilangkan scrollbar masih harus diuji langsung.
+- NEXT TASK:
+  1. Push branch, buka PR ke `develop`, jalankan exact-head CI test/security, lalu integrasi hanya jika seluruh gate lulus.
+  2. QA ponsel: buka Menu, swipe daftar menu sampai item terbawah; pastikan hanya `.side-nav` bergerak; tutup drawer lalu swipe halaman utama; uji backdrop, tombol Menu, dan Escape.
+  3. QA desktop: wheel/trackpad pada daftar menu dan pastikan konten utama tidak ikut bergeser, termasuk saat scroll lock aktif.
+  4. Jika perangkat masih meneruskan gesture, terapkan opsi §20.4 butir 5 (accordion/rail navigasi) tanpa menghapus menu atau fitur.
