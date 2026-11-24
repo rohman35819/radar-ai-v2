@@ -2983,19 +2983,12 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 - NEXT: exact-head npm + PostgreSQL queue + memory smoke + Gitleaks/Trivy, pastikan mergeable=true, lalu merge hanya jika seluruh bukti lulus. Tutup PR #88 sebagai superseded oleh branch terbaru setelah PR pengganti siap.
 
 
-## 98. ATURAN PEMBAGIAN DIVISI & DELEGASI MANDIRI — BOS DIRECTIVE (24 NOVEMBER 2026)
+## 98. DIVISI 07 — MEMORY SECURITY HARDENING BEFORE PR #88 CLOSEOUT (24 NOVEMBER 2026)
 
-**Status: AKTIF.** BOS menegaskan bahwa perkembangan RADAR AI V2 tidak boleh tertahan hanya karena assistant belum mendapat username GitHub, nama reviewer, atau balasan divisi internal. Lead wajib mengatur pembagian pekerjaan sendiri dan menyelesaikan pekerjaan rutin sampai tuntas sesuai gate risiko.
-
-1. **Lead menentukan divisi otomatis.** Petakan tugas ke charter/matriks routing Divisi 01–08 pada section 35. Pilih satu lead division dan supporting divisions yang relevan. Jangan meminta BOS memilih divisi atau mengulang konteks terdokumentasi.
-2. **Delegasi berbasis peran, bukan username.** Gunakan nama/peran Divisi 01–08, bukan akun GitHub personal. Tetapkan checklist Security/QA dan kerjakan pemeriksaan yang tersedia mandiri. Username GitHub tidak diperlukan untuk menetapkan tanggung jawab internal.
-3. **Jangan mengarang identitas atau review.** Jangan menebak/membuat username, meminta review ke akun yang tidak diverifikasi, atau menyatakan review independen tanpa bukti dari pihak/agent/tool terpisah. Jika reviewer manusia wajib untuk high-risk gate dan identitasnya tidak dapat diverifikasi, lanjutkan semua pekerjaan aman dan minta BOS hanya untuk identitas/keputusan yang benar-benar diperlukan.
-4. **Jangan menunggu divisi rutin.** Untuk low/medium-risk, lead melakukan self-review, exact-head CI, security/secret scan, integration checks, mergeability dan rollback assessment. Ketiadaan jawaban Divisi 01/05 bukan alasan membiarkan PR idle selama temporary QA override aktif.
-5. **High-risk tetap memiliki kontrol objektif.** Auth/authorization, privilege, secret handling, production migration, destructive/data-loss, financial/trading, dan irreversible production actions memerlukan focused objective controls serta approval BOS jika disyaratkan. Delegasi tidak menghapus kontrol tersebut.
-6. **Koordinasi lintas divisi.** Satu lead bertanggung jawab; handoff memuat tujuan, file/interface, acceptance criteria, risiko, tes dan keputusan. Hindari concurrent edits pada file yang sama.
-7. **Catatan delivery wajib.** Sebutkan lead/supporting divisions, review yang benar-benar dilakukan, exact SHA/checks, merge/deploy status, risiko tersisa dan satu NEXT TASK. Self-review bukan independent review.
-8. **Kapan meminta BOS.** Hanya untuk keputusan Owner (produksi, credential/permission, biaya berbayar, data destruktif, live trading/financial action), atau identitas reviewer manusia yang benar-benar wajib dan tidak dapat diverifikasi.
-
-**Rekonsiliasi:** aturan ini memperjelas kebijakan otonomi dan temporary QA override. Tidak menghapus quality gate, branch protection, WIP limit, atau larangan produksi. Tidak memberi wewenang membuat identitas palsu, mengubah izin, mengeluarkan biaya, atau menjalankan aksi finansial.
-
-**NEXT TASK:** terapkan pembagian peran secara mandiri pada antrean PR dan lakukan triase sesuai batas WIP; lanjutkan hanya PR berbasis main terbaru yang lolos exact-head checks.
+- The proposal-only memory foundation landed on main at commit `3479e227026cffdaff74a28bbfd20e9ac1bf6e44` while PR #88 remained open. PR #88 therefore requires incremental hardening, not re-merging duplicate foundation files.
+- Hardened adapter rejects Supabase `sb_secret_` keys, JWT-shaped credentials, provider tokens and secret-like values in artifact_refs; Supabase URL is HTTPS-only and rejects embedded credentials, query, hash and path.
+- Proposal/approved retrieval applies retention_until, valid_from and valid_until filters in PostgREST before returning records; confidential records remain excluded.
+- Migration explicitly grants public schema USAGE only to server-side service_role while retaining SELECT/INSERT-only table privileges. Disposable PostgreSQL role models Supabase service_role BYPASSRLS and tests insert/read plus denied UPDATE.
+- Manual Divisi 01/05 review not performed (temporary BOS override); exact-head Node, PostgreSQL migration/privilege smoke, Gitleaks and Trivy remain mandatory.
+- No production Supabase migration, credential, API route, memory activation, Hostless config or deployment.
+- NEXT: validate exact head and merge PR #88 only when GitHub reports mergeable=true and every check succeeds.
