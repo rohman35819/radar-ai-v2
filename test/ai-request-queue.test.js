@@ -134,3 +134,37 @@ test('provider queue holds its slot until the complete response body is consumed
   assert.equal(getAIRequestQueueSnapshot().active, 0);
   assert.equal(getAIRequestQueueSnapshot().pending, 0);
 });
+
+test('AI Workspace holds provider queue slot until response body is consumed', async () => {
+  const { requestCompatible } = require('../lib/ai/workspace');
+  const gates = [deferred(), deferred(), deferred()];
+  let fetchCalls = 0;
+  const payload = {
+    choices: [{ message: { content: JSON.stringify({ observation: 'test', proposals: [], challenge: '', self_critique: '', reply_to_others: '' }) } }]
+  };
+  const fetchImpl = async () => {
+    const index = fetchCalls++;
+    return { ok: true, status: 200, headers: { get: () => null }, json: () => gates[index].promise };
+  };
+  const options = {
+    provider: 'groq', apiKey: 'test-key', baseUrl: 'https://example.invalid',
+    model: 'mock-model', context: {}, fetchImpl, retryDelayMs: 0
+  };
+  const first = requestCompatible(options);
+  const second = requestCompatible(options);
+  await Promise.resolve();
+  await Promise.resolve();
+  const third = requestCompatible(options);
+  await Promise.resolve();
+  assert.equal(fetchCalls, 2);
+  assert.equal(getAIRequestQueueSnapshot().active, 2);
+  assert.equal(getAIRequestQueueSnapshot().pending, 1);
+  gates[0].resolve(payload);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(fetchCalls, 3);
+  gates[1].resolve(payload);
+  gates[2].resolve(payload);
+  await Promise.all([first, second, third]);
+  assert.equal(getAIRequestQueueSnapshot().active, 0);
+  assert.equal(getAIRequestQueueSnapshot().pending, 0);
+});
