@@ -223,3 +223,11 @@ body{
 .gem-validation-line{display:grid;gap:2px;padding-top:5px;border-top:1px solid var(--line)}
 .gem-validation-line>b{color:var(--text)}
 .gem-validation-line>small{font-size:9px}
+
+/* AI Workspace — token admin hanya di memori halaman */
+.workspace-access{align-items:center}
+.workspace-access label{font-size:9px;white-space:nowrap}
+.workspace-access input{flex:2;min-width:180px}
+.workspace-access .mini-btn{width:34px;flex:none}
+.workspace-access button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:760px){.workspace-access{display:flex;flex-wrap:wrap}.workspace-access label{width:100%}.workspace-access input{flex:1 1 100%;min-width:0}.workspace-access .mini-btn,.workspace-access .secondary-btn{flex:none}}
