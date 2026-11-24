@@ -2798,3 +2798,15 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Status CI untuk commit `27129835` masih berjalan saat catatan ini ditulis. Jangan menganggap tes adapter sudah lulus sampai run selesai.
 - Pengujian ini memakai mock fetch; ini bukan bukti bahwa restart proses Hostless sudah diuji. Persistensi lintas restart live masih belum dibuktikan secara langsung.
 - NEXT TASK: pastikan CI commit `27129835` lulus; jika lulus, rancang verifikasi restart yang tidak mengganggu production (mis. deployment/restart terkontrol oleh pemilik atau uji cold-start di environment staging). Setelah itu lanjut audit dashboard data freshness dan Exchange Hub read-only.
+
+
+## 86. Registry pengadaan dan shortlist makro — 24 November 2026 (Asia/Jakarta)
+
+- Membuat docs/procurement-tool-registry-2026-11-24.md untuk registry deduplication dan shortlist provider yang sudah dicek dari dokumentasi/terms resmi.
+- Kandidat paling layak: U.S. Treasury Fiscal Data (tanpa key/akun, gratis, terms memperbolehkan penggunaan komersial), World Bank Indicators API v2 (tanpa key, CC BY 4.0 default tetapi wajib cek lisensi tiap dataset), ECB SDMX (gratis dengan atribusi dan larangan modifikasi statistik/metadata), OECD Data Explorer (gratis; limit 60 downloads/hour; metadata pihak ketiga wajib diperiksa), dan GDELT Project (dataset gratis untuk penggunaan komersial; citation/link wajib; throttle konservatif).
+- Klarifikasi compliance: GDELT Project dan GDELT Cloud adalah layanan berbeda. GDELT Cloud Free hanya untuk personal evaluation dan tidak layak untuk produksi RADAR; jangan tertukar dengan dataset/API GDELT Project.
+- Existing integrations dicatat agar tidak diduplikasi: Binance Futures, CoinGecko/GeckoTerminal, DeFiLlama, DEX Screener, GoPlus, Solscan, RSS.
+- Tidak ada provider baru yang dipasang atau dipanggil ke production. Registry ini merupakan procurement/research handoff untuk Divisi 04/03/01/05.
+- Sumber utama: Treasury API docs + terms; World Bank API v2 + public license; OECD API + 60/hour best practices + terms; ECB SDMX + reuse policy; GDELT Project terms/data docs; GDELT Cloud acceptable-use terms. URL lengkap disimpan di dokumen registry.
+- Commit registry: 4b98d39e28b12d26395c0b906d9bf1d73b5610fb.
+- NEXT TASK: setelah CI terbaru selesai, Divisi 04 memilih seri Treasury/World Bank/ECB/OECD dan membuat adapter terisolasi; Divisi 05 QA; Divisi 01 compliance review. Divisi 08 lanjutkan riset ToS/kuota sumber on-chain dan exchange sebelum perluasan.
