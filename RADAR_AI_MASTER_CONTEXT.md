@@ -3204,10 +3204,10 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Tidak ada data simulasi, angka buatan, atau klaim koneksi aktif tanpa bukti dari field snapshot.
 
 ### Status dan NEXT TASK
-- GitHub: branch `feat/dashboard-freshness`; belum di-push/PR pada saat catatan ini dibuat. PR #106 (sidebar) tetap berdiri sendiri dan tidak di-merge.
+- GitHub: branch `feat/dashboard-freshness` sudah di-push ke origin dengan upstream tracking. PR ke `develop` **belum terbuat**: `POST /pulls` ditolak HTTP 403 `Resource not accessible by personal access token`; izin `pull_requests: write` tidak tersedia pada satu-satunya kredensial, sama seperti kasus PR #106. Tidak ada secret yang dibuka/diubah. Tautan pembuatan manual: https://github.com/rohman35819/radar-ai-v2/pull/new/feat/dashboard-freshness . PR #106 (sidebar) tetap berdiri sendiri dan tidak di-merge.
 - Hostless Build/LIVE: tidak dicek; tidak ada deployment. QA browser desktop/mobile belum dilakukan.
 - NEXT TASK:
-  1. Push branch dan buat PR ke `develop`; verifikasi exact-head test/security dan branch-source policy. Jangan merge sebelum gate lulus.
+  1. Buat PR ke `develop` lewat GitHub UI/token berizin `pull_requests: write` (tautan di atas), lalu verifikasi head SHA PR memuat `47cd00f89b0e74f883ac4e5a44c00ced3e99dc92` (kode+test) dan commit dokumentasi, serta pantau test, Gitleaks/Trivy, dan branch-source policy pada event PR. Jangan merge sebelum gate lulus.
   2. QA browser: status koneksi, umur data, empty/loading/error state, dan atribusi sumber di Ringkasan/Screener/News/Unlock/Alerts pada desktop dan mobile.
   3. Lanjutkan audit fungsi tersisa yang tercatat di §23/§25: Watchlist, Analytics, AI Council/Workspace, System Health, serta PWA cache sesuai perubahan UI ini.
   4. Selesaikan gate PR #106 secara terpisah; koordinasikan penomoran bagian 109/110 saat integrasi ke `develop`.
