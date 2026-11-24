@@ -3031,3 +3031,12 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 - Deployment metadata tetap UNKNOWN karena GitHub Actions tidak memiliki `HOSTLESS_API_KEY` dan `HOSTLESS_APP_NAME` tidak valid/terkonfigurasi. Karena itu deployed SHA dan kesesuaian deployment dengan main belum dapat diverifikasi; jangan klaim deployment metadata atau Build sukses.
 - Pemulihan storage/readiness LIVE terindikasi berhasil pada probe ini, tetapi status deployment/build dan kestabilan jangka panjang masih harus dipastikan setelah konfigurasi metadata Hostless diperbaiki.
 - NEXT: BOS/maintainer menambahkan read-only Hostless deployments API key dan mengoreksi HOSTLESS_APP_NAME melalui GitHub Actions secrets/variables; jalankan ulang monitor untuk verifikasi deployment ID/status/SHA. Jangan mengirim key melalui chat.
+
+
+## 100. DIVISI 07 — MEMORY SECURITY HARDENING, EXACT-MAIN PORT (24 NOVEMBER 2026)
+
+- Incremental hardening from superseded PR #98 ported onto the current main after its source branch diverged. Only adapter and unit-test changes are unique; SQL migration, PostgreSQL smoke and workflow already exist on main from the previous foundation/hardening port.
+- Adapter rejects Supabase sb_secret_, JWT-shaped credentials, provider tokens and secret-like content across memory keys, scope IDs, source revisions, content and bounded artifact refs. Supabase URL requires HTTPS and rejects credentials/path/query/hash.
+- Proposal/approved retrieval filters retention expiry and valid_from/valid_until at database query. SQL schema USAGE, SELECT/INSERT-only service_role and PostgreSQL BYPASSRLS/denied-UPDATE smoke are already in current main.
+- No production migration, credentials, API route, frontend, Hostless config, memory activation, worker/scheduler or trading action. Manual Divisi 01/05 review not performed (temporary override); exact-head tests/security remain mandatory.
+- NEXT: run exact-head npm and security checks, verify main compatibility and mergeability, merge only if all checks pass.
