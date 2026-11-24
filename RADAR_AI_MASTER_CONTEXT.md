@@ -3173,3 +3173,34 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Corrected the policy to accept scoped docs/*, chore/*, ci/*, security/*, test/* and refactor/* branches in addition to feat/*, fix/* and exp/* for PRs targeting develop.
 - PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
 - Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
+
+
+## 109. HANDOFF PERANGKAT PEMILIK & INTEGRASI GROQ VIA TERMUX — 25 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### Fakta konteks pengguna yang harus dipakai lintas obrolan
+- Pemilik menggunakan **HP Android dan Termux sudah terpasang**. Jangan menanyakan lagi apakah Termux sudah tersedia; lanjutkan dari Termux.
+- Tujuan pemilik: menghubungkan Groq AI dengan GitHub repository RADAR AI V2 agar coding agent dapat membaca, membantu mengelola, dan mengerjakan perubahan proyek.
+- Pemilik memilih jalur Termux di Android; jangan mengasumsikan tersedia laptop, VS Code desktop, atau Roo Code desktop.
+- Pada percakapan 24 November, pemilik menyatakan Groq API Key lama tidak disimpan. Asisten menyarankan membuat API key baru khusus, misalnya bernama `RADAR-AI-DEVELOPER`. **Pemilik belum mengonfirmasi bahwa key baru sudah berhasil dibuat.** Jangan meminta atau menerima nilai key melalui chat.
+- Termux telah tersedia, tetapi status paket `git`, `nodejs-lts`, `python`, status clone repository, autentikasi GitHub, dan konfigurasi agent belum diverifikasi. Jangan menganggap instalasi/perintah sebelumnya sudah dijalankan.
+
+### Keamanan integrasi
+- API key Groq harus disimpan lokal secara aman di perangkat/secret store, bukan di chat, GitHub repository, source code, frontend, log, screenshot, atau dokumentasi.
+- Jangan menaruh key di argumen perintah yang dapat tersimpan di shell history. Pilih input interaktif atau metode secret lokal yang aman.
+- GitHub authentication gunakan metode least-privilege; jangan meminta pemilik menempelkan PAT/token ke chat.
+- Coding agent mulai dari inspeksi/read-only. Perubahan kode wajib di branch terisolasi dan PR mengikuti governance `develop`; jangan melakukan direct push ke `main`.
+- Agent wajib membaca `RADAR_AI_MASTER_CONTEXT.md` dan `AGENTS.md`, memeriksa branch/commit terkini, mempertahankan fitur, menjalankan tes, memeriksa diff dan secret scan sebelum PR.
+- Jangan menghubungkan agent ke production secrets, Hostless production environment, database produksi, atau tindakan trading/finansial. Tidak ada auto-merge/deploy/trading tanpa gate yang berlaku.
+- Integrasi lokal via Termux tidak berarti agent bekerja terus-menerus di background/cloud. Klaim always-on hanya boleh dibuat jika scheduler, worker, durable queue/state, audit, permission gateway, budget/quota controls, dan kill switch benar-benar diimplementasikan serta diuji.
+
+### Status dan langkah lanjutan onboarding
+1. Lanjutkan percakapan berikutnya dengan mengakui bahwa Termux di Android sudah tersedia.
+2. Verifikasi kondisi Termux dengan perintah pemeriksaan yang aman; instal hanya paket yang belum ada.
+3. Konfirmasi apakah Groq API key khusus sudah dibuat tanpa meminta nilainya. Jika belum, pandu pembuatan key di Groq Console.
+4. Pilih coding agent/CLI yang pada versi saat itu mendukung provider Groq dan berjalan di Termux/Android. Verifikasi dokumentasi dan kompatibilitas aktual sebelum memberi perintah instalasi; jangan mengasumsikan Roo Code desktop berjalan native di Termux.
+5. Siapkan autentikasi GitHub yang aman, clone repository, lalu audit dokumentasi dan status repo sebelum agent diberi izin mengedit.
+6. Uji agent pada tugas dokumentasi atau perubahan kecil di branch terisolasi terlebih dahulu. Jangan mengaktifkan otomasi GitHub Actions yang memiliki akses tulis/production sebelum permission, approval, budget, audit, dan kill switch jelas.
+
+**NEXT TASK KHUSUS ONBOARDING GROQ:** lanjutkan dari Termux yang sudah ada; pastikan status API key baru (tanpa melihat/menyimpan nilainya), lalu verifikasi opsi coding agent CLI yang kompatibel dengan Termux dan Groq. Jangan mengulang pertanyaan apakah pengguna memiliki Termux.
+
+**Batas bukti sesi ini:** belum ada perintah yang dijalankan pada perangkat Termux, belum ada API key yang dikonfirmasi dibuat/diuji, belum ada coding agent yang terpasang/terhubung, dan belum ada perubahan runtime RADAR AI. Catatan ini hanya handoff dokumentasi.
