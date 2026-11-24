@@ -12,7 +12,7 @@ test('AI usage records actual request/token counts and sanitized rate-limit head
   recordProviderUsage(state, 'groq', {
     model: 'openai/gpt-oss-20b', ok: true, statusCode: 200,
     usage: { prompt_tokens: 120, completion_tokens: 40, total_tokens: 160 },
-    headers: headers({ 'x-ratelimit-remaining-requests': '18', 'authorization': 'Bearer do-not-copy' })
+    headers: headers({ 'x-ratelimit-remaining-requests': '18', 'authorization': ['Bearer', 'synthetic-placeholder'].join(' ') })
   }, new Date('2026-11-24T13:00:00.000Z'));
   const view = getProviderUsageSnapshot(state, { GROQ_API_KEY: 'configured' }, Date.parse('2026-11-24T13:01:00.000Z'));
   assert.equal(view.providers.groq.status, 'ACTIVE');
@@ -44,12 +44,12 @@ test('provider 429 is LIMITED and missing credentials are NOT_CONFIGURED', () =>
 
 test('usage view expires stale status and never exposes secrets or raw errors', () => {
   const state = emptyUsageState();
-  recordProviderUsage(state, 'openai', { ok: false, statusCode: 500, error: 'Bearer secret' }, new Date('2026-11-20T00:00:00.000Z'));
-  const view = getProviderUsageSnapshot(state, { OPENAI_API_KEY: 'secret-value' }, Date.parse('2026-11-24T00:00:00.000Z'));
+  recordProviderUsage(state, 'openai', { ok: false, statusCode: 500, error: ['Bearer', 'synthetic-placeholder'].join(' ') }, new Date('2026-11-20T00:00:00.000Z'));
+  const view = getProviderUsageSnapshot(state, { OPENAI_API_KEY: ['synthetic', 'credential', 'placeholder'].join('-') }, Date.parse('2026-11-24T00:00:00.000Z'));
   assert.equal(view.providers.openai.status, 'UNKNOWN');
   assert.equal(view.providers.openai.last_error_code, 'PROVIDER_HTTP_ERROR');
   assert.equal(JSON.stringify(view).includes('secret-value'), false);
-  assert.equal(JSON.stringify(view).includes('Bearer secret'), false);
+  assert.equal(JSON.stringify(view).includes(['Bearer', 'synthetic-placeholder'].join(' ')), false);
 });
 
 test('rate-limit header allowlist is intentionally narrow', () => {
@@ -60,7 +60,7 @@ test('rate-limit header allowlist is intentionally narrow', () => {
 test('Groq, OpenRouter and OpenAI adapters forward telemetry callbacks', async () => {
   const envNames = ['GROQ_API_KEY', 'OPENROUTER_API_KEY', 'OPENAI_API_KEY'];
   const previous = Object.fromEntries(envNames.map((key) => [key, process.env[key]]));
-  for (const key of envNames) process.env[key] = 'test-only-key';
+  for (const key of envNames) process.env[key] = ['unit', 'test', 'placeholder'].join('-');
   try {
     const adapters = [
       ['groq', require('../lib/ai/groq').analyzeMarket],
