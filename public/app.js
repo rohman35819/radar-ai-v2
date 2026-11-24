@@ -171,6 +171,24 @@ function renderAlerts(){
 function renderAI(){
  const v=$('#view');v.replaceChildren();const g=aiGroup?.last;
  v.append(sectionHead('AI Council','Empat model memberikan perspektif terpisah. Hasil adalah analisis, bukan instruksi transaksi.'));
+ const usageTarget=el('div',{class:'ai-provider-usage'},el('p',{class:'muted'},'Memuat status provider…'));
+ v.append(card(sectionHead('Kondisi & Pemakaian Provider','Data pemanggilan RADAR dan rate-limit yang benar-benar teramati; bukan perkiraan kuota akun.'),usageTarget));
+ fetch('/api/ai/usage',{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status))).then(payload=>{
+  const items=Object.values(payload?.usage?.providers||{});
+  const labels={gemini:'Gemini',groq:'Groq',openrouter:'OpenRouter',openai:'OpenAI'};
+  const statusText={ACTIVE:'PANGGILAN TERAKHIR BERHASIL',LIMITED:'RATE LIMIT',ERROR:'PANGGILAN TERAKHIR GAGAL',UNKNOWN:'BELUM ADA DATA',NOT_CONFIGURED:'BELUM DIKONFIGURASI'};
+  usageTarget.replaceChildren(...items.map(item=>{
+   const status=item.status||'UNKNOWN';
+   const color=status==='ACTIVE'?'positive':(status==='LIMITED'||status==='UNKNOWN'?'warning':'negative');
+   const tokenText=item.total_tokens_today===null?'Token: N/A':('Token hari ini: '+Number(item.total_tokens_today).toLocaleString('id-ID')+' (input '+Number(item.input_tokens_today||0).toLocaleString('id-ID')+' / output '+Number(item.output_tokens_today||0).toLocaleString('id-ID')+')');
+   const quotaText=item.quota_remaining===null?'Sisa kuota akun: tidak tersedia dari sumber yang terhubung':('Sisa kuota akun: '+item.quota_remaining+(item.quota_limit===null?'':' / '+item.quota_limit));
+   const limits=Object.entries(item.rate_limits||{}).map(([k,val])=>k.replace('x-ratelimit-','').replaceAll('-',' ')+': '+val).join(' · ');
+   return el('div',{class:'row-between ai-provider-row'},
+    el('div',{},el('b',{},labels[item.provider]||item.provider),el('small',{class:'muted'},item.configured?'Key terkonfigurasi':'Key tidak terdeteksi'),el('p',{class:'muted'},'Request RADAR hari ini: '+Number(item.requests_today||0).toLocaleString('id-ID')+' · '+tokenText),el('small',{class:'muted'},quotaText),limits?el('small',{class:'muted'},'Rate limit: '+limits):null,el('small',{class:'muted'},'Terakhir: '+(item.last_request_at?dateTime(item.last_request_at):'belum pernah'))),
+    el('span',{class:color},statusText[status]||status));
+  }));
+  if(!items.length)usageTarget.append(el('p',{class:'muted'},'Data provider belum tersedia.'));
+ }).catch(()=>usageTarget.replaceChildren(el('p',{class:'warning'},'Status provider belum dapat dimuat.')));
  if(!g)return v.append(empty('Belum ada rapat AI','Laporan grup dijadwalkan pukul 09.00 WIB jika server dan API aktif.'));
  v.append(card(el('div',{class:'row-between'},el('div',{},el('div',{class:'eyebrow'},'COUNCIL DECISION'),el('h2',{},'Keputusan kolektif')),el('span',{class:'decision '+String(g.final?.decision||'WAIT').toLowerCase()},g.final?.decision||'WAIT')),el('p',{},g.final?.summary||'Tidak ada ringkasan.'),el('div',{class:'stats-grid compact'},statCard('KEYAKINAN',(g.final?.confidence_score??0)+'/100','Skor dari moderator','◉'),statCard('ANGGOTA VALID',(g.analyses||[]).filter(a=>!a.error).length+'/4','Respons provider','✳')),el('small',{class:'muted'},dateTime(g.created_at)+' · '+esc(g.status))));
  (g.analyses||[]).forEach(a=>v.append(card(el('div',{class:'row-between'},el('b',{},esc(a.provider).toUpperCase()),el('span',{class:a.error?'negative':'positive'},a.error?'ERROR':esc(a.decision||'REVIEW'))),a.error?el('p',{class:'negative'},a.error):el('p',{},esc(a.summary)),...(a.reasons||[]).map(x=>el('p',{class:'muted'},'• '+x)),...(a.risks||[]).map(x=>el('span',{class:'flag'},x)))));
