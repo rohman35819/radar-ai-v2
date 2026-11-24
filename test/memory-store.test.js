@@ -137,3 +137,10 @@ test('memory retrieval excludes expired and not-yet-valid records at the databas
   assert.match(validity, /valid_from\.is\.null/);
   assert.match(validity, /valid_until\.is\.null/);
 });
+
+test('memory proposals reject Supabase secret keys and JWT credentials', () => {
+  assert.throws(() => validateProposal({ ...sample, content: 'sb_secret_1234567890abcdefghijklmnop' }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+  assert.throws(() => validateProposal({ ...sample, artifactRefs: ['eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.signaturevalue123'] }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+});
