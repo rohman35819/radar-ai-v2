@@ -3143,3 +3143,33 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - `main` and `develop` both contain the governance policy. The bootstrap is merged; it does not mean multi-agent workers, worktrees, independent AI reviewer, SemVer release automation, deployment rollback or autonomous health rollback are active. Those remain staged implementation tasks.
 
 **NEXT TASK:** configure and verify GitHub branch protection/rulesets for `main` and `develop`; then implement the AI task orchestrator and independent review gate on top of the now-established branch/CI foundation. Separately investigate Hostless deployment metadata/status failure while preserving the successful LIVE probes.
+
+
+## 107. AUTONOMOUS SAFE EXECUTION & MERGE AUTHORITY — BOS DIRECTIVE (24 NOVEMBER 2026)
+
+**Status: ACTIVE; supersedes older blanket-approval wording.** BOS instructs AI contributors not to pause for approval on every routine engineering decision. The default is autonomous action when the change is safe and advances RADAR AI V2.
+
+- AI may independently implement features, fix bugs, improve dashboard/UX, refactor safely, add tests/docs/monitoring, research free tools, create branches/PRs, resolve routine conflicts, and merge validated routine low/medium-risk PRs.
+- Routine PRs do not require BOS or divisional human approval by default. Merge promptly when PR is mergeable, current with target, exact-head applicable tests/security/integration checks pass, self-review is complete, and rollback/recovery is understood. Do not allow completed safe work to accumulate waiting for a human response.
+- Keep PR-first integration and required checks. This is permission to merge through normal PR flow, not permission to bypass failed/missing/stale checks or weaken branch protection.
+- AI may merge routine PRs to develop and routine release PRs from develop to main without separate BOS approval once the relevant exact-head gates, compatibility and rollback checks pass. Routine hotfix PRs follow focused equivalent gates.
+- Escalate only for actual high-impact authorization boundaries: paid spend/service activation; production credential exposure/rotation/access changes; repository/admin permission changes or weakening security controls; destructive/irreversible production data operations; materially risky production DB migrations; live trading, withdrawals, financial execution or movement of user funds; and other irreversible production actions without a safe rollback.
+- Work on isolated code, tests, documentation, safe migrations in disposable environments, and proposals may continue while a gated production action awaits authorization. Do not block unrelated work.
+- Low/medium-risk work is autonomous by default. High-risk work may be developed and tested in isolation; do not activate unsafe production behavior. A code merge that leaves a feature disabled/proposal-only may proceed only if it cannot cause unsafe production side effects and objective checks pass.
+- The 3-PR WIP limit is a planning aid, not a blanket prohibition. Prioritize closing/merging safe ready work and reusing matching PRs.
+- This policy does not create always-on/offline workers. Continuous autonomy requires a verified scheduler, durable queue/state, worker runtime, audit, permission gateway, budget/quota limits, kill switch and operational tests.
+- Record rationale, risk classification, exact SHA, test/security evidence, rollback and deployment/LIVE status. Never claim deployment or LIVE verification from a GitHub merge alone.
+
+**Supersession note:** Older blanket wording that requires BOS approval for every routine change or merge is superseded. Existing hard boundaries for secrets, spending, permission/security changes, destructive production actions and live financial/trading actions remain active.
+
+**Implementation record:** Policy documentation only at this stage. It does not change GitHub Rulesets, grant new repository permissions, or create an always-on agent runtime. BOS is separately configuring GitHub Rulesets; verify actual enforcement before claiming branch protection is active.
+
+**NEXT:** Complete the GitHub Rulesets configuration for main and develop with required test and security checks, then verify the actual status-check names and merge behavior. Continue implementing the task orchestrator so multiple AI contributors can work in isolated branches without overlapping writes.
+
+
+## 108. BRANCH SOURCE POLICY CLARIFICATION (24 NOVEMBER 2026)
+
+- The first branch-source policy allowed only feat/*, fix/* and exp/* into develop. That blocked legitimate documentation/governance PR #104 before test execution completed.
+- Corrected the policy to accept scoped docs/*, chore/*, ci/*, security/*, test/* and refactor/* branches in addition to feat/*, fix/* and exp/* for PRs targeting develop.
+- PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
+- Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
