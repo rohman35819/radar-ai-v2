@@ -15,6 +15,7 @@ const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
 const { emptyUsageState, recordProviderUsage, getProviderUsageSnapshot } = require('./lib/ai/usage');
+const { getAIRequestQueueSnapshot } = require('./lib/ai/request-queue');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
@@ -307,6 +308,9 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             tokens: st.tokens.map((t) => ({ ...t, fundamental: st.fundamentals[t.id] || null, vol10m: (st.vol10m || {})[t.id] || null })), exchange: st.exchStats || null, news: st.news, unlocks: st.unlocks, alerts: st.alerts.slice(0, 50), early_gems: Array.isArray(st.earlyGems) ? st.earlyGems : [], early_gems_meta: st.earlyGemsMeta || null,
             config_needed: { telegram: !(cfg.tgToken && cfg.tgChat), coingecko_key: !cfg.cgKey, onchain_key: !cfg.cgKey, early_gems_enabled: cfg.earlyGemsEnabled !== false, onchain_refresh_min: cfg.onchainRefreshMin || 60, goplus_enabled: Boolean(process.env.GOPLUS_ACCESS_TOKEN || (process.env.GOPLUS_APP_KEY && process.env.GOPLUS_APP_SECRET)), goplus_usage: { day_count: Number(st.goplusUsage?.day_count || 0), month_count: Number(st.goplusUsage?.month_count || 0), daily_limit: 1000, monthly_limit: 5000 }, unlock_source: !cfg.unlocksUrl && !st.unlocks.length } },
           'application/json', { 'cache-control': 'public, max-age=30' });
+        }
+        if (url.pathname === '/api/ai/queue' && req.method === 'GET') {
+          return send(res, 200, { status: 'success', queue: getAIRequestQueueSnapshot() }, 'application/json', { 'cache-control': 'no-store' });
         }
         if (url.pathname === '/api/ai/usage' && req.method === 'GET') {
           return send(res, 200, { status: 'success', usage: getProviderUsageSnapshot(st.aiUsage) }, 'application/json', { 'cache-control': 'no-store' });
