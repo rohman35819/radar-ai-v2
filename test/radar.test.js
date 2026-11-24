@@ -286,7 +286,7 @@ test('Supabase storage: snapshot can be written and restored through REST adapte
       row = JSON.parse(options.body);
       return { ok: true, status: 201, json: async () => [] };
     }
-    assert.equal(options.method, undefined);
+    assert.equal(options.method, 'GET');
     return { ok: true, status: 200, json: async () => row ? [row] : [] };
   };
   try {
