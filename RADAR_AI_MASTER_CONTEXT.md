@@ -3173,3 +3173,22 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Corrected the policy to accept scoped docs/*, chore/*, ci/*, security/*, test/* and refactor/* branches in addition to feat/*, fix/* and exp/* for PRs targeting develop.
 - PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
 - Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
+
+
+## 111. CLOUD AUTONOMOUS WORKER PILOT — 25 NOVEMBER 2026
+
+**Status: implementation prepared in PR; not yet merged/released or verified active.**
+
+- BOS requested a cloud-based autonomous worker so Android/Termux does not need to remain open and drain the phone battery.
+- Audit found an existing GitHub Actions workflow scheduled every two hours plus a narrowly scoped autonomous patch worker. It currently uses OpenRouter Free only, checks one outstanding agent Draft PR, validates a patch against a three-file allowlist, runs `npm test`, and opens a Draft PR. It is not a continuously running process.
+- Audit found PostgreSQL Agent Platform migrations `001_agent_platform.sql` and `002_queue_operations.sql` already define registry, durable queue, leases/heartbeat/retry, audit, approvals and pause/kill switch. They are not active: platform defaults paused/kill=true; worker concurrency=1; daily budget USD 0; control/queue functions are revoked from service_role and runtime roles. No production DB worker credentials or grants were added.
+- PR branch `fix/cloud-autonomous-worker-groq` hardens the cloud worker: opt-in Groq provider support, default-off `GROQ_AUTONOMOUS_ENABLED`, explicit OpenRouter Free-only fallback, checkout from `develop`, and Draft PRs targeting `develop` with a `fix/*` branch (instead of the previous policy-incompatible `ai-dev/*` → `main` route).
+- Added `docs/AUTONOMOUS_AGENT_RUNTIME.md` describing staged rollout, queue security, operational limits, activation gates and rollback.
+- Groq activation is deliberately NOT enabled by this change. GitHub Actions secret `GROQ_API_KEY` and repository variable `GROQ_AUTONOMOUS_ENABLED=1` must only be configured after BOS reviews quota/billing and explicitly authorizes activation. No paid service or VPS was provisioned.
+- Phone/Termux can be off while a GitHub-hosted scheduled job runs. The worker runs only on its schedule/manual dispatch; it is not 24/7 between runs. A workflow present only on develop does not run on schedule until it reaches default branch main.
+- Files: `lib/ai/autonomous-agent.js`, `test/autonomous-agent.test.js`, `.github/workflows/autonomous-development.yml`, `docs/AUTONOMOUS_AGENT_RUNTIME.md`, this master context.
+- Tests/security: pending exact-head GitHub Actions for this PR; no local Node environment was available in this session.
+- Hostless Build/LIVE: not changed and not re-verified; no production deployment is claimed.
+- Rollback: revert the worker PR; set `AUTONOMOUS_AGENT_ENABLED=0` to pause the scheduled worker or `GROQ_AUTONOMOUS_ENABLED=0` to disable Groq.
+
+**NEXT TASK:** wait for exact-head test/security CI on the cloud-worker PR; review its diff and any failures. After merge to develop, run the worker manually in a controlled low-risk test; release the workflow to main only through the normal release PR. Keep Groq disabled until BOS explicitly authorizes provider usage. Then implement a least-privilege queue adapter against the existing PostgreSQL schema in a non-production test environment before considering any production activation.
