@@ -30,7 +30,8 @@ jobs:
           node-version: "20"
       - name: Run guarded autonomous worker
         env:
-          AUTONOMOUS_AGENT_ENABLED: ${{ vars.AUTONOMOUS_AGENT_ENABLED || '0' }}
+          # Enabled by default; an explicit repository variable set to "0" still disables it.
+          AUTONOMOUS_AGENT_ENABLED: ${{ vars.AUTONOMOUS_AGENT_ENABLED || '1' }}
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
