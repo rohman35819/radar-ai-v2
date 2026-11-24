@@ -2999,3 +2999,13 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 **Rekonsiliasi:** aturan ini memperjelas kebijakan otonomi dan temporary QA override. Tidak menghapus quality gate, branch protection, WIP limit, atau larangan produksi. Tidak memberi wewenang membuat identitas palsu, mengubah izin, mengeluarkan biaya, atau menjalankan aksi finansial.
 
 **NEXT TASK:** terapkan pembagian peran secara mandiri pada antrean PR dan lakukan triase sesuai batas WIP; lanjutkan hanya PR berbasis main terbaru yang lolos exact-head checks.
+
+## 99. DIVISI 07 — MEMORY SECURITY HARDENING AFTER FOUNDATION MERGE (24 NOVEMBER 2026)
+
+- The proposal-only memory foundation landed on main at commit `3479e227026cffdaff74a28bbfd20e9ac1bf6e44` while PR #88 remained open. PR #88 therefore requires incremental hardening, not re-merging duplicate foundation files.
+- Hardened adapter rejects Supabase `sb_secret_` keys, JWT-shaped credentials, provider tokens and secret-like values in artifact_refs; Supabase URL is HTTPS-only and rejects embedded credentials, query, hash and path.
+- Proposal/approved retrieval applies retention_until, valid_from and valid_until filters in PostgREST before returning records; confidential records remain excluded.
+- Migration explicitly grants public schema USAGE only to server-side service_role while retaining SELECT/INSERT-only table privileges. Disposable PostgreSQL role models Supabase service_role BYPASSRLS and tests insert/read plus denied UPDATE.
+- Manual Divisi 01/05 review not performed (temporary BOS override); exact-head Node, PostgreSQL migration/privilege smoke, Gitleaks and Trivy remain mandatory.
+- No production Supabase migration, credential, API route, memory activation, Hostless config or deployment.
+- NEXT: run exact-head Node tests, disposable PostgreSQL queue + memory smoke, Gitleaks and Trivy on this replacement PR; merge only after all checks pass and GitHub reports mergeable=true.
