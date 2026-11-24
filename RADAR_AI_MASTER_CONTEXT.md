@@ -2773,3 +2773,72 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Aktivasi workflow pada `main` terkonfigurasi, tetapi eksekusi pertama dan pembuatan PR belum terbukti. Verifikasi workflow run setelah jadwal berikutnya atau dispatch manual melalui GitHub Actions UI.
 - Hard cost gate: pertahankan hanya model router eksplisit free; hentikan jika provider meminta pembayaran/credit atau menampilkan biaya. Tidak ada auto-merge/deploy.
 - NEXT TASK: verifikasi Actions run pertama, secret availability tanpa menampilkan nilainya, output/log worker, dan hasil draft PR; lalu Divisi 01/05 audit independen sebelum perluasan scope.
+
+
+## 84. Siklus Direktur Operasional — 24 November 2026 (19:15 Asia/Jakarta)
+
+### Repository dan CI aktual
+- Branch `main`; HEAD `6bb67f5e2bd0161f7dee435895c7a32262f559ce`, message `docs(agent): record autonomous worker activation and verification gates`.
+- Urutan perubahan terbaru: PR #81 digabung pada `6e2dc1defcff19189cbf455ea25be8c4d71eca6a`; aktivasi worker default dilakukan pada `65d7650ddb9d98e52c24f7f7c8a89e333c7d1979`; catatan aktivasi ditambahkan pada HEAD sekarang.
+- Main Test run ID `45390120192` pada HEAD sekarang: completed / success.
+- Main Security run ID `45390120015` pada HEAD sekarang: completed / success. Ini bukti CI, bukan pengganti review manual Divisi 01.
+- Hostless deployment monitor run ID `45390120197` pada HEAD sekarang: completed / failure. Build status dan deployed LIVE SHA belum terbukti.
+- Probe langsung dari lingkungan audit gagal pada resolusi DNS Hostless; itu batasan jaringan lingkungan audit, bukan bukti domain Live mati.
+- Tidak ada test lokal pada siklus ini; status test/security di atas berasal dari GitHub Actions exact HEAD.
+
+### DATA_DIR / EROFS — tetap P0
+- `lib/ingest.js` pada main masih memakai `path.resolve(env('DATA_DIR', './data'))`; `save()` membuat direktori, menulis `state.json.tmp`, lalu rename ke `state.json`.
+- Belum ada writable preflight atau default path Hostless yang aman/persisten. `load()` hanya menganggap `ENOENT` sebagai instalasi baru dan melempar error baca lain; ini mencegah reset state diam-diam tetapi tidak memperbaiki root filesystem read-only.
+- Bukti EROFS spesifik terakhir tetap pada bagian 21–22 dan catatan PR #74. Monitor terkini gagal, tetapi log rinci tidak tersedia di audit ini; jangan mengklaim run terkini pasti EROFS tanpa log.
+- Keputusan storage tetap menunggu BOS: `DATA_DIR=/tmp/radar-ai-v2` gratis namun ephemeral; `DATA_DIR=/data` membutuhkan volume persisten dan verifikasi biaya. Tidak ada Hostless env/secret/volume/data produksi yang diubah.
+
+### Dashboard dan Exchange Hub
+- PR #77 visual refresh masih Draft/open, 5 ahead / 4 behind; diff hanya `public/style.css`, `public/sw.js`, `test/service-worker.test.js`. Belum ada bukti browser QA desktop/mobile. PR #6 sudah closed tanpa merge.
+- Issue #82 tetap backlog dashboard daily evolution dan procurement discovery. Tidak ada dashboard runtime update atau discovery worker yang terbukti berjalan.
+- PR #59 Binance Futures sudah merged (23 November); PR #60 DEX Screener closed tanpa merge. Jangan menyimpulkan integrasi DEX Screener hanya dari status PR; verifikasi file/route di main saat task terkait.
+- Exchange Hub harus tetap read-only/simulasi sampai private-account connection diverifikasi. Belum ada bukti browser QA penuh untuk tab Binance/Bybit, error/empty/loading, mobile layout, dan private read-only status di Hostless Live.
+
+### Autonomous development pilot — konfigurasi aktif, eksekusi belum terbukti
+- PR #81 telah merged ke main. Workflow `.github/workflows/autonomous-development.yml` berjalan terjadwal `17 */2 * * *` UTC dan menyediakan `workflow_dispatch`.
+- Commit `65d7650` mengubah default `AUTONOMOUS_AGENT_ENABLED` menjadi `vars.AUTONOMOUS_AGENT_ENABLED || '1'`. Nilai override repository variable dan keberadaan secret `OPENROUTER_API_KEY` tidak dapat dibaca oleh koneksi audit; jangan menganggap key tersedia. Tanpa key, worker skip aman.
+- Pada waktu audit 19:15 WIB belum ada scheduled worker run setelah aktivasi. Tick cron berikutnya adalah 19:17 WIB (12:17 UTC); cek run dan log setelah waktu itu. Belum ada bukti worker memanggil provider atau membuat Draft PR.
+- Worker hanya membaca `lib/ai/workspace.js`, `lib/ai/group.js`, `test/ai-workspace.test.js`; patch hanya boleh mengubah file existing `lib/ai/*.js` dan `test/*.test.js`, maksimal 3 file / 40 KiB. Wajib `npm test`, lalu Draft PR saja. Satu Draft PR autonomous terbuka menahan siklus berikutnya.
+- Pilot tidak melakukan web research, procurement discovery, dashboard editing, durable task queue, shared memory, atau menjalankan seluruh Divisi 01–07/08. Tidak ada auto-merge/deploy/trading.
+- Source memiliki allowlist path, diff checks, child environment yang menyaring token, dan skip saat provider key tidak ada. Ini belum menjadi security sign-off; Divisi 01 dan 05 harus meninjau sebelum scope diperluas. Label `openrouter/free` bukan jaminan biaya nol atau ketersediaan.
+
+### PR backlog dan konflik file — dibandingkan terhadap main HEAD saat ini
+- PR #74 Marketlight: 48 ahead / 4 behind; Draft. Perlu Divisi 03 validasi semantik data, Divisi 01 security review, Divisi 05 QA, dan exact-head retest.
+- PR #34 Agent Platform schema: 21 ahead / 4 behind; tetap schema-only, belum membuktikan queue/scheduler/runtime.
+- PR #51 Knowledge & Memory: 9 ahead / 4 behind; tetap desain/schema, belum ada persistent memory runtime.
+- PR #44 Director handoff: 7 ahead / 4 behind; dokumen historis, bukan bukti divisi berjalan.
+- PR #43 Provider Registry (18 ahead / 188 behind) dan #45 GitHub Gateway (23 ahead / 188 behind) sangat tertinggal; port/rebase dahulu, jangan merge langsung.
+- PR #55 Executive dashboard (31 ahead / 177 behind) dan #57 Bubblemaps dashboard (18 ahead / 177 behind) sama-sama mengubah `public/app.js`, `public/index.html`, `public/style.css`; Divisi 02 harus memilih urutan integrasi tunggal.
+- PR #62/#63/#72 GoPlus berbagi `lib/goplus.js` dan sebagian `server.js`/`public/app.js`; deduplikasi ke satu jalur kanonis.
+- PR #65/#70/#71/#74 berbagi area Market Intelligence dan/atau `server.js` serta `public/market.html`; integrasikan satu per satu.
+- PR #80 Gemini workflow masih Draft; tidak ada bukti provider quota/eksekusi berhasil.
+
+### Pembagian tugas dan batas file
+- Divisi 01 Security & Reliability (P0): pemilik audit `lib/ingest.js`, error storage, startup/readiness, dan review keamanan worker. Tidak mengubah Hostless storage/env/volume tanpa keputusan BOS.
+- Divisi 02 UI/UX & Frontend: pemilik `public/index.html`, `public/app.js`, `public/style.css`, `public/sw.js`; audit PR #77 dan browser QA desktop/mobile. Jangan kerjakan PR #55/#57 paralel.
+- Divisi 03 Exchange & Trading: pemilik `public/trading.html`, `public/trading.js`, `public/trading.css`, `lib/exchanges.js`, `lib/derivatives.js`; validasi GET/read-only dan kalkulator simulasi saja.
+- Divisi 04 AI Intelligence & Research: audit freshness, provenance, kualitas data dan semantik Market Intelligence; koordinasi #74/#65/#70/#71 tanpa mengubah UI milik Divisi 02.
+- Divisi 05 QA/DevOps: reviewer independen; exact-head regression, browser QA, workflow/artifact dan deployment evidence. Tidak mengubah Hostless produksi.
+- Divisi 06 Agent Platform: pemilik `.github/workflows/autonomous-development.yml`, `lib/ai/autonomous-agent.js`, serta desain queue/lease/idempotency; jangan perluas allowlist sebelum Divisi 01/05 sign-off.
+- Divisi 07 Knowledge & Memory: pemilik `docs/division-07-*` dan provenance/retention design; belum ada persistent memory runtime.
+- Divisi 08 Procurement & Tools: mengikuti issue #82/charter; wajib bukti license, harga, quota, akses dan deduplikasi. Tidak boleh auto-install atau mengganti provider produksi.
+- Tidak ada bukti chat divisi lain dibangunkan atau worker khusus divisi mereka dijalankan.
+
+### NEXT TASK — urutan wajib
+1. Divisi 01 + BOS: putuskan storage ephemeral atau persistent; setelah keputusan, siapkan perubahan Hostless yang sesuai dan verifikasi readiness. Tanpa keputusan, jangan ubah produksi.
+2. Divisi 05 + 02: bangun browser QA dari main HEAD terbaru; uji semua menu, sidebar, mobile overflow, console/network dan simpan artifact screenshot.
+3. Divisi 05 + 03: QA Exchange Hub desktop/mobile dengan mock dan GET read-only; tidak ada order atau permission change.
+4. Divisi 01 + 05: review keamanan pilot worker dan cek scheduled run pertama serta biaya/provider usage tanpa menampilkan secret.
+5. Divisi 04/08: audit dashboard dan registry procurement terpisah setelah P0/P1 stabil.
+6. Divisi 06/07: rancang durable task/memory records, audit, approval queue dan kill switch; jangan klaim otonomi lintas divisi sebelum persistence dan run evidence ada.
+
+### Catatan delivery siklus
+- Perubahan kode aplikasi: tidak ada.
+- Perubahan produksi/secrets/permissions: tidak ada.
+- Dokumen ini diperbarui pada branch terisolasi untuk review; tidak ada merge/deploy.
+- Hostless Build: tidak diketahui. Hostless LIVE: monitor gagal pada run `45390120197`; deployed SHA tidak diketahui.
+- NEXT TASK utama: DATA_DIR/EROFS, Dashboard browser QA, Exchange Hub browser QA, dan stabilitas deployment sebelum fitur baru.
