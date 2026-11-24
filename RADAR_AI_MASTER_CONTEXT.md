@@ -3470,3 +3470,16 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Header `/`: `x-content-type-options: nosniff`; CSP `default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'` — konsisten dengan penggunaan aset eksternal Command Center (tidak ada `<script>`/`<style>` inline pada `command.html`).
 - `/api/health`: `{"status":"ok","storage":{"status":"ok","code":null}}` pada filesystem sementara yang writable. Ini **tidak** membuktikan mount Hostless produksi atau menyelesaikan insiden EROFS.
 - Batasan: ini smoke HTTP, bukan QA browser. Tidak ada render, gesture, console, atau offline PWA yang diuji. Server dihentikan setelah probe; tidak ada deployment; tidak ada kredensial yang dipakai atau dibuka.
+
+---
+
+## 130. TOMBOL BUKA WEB EKSTERNAL UNTUK SETIAP TOKEN — 25 NOVEMBER 2026
+
+- Permintaan BOS: setiap token yang terdeteksi RADAR (termasuk koin yang naik, lonjakan volume, dan sinyal whale/early gem) perlu tombol untuk membuka web dengan grafik dan data lengkap, karena RADAR belum menyediakan grafik tersebut secara internal.
+- Keputusan teknis: tombol dibangun dari identifier token yang divalidasi, **bukan** memercayai URL dari respons API. `externalCoinUrl()` hanya menerima `id`/`gecko_id` berupa `[a-z0-9][a-z0-9-]{0,99}`, lalu membentuk `https://www.coingecko.com/en/coins/<id>` dengan `encodeURIComponent`. `externalLinkNode()` memakai `target="_blank"` dan `rel="noopener noreferrer"` serta `aria-label` yang menyebut simbol dan sumber.
+- Penempatan: tabel token (Screener, Watchlist, Market Watch), kedua kolom Top Movers di Ringkasan, dan jadwal Token Unlock. Early Gem Scanner mempertahankan tautan GeckoTerminal yang sudah ada, kini diberi label jelas "Grafik token ↗" / "Grafik pool ↗" (URL tetap diverifikasi dengan allowlist domain).
+- CSS: kolom aksi diperlebar menjadi 92px, `min-width` tabel 625px, gaya `.web-btn` responsif. Tidak ada menu, route, atau kontrak API yang dihapus.
+- Verifikasi: `node --test test/dashboard-runtime.test.js test/frontend-ui.test.js` 17 pass, 0 fail; `npm test` **215 pass, 0 fail, 0 skipped**; `git diff --check` bersih. Tes runtime memastikan identifier berbahaya (`../admin`, `javascript:`, `https://evil.com`, huruf kapital/underscore, kosong) ditolak dan anchor memiliki atribut keamanan yang benar.
+- Uji jangkauan tautan: `curl` dengan User-Agent curl default mendapat 403 (proteksi bot); dengan User-Agent browser, `https://www.coingecko.com/en/coins/bitcoin` mengembalikan **HTTP 200**. Ini bukti URL dapat dibuka di browser, bukan jaminan konten tertentu.
+- Batasan: ini adalah navigasi ke situs pihak ketiga; data di sana bukan data RADAR dan tetap tunduk pada kebijakan/ToS situs tersebut. Tidak ada kredensial atau data privat yang dikirim. QA klik pada browser/perangkat nyata belum dilakukan.
+- NEXT TASK: QA klik tombol di desktop/mobile, termasuk token tanpa `id` (tombol tidak muncul) dan perilaku tab baru; bila BOS ingin grafik internal, rancang modul grafik terpisah dengan sumber data terverifikasi.

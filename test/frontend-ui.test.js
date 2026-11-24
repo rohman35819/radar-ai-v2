@@ -128,3 +128,17 @@ test('Dashboard icon buttons and live result counts are screen-reader accessible
   assert.match(app,/'aria-label':favorite\?'Hapus '/);
   assert.match(app,/'aria-label':'Lihat detail '/);
 });
+
+test('Setiap token memiliki tombol buka web dengan URL yang dibangun aman',()=>{
+  assert.match(app,/const externalCoinUrl=\(token\)=>\{/);
+  assert.match(app,/coingecko\.com\/en\/coins\//);
+  assert.match(app,/encodeURIComponent\(id\)/);
+  assert.ok(app.includes('^[a-z0-9][a-z0-9-]{0,99}$'),'identifier tervalidasi');
+  assert.match(app,/rel:'noopener noreferrer'/);
+  assert.match(app,/target:'_blank'/);
+  assert.ok((app.match(/externalLinkNode\(t\)/g)||[]).length>=3,'tombol hadir di tabel token dan kedua kolom mover');
+  assert.match(app,/externalLinkNode\(u\)/,'tombol hadir pada jadwal unlock');
+  assert.match(app,/Grafik token ↗/);
+  assert.match(styleCss,/\.token-actions \.web-btn/);
+  assert.match(styleCss,/min-width:625px/,'kolom aksi cukup lebar untuk tiga tombol');
+});

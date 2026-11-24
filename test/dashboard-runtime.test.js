@@ -108,7 +108,7 @@ function loadDashboard() {
   const source = fs.readFileSync(require.resolve('../public/app.js'), 'utf8');
   const probe = `
     globalThis.__t = {
-      connectionState, ageLabel, dateTime, safeExternalLink, renderPreservingFocus,
+      connectionState, ageLabel, dateTime, externalCoinUrl, externalLinkNode, safeExternalLink, renderPreservingFocus,
       setRender: (fn) => { render = fn; },
       setState: (s) => {
         if ('data' in s) data = s.data;
@@ -161,6 +161,22 @@ test('dateTime tidak merender Invalid Date untuk nilai yang tidak valid', () => 
   assert.equal(t.dateTime('bukan-tanggal'), 'Waktu tidak tersedia');
   assert.notEqual(t.dateTime('bukan-tanggal'), 'Invalid Date');
   assert.notEqual(t.dateTime(new Date().toISOString()), 'Waktu tidak tersedia');
+});
+
+test('Tombol web token dibangun dari identifier yang tervalidasi', () => {
+  const { context } = loadDashboard();
+  const t = context.__t;
+  assert.equal(t.externalCoinUrl({ id: 'bitcoin' }), 'https://www.coingecko.com/en/coins/bitcoin');
+  assert.equal(t.externalCoinUrl({ gecko_id: 'ethereum' }), 'https://www.coingecko.com/en/coins/ethereum');
+  for (const bad of ['../admin', 'javascript:alert(1)', 'https://evil.com', 'AB_CD', '', null, undefined]) {
+    assert.equal(t.externalCoinUrl({ id: bad }), null, 'identifier ditolak: ' + bad);
+  }
+  const link = t.externalLinkNode({ id: 'bitcoin', symbol: 'BTC' });
+  assert.equal(link.tagName, 'A');
+  assert.equal(link.attributes.href, 'https://www.coingecko.com/en/coins/bitcoin');
+  assert.equal(link.attributes.target, '_blank');
+  assert.equal(link.attributes.rel, 'noopener noreferrer');
+  assert.equal(t.externalLinkNode({}), null, 'token tanpa identifier tidak membuat tautan');
 });
 
 test('renderPreservingFocus mengembalikan fokus, kursor, dan scroll setelah DOM diganti', () => {

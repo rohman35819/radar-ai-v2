@@ -76,6 +76,18 @@ const renderPreservingFocus=()=>{
     }
   }
 };
+// Tombol "buka web" dibangun sendiri dari identifier token, bukan memercayai URL dari data.
+const externalCoinUrl=(token)=>{
+  const id=String(token?.id||token?.gecko_id||'');
+  if(!/^[a-z0-9][a-z0-9-]{0,99}$/.test(id))return null;
+  return 'https://www.coingecko.com/en/coins/'+encodeURIComponent(id);
+};
+const externalLinkNode=(token,label='↗')=>{
+  const href=externalCoinUrl(token);
+  if(!href)return null;
+  const symbol=esc(token.symbol||'token');
+  return el('a',{class:'mini-btn web-btn',href,target:'_blank',rel:'noopener noreferrer','aria-label':'Buka grafik dan data lengkap '+symbol+' di CoinGecko',title:'Grafik dan data lengkap di CoinGecko (tab baru)'},label);
+};
 // Tautan berita berasal dari feed eksternal; hanya izinkan http/https.
 const safeExternalLink=(value)=>{
   if(!value)return null;
@@ -108,7 +120,7 @@ function tokenRow(t,showDetail=false){
   pctPill(t.change_24h),
   el('div',{class:'token-metric'},money(t.market_cap)),
   el('div',{class:'token-metric'},money(t.volume_24h)),
-  el('div',{class:'token-actions'},el('button',{class:'mini-btn '+(favorite?'saved':''),title:'Watchlist','aria-label':favorite?'Hapus '+esc(t.symbol)+' dari watchlist':'Tambahkan '+esc(t.symbol)+' ke watchlist',onclick:()=>toggleWatch(t.id)},favorite?'★':'☆'),showDetail?el('button',{class:'mini-btn',title:'Detail','aria-label':'Lihat detail '+esc(t.symbol),onclick:()=>{expanded=expanded===t.id?null:t.id;render();}},'↗'):null)
+  el('div',{class:'token-actions'},el('button',{class:'mini-btn '+(favorite?'saved':''),title:'Watchlist','aria-label':favorite?'Hapus '+esc(t.symbol)+' dari watchlist':'Tambahkan '+esc(t.symbol)+' ke watchlist',onclick:()=>toggleWatch(t.id)},favorite?'★':'☆'),showDetail?el('button',{class:'mini-btn',title:'Detail','aria-label':'Lihat detail '+esc(t.symbol),onclick:()=>{expanded=expanded===t.id?null:t.id;render();}},'ⓘ'):null,externalLinkNode(t))
  );
  if(showDetail && expanded===t.id) row.append(tokenDetail(t));
  return row;
@@ -148,8 +160,8 @@ function renderOverview(){
   statCard('MARKET BREADTH',s.count?Math.round(s.positive/s.count*100)+'%':'—',s.positive+' naik · '+s.negative+' turun','⌁',s.positive>=s.negative?'positive':'negative')
  ));
  const movers=card(sectionHead('Top Movers','Pergerakan terbesar berdasarkan data 24 jam',el('button',{class:'text-btn',onclick:()=>navigate('screener')},'Buka screener →')),el('div',{class:'mover-grid'},
-  el('div',{class:'mover-column'},el('div',{class:'column-label positive'},'▲ GAINERS'),...topTokens('change_24h',-1,5).map(t=>el('div',{class:'mover-row'},el('b',{},esc(t.symbol)),pctPill(t.change_24h)))),
-  el('div',{class:'mover-column'},el('div',{class:'column-label negative'},'▼ LOSERS'),...topTokens('change_24h',1,5).map(t=>el('div',{class:'mover-row'},el('b',{},esc(t.symbol)),pctPill(t.change_24h))))
+  el('div',{class:'mover-column'},el('div',{class:'column-label positive'},'▲ GAINERS'),...topTokens('change_24h',-1,5).map(t=>el('div',{class:'mover-row'},el('b',{},esc(t.symbol)),pctPill(t.change_24h),externalLinkNode(t)))),
+  el('div',{class:'mover-column'},el('div',{class:'column-label negative'},'▼ LOSERS'),...topTokens('change_24h',1,5).map(t=>el('div',{class:'mover-row'},el('b',{},esc(t.symbol)),pctPill(t.change_24h),externalLinkNode(t))))
  ));
  const market=card(sectionHead('Market Watch','Token dengan aktivitas volume tertinggi',el('button',{class:'text-btn',onclick:()=>navigate('analytics')},'Analitik →')),tokenTable(topTokens('volume_24h',-1,6),6));
  const bottom=el('div',{class:'two-col'},card(sectionHead('AI Council','Ringkasan rapat analisis terakhir'),aiGroup?.last?el('div',{class:'ai-summary'},el('div',{class:'row-between'},el('b',{},'Keputusan grup'),el('span',{class:'decision '+String(aiGroup.last.final?.decision||'WAIT').toLowerCase()},aiGroup.last.final?.decision||'WAIT')),el('p',{},aiGroup.last.final?.summary||'Belum ada ringkasan.'),el('small',{class:'muted'},dateTime(aiGroup.last.created_at)),el('button',{class:'text-btn',onclick:()=>navigate('ai')},'Lihat analisis →')):empty('Belum ada analisis','Laporan AI muncul setelah proses terjadwal berhasil.')),
@@ -234,7 +246,7 @@ function renderUnlock(){
  const v=$('#view');v.replaceChildren();const items=[...(data?.unlocks||[])].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
  v.append(sectionHead('Token Unlock Calendar','Jadwal pelepasan token berdasarkan sumber data yang dikonfigurasi.'));
  if(!items.length)return v.append(empty('Data unlock belum tersedia',data?.config_needed?.unlock_source?'Sumber belum dikonfigurasi; RADAR tidak mengarang jadwal unlock.':'Sumber telah dikonfigurasi tetapi belum mengirim jadwal. RADAR tidak mengarang data.'),sourceFootnote());
- items.forEach(u=>v.append(el('div',{class:'unlock-row'},el('div',{class:'unlock-date'},el('b',{},u.date?new Date(u.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short'}):'—'),el('small',{},u.date?new Date(u.date).getFullYear():'')),el('div',{class:'unlock-asset'},el('b',{},esc(u.symbol||u.id)),el('small',{},esc(u.source))),el('div',{class:'unlock-value'},money(u.amount_usd),el('small',{},u.pct_supply==null?'Persentase tidak tersedia':u.pct_supply+'% supply')))));
+ items.forEach(u=>v.append(el('div',{class:'unlock-row'},el('div',{class:'unlock-date'},el('b',{},u.date?new Date(u.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short'}):'—'),el('small',{},u.date?new Date(u.date).getFullYear():'')),el('div',{class:'unlock-asset'},el('b',{},esc(u.symbol||u.id)),el('small',{},esc(u.source)),externalLinkNode(u)),el('div',{class:'unlock-value'},money(u.amount_usd),el('small',{},u.pct_supply==null?'Persentase tidak tersedia':u.pct_supply+'% supply')))));
 }
 function renderAlerts(){
  const v=$('#view');v.replaceChildren();const items=data?.alerts||[];
@@ -396,7 +408,7 @@ function renderEarlyGems(){
      el('div',{},el('small',{},'PERUBAHAN 24J'),el('b',{},pct(x.price_change_24h_pct))),
      el('div',{},el('small',{},'BUY / SELL 24J'),el('b',{},(x.buys_24h??'—')+' / '+(x.sells_24h??'—')))),
     flags.length?el('div',{class:'gem-flags'},...flags.map(flag=>el('span',{class:'flag'},flag))):el('div',{class:'gem-flags'},el('span',{class:'gem-clean'},'Tidak ada flag kualitas data')),
-    el('div',{class:'gem-footer'},el('small',{title:tokenAddress},'CA: '+(tokenAddress?tokenAddress.slice(0,8)+'…'+tokenAddress.slice(-6):'N/A')),el('div',{class:'gem-links'},tokenLink?el('a',{href:tokenLink,target:'_blank',rel:'noopener noreferrer'},'Token ↗'):null,link?el('a',{href:link,target:'_blank',rel:'noopener noreferrer'},'Pool ↗'):null)));
+    el('div',{class:'gem-footer'},el('small',{title:tokenAddress},'CA: '+(tokenAddress?tokenAddress.slice(0,8)+'…'+tokenAddress.slice(-6):'N/A')),el('div',{class:'gem-links'},tokenLink?el('a',{href:tokenLink,target:'_blank',rel:'noopener noreferrer','aria-label':'Buka grafik token '+esc(x.symbol)+' di GeckoTerminal'},'Grafik token ↗'):null,link?el('a',{href:link,target:'_blank',rel:'noopener noreferrer','aria-label':'Buka grafik pool '+esc(x.symbol)+' di GeckoTerminal'},'Grafik pool ↗'):null)));
 
    const validation=el('div',{class:'gem-validation-actions'});
    const dexButton=el('button',{class:'mini-btn',type:'button',disabled:tokenAddress?null:true},'Validasi DEX');

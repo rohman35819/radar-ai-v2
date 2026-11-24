@@ -60,3 +60,5 @@
 - Dashboard `dateTime()` now validates parsed timestamps; 5 runtime QA tests pass and the full suite is 213/213 across 26 files on the integration branch.
 
 - Local HTTP smoke (integration branch, temp DATA_DIR, port 38711): 19/19 probed assets/routes returned 200; strict CSP and nosniff confirmed; `/api/health` ok on writable temp storage. Not browser QA and not evidence about Hostless production mount.
+
+- Each scanned token now has an external "open web" button built from validated CoinGecko ids (allowlisted pattern, no API-provided URLs), placed in token tables, Top Movers and unlock rows; Early Gem chart links are clearly labeled. 215/215 tests pass; link reachability 200 with a browser UA. External chart data is third-party, not RADAR data.
