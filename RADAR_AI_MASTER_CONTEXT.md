@@ -2822,3 +2822,17 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Sumber dan detail tercatat di docs/procurement-tool-registry-2026-11-24.md.
 - Commit update registry: f8f60c2b24bd5fe41d49b9312bd7a8088a462510.
 - NEXT TASK: lanjutkan evaluasi rights/quota untuk Solscan (actual plan/CU), CoinGecko Demo, GeckoTerminal, DeFiLlama, GoPlus, Binance public market data, dan GDELT Project; Divisi 04/03 memilih kandidat makro dari section 86.
+
+
+## 88. AI provider usage transparency — 24 November 2026 (Asia/Jakarta)
+
+- Audit Divisi 06 menemukan bahwa main sudah memiliki empat provider adapter (Gemini, Groq, OpenRouter, OpenAI), AI Council/Workspace, serta counter GoPlus; tetapi belum ada telemetry pemakaian/kuota terpadu untuk provider AI. AI orchestration tidak sama dengan quota management.
+- Implementasi awal pada branch `feat/ai-provider-usage-observability` menambahkan `lib/ai/usage.js` untuk pencatatan request per provider per hari Asia/Jakarta, token input/output/total hanya jika usage metadata disediakan, status request terakhir, dan header rate-limit yang di-allowlist.
+- Instrumentasi mencakup AI Council, AI Workspace (termasuk putaran diskusi dan sekretaris), scheduled AI runs, dan direct Gemini test. Counter disimpan di RADAR state melalui adapter persistence yang sudah ada.
+- Endpoint `GET /api/ai/usage` mengembalikan status sanitasi tanpa key, raw error, prompt, atau isi respons. Panel status ditambahkan pada halaman AI Council.
+- Definisi status: ACTIVE = panggilan teramati terakhir sukses dalam 24 jam; LIMITED = respons terakhir HTTP 429; ERROR = panggilan terakhir gagal; UNKNOWN = belum ada panggilan teramati dalam 24 jam atau metadata tidak tersedia; NOT_CONFIGURED = env key tidak ditemukan. Status adalah hasil panggilan terakhir, bukan health probe kontinu.
+- Batas transparansi: token count hanya tersedia jika provider menyertakan usage metadata; rate-limit hanya jika response menyertakan header yang dikenal. Account-level daily quota Gemini/Groq/OpenAI dan sisa request harian OpenRouter belum dibaca oleh implementasi ini; field quota tetap null/N/A, tidak dibuat perkiraan. Counter RADAR tidak mencakup pemakaian key yang sama dari aplikasi lain.
+- Perubahan README mendokumentasikan endpoint dan batas interpretasi. Tidak ada secret, provider key, permission, model, dependency, atau konfigurasi produksi yang diubah.
+- File branch: `lib/ai/usage.js`, `lib/ai/chat-completions.js`, `lib/ai/gemini.js`, `lib/ai/workspace.js`, `server.js`, `public/app.js`, `test/ai-usage.test.js`, `README.md`, dan master context ini.
+- Commit terakhir yang diketahui pada branch saat catatan disusun: `55a99fe3b95e31fc782de893fa7c6a7539e472b7` (README). Branch belum merge ke main. Tes lokal tidak dijalankan karena tidak tersedia working copy/runtime repository dalam sesi ini; GitHub Actions exact-head dan independent Divisi 01/05 review masih pending. Hostless Build/Live tidak diperiksa dan tidak ada klaim deployment.
+- NEXT TASK: jalankan CI pada exact PR head; perbaiki setiap test/syntax failure; Divisi 01 review endpoint exposure, secret handling, persistence and rate-limit metadata; Divisi 05 QA status transitions, Jakarta daily reset, AI Council/Workspace UI and no-regression. Setelah gates lulus, minta integrasi sesuai kebijakan Owner; berikutnya evaluasi endpoint usage resmi per provider untuk account-level quotas tanpa mengubah key/permission dan tanpa menambah biaya.
