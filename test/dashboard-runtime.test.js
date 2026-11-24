@@ -108,7 +108,7 @@ function loadDashboard() {
   const source = fs.readFileSync(require.resolve('../public/app.js'), 'utf8');
   const probe = `
     globalThis.__t = {
-      connectionState, ageLabel, dateTime, validCoinId, chartSeriesStats, drawTokenChart, externalCoinUrl, externalLinkNode, safeExternalLink, renderPreservingFocus,
+      connectionState, ageLabel, dateTime, validCoinId, chartSeriesStats, drawTokenChart, externalCoinUrl, externalLinkNode, safeExternalLink, renderPreservingFocus, tokenRow,
       setRender: (fn) => { render = fn; },
       setState: (s) => {
         if ('data' in s) data = s.data;
@@ -225,6 +225,20 @@ test('drawTokenChart merender SVG dan statistik, serta empty state untuk data ku
   const emptyTarget = new FakeElement('div');
   assert.equal(t.drawTokenChart(emptyTarget, [[1, 2]], {}), null);
   assert.ok(emptyTarget.children.some((child) => hasText(child, 'Data historis belum tersedia')), 'empty state ditampilkan');
+});
+
+test('Baris token memuat tombol grafik internal dan web hanya untuk identifier valid', () => {
+  const { context, FakeElement } = loadDashboard();
+  const hasClass = (node, className) => {
+    if (String(node.className || '').split(/\s+/).includes(className)) return true;
+    return (node.children || []).some((child) => child instanceof FakeElement && hasClass(child, className));
+  };
+  const valid = context.__t.tokenRow({ id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', price: 60000, change_24h: 1, market_cap: 1e12, volume_24h: 1e10 }, false);
+  assert.ok(hasClass(valid, 'chart-btn'), 'tombol grafik hadir');
+  assert.ok(hasClass(valid, 'web-btn'), 'tombol web tetap hadir');
+  const invalid = context.__t.tokenRow({ id: '../bad', symbol: 'BAD', name: 'Invalid' }, false);
+  assert.ok(!hasClass(invalid, 'chart-btn'), 'grafik tidak dibuat untuk identifier invalid');
+  assert.ok(!hasClass(invalid, 'web-btn'), 'web tidak dibuat untuk identifier invalid');
 });
 
 test('renderPreservingFocus mengembalikan fokus, kursor, dan scroll setelah DOM diganti', () => {
