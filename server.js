@@ -66,7 +66,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const privateExchangeToken = String(exchangeAccessToken !== undefined ? exchangeAccessToken : (process.env.EXCHANGE_ACCESS_TOKEN || cfg.adminToken || ''));
   const hasValidExchangeToken = (provided) => matchesToken(privateExchangeToken, provided);
   const hasValidAdminToken = (provided) => matchesToken(cfg.adminToken, provided);
-  const remoteStorage = Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
+  const remoteStorage = Boolean(process.env.SUPABASE_URL || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY);
   const st = state || (remoteStorage ? ingest.emptyState() : ingest.load(cfg));
   let storageChecked = false;
   let storageErrorCode = null;
@@ -79,14 +79,14 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
       storageChecked = true;
       storageErrorCode = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'STORAGE_WRITE_FAILED';
       console.error('storage write error', storageErrorCode);
-      throw error;
+      return false;
     });
     return saveQueue;
   };
   const ready = remoteStorage && !state
     ? ingest.loadAsync(cfg).then((loaded) => {
       Object.assign(st, loaded);
-      st.goplusUsage = { ...(loaded.goplusUsage || {}) };
+      st.goplusUsage = Object.assign(st.goplusUsage || {}, loaded.goplusUsage || {});
       storageChecked = true; storageErrorCode = null;
       return st;
     }).catch((error) => {
