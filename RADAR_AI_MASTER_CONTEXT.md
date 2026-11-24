@@ -3212,3 +3212,22 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   2. QA browser: status koneksi, umur data, empty/loading/error state, dan atribusi sumber di Ringkasan/Screener/News/Unlock/Alerts pada desktop dan mobile.
   3. Lanjutkan audit fungsi tersisa yang tercatat di §23/§25: Watchlist, Analytics, AI Council/Workspace, System Health, serta PWA cache sesuai perubahan UI ini.
   4. Selesaikan gate PR #106 secara terpisah; koordinasikan penomoran bagian 109/110 saat integrasi ke `develop`.
+
+### Lanjutan 25 November 2026 — interaksi, token workspace, dan aksesibilitas
+- Lead: Divisi 02 — UI/UX & Frontend. Tidak ada perubahan backend, kontrak API, kredensial, exchange, trading, atau deployment.
+- Temuan dan perbaikan:
+  - `render()` dipanggil setiap auto-refresh 120 detik dan mengganti seluruh `#view`, sehingga fokus/kursor input filter dan posisi scroll hilang saat pengguna mengetik. Ditambahkan `renderPreservingFocus()` yang mempertahankan `activeElement.id`, `selectionStart/End`, `scrollTop` view, dan `window.scrollY`, lalu dipakai oleh `load()`.
+  - AI Workspace memakai `window.prompt` untuk `ADMIN_TOKEN`. Diganti dengan kolom password inline beserta toggle tampil/sembunyikan, label, dan `aria-label`. Token hanya berada di variabel memori `workspaceToken`, tetap dikirim lewat header `x-admin-token` yang sama, dihapus segera setelah server menerima permintaan (sebelum polling yang merender ulang) serta di `finally`. Tidak ada localStorage/sessionStorage untuk token.
+  - Tautan berita dari feed eksternal kini lolos `safeExternalLink()` (hanya `http:`/`https:`); input kosong ditolak agar tidak berubah menjadi URL halaman dashboard itu sendiri.
+  - Aksesibilitas: `aria-label` pada tombol refresh/tema dan tombol aksi token, `role="status" aria-live="polite"` pada banner, `aria-live="polite"` pada penghitung hasil Screener dan Early Gems.
+  - `public/style.css`: gaya `.workspace-access` termasuk breakpoint mobile.
+- Self-review menemukan dua masalah sebelum commit: (1) token masih bisa tampil setelah `render()` saat polling karena `workspaceToken` belum dikosongkan, (2) tautan kosong berubah menjadi URL halaman melalui `new URL('', location.href)`. Keduanya diperbaiki lalu diuji ulang.
+- Pengujian lokal (Node v24.22.3): `node --check public/app.js` lulus; `node --test test/frontend-ui.test.js` 8 pass, 0 fail; `npm test` **198 pass, 0 fail, 0 skipped**; `git diff --check` bersih. README diselaraskan dari 99/12 menjadi 198/24 test case.
+- Commit kode: `b6a21c35ff231ec216f69a92466b53f460a17eca` (`feat: preserve dashboard state and harden workspace token UX`).
+- GitHub: `POST /pulls` untuk PR ke `develop` kembali ditolak HTTP 403 `Resource not accessible by personal access token` pada kredensial yang tersedia. Seluruh pekerjaan tetap berada di `feat/dashboard-freshness`; tidak ada secret yang dibuka atau diubah.
+- Hostless Build/LIVE: tidak dicek; tidak ada deployment dari perubahan ini. QA browser desktop/mobile belum dilakukan. Ini perubahan source-level yang sudah diuji otomatis, bukan klaim lulus QA visual.
+- Risiko tersisa: PR belum terbuat karena izin token; QA visual/interaksi nyata dan verifikasi Hostless masih terbuka.
+- NEXT TASK:
+  1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write` (https://github.com/rohman35819/radar-ai-v2/pull/new/feat/dashboard-freshness), verifikasi head memuat `b6a21c35ff231ec216f69a92466b53f460a17eca`, lalu pantau gate test/Gitleaks/Trivy/branch-source policy. Jangan merge sebelum gate lulus.
+  2. QA browser: ketik di filter Screener/Early Gems saat auto-refresh 2 menit dan pastikan fokus/kursor tidak hilang; uji kolom token Workspace, toggle, penghapusan setelah request, dan respons 403.
+  3. Lanjutkan audit loading/error/empty state pada `market.html`, `solscan.html`, dan `membership.html` memakai pola yang sama tanpa mengubah kontrak backend.
