@@ -2999,3 +2999,15 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 **Rekonsiliasi:** aturan ini memperjelas kebijakan otonomi dan temporary QA override. Tidak menghapus quality gate, branch protection, WIP limit, atau larangan produksi. Tidak memberi wewenang membuat identitas palsu, mengubah izin, mengeluarkan biaya, atau menjalankan aksi finansial.
 
 **NEXT TASK:** terapkan pembagian peran secara mandiri pada antrean PR dan lakukan triase sesuai batas WIP; lanjutkan hanya PR berbasis main terbaru yang lolos exact-head checks.
+
+
+## 99. DIVISI 07 — MEMORY SECURITY HARDENING & EXACT-HEAD PORT (24 NOVEMBER 2026)
+
+- PR #96 membawa hardening incremental setelah fondasi Memory #92 merged. Branch sumber tertinggal dari main karena kebijakan delegasi #94; perubahan dipindahkan selektif ke branch baru `fix/knowledge-memory-hardening-latest-main`.
+- Secret detection kini mencakup Supabase `sb_secret_`, JWT-shaped credentials, provider tokens, dan secret-like strings pada `artifactRefs`. Supabase base URL wajib HTTPS tanpa userinfo/query/hash/path.
+- Retrieval proposal/approved memfilter retention expiry serta valid_from/valid_until di PostgREST sebelum data dikembalikan.
+- Migration memberi USAGE pada schema public kepada server-side service_role; table privilege tetap SELECT/INSERT saja. CI memodelkan BYPASSRLS pada disposable service_role dan menguji insert/read serta penolakan UPDATE.
+- Self-review menemukan delimiter DO block pada smoke SQL source PR #96 tidak valid; diperbaiki menjadi dollar-quoted block `DO $$ ... $$;` dan exact-head PostgreSQL smoke berikutnya lulus.
+- No production Supabase migration, credentials, public route, frontend, Hostless config, memory activation, worker/scheduler, or trading action.
+- Manual Divisi 01/05 review not performed (temporary override); exact-head npm, PostgreSQL, Gitleaks and Trivy passed on the current branch head before this documentation correction; rerun required for the final exact head.
+- NEXT: rerun exact-head CI/security after preserving all current main policy sections; merge only if final head remains green and mergeable.
