@@ -111,3 +111,63 @@ test('memory storage errors expose status codes only, never upstream response bo
     return true;
   });
 });
+
+test('memory proposals reject secrets embedded in artifact references', () => {
+  assert.throws(() => validateProposal({
+    ...sample,
+    artifactRefs: ['https://example.test/callback?token=supersecretcredentialvalue123']
+  }, { id: 'division-07' }), (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+});
+
+test('memory store accepts only HTTPS base URLs without embedded credentials or path', () => {
+  assert.throws(() => createMemoryStore({ url: 'http://example.supabase.co', serviceKey: 'secret' }), (e) => e.code === 'MEMORY_INVALID_URL');
+  assert.throws(() => createMemoryStore({ url: 'https://user:pass@example.supabase.co', serviceKey: 'secret' }), (e) => e.code === 'MEMORY_INVALID_URL');
+});
+
+test('memory retrieval excludes expired and not-yet-valid records at the database query', async () => {
+  let call;
+  const store = createMemoryStore({
+    url: 'https://example.supabase.co',
+    serviceKey: 'test-service-secret',
+    fetchImpl: async (url) => { call = new URL(String(url)); return new Response('[]', { status: 200 }); }
+  });
+  await store.searchApproved({ type: 'project', id: 'radar-ai-v2' }, 'current policy');
+  assert.match(call.searchParams.get('retention_until'), /^gt\./);
+  const validity = call.searchParams.get('and');
+  assert.match(validity, /valid_from\.is\.null/);
+  assert.match(validity, /valid_until\.is\.null/);
+});
+
+test('memory proposals reject Supabase secret keys and JWT credentials', () => {
+  assert.throws(() => validateProposal({ ...sample, content: 'sb_secret_1234567890abcdefghijklmnop' }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+  const jwt = ['eyJhbGciOiJIUzI1NiJ9', 'eyJzdWIiOiJ0ZXN0In0', 'signaturevalue123'].join('.');
+  assert.throws(() => validateProposal({ ...sample, artifactRefs: [jwt] }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+});
+
+
+test('memory proposals reject secrets in identifiers and source revisions before persistence', () => {
+  assert.throws(() => validateProposal({ ...sample, sourceRevision: 'sb_secret_1234567890abcdefghijklmnop' }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+  assert.throws(() => validateProposal({ ...sample, memoryKey: 'sk-12345678901234567890' }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+});
+
+test('memory proposal artifact references are bounded before secret scanning', () => {
+  assert.throws(() => validateProposal({ ...sample, artifactRefs: Array(21).fill('https://example.test/ref') }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_INVALID_ARTIFACT_REFS');
+  assert.throws(() => validateProposal({ ...sample, artifactRefs: ['https://example.test/ref', 42] }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_INVALID_ARTIFACT_REFS');
+});
+
+test('memory store rejects Supabase URLs containing paths, query strings or fragments', () => {
+  for (const url of [
+    'https://example.supabase.co/rest/v1',
+    'https://example.supabase.co?apikey=not-allowed',
+    'https://example.supabase.co#fragment'
+  ]) {
+    assert.throws(() => createMemoryStore({ url, serviceKey: 'test-service-secret' }),
+      (e) => e.code === 'MEMORY_INVALID_URL');
+  }
+});
