@@ -53,3 +53,6 @@
 - Frontend integration branch `integration/frontend-ux-20261125` (head maintained on remote) contains dashboard freshness/state/a11y, Market and Solscan truthfulness, and PWA shell v13; last local suite 208/208 pass. PR creation remains blocked by the PAT's missing `pull_requests: write` scope.
 - Isolated experiment `exp/volume-spike-robustness` (`b43e363`) tested a P90+MAD gate against the median-only volume-spike rule using deterministic synthetic fixtures: 4/4 tests pass; recurring bursts no longer flagged, isolated bursts preserved. Not adopted into production; details in `docs/EXPERIMENT_VOLUME_SPIKE.md`.
 - Workflow runtime upgrade for the autonomous worker is implemented locally (`d1a55a9`, 197/197 tests) but cannot be pushed because the PAT lacks `workflow` scope. Needs a maintainer with that scope.
+
+## QA improvement (25 November 2026)
+- Added `test/dashboard-runtime.test.js`: executes `public/app.js` in a VM with a minimal DOM shim and asserts real helper behavior (connection states, link scheme guard, missing timestamp, focus/cursor/scroll restoration after DOM replacement). 4/4 pass; full suite 212/212 pass across 26 files. This supplements but does not replace browser/device QA.
