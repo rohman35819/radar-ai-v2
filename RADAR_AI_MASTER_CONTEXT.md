@@ -3212,9 +3212,21 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 **NEXT TASK:** merge this shared-memory policy PR after exact-head checks; then close/supersede stale PR #107. Continue with current master-context NEXT TASK: validate PR #106 against latest develop and complete device/browser QA; prepare the normal release from develop to main for the phone-free worker only after exact-head release checks. Keep Groq disabled until BOS explicitly approves provider usage.
 
+## 113. GROK AUTONOMOUS ENGINEERING CHARTER — 25 NOVEMBER 2026
+
+- Added `GROK.md` as the dedicated startup and operating charter for Grok/xAI assistants contributing to RADAR AI V2.
+- Updated `AGENTS.md` to require Grok sessions to read the shared memory, AGENTS, complete master context and GROK charter before acting, verify live repository/CI state, resume NEXT TASK, perform bounded research/experiments, implement safe work, test, self-review and document.
+- Charter distinguishes Grok (xAI assistant) from Groq (inference provider), keeps provider activation opt-in, and preserves existing cost, secrets, branch, CI, production and financial safety gates.
+- Repository instructions do not automatically configure Grok's client or guarantee it can read GitHub. BOS/Grok workspace must have repository access and a startup/project instruction pointing to these files. No always-on execution is implied.
+- Change scope: documentation/governance only; no runtime code, provider activation, secrets, production data, Hostless deployment or trading behavior changed.
+- Validation: file content checked on the working branch; exact CI status must be checked on the PR head. No application test result is claimed for this documentation-only change.
+- Files changed: `GROK.md` (new), `AGENTS.md`, `RADAR_AI_MASTER_CONTEXT.md`, `RADAR_AI_SHARED_MEMORY.md`.
+
+**NEXT TASK:** verify exact-head branch-source, test and security workflows for the updated documentation PR. After merge, configure Grok's project/custom instructions to read `GROK.md` at every new conversation and verify repository access. Do not claim automatic startup until tested.
+
 ---
 
-## 113. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
+## 114. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
 
 > Catatan penomoran: bagian ini awalnya ditulis sebagai §109 pada branch `fix/sidebar-drawer-scroll` sebelum `develop` menerima §111 (cloud worker) dan §112 (shared memory). Dinomorkan ulang menjadi §113 saat branch diperbarui ke `develop` terbaru; isi aslinya dipertahankan.
 
@@ -3264,7 +3276,7 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### Revalidasi terhadap `develop` terbaru — 25 November 2026 (supersedes status di atas)
 - `origin/develop` telah maju dari `4b37426f519ba91483f11a37a0023180134f9c62` ke `c9c3a1403b19e5fe52250d0354e03bf7a1af1319` (cloud worker + shared memory). **PR #106 kini benar-benar terbuka** (`fix/sidebar-drawer-scroll` → `develop`); catatan lama "PR belum dibuat / kueri 0 PR" dinyatakan **superseded** oleh fakta ini.
-- Branch `fix/sidebar-drawer-scroll` digabung dengan `origin/develop` menggunakan merge commit biasa (bukan force-reset), sehingga PR mengikuti basis integrasi terbaru. Konflik hanya terjadi pada dokumen master; bagian sidebar dinomorkan ulang menjadi §113 agar tidak bentrok dengan §111 (cloud worker) dan §112 (shared memory). Tidak ada konflik pada `public/style.css` maupun `test/frontend-ui.test.js`.
+- Branch `fix/sidebar-drawer-scroll` digabung dengan `origin/develop` menggunakan merge commit biasa (bukan force-reset), sehingga PR mengikuti basis integrasi terbaru. Konflik hanya terjadi pada dokumen master; bagian sidebar dinomorkan ulang menjadi §114 agar tidak bentrok dengan §111 (cloud worker), §112 (shared memory) dan §113 (Grok charter). Tidak ada konflik pada `public/style.css` maupun `test/frontend-ui.test.js`.
 - Pengujian lokal setelah revalidasi (Node v24.22.3): `npm test` **196 pass, 0 fail, 0 skipped**; `git diff --check` bersih; tidak ada marker konflik yang tersisa. Belum ada CI exact-head untuk HEAD setelah merge ini.
 - Tidak ada perubahan kredensial, exchange, trading, atau konfigurasi produksi. Hostless Build/LIVE tidak dicek.
 - NEXT TASK: setelah push, verifikasi CI exact-head PR #106 (test, Branch source policy, Gitleaks, Trivy), lanjutkan QA perangkat Android/iOS/desktop, dan merge hanya bila seluruh gate lulus.
@@ -3273,3 +3285,9 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - HEAD PR `b3161df12ccbc8da53409b2b5582867ac44d3bae`: workflow `RADAR AI tests` run `45470390605` **completed / success** dengan job `Branch source policy` **success** dan job `test` **success**; workflow `RADAR AI security scans` run `45470390762` **completed / success**.
 - `GET /compare/c9c3a14...b3161df` melaporkan status `ahead`, `ahead_by=5`, `behind_by=0`; merge lokal dari `origin/develop` ke branch ini adalah fast-forward tanpa konflik. Namun API merge PR sempat mengembalikan HTTP 405 `Pull Request has merge conflicts` dengan `mergeable=false` / `mergeable_state=dirty`; status ini perlu dihitung ulang oleh GitHub sebelum merge.
 - Tidak ada perubahan kode pada pembaruan ini; Hostless Build/LIVE dan QA perangkat tetap belum diverifikasi.
+
+### Revalidasi kedua terhadap `develop` `b26d8b4` — 25 November 2026
+- `develop` maju lagi dengan PR #111 (refresh shared memory handoff) dan charter Grok (§113). Itu menjelaskan `mergeable=false` / `mergeable_state=dirty` yang dilaporkan GitHub setelah push pertama: basis PR bergeser, bukan konflik pada kode.
+- Branch `fix/sidebar-drawer-scroll` digabung lagi dengan `origin/develop` `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`. Konflik hanya pada dokumen master; bagian sidebar dinomorkan ulang menjadi §114 agar tidak bentrok dengan §113 (Grok charter). Tidak ada perubahan pada `public/style.css` atau `test/frontend-ui.test.js`.
+- Gate CI telah lolos pada HEAD lama `b3161df` (test, Branch source policy, security scans), tetapi **tidak boleh dipakai untuk HEAD baru**. CI exact-head harus dijalankan ulang setelah push ini sebelum merge dipertimbangkan.
+- Hostless Build/LIVE dan QA perangkat masih belum diverifikasi. Tidak ada kredensial, exchange, trading, atau konfigurasi produksi yang diubah.
