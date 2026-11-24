@@ -22,6 +22,7 @@ BEGIN
   END IF;
 END $$;
 
+SET ROLE service_role;
 INSERT INTO public.radar_memory_records
   (memory_key, memory_type, scope_type, scope_id, title, summary, content, source_type, source_ref, source_revision, created_by, retention_until)
 VALUES
@@ -30,6 +31,18 @@ VALUES
    'Approved knowledge must be scoped and traceable.',
    'github', 'https://github.com/rohman35819/radar-ai-v2/issues/82',
    'test-revision-1', 'ci', now() + interval '365 days');
+DO $
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.radar_memory_records WHERE memory_key = 'qa-memory-provenance-01') THEN
+    RAISE EXCEPTION 'service_role cannot read its inserted proposal';
+  END IF;
+  BEGIN
+    UPDATE public.radar_memory_records SET status = 'approved' WHERE memory_key = 'qa-memory-provenance-01';
+    RAISE EXCEPTION 'service_role unexpectedly updated memory status';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+END $;
+RESET ROLE;
 
 DO $$
 BEGIN
