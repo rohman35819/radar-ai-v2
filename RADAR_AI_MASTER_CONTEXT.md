@@ -3441,3 +3441,13 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Push ditolak oleh GitHub: `refusing to allow a Personal Access Token to create or update workflow .github/workflows/autonomous-development.yml without workflow scope`. Branch.remote tidak dibuat; perubahan **tidak** masuk repository. Ini bukan kegagalan test melainkan batas izin kredensial.
 - Keputusan: tidak mencoba bypass, tidak mengubah izin repository, tidak memaksa push. Perbaikan tetap tersimpan lokal sebagai bukti siap pakai bila token ber-`workflow` tersedia.
 - NEXT TASK: maintainer dengan scope `workflow` mendorong branch tersebut atau menerapkan ulang perubahan tiga baris workflow dan test assertion, lalu menjalankan gate CI sebelum merge. Sementara itu gunakan `test.yml` v7/Node 24 sebagai referensi runtime.
+
+---
+
+## 126. QA PERILAKU RUNTIME DASHBOARD — 25 NOVEMBER 2026
+
+- Keterbatasan sebelumnya: pengujian frontend hanya berupa assertion statis terhadap source. QA browser/perangkat tidak tersedia di lingkungan ini.
+- Penambahan: `test/dashboard-runtime.test.js` menjalankan `public/app.js` di `node:vm` dengan DOM shim minimal, lalu menguji **perilaku nyata** helper: `connectionState()` untuk lima kondisi (gagal memuat, terputus, basi, terhubung), `safeExternalLink()` terhadap `https`, `javascript:`, `data:`, string kosong, dan `undefined`, `ageLabel()` untuk timestamp tidak tersedia, serta `renderPreservingFocus()` ketika DOM diganti (fokus, kursor, seleksi, scroll view, dan scroll halaman dipulihkan ke elemen/node baru).
+- Hasil nyata: `node --test test/dashboard-runtime.test.js` 4 pass, 0 fail; `npm test` **212 pass, 0 fail, 0 skipped** (26 file); `git diff --check` bersih. README diselaraskan ke 212/26.
+- Batasan: shim bukan pengganti browser. Render penuh, gesture sentuh, CSP, layout responsif, dan PWA offline tetap memerlukan QA perangkat nyata. Tidak ada perubahan kode aplikasi pada perubahan ini—hanya test dan dokumentasi.
+- NEXT TASK: jalankan QA browser pada PR integrasi setelah gate terpenuhi, bandingkan dengan hasil runtime-test ini, dan perbaiki bila perilaku nyata berbeda.
