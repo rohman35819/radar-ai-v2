@@ -173,6 +173,20 @@ function renderAI(){
  v.append(sectionHead('AI Council','Empat model memberikan perspektif terpisah. Hasil adalah analisis, bukan instruksi transaksi.'));
  const usageTarget=el('div',{class:'ai-provider-usage'},el('p',{class:'muted'},'Memuat status provider…'));
  v.append(card(sectionHead('Kondisi & Pemakaian Provider','Data pemanggilan RADAR dan rate-limit yang benar-benar teramati; bukan perkiraan kuota akun.'),usageTarget));
+ const queueTarget=el('div',{class:'ai-provider-usage'},el('p',{class:'muted'},'Memuat antrean AI…'));
+ v.append(card(sectionHead('Antrean Permintaan AI','FIFO global untuk seluruh provider; kapasitas dibatasi agar request tidak menumpuk.'),queueTarget));
+ fetch('/api/ai/queue',{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status))).then(payload=>{
+  const q=payload?.queue;
+  if(!q)throw new Error('Queue status unavailable');
+  const color=q.status==='FULL'?'negative':(q.status==='QUEUED'?'warning':'positive');
+  queueTarget.replaceChildren(
+   el('div',{class:'row-between'},el('b',{},q.status==='FULL'?'ANTREAN PENUH':(q.status==='QUEUED'?'MENUNGGU FIFO':(q.status==='RUNNING'?'SEDANG DIPROSES':'IDLE'))),el('span',{class:color},q.active+'/'+q.max_concurrent+' aktif')),
+   el('p',{class:'muted'},'Menunggu: '+q.pending+'/'+q.max_pending+' · Total: '+q.total_in_system+'/'+q.max_total),
+   el('p',{class:'muted'},'Kebijakan: FIFO · Maksimum 2 request aktif + 12 antrean menunggu.'),
+   el('small',{class:'muted'},'Antrean tertua: '+Math.ceil((q.oldest_wait_ms||0)/1000)+' dtk · Selesai sejak restart: '+q.completed_since_restart+' · Ditolak saat penuh: '+q.rejected_since_restart)
+  );
+ }).catch(()=>queueTarget.replaceChildren(el('p',{class:'warning'},'Status antrean AI belum dapat dimuat.')));
+
  fetch('/api/ai/usage',{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status))).then(payload=>{
   const items=Object.values(payload?.usage?.providers||{});
   const labels={gemini:'Gemini',groq:'Groq',openrouter:'OpenRouter',openai:'OpenAI'};
