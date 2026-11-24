@@ -2972,7 +2972,7 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 - No production DB migration, role grants, worker, scheduler, Hostless config, deployment, or trading action was performed. Manual Division 01/05 review not performed (temporary override); objective CI/security checks are required before merge.
 - NEXT: verify exact-head CI/security, mergeability and PR merge; then proceed to PR #88. Production activation remains a separate BOS-approved task.
 
-## 96. ATURAN PEMBAGIAN DIVISI & DELEGASI MANDIRI — BOS DIRECTIVE (24 NOVEMBER 2026)
+## 97. ATURAN PEMBAGIAN DIVISI & DELEGASI MANDIRI — BOS DIRECTIVE (24 NOVEMBER 2026)
 
 **Status: AKTIF.** BOS menegaskan bahwa perkembangan RADAR AI V2 tidak boleh tertahan hanya karena assistant belum mendapat username GitHub, nama reviewer, atau balasan divisi internal. Lead wajib mengatur pembagian pekerjaan sendiri dan menyelesaikan pekerjaan rutin sampai tuntas sesuai gate risiko.
 
