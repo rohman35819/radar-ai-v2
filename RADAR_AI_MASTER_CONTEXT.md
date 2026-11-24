@@ -3303,3 +3303,30 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write`, verifikasi head `c0e88a6...`, lalu jalankan gate test/Gitleaks/Trivy/branch-source policy.
   2. QA browser Market Intelligence: ganti exchange dengan cepat untuk memastikan tabel tidak menampilkan hasil usang; uji respons tanpa `updated_at`.
   3. Terapkan pola freshness jujur yang sama pada `solscan.html` dan `membership.html`, lalu selesaikan konflik penomoran §109/§110/§111 saat integrasi ke `develop`.
+## 112. SOLSCAN — WAKTU OBSERVASI JUJUR & AKSESIBILITAS (25 NOVEMBER 2026)
+
+> Catatan penomoran: bagian 109, 110, dan 111 berada pada branch lain yang belum terintegrasi ke `develop`. Rapikan urutan saat integrasi tanpa menghapus isi bagian mana pun.
+
+### Routing dan ruang lingkup
+- Lead: Divisi 02 — UI/UX & Frontend. Branch `fix/solscan-truthful-observability` dari `develop` SHA `4b37426f519ba91483f11a37a0023180134f9c62`.
+- Tidak ada perubahan backend, kontrak API, kredensial Solscan, exchange, trading, atau deployment.
+
+### Temuan dan perbaikan
+- `public/solscan.js` merender `new Date(payload.observed_at)` tanpa memeriksa keberadaan/validitas nilai. Bila field tidak ada atau tidak valid, UI menampilkan `Invalid Date` seolah waktu observasi nyata. Ditambahkan `formatObserved()` dan `observedLabel()`; tanpa nilai ditampilkan `Waktu observasi tidak tersedia dari server`, bukan waktu hasil `Date.now()` atau `Invalid Date`.
+- Notifikasi agregat kini memakai `formatObserved()` sehingga tidak menyisipkan tanggal palsu pada teks status endpoint.
+- `setMenu()` kini menyelaraskan `aria-label` dengan status drawer seperti halaman dashboard lain.
+- `public/solscan.html`: `aria-label` pada tombol refresh dan `aria-live="polite"` pada `#notice`.
+
+### Pengujian
+- `node --check public/solscan.js` lulus; `node --test test/solscan-ui.test.js` 3 pass, 0 fail; `npm test` **196 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
+- `test/solscan-ui.test.js` baru: larangan render timestamp mentah, pesan waktu tidak tersedia, dan aksesibilitas kontrol.
+- README diselaraskan dari 99/12 menjadi 196/25 test case.
+
+### Status dan NEXT TASK
+- Commit kode: `02b4f3bc0322087993b20d15bc35c01db714c9b2` (`fix: report Solscan observation time truthfully and improve a11y`).
+- GitHub: branch belum di-PR karena kredensial tetap menolak `POST /pulls` (HTTP 403 `Resource not accessible by personal access token`). Tautan manual: https://github.com/rohman35819/radar-ai-v2/pull/new/fix/solscan-truthful-observability . Tidak ada secret yang dibuka atau diubah.
+- Hostless Build/LIVE: tidak dicek; tidak ada deployment. QA browser desktop/mobile belum dilakukan. Ini perubahan source-level yang sudah diuji otomatis, bukan klaim lulus QA visual.
+- NEXT TASK:
+  1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write`, verifikasi head `02b4f3b...`, lalu jalankan gate test/Gitleaks/Trivy/branch-source policy.
+  2. Terapkan pola waktu jujur yang sama pada `membership.html`/`membership.js` dan `command.html` bila ada field timestamp yang tidak divalidasi.
+  3. Koordinasikan integrasi empat branch frontend (`feat/dashboard-freshness`, `fix/market-truthful-state`, `fix/solscan-truthful-observability`, dan PR #106) ke `develop`: selesaikan konflik dokumen §109–§112 dan jalankan suite penuh pada HEAD gabungan sebelum merge.

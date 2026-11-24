@@ -3,6 +3,15 @@ const $ = (s) => document.querySelector(s);
 const fmt = (v) => v == null || !Number.isFinite(Number(v)) ? '—' : Number(v).toLocaleString('id-ID',{maximumFractionDigits:4});
 const money = (v) => v == null || !Number.isFinite(Number(v)) ? '—' : '$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:2});
 const short = (v,n=7) => v ? String(v).slice(0,n)+'…'+String(v).slice(-n) : '—';
+const formatObserved = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toLocaleString('id-ID') : null;
+};
+const observedLabel = (value) => {
+  const formatted = formatObserved(value);
+  return formatted ? 'Observed: ' + formatted : 'Waktu observasi tidak tersedia dari server';
+};
 const esc = (v) => String(v ?? '—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const unwrap = (x) => x?.data?.data ?? x?.data ?? null;
 const arr = (x) => Array.isArray(unwrap(x)) ? unwrap(x) : Array.isArray(x?.data) ? x.data : [];
@@ -29,7 +38,7 @@ async function load(){
  try{
   const response=await fetch('/api/solscan/overview',{cache:'no-store'}),payload=await response.json();
   if(!response.ok && !payload.configured) throw Object.assign(new Error(payload.code),{code:payload.code});
-  setStatus(payload);$('#updated-at').textContent='Observed: '+new Date(payload.observed_at).toLocaleString('id-ID');
+  setStatus(payload);$('#updated-at').textContent=observedLabel(payload.observed_at);
   const endpoints=payload.endpoints||{},chain=unwrap(endpoints.chain_info),tx=arr(endpoints.latest_transactions),blocks=arr(endpoints.latest_blocks),tokens=arr(endpoints.trending_tokens);
   const latest=(key)=>{const series=unwrap(endpoints[key])?.series;return Array.isArray(series)&&series.length?series[series.length-1]:null;};
   const txDay=latest('transaction_analytics'),stakeDay=latest('stake_analytics'),feeDay=latest('fee_analytics'),defiDay=latest('defi_analytics');
@@ -49,7 +58,8 @@ async function load(){
   renderRows('#transactions',tx,(t)=>[short(t.tx_hash||t.signature||t.txHash),t.status||t.block_time||t.time||'Transaksi',t.fee!=null?'Fee '+fmt(t.fee):''], 'Transaksi terbaru belum tersedia.');
   renderRows('#blocks',blocks,(b)=>['Slot '+fmt(b.slot||b.block_id||b.blockHeight),b.block_time||b.time||'',b.transaction_count!=null?fmt(b.transaction_count)+' tx':''], 'Data block belum tersedia.');
   const failures=Object.entries(endpoints).filter(([,v])=>!v.ok).map(([k,v])=>k+': '+v.code);
-  $('#notice').textContent=(failures.length?'Sebagian endpoint tidak tersedia: '+failures.join(' · '):'Seluruh endpoint ringkasan yang diminta berhasil.')+' Data diobservasi '+new Date(payload.observed_at).toLocaleString('id-ID')+(maxLag===null?'':' · Lag maksimum analytics harian: '+maxLag+' hari.')+'; harga/market data mengikuti delay indeksasi Solscan.';
+  const observedText=formatObserved(payload.observed_at);
+  $('#notice').textContent=(failures.length?'Sebagian endpoint tidak tersedia: '+failures.join(' · '):'Seluruh endpoint ringkasan yang diminta berhasil.')+(observedText?' Data diobservasi '+observedText:' Waktu observasi tidak tersedia dari server.')+(maxLag===null?'':' · Lag maksimum analytics harian: '+maxLag+' hari.')+'; harga/market data mengikuti delay indeksasi Solscan.';
  }catch(error){$('#notice').textContent=showError(error.code||'SOLSCAN_UNAVAILABLE');$('#network-stats').replaceChildren(stat('STATUS','Tidak tersedia',showError(error.code)));setStatus({ok:false,code:error.code});}
  finally{$('#refresh').disabled=false;}
 }
@@ -80,6 +90,6 @@ $('#wallet-form').addEventListener('submit',async event=>{
 });
 $('#refresh').addEventListener('click',load);
 const menu=$('#menu-toggle'),sidebar=$('#sidebar'),backdrop=$('#sidebar-backdrop');
-const setMenu=(open)=>{sidebar.classList.toggle('open',open);document.body.classList.toggle('sidebar-open',open);menu.setAttribute('aria-expanded',String(open));};
+const setMenu=(open)=>{sidebar.classList.toggle('open',open);document.body.classList.toggle('sidebar-open',open);menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'Tutup menu':'Buka menu');};
 menu.addEventListener('click',()=>setMenu(!sidebar.classList.contains('open')));backdrop.addEventListener('click',()=>setMenu(false));document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false);});
 load();setInterval(load,300000);
