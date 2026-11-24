@@ -2981,3 +2981,14 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 - Memory tetap proposal-only: RLS aktif, anon/authenticated tanpa privilege, service_role SELECT/INSERT saja, tidak ada approval API. Tidak ada Supabase production migration, secret, API route, frontend integration atau activation.
 - Exact-head CI/security untuk branch baru masih harus diverifikasi. Manual Divisi 01/05 review: not performed (temporary override); fokus self-review pada service-key handling, scope filters, SQL privilege dan proposal-only trigger.
 - NEXT: exact-head npm + PostgreSQL queue + memory smoke + Gitleaks/Trivy, pastikan mergeable=true, lalu merge hanya jika seluruh bukti lulus. Tutup PR #88 sebagai superseded oleh branch terbaru setelah PR pengganti siap.
+
+
+## 98. DIVISI 07 — MEMORY SECURITY HARDENING BEFORE PR #88 CLOSEOUT (24 NOVEMBER 2026)
+
+- The proposal-only memory foundation landed on main at commit `3479e227026cffdaff74a28bbfd20e9ac1bf6e44` while PR #88 remained open. PR #88 therefore requires incremental hardening, not re-merging duplicate foundation files.
+- Hardened adapter rejects Supabase `sb_secret_` keys, JWT-shaped credentials, provider tokens and secret-like values in artifact_refs; Supabase URL is HTTPS-only and rejects embedded credentials, query, hash and path.
+- Proposal/approved retrieval applies retention_until, valid_from and valid_until filters in PostgREST before returning records; confidential records remain excluded.
+- Migration explicitly grants public schema USAGE only to server-side service_role while retaining SELECT/INSERT-only table privileges. Disposable PostgreSQL role models Supabase service_role BYPASSRLS and tests insert/read plus denied UPDATE.
+- Manual Divisi 01/05 review not performed (temporary BOS override); exact-head Node, PostgreSQL migration/privilege smoke, Gitleaks and Trivy remain mandatory.
+- No production Supabase migration, credential, API route, memory activation, Hostless config or deployment.
+- NEXT: validate exact head and merge PR #88 only when GitHub reports mergeable=true and every check succeeds.
