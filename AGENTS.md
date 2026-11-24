@@ -144,3 +144,46 @@ BOS directs the lead assistant/contributor to complete routine work end-to-end w
 11. **Risk gates remain:** authentication/authorization, privilege boundaries, secrets, production migrations, destructive/data-loss actions, financial execution/trading and irreversible production changes retain their existing security controls and BOS approval requirements. This policy does not authorize production activation or deployment.
 12. **Truthful status:** report separately what was mapped, ported, tested, merged, deployed and verified LIVE. Never describe an old feature as implemented merely because its idea was copied into a new branch.
 
+
+
+## BRANCH GOVERNANCE & AI AUTONOMY CHARTER — BOS DIRECTIVE (24 November 2026)
+
+**Status: ACTIVE POLICY.** The repository uses a protected production lane, an integration lane, and isolated work lanes.
+
+- `main`: permanent production/stable branch. No direct pushes by AI or contributors. Receives only reviewed PRs from `develop` or `hotfix/*`, after required exact-head checks and release approval.
+- `develop`: permanent integration branch. Receives coherent, tested feature/fix/validated experiment PRs. It is the normal target for day-to-day work.
+- `feat/<name>`: temporary feature development or improvement branch, created from current `develop`; return via PR to `develop`.
+- `fix/<name>`: temporary bug-fix branch, created from current `develop`; return via PR to `develop`.
+- `exp/<name>`: isolated AI experimentation branch. May fail or be reworked without affecting `develop` or `main`. Do not open a PR until the experiment is reproducibly successful and its tests pass; then PR to `develop`.
+- `hotfix/<name>`: narrowly scoped urgent production fix. May PR directly to `main` after focused risk controls, full relevant CI/security checks, rollback analysis, and required BOS approval for high-risk/production-sensitive actions. Forward-port the fix to `develop` immediately after release.
+
+**Isolation and queue**
+1. One task/one writing agent/one branch. Two agents must not concurrently write to the same branch or working tree. Reviewer must be separate from the author; CI is an automated gate, not a claim of independent human review.
+2. Maximum 3 active open PRs targeting `develop` at a time. This is the integration WIP limit; it does not cap local/remote experiment branches. Emergency exceptions must be justified and documented under the existing emergency policy.
+3. `exp/*` branches may be numerous, but must have bounded compute/time/API usage, no production credentials, and no production side effects. Only validated results enter `develop`.
+4. Use Git worktrees when multiple agents share one machine; use separate branch/worktree or separate isolated workspace per agent. Never share one mutable working directory concurrently.
+5. Old branches may be regenerated from latest `develop` while preserving all legacy ideas, sources, data contracts, features and acceptance criteria per the Branch Regeneration policy. Link every replacement PR to its source PR/issue.
+
+**Required PR gates**
+- PR to `develop`: source must be `feat/*`, `fix/*`, or validated `exp/*`; automated test, syntax, integration/database and security checks relevant to the diff must pass.
+- PR to `main`: source must be `develop` or `hotfix/*`; full release checks, version/tag plan, migration compatibility and rollback plan must pass.
+- Failed required checks block merge. Missing or stale checks are not passes. Re-run after changes and verify the exact head SHA.
+- Keep the current WIP limit of 3 PRs toward `develop`. A branch without a PR does not count as an active PR.
+
+**Automation and release safety**
+- Every meaningful PR must run available tests and security scans. Add lint/build checks only when a real, maintained project command exists; do not invent a passing lint/build step. Add a dedicated lint/build command when justified and tested.
+- Use conventional commit prefixes: `feat:`, `fix:`, `exp:`, `docs:`, `test:`, `ci:`, `security:`, `refactor:`, `chore:`. PR descriptions must state purpose, changes, legacy parity, data/provider/source status, tests, risks, migration and rollback.
+- Release from `develop` to `main` must create an immutable version tag (SemVer, e.g. `v2.3.1`) tied to the exact released commit. Do not create a version tag before a release is verified.
+- Rollback must be an explicit, auditable revert/redeployment to a known-good release. Never force-reset a shared branch or automatically reverse database/data changes. Health-triggered rollback may be automated only after safe thresholds, deployment adapter, migration compatibility, audit trail, and kill switch are implemented and tested.
+- Preserve a known-good release and forward-fix after rollback. Roll back application code only when database compatibility is confirmed.
+
+**BOS-authorized rule evolution**
+BOS authorizes AI contributors to propose and adopt additional repository engineering, testing, observability, reliability, security, documentation, and automation rules when evidence shows they materially advance RADAR AI V2 toward safe autonomy. This is standing authority for additive technical governance; it does not require asking BOS for every low-risk process improvement.
+- New rules must be written into `AGENTS.md` and/or `RADAR_AI_MASTER_CONTEXT.md`, dated, scoped, justified, and reconciled with existing rules.
+- Rules must be additive and strengthen or clarify the system. If a rule conflicts with an existing rule, document the conflict and resolution; do not silently weaken a safety gate.
+- AI may not use this authority to change repository/admin permissions, disable branch protection or required checks, weaken security, expose secrets, enable production services, spend money, approve destructive data actions, or enable live financial/trading actions. Those remain BOS/authorized-owner decisions.
+- For material architecture/security/release policy changes, record rationale, risk, test/evidence, rollback and the next review condition in the master context. Mark obsolete rules as superseded; retain their history.
+- If a new rule has not yet been technically enforced, label it policy-only and do not claim it is automated.
+
+**Current implementation caveat:** GitHub currently reports `main` as unprotected (`protected=false`); the available repository connection cannot read/write the branch-protection administration endpoint (403). Therefore the policy is defined here, but the actual GitHub lock/required-status-check enforcement is NOT YET ACTIVE. Do not claim `main` is protected until a repository administrator configures and verifies it in GitHub Settings. See the master-context next action.
+

@@ -2,11 +2,38 @@ name: RADAR AI tests
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   push:
-    branches: [main, 'feature/**']
+    branches: [main, develop, 'feat/**', 'fix/**', 'exp/**', 'hotfix/**']
 
 jobs:
+  branch-policy:
+    name: Branch source policy
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce allowed PR source branches
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -eu
+          case "$BASE_BRANCH" in
+            main)
+              case "$HEAD_BRANCH" in
+                develop|hotfix/*) echo "Allowed production PR source: $HEAD_BRANCH" ;;
+                *) echo "PRs to main must come from develop or hotfix/*; got $HEAD_BRANCH"; exit 1 ;;
+              esac
+              ;;
+            develop)
+              case "$HEAD_BRANCH" in
+                feat/*|fix/*|exp/*) echo "Allowed integration PR source: $HEAD_BRANCH" ;;
+                *) echo "PRs to develop must come from feat/*, fix/*, or validated exp/*; got $HEAD_BRANCH"; exit 1 ;;
+              esac
+              ;;
+            *) echo "No branch source policy defined for target $BASE_BRANCH"; exit 1 ;;
+          esac
+
   test:
     runs-on: ubuntu-latest
     services:

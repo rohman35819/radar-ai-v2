@@ -3062,3 +3062,71 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 
 **Penerapan awal:** gunakan kebijakan ini untuk pekerjaan backlog/issue #95 dan PR lama yang masih relevan. Lakukan inventarisasi ulang terhadap kondisi GitHub terkini sebelum memilih sumber migrasi; jangan mengandalkan jumlah atau status PR dari audit sebelumnya tanpa refresh.
 
+
+
+## 104. GOVERNANCE BRANCH, MULTI-AI, CI/CD & RULE EVOLUTION — BOS DIRECTIVE (24 NOVEMBER 2026)
+
+**Status: KEBIJAKAN AKTIF; IMPLEMENTASI TEKNIS BERTAHAP.**
+
+### Struktur branch resmi
+- `main`: permanen untuk produksi/stabil; tidak boleh direct push. Hanya menerima PR dari `develop` atau `hotfix/*) setelah exact-head checks, release gate dan rollback review lulus.
+- `develop`: permanen untuk integrasi; target normal PR fitur, bug fix dan eksperimen yang sudah tervalidasi.
+- `feat/<nama>`: branch sementara dari `develop` untuk fitur baru/peningkatan fitur; kembali ke develop lewat PR.
+- `fix/<nama>`: branch sementara dari `develop` untuk perbaikan bug; kembali ke develop lewat PR.
+- `exp/<nama>`: laboratorium eksperimen AI terisolasi. Boleh gagal/dirombak tanpa memengaruhi develop/main. PR hanya boleh dibuat setelah hasil dapat direproduksi dan tes lulus.
+- `hotfix/<nama>`: perbaikan darurat produksi yang sempit; PR langsung ke main dengan pemeriksaan risiko, CI/security, rollback dan persetujuan BOS bila high-risk. Setelah rilis, forward-port ke develop.
+
+### Isolasi multi-AI dan antrean
+1. Satu tugas/satu agen penulis/satu branch. Tidak boleh dua agen menulis branch atau working tree yang sama bersamaan. Reviewer harus terpisah dari penulis; CI bukan bukti review independen manusia.
+2. Maksimal 3 PR aktif terbuka yang menargetkan develop. Ini batas WIP integrasi, bukan batas jumlah branch eksperimen. Pengecualian darurat mengikuti kebijakan emergency yang sudah ada.
+3. Branch exp boleh banyak, tetapi penggunaan komputasi/waktu/API harus dibatasi; tidak boleh memakai production credentials atau membuat efek samping produksi.
+4. Gunakan Git worktrees jika beberapa agen berada pada mesin yang sama. Jika mesin berbeda, gunakan branch/workspace terisolasi. Jangan berbagi satu working directory yang mutable.
+5. Regenerasi branch lama dimulai dari develop terbaru, menjaga semua ide, sumber, kontrak data, fungsi, dan acceptance criteria sesuai kebijakan regenerasi. PR pengganti harus menautkan PR/issue asal.
+
+### Gate PR
+- PR ke develop hanya dari `feat/*`, `fix/*`, atau `exp/*) yang sudah tervalidasi. Test, syntax, integration/database dan security check yang relevan wajib lulus.
+- PR ke main hanya dari develop atau hotfix/*. Full release checks, version/tag plan, kompatibilitas migrasi dan rollback wajib lulus.
+- Failed, missing, stale checks bukan kelulusan. Ulangi setelah perubahan dan validasi exact head SHA.
+- Maksimal 3 PR aktif menuju develop; branch tanpa PR tidak dihitung sebagai PR aktif.
+
+### CI/CD, commit, release dan rollback
+- Setiap PR menjalankan tes dan security scan yang tersedia. Lint/build hanya diwajibkan jika ada perintah proyek yang benar-benar tersedia dan terpelihara; jangan membuat gate palsu. Tambahkan perintah lint/build nyata bila sudah diuji dan layak.
+- Gunakan prefix Conventional Commits: `feat:`, `fix:`, `exp:`, `docs:`, `test:`, `ci:`, `security:`, `refactor:`, `chore:`.
+- PR template wajib mencatat tujuan, perubahan, kesetaraan fitur lama, status sumber/provider/data, tes, risiko, migrasi dan rollback.
+- Rilis develop ke main wajib membuat immutable SemVer tag (misalnya `v2.3.1`) pada commit rilis yang tepat. Jangan membuat tag versi sebelum rilis diverifikasi.
+- Rollback harus berupa revert/redeploy yang tercatat ke rilis stabil. Jangan force-reset branch bersama atau membalik perubahan database/data secara otomatis. Auto rollback berbasis health hanya boleh diaktifkan setelah threshold, deployment adapter, kompatibilitas migrasi, audit dan kill switch terbukti.
+- Pertahankan rilis stabil; setelah rollback lakukan forward-fix. Rollback kode hanya jika kompatibilitas database terkonfirmasi.
+
+### Kewenangan AI untuk mengembangkan aturan
+BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tambahan aturan engineering, testing, observability, reliability, security, dokumentasi dan otomasi yang terbukti mendukung visi RADAR AI V2 menuju otomatisasi aman.
+- Aturan baru harus ditulis di `AGENTS.md` dan/atau `RADAR_AI_MASTER_CONTEXT.md`, memiliki tanggal, cakupan, alasan dan konsistensi dengan aturan lama.
+- Aturan bersifat memperkuat/menjelaskan. Konflik harus dicatat dan diselesaikan secara eksplisit; tidak boleh diam-diam melemahkan safety gate.
+- Kewenangan ini TIDAK mencakup perubahan izin admin/repository, menonaktifkan branch protection/required checks, melemahkan keamanan, membuka secret, aktivasi layanan produksi, pengeluaran biaya, tindakan destruktif, atau eksekusi trading/finansial. Itu tetap keputusan BOS/owner berwenang.
+- Perubahan kebijakan arsitektur/security/release yang material wajib mencatat alasan, risiko, bukti/tes, rollback dan kondisi evaluasi berikutnya. Aturan lama yang diganti diberi label superseded, bukan dihapus.
+- Aturan yang belum ditegakkan secara teknis harus disebut policy-only; jangan mengklaim sudah otomatis.
+
+### Status implementasi pada 24 November 2026
+- Branch permanen `develop` dibuat dari main SHA `859818456228152643b350002a3366910d445a1e`.
+- Pemeriksaan GitHub branch list menunjukkan `main` saat itu `protected=false`; rulesets kosong. Endpoint admin branch protection mengembalikan 403 pada koneksi yang tersedia. Dengan demikian, aturan main locked sudah ditetapkan tetapi belum dipaksakan oleh GitHub. Perlu konfigurasi manual oleh repository administrator.
+- Workflow test dan security telah diperbarui di branch develop untuk memicu PR ke main/develop dan push ke branch kerja; pemeriksaan sumber PR juga ditambahkan pada workflow test. Perubahan ini sedang diajukan melalui PR #102.
+- `package.json` belum memiliki script lint/build terpisah. `npm test` menjalankan syntax checks Node dan test suite. Jangan mengklaim lint/build check mandiri tersedia.
+- Git worktrees, multi-agent runtime, independent AI reviewer, automated SemVer tagging, deployment rollback dan auto rollback belum dibuktikan aktif. Kebijakan sudah mendefinisikan desain; implementasi harus bertahap dan diuji.
+
+**NEXT TASK:** selesaikan workflow branch-aware, PR template dan pemeriksaan exact-head pada develop; kemudian repository administrator aktifkan branch protection/rulesets untuk main/develop dan required status checks. Setelah itu baru migrasikan alur kerja fitur secara bertahap ke develop.
+
+
+
+## 105. GOVERNANCE BOOTSTRAP DELIVERY — 24 NOVEMBER 2026
+
+- Created permanent `develop` branch from main SHA `859818456228152643b350002a3366910d445a1e`.
+- Governance and AI rule-evolution charter recorded in `AGENTS.md` and this master context on develop.
+- Updated `.github/workflows/test.yml`: pull_request targets main/develop; push targets main, develop, feat/*, fix/*, exp/*, hotfix/*; added source-branch policy job (main accepts develop/hotfix/*; develop accepts feat/fix/exp).
+- Updated `.github/workflows/security.yml` to scan PRs to main/develop and pushes to main/develop.
+- Added `.github/pull_request_template.md` with purpose, legacy parity, data/provider, exact-head test, risk, migration, rollback and review provenance sections.
+- Opened bootstrap PR #102 from develop to main: https://github.com/rohman35819/radar-ai-v2/pull/102. PR head at opening: `0df1f03098505a4dc5495ce883250a87f7003090`; base main: `859818456228152643b350002a3366910d445a1e`; 6 commits / 5 changed files reported by GitHub.
+- Exact-head workflow lookup at the time of this note returned no PR workflow runs yet. Tests/security are therefore PENDING, not passed. Do not merge until current head has successful checks and mergeability is true.
+- GitHub branch listing showed `main` unprotected; rulesets endpoint returned empty. Branch-protection admin endpoint returned 403 for the current integration. The `main`/ `develop` lock and required status checks are NOT technically enforced yet; repository administrator must configure them in GitHub Settings and verify.
+- `package.json` has `npm test` (Node syntax checks + Node test suite), but no standalone lint/build scripts. Do not claim separate lint/build gates.
+- No runtime application code, production database, credentials, Hostless configuration, deployment, paid service or trading behavior changed.
+
+**NEXT TASK:** monitor PR #102 exact-head test/security checks; fix any workflow failures. Before merging, have repository administrator configure branch protection/rulesets for main (and develop) with direct push/force-push/deletion disabled, PR-only updates, required exact-head test/security checks, and main source restriction to develop/hotfix. Then verify protection state and merge bootstrap PR only after all gates pass.
