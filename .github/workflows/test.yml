@@ -39,6 +39,10 @@ jobs:
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < db/migrations/002_queue_operations.sql
       - name: Verify queue, lease, retry, approval and kill-switch semantics
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < db/tests/002_queue_operations_smoke.sql
+      - name: Apply Divisi 07 memory migration to disposable PostgreSQL
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/migrations/20261124_radar_memory.sql
+      - name: Verify Divisi 07 memory schema and least-privilege access
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/tests/20261124_radar_memory_smoke.sql
       - name: Hostless LIVE readiness and News probe (diagnostic only)
         if: github.head_ref == 'ops/hostless-live-check'
         run: npm run hostless-check
