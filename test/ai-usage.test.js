@@ -102,3 +102,29 @@ test('daily provider counters follow Asia/Jakarta day boundary, not UTC midnight
   assert.equal(view.providers.gemini.requests_today, 1);
   assert.equal(view.providers.gemini.total_tokens_today, 13);
 });
+
+test('network retry failures and later success are both observable', async () => {
+  const { requestStructured } = require('../lib/ai/chat-completions');
+  const events = [];
+  let calls = 0;
+  await requestStructured({
+    provider: 'groq', apiKey: 'configured', baseUrl: 'https://example.invalid', model: 'mock',
+    messages: [{ role: 'user', content: 'test' }], retryDelayMs: 0,
+    onUsage: (event) => events.push(event),
+    fetchImpl: async () => {
+      calls++;
+      if (calls === 1) throw new TypeError('temporary network issue');
+      return {
+        ok: true, status: 200, headers: headers(),
+        json: async () => ({ usage: { prompt_tokens: 3, completion_tokens: 2, total_tokens: 5 }, choices: [{ message: { content: JSON.stringify({
+          decision: 'WAIT', confidence_score: 1, timeframe: '1h', reasons: [], risks: [], missing_data: [], summary: 'ok'
+        }) } }] })
+      };
+    }
+  });
+  assert.equal(calls, 2);
+  assert.equal(events.length, 2);
+  assert.equal(events[0].ok, false);
+  assert.equal(events[0].statusCode, null);
+  assert.equal(events[1].ok, true);
+});
