@@ -177,6 +177,9 @@ body{
 }
 
 .news-health{margin:10px 0 14px;padding:12px}.news-health .health-line{margin:4px 0}.news-health-error{margin:8px 0 0;font-size:10px}
+.freshness-note{margin:10px 0 2px;font-size:9px;color:var(--muted)}
+.state-panel{display:grid;gap:8px;justify-items:center;text-align:center;padding:24px}
+.state-panel .freshness-note{margin:0}
 
 /* Early Gem Scanner */
 .gem-status{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:10px}

@@ -35,3 +35,16 @@ test('Membership preview keeps the registration name field hidden in login mode'
   assert.match(membershipHtml,/id="name-field" hidden/);
   assert.match(membershipCss,/#name-field\[hidden\]\s*\{\s*display:\s*none\s*\}/);
 });
+
+const styleCss=fs.readFileSync(require.resolve('../public/style.css'),'utf8');
+
+test('Dashboard exposes truthful freshness, source and connection states',()=>{
+  for(const marker of ['const ageLabel','const connectionState','const sourceFootnote','loadFailed'])
+    assert.ok(app.includes(marker),'missing '+marker);
+  assert.match(app,/Sumber: \/api\/snapshot/);
+  assert.match(app,/data\.stale/);
+  assert.match(app,/snapshotReachable/);
+  assert.doesNotMatch(app,/Math\.random/,'dashboard must not fabricate data');
+  assert.match(styleCss,/\.freshness-note/);
+  assert.match(styleCss,/\.state-panel/);
+});
