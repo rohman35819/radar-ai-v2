@@ -3195,7 +3195,8 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   - News menampilkan waktu ambil snapshot di samping status per-sumber; Unlock membedakan sumber belum dikonfigurasi (`config_needed.unlock_source=true`) dari sumber aktif tanpa jadwal.
   - `updateStatus()` kini konsisten dengan `connectionState()` dan selalu dipanggil setelah `load()`, termasuk saat gagal. `load()` masih mengembalikan `snapshotOk` seperti sebelumnya.
 - `public/style.css`: menambah `.freshness-note` dan `.state-panel` (responsif melalui layout grid yang sudah ada).
-- `test/frontend-ui.test.js`: satu regression test untuk helper di atas, sumber `/api/snapshot`, penggunaan `data.stale`/`snapshotReachable`, absennya `Math.random`, dan keberadaan kelas CSS baru.
+- `test/frontend-ui.test.js`: satu regression test untuk helper di atas, sumber `/api/snapshot`, penggunaan `data.stale`/`snapshotReachable`, absennya `Math.random`, keberadaan kelas CSS baru, dan cakupan footnote pada minimal delapan view.
+- Lanjutan aman pada commit `b92ad4d96aa0de93022eed82fea9972279908881`: Watchlist, Analytics, dan System Health memakai `connectionState()`/`sourceFootnote()`; Analytics memperoleh empty state ketika tidak ada token; API STATUS pada System Health tidak lagi mengklaim ONLINE tanpa bukti snapshot.
 
 ### Pengujian dan commit
 - Commit kode: `47cd00f89b0e74f883ac4e5a44c00ced3e99dc92` (`feat: show truthful dashboard freshness, source and state`).
