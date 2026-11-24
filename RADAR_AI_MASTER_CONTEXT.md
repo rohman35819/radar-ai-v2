@@ -3165,3 +3165,11 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 **Implementation record:** Policy documentation only at this stage. It does not change GitHub Rulesets, grant new repository permissions, or create an always-on agent runtime. BOS is separately configuring GitHub Rulesets; verify actual enforcement before claiming branch protection is active.
 
 **NEXT:** Complete the GitHub Rulesets configuration for main and develop with required test and security checks, then verify the actual status-check names and merge behavior. Continue implementing the task orchestrator so multiple AI contributors can work in isolated branches without overlapping writes.
+
+
+## 108. BRANCH SOURCE POLICY CLARIFICATION (24 NOVEMBER 2026)
+
+- The first branch-source policy allowed only feat/*, fix/* and exp/* into develop. That blocked legitimate documentation/governance PR #104 before test execution completed.
+- Corrected the policy to accept scoped docs/*, chore/*, ci/*, security/*, test/* and refactor/* branches in addition to feat/*, fix/* and exp/* for PRs targeting develop.
+- PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
+- Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
