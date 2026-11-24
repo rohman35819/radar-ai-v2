@@ -3291,3 +3291,14 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Branch `fix/sidebar-drawer-scroll` digabung lagi dengan `origin/develop` `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`. Konflik hanya pada dokumen master; bagian sidebar dinomorkan ulang menjadi §114 agar tidak bentrok dengan §113 (Grok charter). Tidak ada perubahan pada `public/style.css` atau `test/frontend-ui.test.js`.
 - Gate CI telah lolos pada HEAD lama `b3161df` (test, Branch source policy, security scans), tetapi **tidak boleh dipakai untuk HEAD baru**. CI exact-head harus dijalankan ulang setelah push ini sebelum merge dipertimbangkan.
 - Hostless Build/LIVE dan QA perangkat masih belum diverifikasi. Tidak ada kredensial, exchange, trading, atau konfigurasi produksi yang diubah.
+
+---
+
+## 125. EKSPERIMEN DETEKSI SPIKE VOLUME ROBUST — 25 NOVEMBER 2026
+
+- Branch terisolasi: `exp/volume-spike-robustness` dari `develop`. Tidak ada perubahan pada `lib/exchange.js`, ambang alert, konfigurasi produksi, trading, atau kredensial.
+- Hipotesis: aturan median saja (`current/median >= 3`) menganggap lonjakan periodik yang sudah umum sebagai anomali. Gate P90 baseline dan robust z-score berbasis MAD diharapkan menekan false positive tanpa menghilangkan lonjakan tunggal nyata.
+- Metode: `lib/experiments/volume-spike-robust.js` membandingkan `analyze10m()` produksi dengan `robustSpike()` pada fixture 10 menit sintetis yang deterministik (24 baseline + 1 bucket aktual). Tidak ada panggilan API dan tidak ada data pasar nyata yang dipakai.
+- Hasil nyata: `node --test test/volume-spike-experiment.test.js` 4 pass, 0 fail. Skenario A (lonjakan tunggal) terdeteksi kedua metode; B (lonjakan periodik) false positive pada median saja tetapi ditolak oleh gate P90; C (baseline volatil + lonjakan besar) lolos gate dengan robust_z > 3; D (data kurang) menghasilkan null.
+- Keputusan: **tidak diimplementasikan ke produksi** pada sesi ini. Eksperimen tetap di `exp/*`;validasi lanjutan memerlukan data historis berlabel, pengukuran FP/FN, dan proposal perubahan terpisah dengan rollback. Detail lengkap: `docs/EXPERIMENT_VOLUME_SPIKE.md` (hipotesis, tujuan, metode, data, hasil, perbandingan, kesimpulan, keputusan).
+- Pengujian gabungan pada branch: `npm test` dijalankan pada commit berikutnya; tidak ada klaim CI/Hostless/LIVE sebelum diverifikasi terpisah.
