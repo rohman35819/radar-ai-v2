@@ -1,9 +1,5 @@
 -- Disposable PostgreSQL 16 smoke test for Divisi 07 memory migration.
-CREATE ROLE anon NOLOGIN;
-CREATE ROLE authenticated NOLOGIN;
-CREATE ROLE service_role NOLOGIN;
-
-\i supabase/migrations/20261124_radar_memory.sql
+-- Roles and migration are prepared by the GitHub Actions workflow before this file runs.
 
 DO $$
 BEGIN
