@@ -267,3 +267,58 @@ test('integrasi: snapshot memuat vol10m asli atau null (N/A); kegagalan bursa me
     assert.strictEqual(s.tokens[0].vol10m, null); assert.strictEqual(s.health.exchange.ok, false);
   } finally { app.stop(); }
 });
+
+
+test('Supabase storage: snapshot can be written and restored through REST adapter', async () => {
+  const previousUrl = process.env.SUPABASE_URL;
+  const previousSecret = process.env.SUPABASE_SECRET_KEY;
+  const previousServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const previousFetch = global.fetch;
+  let row = null;
+  process.env.SUPABASE_URL = 'https://radar-test.supabase.co';
+  process.env.SUPABASE_SECRET_KEY = 'test-only-not-a-real-secret';
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  global.fetch = async (url, options = {}) => {
+    assert.match(String(url), /\/rest\/v1\/radar_state\?id=eq\.main$/);
+    assert.equal(options.headers.apikey, 'test-only-not-a-real-secret');
+    assert.equal(options.headers.Authorization, 'Bearer test-only-not-a-real-secret');
+    if (options.method === 'POST') {
+      row = JSON.parse(options.body);
+      return { ok: true, status: 201, json: async () => [] };
+    }
+    assert.equal(options.method, undefined);
+    return { ok: true, status: 200, json: async () => row ? [row] : [] };
+  };
+  try {
+    const expected = ingest.emptyState();
+    expected.lastRefresh = '2026-11-24T13:00:00.000Z';
+    expected.tokens = [{ id: 'persistent-test-token' }];
+    await ingest.saveAsync({}, expected);
+    const restored = await ingest.loadAsync({});
+    assert.equal(row.id, 'main');
+    assert.deepStrictEqual(row.payload.tokens, expected.tokens);
+    assert.equal(restored.lastRefresh, expected.lastRefresh);
+    assert.equal(restored.tokens[0].id, 'persistent-test-token');
+  } finally {
+    global.fetch = previousFetch;
+    if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
+    if (previousSecret === undefined) delete process.env.SUPABASE_SECRET_KEY; else process.env.SUPABASE_SECRET_KEY = previousSecret;
+    if (previousServiceRole === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = previousServiceRole;
+  }
+});
+
+test('Supabase storage: failed remote reads are surfaced instead of silently resetting state', async () => {
+  const previousUrl = process.env.SUPABASE_URL;
+  const previousSecret = process.env.SUPABASE_SECRET_KEY;
+  const previousFetch = global.fetch;
+  process.env.SUPABASE_URL = 'https://radar-test.supabase.co';
+  process.env.SUPABASE_SECRET_KEY = 'test-only-not-a-real-secret';
+  global.fetch = async () => ({ ok: false, status: 503, json: async () => [] });
+  try {
+    await assert.rejects(ingest.loadAsync({}), (error) => error.code === 'SUPABASE_HTTP_503');
+  } finally {
+    global.fetch = previousFetch;
+    if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl;
+    if (previousSecret === undefined) delete process.env.SUPABASE_SECRET_KEY; else process.env.SUPABASE_SECRET_KEY = previousSecret;
+  }
+});
