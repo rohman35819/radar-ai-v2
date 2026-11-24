@@ -3212,9 +3212,11 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Combined commit status API masih `pending` dengan nol status legacy; bukti CI diambil dari daftar dan job Actions, bukan dari status check lama.
 - Security scan GitHub **belum berjalan** pada branch ini: `.github/workflows/security.yml` hanya memicu PR ke `main`/`develop` dan push ke `main`/`develop`, bukan `fix/**`. `gitleaks` dan `trivy` tidak terpasang lokal; pemeriksaan pola pada diff tidak menemukan literal secret, tetapi ini bukan pengganti Gitleaks/Trivy.
 - Tidak ada merge, Hostless check, atau klaim LIVE.
+- Upaya kedua membuat PR dengan payload minimal (title/head/base saja) masih ditolak **HTTP 403 `Resource not accessible by personal access token`**. Respons GitHub mencantumkan `x-accepted-github-permissions: pull_requests=write`, artinya izin tersebut **dibutuhkan tetapi tidak dimiliki** oleh kredensial yang tersedia. Tidak ada `gh`, konfigurasi `~/.config/gh`, token environment, atau resource MCP sebagai alternatif; kredensial tidak diubah atau dibagikan.
+- Karena tidak ada event PR, job `Branch source policy` dan security Gitleaks/Trivy **tidak dapat dipantau**; keduanya baru berjalan setelah PR benar-benar dibuat. Kueri PR open dengan head `fix/sidebar-drawer-scroll` dan base `develop` mengembalikan 0 PR.
 
 - NEXT TASK:
-  1. Buat PR ke `develop` melalui GitHub UI/token dengan izin `pull_requests: write` (tautan di atas), lalu verifikasi `Branch source policy`, test, dan security scan pada exact head PR.
+  1. Pemilik/maintainer membuat PR ke `develop` lewat GitHub UI atau token berizin `pull_requests: write`: https://github.com/rohman35819/radar-ai-v2/pull/new/fix/sidebar-drawer-scroll . Setelah PR ada, verifikasi head SHA PR mencakup `fcbbf8aec65a3fe88fc35e92132e85c71a1fff49` (kode+test) dan `d77f93e8f5c9ac52914dab14c9a8d840460c8118` (dokumentasi), lalu pantau `Branch source policy`, test, Gitleaks, dan Trivy pada event PR. Jangan merge sebelum seluruhnya lulus.
   2. Selesaikan security scan Gitleaks/Trivy sebelum integrasi; jangan merge hanya dengan CI test yang hijau.
   3. QA ponsel: buka Menu, swipe daftar menu sampai item terbawah; pastikan hanya `.side-nav` bergerak; tutup drawer lalu swipe halaman utama; uji backdrop, tombol Menu, dan Escape.
   4. QA desktop: wheel/trackpad pada daftar menu dan pastikan konten utama tidak ikut bergeser, termasuk saat scroll lock aktif.
