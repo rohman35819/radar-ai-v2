@@ -25,15 +25,16 @@
 - Do not claim always-on/background autonomy unless scheduler, durable queue/state, workers, permissions, audit, budgets, approval gates and kill switch are implemented and verified.
 
 ## Verified project handoff — 25 November 2026
-- `develop` HEAD: `c9c3a1403b19e5fe52250d0354e03bf7a1af1319`; `main` HEAD: `0f8521a4ab2399f80a102af4e422b2586d32e437` at last check. Re-check before action.
-- PR #110 (single shared memory + no-chat-archive policy) merged to `develop` as `c9c3a1403b19e5fe52250d0354e03bf7a1af1319`. Exact-head npm tests, disposable PostgreSQL Agent Platform/queue/memory smoke tests, Gitleaks, Trivy and branch-source policy all passed.
+- `develop` HEAD: `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52` after PR #111 merge. `main` HEAD last verified: `0f8521a4ab2399f80a102af4e422b2586d32e437`; re-check before action.
+- PR #110 established the single shared memory and no-chat-archive policy. Exact-head npm tests, disposable PostgreSQL Agent Platform/queue/memory smoke tests, Gitleaks, Trivy and branch-source policy passed.
+- PR #111 merged to `develop` as `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`. It adds the Grok/xAI autonomous engineering charter (`GROK.md`), links it from `AGENTS.md`, and refreshes the durable handoff. All four exact-head checks (tests, Gitleaks, Trivy, branch-source policy) passed.
 - PR #107 is closed as superseded by #110; do not revive its stale/diverged branch.
-- PR #106 (mobile sidebar drawer) remains open and needs rebase/validation against current develop plus Android/iOS/browser QA. Prior Termux report: 5 frontend tests passed and `git diff --check` clean; device QA was not completed.
-- PR #108 (cloud-worker hardening) and #109 (master-context status) are merged to `develop`. Exact-head tests, PostgreSQL disposable migration/queue/memory smoke tests, Gitleaks, Trivy and branch-source policy passed for #108.
+- PR #106 (mobile sidebar drawer) remains open, based on the older develop commit and currently reports non-mergeable. Rebase against current develop, rerun checks, then complete Android/iOS/browser QA. Prior Termux report: 5 frontend tests passed and `git diff --check` clean; device QA was not completed.
+- PR #108 (cloud-worker hardening) and #109 (master-context status) are merged to `develop`. Exact-head tests, disposable PostgreSQL migration/queue/memory smoke tests, Gitleaks, Trivy and branch-source policy passed for #108.
 - Cloud worker hardening exists on `develop`, not yet released to `main`. GitHub Actions worker is periodic (every two hours), not continuous 24/7. It can run without the phone/Termux, but workflow must reach default branch `main` before scheduled runs use the new version.
 - Groq provider support is opt-in and OFF by default. Do not configure `GROQ_API_KEY` or enable `GROQ_AUTONOMOUS_ENABLED=1` without BOS explicitly approving after quota/billing review. OpenRouter fallback is pinned to `openrouter/free`.
 - PostgreSQL Agent Platform queue/control plane is not activated for production: pause + kill switch defaults, USD 0 budget and restrictive grants remain. No VPS or paid service has been provisioned.
-- Hostless Build/LIVE status was not verified by the above GitHub work. Do not infer deployment from a merge.
+- Hostless Build/LIVE status has not been verified by the above GitHub work. Do not infer deployment from a merge.
 
 ## Grok onboarding
 - `GROK.md` is the dedicated Grok/xAI startup and engineering charter. `AGENTS.md` links it and requires Grok to read it with shared memory and master context at session start.
@@ -41,7 +42,7 @@
 - Grok is xAI's assistant; Groq is a separate inference provider. Groq provider activation remains OFF unless BOS explicitly approves.
 
 ## Next actions
-1. Keep this shared memory concise and current; every AI contributor must read it first on startup.
-2. Rebase/revalidate PR #106 against current develop and complete mobile/browser device QA before merging.
-3. Prepare a normal `develop` → `main` release PR for the cloud worker; verify exact-head release checks. Keep Groq disabled.
-4. After release, run a controlled manual worker test; later design a least-privilege non-production adapter to the existing PostgreSQL queue before any production activation.
+1. Rebase/revalidate PR #106 against current develop and complete mobile/browser device QA before merging.
+2. Prepare a normal `develop` → `main` release PR for the cloud worker; verify exact-head release checks. Keep Groq disabled.
+3. After release, run a controlled manual worker test; later design a least-privilege non-production adapter to the existing PostgreSQL queue before any production activation.
+4. Keep this file concise and current; every AI contributor must read it first on startup.
