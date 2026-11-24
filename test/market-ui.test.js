@@ -31,3 +31,32 @@ test('Market Intelligence merender data provider sebagai teks, bukan HTML mentah
   assert.doesNotMatch(js, /innerHTML\s*=/);
   assert.doesNotMatch(js, /eval\s*\(/);
 });
+
+test('Market Intelligence tidak mengarang waktu pembaruan atau status saat data belum ada', () => {
+  const js = read('../public/market.js');
+  const start = js.indexOf('function updateStatus()');
+  const end = js.indexOf('\nfunction drawChart', start);
+  assert.ok(start >= 0 && end > start, 'updateStatus exists');
+  const source = js.slice(start, end);
+  assert.doesNotMatch(source, /Date\.now\(\)/, 'current time is never used as a data timestamp');
+  assert.match(source, /market\?\.updated_at/, 'timestamp comes from the server payload');
+  assert.match(source, /Number\.isFinite\(parsed\.getTime\(\)\)/, 'invalid timestamp is detected');
+  assert.match(source, /!total \? 'Menunggu data'/, 'zero sources do not claim a connection');
+  assert.match(source, /WAKTU TIDAK TERSEDIA/, 'missing timestamp is explicit');
+  assert.match(source, /Waktu pembaruan tidak tersedia dari server/, 'missing timestamp has a truthful message');
+});
+
+test('Exchange ticker mengabaikan respons lama dan menangani waktu yang tidak tersedia', () => {
+  const js = read('../public/market.js');
+  assert.match(js, /let tickerRequest = 0/);
+  assert.match(js, /const requestId = \+\+tickerRequest/);
+  assert.ok((js.match(/if \(requestId !== tickerRequest\) return;/g) || []).length >= 2, 'stale responses are ignored before DOM updates');
+  assert.doesNotMatch(js, /new Date\(result\.updated_at\)\.toLocaleString/, 'missing timestamp is not rendered as Invalid Date');
+  assert.match(js, /waktu pembaruan tidak tersedia/);
+});
+
+test('Notifikasi market dan tombol refresh dapat diakses pembaca layar', () => {
+  const html = read('../public/market.html');
+  assert.match(html, /id="notice"[^>]*role="status"[^>]*aria-live="polite"/);
+  assert.match(html, /id="refresh"[^>]*aria-label="Muat ulang data market"/);
+});
