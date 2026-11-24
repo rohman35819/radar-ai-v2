@@ -2758,3 +2758,18 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Next: selesaikan PR #81 gates, kemudian buat registry procurement + audit dashboard dari current main sebagai PR terpisah.
 
 - Tracking issue dibuat: [#82 — Daily dashboard evolution & two-hour open-source intelligence discovery](https://github.com/rohman35819/radar-ai-v2/issues/82). Issue ini memecah implementasi Divisi 04/08; belum ada perubahan dashboard runtime atau discovery worker aktif.
+
+---
+
+## 83. Aktivasi pilot worker otonom — 24 November 2026 (Asia/Jakarta)
+
+- BOS meminta worker pilot mulai bekerja saat BOS offline.
+- Workflow `.github/workflows/autonomous-development.yml` diubah agar `AUTONOMOUS_AGENT_ENABLED` default ke `1`; repository variable eksplisit `AUTONOMOUS_AGENT_ENABLED=0` tetap menjadi kill switch konfigurasi.
+- Commit aktivasi: `65d7650ddb9d98e52c24f7f7c8a89e333c7d1979`.
+- Jadwal tetap setiap dua jam pada menit ke-17 UTC; `workflow_dispatch` tetap tersedia.
+- Batas worker tidak berubah: hanya `lib/ai/*.js` dan `test/*.test.js`, maksimal tiga file/40 KiB, wajib `npm test`, hanya membuat Draft PR; tidak merge/deploy/trading.
+- Model/provider tetap hanya `openrouter/free`; tidak ada fallback berbayar. Jika `OPENROUTER_API_KEY` tidak tersedia, worker akan berhenti aman dengan `SKIP: no free provider key`.
+- Akses connector saat perubahan ini tidak menyediakan pembacaan/penulisan GitHub Actions repository variables/secrets atau dispatch workflow. Karena itu keberadaan secret dan nilai override `AUTONOMOUS_AGENT_ENABLED` belum dapat diverifikasi; jangan menganggap worker sudah berhasil memanggil model.
+- Aktivasi workflow pada `main` terkonfigurasi, tetapi eksekusi pertama dan pembuatan PR belum terbukti. Verifikasi workflow run setelah jadwal berikutnya atau dispatch manual melalui GitHub Actions UI.
+- Hard cost gate: pertahankan hanya model router eksplisit free; hentikan jika provider meminta pembayaran/credit atau menampilkan biaya. Tidak ada auto-merge/deploy.
+- NEXT TASK: verifikasi Actions run pertama, secret availability tanpa menampilkan nilainya, output/log worker, dan hasil draft PR; lalu Divisi 01/05 audit independen sebelum perluasan scope.
