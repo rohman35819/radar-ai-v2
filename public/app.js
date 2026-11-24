@@ -156,7 +156,7 @@ function renderWatch(){
  const list=getTokens().filter(t=>watch.includes(t.id));
  v.append(sectionHead('Watchlist','Daftar aset pilihan tersimpan di perangkat ini.',el('button',{class:'secondary-btn',onclick:()=>navigate('screener')},'＋ Tambah aset')));
  v.append(el('div',{class:'stats-grid compact'},statCard('ASET DISIMPAN',watch.length,'Tersimpan lokal di browser','☆'),statCard('TERSEDIA DI RADAR',list.length,'Aset yang saat ini ada di feed','◈')));
- v.append(card(list.length?tokenTable(list):empty('Watchlist masih kosong','Buka Market Screener lalu tekan ikon ☆ untuk menyimpan token.')));
+ v.append(card(list.length?tokenTable(list):empty('Watchlist masih kosong',!data?(loadFailed?'Snapshot gagal dimuat; coba muat ulang.':'Data sedang diambil dari server.'):'Buka Market Screener lalu tekan ikon ☆ untuk menyimpan token.')),sourceFootnote());
 }
 function renderAnalytics(){
  const v=$('#view');v.replaceChildren();const s=totals(),ts=getTokens();
@@ -164,6 +164,8 @@ function renderAnalytics(){
  const bars=(items,key)=>el('div',{class:'bar-list'},...items.map(t=>{const max=Math.max(1,...items.map(x=>Number(x[key])||0));return el('div',{class:'bar-item'},el('div',{class:'bar-caption'},el('b',{},esc(t.symbol)),el('span',{},money(t[key]))),el('div',{class:'bar-track'},el('progress',{class:'bar-fill',max:String(max),value:String(Math.max(0,Number(t[key])||0)),'aria-label':esc(t.symbol)+' '+key})));}));
  v.append(sectionHead('Market Analytics','Pembacaan statistik dari token yang sedang terpantau.'));
  v.append(el('div',{class:'stats-grid'},statCard('NAIK',s.positive,'Aset dengan return positif','↗','positive'),statCard('TURUN',s.negative,'Aset dengan return negatif','↘','negative'),statCard('MARKET CAP',money(s.cap),'Total dalam universe radar','◫'),statCard('VOLUME',money(s.vol),'Agregat volume 24 jam','⇅')));
+ v.append(sourceFootnote());
+ if(!ts.length){v.append(card(empty('Belum ada token untuk dianalisis',!data?'Data sedang diambil atau gagal dimuat.':'Screener belum menghasilkan aset yang memenuhi filter server.')));return;}
  v.append(el('div',{class:'two-col'},card(sectionHead('Top Market Cap','Aset dengan kapitalisasi terbesar'),bars(capSorted,'market_cap')),card(sectionHead('Top Volume','Aset dengan volume perdagangan terbesar'),bars(volSorted,'volume_24h'))));
  v.append(card(sectionHead('Distribusi Market Breadth','Jumlah token berdasarkan arah perubahan 24 jam'),el('progress',{class:'breadth-progress',max:String(s.count||1),value:String(s.positive),'aria-label':'Market breadth: '+s.positive+' naik dari '+s.count+' aset'}),el('div',{class:'legend'},el('span',{class:'positive'},'● Naik '+s.positive),el('span',{class:'negative'},'● Turun '+s.negative),el('span',{},'● Netral '+Math.max(0,s.count-s.positive-s.negative)))));
 }
@@ -393,10 +395,10 @@ function renderEarlyGems(){
 function renderSystem(){
  const v=$('#view');v.replaceChildren();const health=data?.health||{};
  v.append(sectionHead('System Health','Transparansi status sumber data dan runtime.'));
- v.append(el('div',{class:'stats-grid'},statCard('API STATUS',data&&snapshotReachable?'ONLINE':'OFFLINE',snapshotReachable?'Snapshot berhasil dijangkau':'Server tidak dapat dijangkau; data lama mungkin tampil','◉',snapshotReachable?'positive':'negative'),statCard('LAST SUCCESS',dateTime(data?.last_ok),'Refresh terakhir yang berhasil','↻'),statCard('TOKEN FEED',getTokens().length,'Token tersedia','◈'),statCard('ALERT LOG',(data?.alerts||[]).length,'Riwayat tersimpan','⌁')));
+ v.append(el('div',{class:'stats-grid'},statCard('API STATUS',connectionState().label,connectionState().detail,'◉',connectionState().cls),statCard('LAST SUCCESS',dateTime(data?.last_ok),'Refresh terakhir yang berhasil','↻'),statCard('TOKEN FEED',getTokens().length,'Token tersedia','◈'),statCard('ALERT LOG',(data?.alerts||[]).length,'Riwayat tersimpan','⌁')));
  const rows=Object.entries(health);
  v.append(card(sectionHead('Data Source Monitor','Status setiap sumber yang dipakai server.'),...rows.map(([name,s])=>el('div',{class:'source-row'},el('div',{},el('b',{},name.toUpperCase()),el('small',{},dateTime(s.at)),s.error?el('small',{class:'negative'},s.error):null),el('span',{class:s.ok?'source-ok':'source-error'},s.ok?'HEALTHY':'ERROR')))));
- v.append(card(sectionHead('Konfigurasi & batas sistem','Informasi yang dapat dibaca dari API snapshot.'),el('div',{class:'detail-grid'},el('div',{},el('small',{},'Status data'),el('b',{},(data?.stale||!snapshotReachable)?'Stale / koneksi perlu dicek':'Aktif')),el('div',{},el('small',{},'Telegram'),el('b',{},data?.config_needed?.telegram?'Belum dikonfigurasi':'Terkonfigurasi')),el('div',{},el('small',{},'CoinGecko key'),el('b',{},data?.config_needed?.coingecko_key?'Tidak tersedia':'Terkonfigurasi')),el('div',{},el('small',{},'Unlock source'),el('b',{},data?.config_needed?.unlock_source?'Belum tersedia':'Terkonfigurasi'))),el('p',{class:'muted'},'API key dan token tidak pernah ditampilkan di dashboard.')));
+ v.append(card(sectionHead('Konfigurasi & batas sistem','Informasi yang dapat dibaca dari API snapshot.'),el('div',{class:'detail-grid'},el('div',{},el('small',{},'Status data'),el('b',{},(data?.stale||!snapshotReachable)?'Stale / koneksi perlu dicek':'Aktif')),el('div',{},el('small',{},'Telegram'),el('b',{},data?.config_needed?.telegram?'Belum dikonfigurasi':'Terkonfigurasi')),el('div',{},el('small',{},'CoinGecko key'),el('b',{},data?.config_needed?.coingecko_key?'Tidak tersedia':'Terkonfigurasi')),el('div',{},el('small',{},'Unlock source'),el('b',{},data?.config_needed?.unlock_source?'Belum tersedia':'Terkonfigurasi'))),el('p',{class:'muted'},'API key dan token tidak pernah ditampilkan di dashboard.')));v.append(sourceFootnote());
 }
 function render(){
  $('#page-title').textContent=TITLES[tab]||'RADAR AI';$('#crumb').textContent=(tab||'overview').toUpperCase();

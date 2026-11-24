@@ -45,6 +45,7 @@ test('Dashboard exposes truthful freshness, source and connection states',()=>{
   assert.match(app,/data\.stale/);
   assert.match(app,/snapshotReachable/);
   assert.doesNotMatch(app,/Math\.random/,'dashboard must not fabricate data');
+  assert.ok((app.match(/sourceFootnote\(\)/g)||[]).length>=8,'freshness footnote appears across dashboard views');
   assert.match(styleCss,/\.freshness-note/);
   assert.match(styleCss,/\.state-panel/);
 });
