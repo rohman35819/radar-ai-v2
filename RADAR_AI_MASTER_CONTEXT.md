@@ -3348,3 +3348,14 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   1. Buat PR `integration/frontend-ux-20261125` → `develop` melalui GitHub UI/token berizin `pull_requests: write`; verifikasi head memuat seluruh SHA kode gabungan dan pantau gate test/branch-source/Gitleaks/Trivy sebelum merge.
   2. Setelah PR lulus, QA browser: drawer/sidebar, filter Screener/Early Gems saat auto-refresh, token Workspace, freshness Market Intelligence, dan waktu observasi Solscan pada desktop serta mobile.
   3. Lanjutkan ke `membership.html`/`command.html` untuk pola timestamp jujur yang sama, lalu verifikasi Hostless Build dan LIVE secara terpisah.
+
+---
+
+## 114. PWA SHELL v13 — 25 NOVEMBER 2026
+
+- Audit lanjutan: `membership.html`/`membership.js` dan `command.js` tidak memiliki field timestamp yang divalidasi secara mentah, sehingga tidak ada perubahan yang diperlukan untuk pola waktu jujur pada dua halaman itu.
+- Temuan nyata: seluruh aset UI gabungan telah berubah (`app.js`, `index.html`, `style.css`, `market.*`, `solscan.*`), tetapi `public/sw.js` masih memakai `radar-shell-v12`. Karena strategi cache-first, pengguna PWA yang sudah terpasang akan terus menerima aset lama. Selain itu `/solscan.html`, `/solscan.js`, dan `/solscan.css` tidak pernah masuk daftar precache shell.
+- Perubahan pada branch integrasi: `SHELL` dinaikkan ke `radar-shell-v13`; aset Solana Intelligence ditambahkan ke `FILES`; `test/service-worker.test.js` diperbarui (fixture cache lama v12/v13, assertion cache aktif tidak dihapus) dan mendapat satu test regresi baru.
+- Pengujian: `node --check public/sw.js` lulus; `node --test test/service-worker.test.js` 5 pass, 0 fail; `npm test` **207 pass, 0 fail, 0 skipped**; `git diff --check` bersih. README diselaraskan ke 207/25.
+- Risiko: versi cache baru hanya efektif setelah service worker terpasang dan diperbarui di perangkat; QA browser/PWA offline belum dilakukan. Hostless Build/LIVE tidak dicek.
+- NEXT TASK: verifikasi pada perangkat bahwa PWA mengambil `radar-shell-v13` dan halaman Solscan dapat dibuka offline; setelah itu prioritaskan pembuatan PR integrasi dengan token berizin `pull_requests: write`.

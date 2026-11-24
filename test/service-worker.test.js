@@ -12,7 +12,7 @@ function loadWorker() {
       calls.cacheOpen.push(name);
       return { addAll: async (files) => { calls.staticFiles = files; } };
     },
-    keys: async () => ['radar-shell-v12', 'radar-shell-v7', 'radar-api-v7', 'old-cache', 'other-app-cache'],
+    keys: async () => ['radar-shell-v13', 'radar-shell-v12', 'radar-shell-v7', 'radar-api-v7', 'old-cache', 'other-app-cache'],
     delete: async (name) => { calls.cacheDeletes.push(name); return true; },
     match: async () => null,
   };
@@ -65,8 +65,19 @@ test('PWA shell menyediakan halaman Market Intelligence dan Exchange Hub serta m
   handlers.activate({ waitUntil: (promise) => { activatePromise = promise; } });
   await activatePromise;
   assert.ok(calls.cacheDeletes.includes('radar-api-v7'));
-  assert.equal(calls.cacheDeletes.includes('radar-shell-v12'), false);
+  assert.equal(calls.cacheDeletes.includes('radar-shell-v13'), false);
   assert.equal(calls.cacheDeletes.includes('other-app-cache'), false);
+});
+
+test('PWA shell naik ke v13 untuk perubahan UI dan menyertakan Solana Intelligence', async () => {
+  const { handlers, calls } = loadWorker();
+  let installPromise;
+  handlers.install({ waitUntil: (promise) => { installPromise = promise; } });
+  await installPromise;
+  assert.ok(calls.cacheOpen.includes('radar-shell-v13'), 'updated shell cache is installed');
+  for (const file of ['/solscan.html', '/solscan.js', '/solscan.css']) {
+    assert.ok(calls.staticFiles.includes(file), 'missing precache asset: ' + file);
+  }
 });
 
 test('Command Center menggunakan aset eksternal agar tidak diblokir strict CSP', () => {
