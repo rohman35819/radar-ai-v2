@@ -2773,3 +2773,17 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Aktivasi workflow pada `main` terkonfigurasi, tetapi eksekusi pertama dan pembuatan PR belum terbukti. Verifikasi workflow run setelah jadwal berikutnya atau dispatch manual melalui GitHub Actions UI.
 - Hard cost gate: pertahankan hanya model router eksplisit free; hentikan jika provider meminta pembayaran/credit atau menampilkan biaya. Tidak ada auto-merge/deploy.
 - NEXT TASK: verifikasi Actions run pertama, secret availability tanpa menampilkan nilainya, output/log worker, dan hasil draft PR; lalu Divisi 01/05 audit independen sebelum perluasan scope.
+
+
+## 84. Penguatan health gate Hostless — 24 November 2026 (Asia/Jakarta)
+
+- Pemeriksaan Hostless ulang pukul 13:14 UTC membuktikan `/api/ready` HTTP 200, `status=ready`, `storage.status=ok`, dan `code=null`; masalah EROFS tidak muncul.
+- `/api/snapshot` HTTP 200 dan `stale=false`; refresh terakhir tercatat 2026-11-24T13:06:25.487Z. News berisi 50 item; TechCrunch (20) dan Cointelegraph (30) sehat. Early Gems berisi 80 pool dan health on-chain/trending sehat.
+- Probe Binance Futures BTCUSDT HTTP 200, non-partial; funding, open interest, OI history, dan taker flow seluruhnya sehat. Probe DEX Screener HTTP 200 dan memvalidasi pool yang sama.
+- Ditemukan celah pada `scripts/hostless-live-check.js`: proses monitor hanya menggagalkan job untuk readiness, snapshot HTTP, dan news; kegagalan storage atau provider probes belum otomatis menggagalkan job.
+- Perubahan: menambahkan `evaluateHealth()` agar job memeriksa storage OK, snapshot tidak stale, news sehat, seluruh metrik Binance Futures non-partial, dan validasi pool DEX Screener. Menambahkan unit test untuk kondisi sehat dan skenario gagal.
+- Commit: `3b6bba01f7048026a4bd54546932cf6d5dfe0ee8` (monitor gate); `694c49776e2a32f24822ecc66b7f531b9fee266d` (unit tests).
+- Tes: CI untuk commit baru belum selesai saat catatan ini ditulis. Hasil live check sebelumnya sukses pada versi monitor lama; monitor yang diperketat perlu dijalankan ulang setelah CI.
+- Security: ditemukan Gitleaks false positive di PR #84 pada fixture `test/memory-store.test.js:31` yang berisi string contoh `OPENAI_API_KEY=`; file tersebut berada di branch PR, bukan main. Belum ada bukti credential nyata bocor. Divisi 07 perlu mengganti fixture menjadi placeholder sintetis yang tidak menyerupai secret, lalu rerun scan.
+- Batasan: uji live membuktikan endpoint dan provider dapat diakses pada saat pemeriksaan, tetapi belum membuktikan persistensi melewati restart proses. Uji restart yang aman masih diperlukan; jangan menambahkan endpoint publik untuk memaksa restart.
+- NEXT TASK: tunggu CI pada dua commit monitor; rerun Hostless live monitor dengan gate baru; buat uji adapter Supabase mocked untuk read/upsert/hydration; rancang uji persistence-after-restart tanpa mengganggu layanan Live.
