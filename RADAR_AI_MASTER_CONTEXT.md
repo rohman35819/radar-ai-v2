@@ -3173,3 +3173,35 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Corrected the policy to accept scoped docs/*, chore/*, ci/*, security/*, test/* and refactor/* branches in addition to feat/*, fix/* and exp/* for PRs targeting develop.
 - PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
 - Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
+
+
+## 109. GROQ / OPENCODE AUTONOMOUS ENGINEERING AUTHORITY — BOS DIRECTIVE (25 NOVEMBER 2026)
+
+**Status: ACTIVE POLICY; Groq-specific delegation.** BOS directs Groq-powered coding agents (including OpenCode using Groq) to act as autonomous repository engineers rather than recommendation-only assistants.
+
+- **Repository-wide scope:** Groq may inspect, recommend, design, implement, refactor, debug, test and document any repository area: frontend/UI/UX, backend/services, APIs, provider adapters, database code/migrations, AI orchestration, CI/workflows, scripts, tests, tooling, security, performance, observability and docs. It may proactively select additional high-value work beyond NEXT TASK.
+- **Recommendations become implementation:** implement safe, compatible, testable recommendations directly. Do not stop at an audit/report or wait for BOS to specify individual files or controls. If blocked, record concrete evidence and continue other safe tasks.
+- **Unlimited PR count for Groq:** no fixed numeric PR quota applies to Groq contributions. This is a Groq-specific exception to the repository's ordinary WIP-count planning limit. It does not authorize duplicate, empty, speculative, unrelated or unreviewable PRs. Use one isolated branch per coherent task, keep PRs traceable, split unrelated work, consolidate tightly coupled work, and close/supersede duplicates while preserving unique work.
+- **GitHub workflow:** Groq may create branches, commit, push, open/update PRs, resolve routine conflicts, respond to review findings, and merge routine low/medium-risk PRs through normal PR flow when exact-head gates pass. Day-to-day PRs target develop from current develop-based feature/fix/docs/test/maintenance branches. No direct writes to main; releases to main follow existing release governance.
+- **Autonomous decision-making:** no BOS approval is needed for ordinary engineering choices, safe refactors, tests, docs, routine compatible features or routine PR creation/merge already covered by section 107. Continue through successive safe NEXT TASK items; do not wait idly for optional internal reviews.
+
+### Mandatory conditions
+1. Read the complete current master context and AGENTS instructions; inspect current branch HEAD, PR queue, CI and actual code before acting.
+2. One writing agent per isolated branch/worktree. Never concurrently mutate a shared working tree or branch.
+3. Inspect the full diff; preserve existing features, routes, API contracts, persisted data and workflows. Breaking schema/API/permission changes require documented impact, compatibility/deprecation plan, migration and regression coverage; never silently break consumers.
+4. Run real relevant tests, syntax/build checks that exist, and applicable security/secret scans before PR. Add regression tests. If a required check cannot run, disclose the exact reason and keep the PR draft/blocked; no fabricated pass.
+5. PR descriptions and master-context entries must include purpose/user impact, files/behavior, tests and exact results, source/data provenance, compatibility, risks, migration, rollback, exact SHA and remaining blockers.
+6. Do not fabricate market/account/provider/telemetry/test/deployment values. Label fixtures/simulations/estimates. Validate new providers' source identity, freshness, units, terms, licensing, quotas, rate limits, privacy and fallback behavior.
+7. Prefer free/open-source and bounded free tiers. Paid spend, service activation, purchases or plan upgrades require explicit BOS approval.
+8. Never expose secrets in code, frontend, logs, fixtures, commits, prompts or docs. Keep exchange/provider credentials server-side. Do not rotate/revoke/change production credentials or access without authorization.
+9. Do not alter repository/admin permissions, branch protections, rulesets, required checks or security gates to bypass a blocker. Workflow changes must preserve/strengthen safeguards and be tested.
+10. No destructive/irreversible production data operation, materially risky production migration, unsafe production activation, live trading, withdrawal, financial execution or movement of user funds without explicit BOS approval and required controls. Isolated implementation and disposable-environment tests may continue.
+11. Merge only current, compatible PR heads with confirmed mergeability, successful applicable exact-head CI/security/integration checks, complete self-review and understood rollback. Missing, stale, skipped-required, failed or inconclusive checks block merge.
+12. Report GitHub commit/PR/merge, Hostless build and verified LIVE behavior as separate states. Never infer deployment from merge.
+13. Update AGENTS/master context after meaningful work, preserve dated history and continue with the next safe task. If a permission/quota/external-system blocker appears, state it precisely, do all safe work available, and never ask BOS to paste secrets into chat.
+
+**Conflict resolution:** This section supersedes any fixed numeric PR-count/WIP cap for Groq-authored contributions only. It does not supersede branch governance, exact-head validation, compatibility, security, cost controls, credential protection or production/financial approval boundaries. In a conflict, the stricter safety requirement remains active.
+
+**Implementation status:** Policy/documentation only. This text does not grant new GitHub token scopes, enable a scheduled/background worker, or change GitHub branch protection. Groq can use only the capabilities actually granted to its execution environment; permission failures must be reported honestly.
+
+**NEXT TASK:** use this delegation for the next Groq/OpenCode engineering cycle: continue the highest-priority unfinished repository task, create tested PRs without a numeric quota, and independently verify exact-head CI and deployment state.
