@@ -3193,3 +3193,22 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Rollback: revert PR #108 or release revert; set `AUTONOMOUS_AGENT_ENABLED=0` to pause the scheduled worker or `GROQ_AUTONOMOUS_ENABLED=0` to disable Groq.
 
 **NEXT TASK:** update the shared AI memory handoff when PR #107 is integrated; then prepare a normal develop-to-main release PR and verify exact-head CI before activating the updated schedule. Run a controlled manual worker test after release. Keep Groq disabled until BOS explicitly authorizes provider usage. Then implement a least-privilege queue adapter against the existing PostgreSQL schema in a non-production test environment before considering production activation.
+
+
+## 112. SINGLE SHARED AI MEMORY — NO CHAT ARCHIVING (BOS DIRECTIVE — 25 NOVEMBER 2026)
+
+**Decision:** BOS wants every AI contributor to join a new chat/session already understanding RADAR AI, without storing conversations or filling GitHub with chat logs. This is a standing project-wide rule.
+
+- `RADAR_AI_SHARED_MEMORY.md` is the one compact, shared cross-agent handoff for ChatGPT, Groq/OpenCode and future agents.
+- The shared file stores only distilled durable context: project identity, architecture/contracts, durable decisions and rationale, approved working preferences, verified current state, blockers, and the next actionable task.
+- No conversations with BOS or any other person, raw transcripts, chat exports, routine prompts/responses, chain-of-thought/reasoning logs, or message-by-message histories may be saved in the shared memory or elsewhere in the repository (including master context, README, issues, PR bodies, commit messages or docs).
+- The master context remains technical project documentation and durable engineering history only. It is not a second shared-memory dump and must not contain conversation transcripts.
+- All agents must read the shared memory first at new-session startup, then `AGENTS.md` and the relevant master-context sections, then verify current repository/PR/CI/deployment state. A memory snapshot never replaces live verification.
+- Update the shared memory only when a durable fact or handoff materially changes. Rewrite stale status in place, remove/supersede obsolete facts, and target under 12 KB. Do not append each interaction.
+- Agent-native private memory is optional and product-specific. The shared file remains the only common cross-agent handoff. Do not claim a new AI product will auto-read it unless that product's repository access/startup mechanism is configured and verified.
+- No secrets, credentials, tokens, passwords, sensitive account data, or unnecessary personal identifiers in shared memory or repository docs.
+- This policy does not create a background worker or guarantee 24/7 execution. Cloud runtime status is tracked separately in section 111 and `docs/AUTONOMOUS_AGENT_RUNTIME.md`.
+
+**Current implementation note (25 November 2026):** PR #107 contains an earlier version of this policy but is stale/diverged from current `develop` (2 commits behind). This replacement PR re-applies the shared memory and startup rules against current `develop`; do not merge the stale PR #107 as-is. PR #106 remains an independent frontend drawer change with device QA still outstanding. PR #108 and #109 are merged to `develop`; cloud worker code is still not released to `main`, and Groq remains disabled.
+
+**NEXT TASK:** merge this shared-memory policy PR after exact-head checks; then close/supersede stale PR #107. Continue with current master-context NEXT TASK: validate PR #106 against latest develop and complete device/browser QA; prepare the normal release from develop to main for the phone-free worker only after exact-head release checks. Keep Groq disabled until BOS explicitly approves provider usage.
