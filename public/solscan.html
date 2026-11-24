@@ -16,7 +16,7 @@
 </aside>
 <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Tutup menu"></button>
 <div class="main-shell">
-<header class="topbar"><div class="top-left"><button class="mobile-menu" id="menu-toggle" type="button" aria-label="Buka menu" aria-controls="sidebar" aria-expanded="false"><span class="menu-icon">☰</span><span class="menu-text">Menu</span></button><a class="secondary-btn" href="/">← Kembali</a><div><div class="eyebrow">ON-CHAIN INTELLIGENCE / SOLANA MAINNET</div><h1>Solscan Intelligence</h1></div></div><div class="top-actions"><span class="market-status" id="api-status">Memeriksa Solscan…</span><button class="icon-btn" id="refresh" title="Perbarui">↻</button></div></header>
+<header class="topbar"><div class="top-left"><button class="mobile-menu" id="menu-toggle" type="button" aria-label="Buka menu" aria-controls="sidebar" aria-expanded="false"><span class="menu-icon">☰</span><span class="menu-text">Menu</span></button><a class="secondary-btn" href="/">← Kembali</a><div><div class="eyebrow">ON-CHAIN INTELLIGENCE / SOLANA MAINNET</div><h1>Solscan Intelligence</h1></div></div><div class="top-actions"><span class="market-status" id="api-status">Memeriksa Solscan…</span><button class="icon-btn" id="refresh" title="Perbarui" aria-label="Perbarui data Solscan">↻</button></div></header>
 <main class="content solscan-content">
 <div class="solscan-intro"><div><div class="eyebrow">INDEXED BLOCKCHAIN DATA</div><h2>Solana On-Chain Monitor</h2><p class="muted">Data langsung dari Solscan Pro API. Setiap bagian menampilkan status sumber dan waktu observasi.</p></div><div class="solscan-meta"><b id="updated-at">Belum diperbarui</b><small>Source: Solscan Pro API v2.0 · Mainnet</small></div></div>
 <div id="network-stats" class="stats-grid"><div class="loading-card">Memuat data jaringan…</div></div>
@@ -29,7 +29,7 @@
 <form id="wallet-form" class="wallet-form"><input id="wallet-address" autocomplete="off" spellcheck="false" placeholder="Masukkan alamat wallet Solana (base58)" maxlength="44" required><button class="secondary-btn" type="submit">Analisis Wallet</button></form>
 <div id="wallet-result" class="wallet-result"><div class="empty-state"><b>Wallet belum dipilih</b><p>Masukkan alamat publik untuk melihat portfolio, token accounts, transaksi, transfer, DeFi, dan staking (sesuai hak API key).</p></div></div>
 </section>
-<div id="notice" class="solscan-notice" role="status">Data tidak tersedia belum tentu bernilai nol. Endpoint yang dibatasi paket akan ditandai terpisah.</div>
+<div id="notice" class="solscan-notice" role="status" aria-live="polite">Data tidak tersedia belum tentu bernilai nol. Endpoint yang dibatasi paket akan ditandai terpisah.</div>
 </main>
 <footer class="footer"><span>RADAR AI V2 · SOLANA INTELLIGENCE</span><span>Read-only · No signing · No transaction execution</span></footer>
 </div></div>
