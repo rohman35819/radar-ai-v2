@@ -3438,6 +3438,6 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ## 116. BLOKER IZIN PUSH WORKFLOW — 25 NOVEMBER 2026
 
 - Audit menemukan `.github/workflows/autonomous-development.yml` masih memakai Actions v4/Node 20 sementara `test.yml` sudah v7/Node 24 (§36). Perbaikan diimplementasikan pada branch lokal `ci/autonomous-worker-actions-v7` commit `d1a55a9b0f8d553d77ca43d1d2a08364faa94c61`: action dinaikkan ke v7, Node 24, satu test assertion statis baru, README diselaraskan ke 197/25. `npm test` lokal 197 pass, 0 fail.
-- Push ditolakGitHub: `refusing to allow a Personal Access Token to create or update workflow .github/workflows/autonomous-development.yml without workflow scope`. Branch.remote tidak dibuat; perubahan **tidak** masuk repository. Ini bukan kegagalan test melainkan batas izin kredensial.
+- Push ditolak oleh GitHub: `refusing to allow a Personal Access Token to create or update workflow .github/workflows/autonomous-development.yml without workflow scope`. Branch.remote tidak dibuat; perubahan **tidak** masuk repository. Ini bukan kegagalan test melainkan batas izin kredensial.
 - Keputusan: tidak mencoba bypass, tidak mengubah izin repository, tidak memaksa push. Perbaikan tetap tersimpan lokal sebagai bukti siap pakai bila token ber-`workflow` tersedia.
 - NEXT TASK: maintainer dengan scope `workflow` mendorong branch tersebut atau menerapkan ulang perubahan tiga baris workflow dan test assertion, lalu menjalankan gate CI sebelum merge. Sementara itu gunakan `test.yml` v7/Node 24 sebagai referensi runtime.
