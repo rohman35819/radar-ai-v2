@@ -2960,3 +2960,14 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 **Catatan rekonsiliasi aturan lama:** catatan PR #87 yang menyebut harus menunggu Divisi 01/05 adalah catatan kondisi/ketentuan saat itu dan telah dikesampingkan oleh keputusan BOS serta aturan sementara ini. Review manual PR #87 tidak dilakukan; bukti yang tersedia adalah 177/177 test dan secret/security scan pada head sebelum merge. Keputusan merge #87 tetap dicatat terpisah dan tidak menjadi bukti bahwa review independen telah terjadi.
 
 **Status:** aturan sementara ditambahkan ke AGENTS.md dan master context pada main. Perubahan ini hanya dokumentasi kebijakan; tidak mengubah kode runtime, environment, database, permission, atau deployment.
+
+
+## 95. DIVISI 06 — QUEUE OPERATIONS V1 PORTED TO LATEST MAIN (24 NOVEMBER 2026)
+
+- PR #89 source was 10 commits behind and diverged from latest main. Its unique implementation was ported onto main HEAD `1447002a5746967bc21cbac0efd5618416ed0b6e`; no unrelated main changes were dropped.
+- Includes Agent Platform schema, transactional queue operations, disposable PostgreSQL 16 migration/lifecycle smoke tests, and CI workflow steps.
+- Self-review confirms all SECURITY DEFINER functions use fixed `search_path`; EXECUTE revoked from PUBLIC, anon, authenticated, service_role and runtime role. Queue/control/approval tables are not granted to application roles. Global `paused=true` and `kill_switch=true` defaults are preserved.
+- Queue semantics cover idempotency, SKIP LOCKED claim, per-agent serialization, fencing leases, heartbeat, bounded retries/dead-letter, expired-lease recovery, dependency gating/cycle checks, approval flow and append-only audit. CI must exercise both migrations on disposable PostgreSQL.
+- Actor IDs in SQL functions are caller parameters; this is acceptable only while functions remain owner-only. Do not grant EXECUTE to worker/service roles until a trusted identity-bound gateway replaces caller-supplied actor assertions.
+- No production DB migration, role grants, worker, scheduler, Hostless config, deployment, or trading action was performed. Manual Division 01/05 review not performed (temporary override); objective CI/security checks are required before merge.
+- NEXT: verify exact-head CI/security, mergeability and PR merge; then proceed to PR #88. Production activation remains a separate BOS-approved task.
