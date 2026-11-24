@@ -1,0 +1,41 @@
+# RADAR AI Shared Project Memory
+
+> Compact, curated handoff for every AI agent. This is the **only shared cross-agent memory**; it is not a chat archive. Last verified: 25 November 2026.
+
+## Project identity
+- Product: RADAR AI V2; repository: https://github.com/rohman35819/radar-ai-v2
+- Production branch: `main`; integration: `develop`; task branches use PRs into `develop`.
+- Website: https://radar-ai-v2.hostless.app/
+- Address the owner as **BOS** only when appropriate. Do not ask BOS to repeat information already documented.
+
+## Non-negotiable memory rule
+- Save **no conversations** with BOS or anyone else: no transcripts, chat exports, routine prompts/responses, reasoning logs, or message-by-message histories anywhere in the repository.
+- This file alone is the shared AI handoff. Store only distilled durable facts: decisions/rationale, architecture/contracts, approved preferences, verified status, blockers, and next action.
+- Rewrite stale status in place; do not append every interaction. Keep this file under 12 KB. Never store credentials, tokens, passwords, sensitive account data or unnecessary personal details.
+- Master context and focused docs are for technical specifications, durable engineering decisions and evidence—not conversation archives.
+- Every AI must read this file first at session start, then `AGENTS.md` and relevant master-context sections, then verify live GitHub/code/PR/CI/deployment state. Do not claim a new AI automatically reads it unless repository access and startup behavior are configured and verified.
+- Agent-native private memory is optional; it does not replace this shared file.
+
+## Working agreement
+- Preserve existing features, routes, menus, API contracts, data and workflows.
+- Groq/OpenCode has repository-wide autonomous engineering authority under `AGENTS.md` and the master context. Safe engineering may be implemented and proposed through coherent PRs; numeric PR quota is not the limiting factor.
+- All agents follow branch, test, security, review, documentation and production-safety rules. No task writes directly to `main`.
+- Never claim CI, merge, Hostless build or LIVE deployment without checking each separately.
+- Explicit BOS approval is required for paid spend/service activation, production credential/access changes, destructive or materially risky production operations, and live trading/withdrawal/financial execution.
+- Do not claim always-on/background autonomy unless scheduler, durable queue/state, workers, permissions, audit, budgets, approval gates and kill switch are implemented and verified.
+
+## Verified project handoff — 25 November 2026
+- `develop` HEAD: `406962a0692b8e0c4cb3bdd468068c80c5aec99e`; `main` HEAD: `0f8521a4ab2399f80a102af4e422b2586d32e437` at last check. Re-check before action.
+- PR #108 (cloud-worker hardening) and PR #109 (master-context status) are merged to `develop`. Exact-head tests, PostgreSQL disposable migration/queue/memory smoke tests, Gitleaks, Trivy and branch-source policy passed for PR #108.
+- PR #107 (older shared-memory/Groq authority policy) is open but stale/diverged (2 commits behind develop); replace it with the current shared-memory policy PR and close/supersede #107 after integration.
+- PR #106 (mobile sidebar drawer) remains open and needs rebase/validation against current develop plus Android/iOS/browser QA. Prior Termux report: 5 frontend tests passed and `git diff --check` clean; device QA was not completed.
+- Cloud worker hardening exists on `develop`, not yet released to `main`. GitHub Actions worker is periodic (every two hours), not continuous 24/7. It can run without the phone/Termux, but workflow must reach default branch `main` before scheduled runs use the new version.
+- Groq provider support is opt-in and OFF by default. Do not configure `GROQ_API_KEY` or enable `GROQ_AUTONOMOUS_ENABLED=1` without BOS explicitly approving after quota/billing review. OpenRouter fallback is pinned to `openrouter/free`.
+- PostgreSQL Agent Platform queue/control plane is not activated for production: pause + kill switch defaults, USD 0 budget and restrictive grants remain. No VPS or paid service has been provisioned.
+- Hostless Build/LIVE status was not verified by the above GitHub work. Do not infer deployment from a merge.
+
+## Next actions
+1. Integrate this memory policy PR after exact-head tests and security checks; close/supersede stale PR #107.
+2. Rebase/revalidate PR #106 against current develop and complete mobile/browser device QA before merging.
+3. Prepare a normal `develop` → `main` release PR for the cloud worker; verify exact-head release checks. Keep Groq disabled.
+4. After release, run a controlled manual worker test; later design a least-privilege non-production adapter to the existing PostgreSQL queue before any production activation.
