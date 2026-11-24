@@ -2666,3 +2666,43 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - These results certify repository tests/security only. They do not certify a scheduled execution, OpenRouter zero-charge behavior, Hostless Build, or Hostless LIVE.
 - PR #81 remains Draft/open/unmerged; no independent Divisi 01 or Divisi 05 review has been submitted. Worker variable defaults to disabled.
 - NEXT: obtain actual independent Divisi 01/05 review, verify free-route usage/zero charges in provider account without exposing the key, then obtain BOS authorization before setting AUTONOMOUS_AGENT_ENABLED=1. After activation, capture three scheduled run IDs and results.
+
+
+## 81. MASTER DEVELOPMENT DIRECTIVE & TWO-HOURLY AUTONOMOUS CADENCE — 24 NOVEMBER 2026
+
+### Mandate saved
+- BOS menetapkan RADAR AI-V2 Master Development Directive sebagai mandat pengembangan berkelanjutan: system reliability/security; crypto data & intelligence; AI analysis/evaluation/memory; trading dashboard; background automation; conversation/decision/analysis memory; QA; documentation and handoff.
+- Berlaku lintas Divisi 01–08, dengan Direktur Utama sebagai koordinator. Setiap siklus wajib membaca status repository/kanban dan catatan siklus sebelumnya, memilih pekerjaan paling berdampak, menghindari duplikasi, menetapkan acceptance criteria, menguji perubahan, dan mencatat hasil.
+- Prinsip biaya: Rp0/no-overage; tidak ada fallback model berbayar. API/secret tetap server-side. Tidak ada auto-merge/deploy, perubahan secret/permission, migrasi produksi, tindakan exchange, transaksi, withdrawal, atau live trading.
+
+### Cadence decision
+- Target siklus pengembangan: setiap 2 jam, menit ke-17 pada jam genap, timezone UTC (cron GitHub Actions): `17 */2 * * *`.
+- Monitoring teknis terpisah: workflow Hostless monitor yang sudah ada berjalan setiap 5 menit; test/security berjalan sesuai trigger masing-masing. Jadwal ini bukan instruksi agar setiap divisi memanggil provider AI pada setiap interval.
+- PR #81 workflow pada branch `feat/autonomous-agent-pilot` diperbarui dari setiap 6 jam menjadi setiap 2 jam. Perubahan ini masih Draft PR dan belum aktif pada main.
+
+### Actual scope and limitations — do not overstate
+- Worker PR #81 saat ini hanya pilot proposal untuk peningkatan kecil pada modul AI workspace/group dan test terkait; maksimal 3 file / 40 KiB; hasilnya Draft PR setelah patch checks dan `npm test`.
+- Worker hanya memakai OpenRouter `openrouter/free`; jika key/provider gratis tidak tersedia, worker skip/fail safely. Label free router bukan jaminan availability, quota, atau zero-charge; BOS harus memeriksa usage/billing.
+- Worker tidak menyimpan task queue atau memory di PostgreSQL, tidak menjalankan semua divisi, tidak melakukan riset market/data secara luas, dan tidak merge/deploy. Satu Draft PR autonomous yang belum direview akan menahan siklus berikutnya.
+- `AUTONOMOUS_AGENT_ENABLED` default `0`; PR #81 belum merge, belum ada bukti scheduled run sukses, dan belum ada independent Divisi 01 Security / Divisi 05 QA sign-off.
+
+### Activation gates
+1. Divisi 01 review token scope, patch validation, child-process environment isolation, untrusted input handling, and workflow permissions.
+2. Divisi 05 independently verify workflow cadence, concurrency, exact-head test/security, and PR lifecycle.
+3. Verify OpenRouter free-route usage/charges and BOS confirms acceptable Rp0/no-overage behavior.
+4. Only after reviews and verification, BOS may configure GitHub Actions secret `OPENROUTER_API_KEY` and repository variable `AUTONOMOUS_AGENT_ENABLED=1`. Do not copy Hostless secrets.
+5. Capture at least three successful scheduled run IDs and results before widening worker scope.
+
+### Next architecture increments — Divisions 06/07
+- Stage A: persistent task/memory schema and audit contracts; PostgreSQL only if a verified existing free/no-overage database is available. No paid provisioning or production migration without BOS approval.
+- Stage B: scheduler + durable queue + lease/idempotency/retry/dead-letter + task history; do not treat workflow cron alone as a durable queue.
+- Stage C: division-specific workers with allowlisted tools, isolated branches, scoped memory, budgets, QA/Security gates, human approval queue, kill switch and recovery.
+- Stage D: expand from proposal-only to controlled integration only after independent gates and operational evidence. Production deployment and financial actions remain BOS-approved.
+
+### Session record
+- Repository main HEAD verified: `bb4c002c9f3cccae266504131a54583a406dbb5b`.
+- PR #81 current head at audit: `75d1d275d22193a2803badd0ed5865b72e431a67`; open, Draft, unmerged. Combined commit status API returned pending with no status records; no fresh exact-head CI result was established in this session. Earlier documented test/security success on prior head does not certify this head.
+- Changed file on PR branch: `.github/workflows/autonomous-development.yml` (cron only); this master-context entry is also on the PR branch.
+- Tests: not run locally; GitHub Actions after these changes must validate exact new head.
+- Hostless Build/Live: not applicable to this PR branch update and not checked.
+- NEXT TASK: obtain exact-head CI/security result, independent Divisi 01/05 review, and BOS provider-cost confirmation; only then merge/activate under the documented gates. In parallel, design/implement Stage A task + memory persistence without provisioning paid infrastructure.
