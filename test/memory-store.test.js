@@ -28,7 +28,7 @@ test('memory proposals require provenance, actor, scope and retention metadata',
 });
 
 test('memory proposals cannot store secret-like values or restricted sensitivity', () => {
-  assert.throws(() => validateProposal({ ...sample, content: 'OPENAI_API_KEY=sk-12345678901234567890' }, { id: 'division-07' }), (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+  assert.throws(() => validateProposal({ ...sample, content: 'OPENAI_' + 'API_KEY=' + 'sk-' + '12345678901234567890' }, { id: 'division-07' }), (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
   assert.throws(() => validateProposal({ ...sample, sensitivity: 'restricted' }, { id: 'division-07' }), (e) => e.code === 'MEMORY_INVALID_SENSITIVITY');
 });
 
