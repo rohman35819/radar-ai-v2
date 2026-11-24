@@ -2945,3 +2945,18 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 **Status perubahan aturan:** ditambahkan ke AGENTS.md dan master context pada main. Perubahan dokumentasi ini tidak mengubah kode runtime, environment, database, permission, Hostless, atau trading. CI/Hostless tidak diklaim selesai hanya dari commit dokumentasi.
 
 **NEXT TASK:** terapkan gate ini satu per satu pada PR #89 dan #88: perbarui branch terhadap main, selesaikan conflict/mergeability, jalankan exact-head integration + security checks, lalu merge hanya yang seluruh gate risikonya lulus.
+
+## 94. ATURAN SEMENTARA QA INDEPENDEN & REVIEW DIVISI — AKTIF (24 NOVEMBER 2026)
+
+**Perintah BOS: aktifkan pengecualian sementara** selama otomatisasi RADAR AI belum berjalan penuh dan proses QA/review manual justru membuat PR tertahan.
+
+- Aturan ini mengesampingkan ketentuan lama yang mewajibkan menunggu QA independen atau review Divisi 01/05 untuk pekerjaan rutin. Jika implementasi/kode sudah siap, lead telah memeriksa seluruh diff, branch kompatibel dengan main terbaru, konflik selesai, GitHub menyatakan mergeable=true, serta exact-head test/build/security/integration yang relevan lulus, pekerjaan boleh dilanjutkan sampai merge tanpa menunggu jawaban divisi.
+- Divisi 01/05 boleh melakukan review secara asynchronous, tetapi tidak menjadi dependency untuk pekerjaan low/medium-risk. Jangan membiarkan PR tetap Draft/idle hanya karena review manual belum datang.
+- Ini bukan penghapusan QA. Self-review, test aktual pada SHA terkini, security/secret scan, integration/database smoke test, pemeriksaan migrasi dan rollback, branch protection, serta laporan transparan tetap wajib. Tes gagal/hilang/stale tidak boleh dianggap lulus.
+- Untuk perubahan high-risk (auth/authorization, privilege, secret, production migration, data-loss/destructive operation, financial execution/trading, atau tindakan irreversible), kontrol objektif tetap wajib: security/integration test terfokus di lingkungan aman dan persetujuan BOS bila tindakan produksi memerlukannya. Jangan bypass safeguard produksi.
+- Bila QA independen tidak tersedia, catat eksplisit `not performed (temporary override)` dan sebutkan bukti self-review/otomatis yang benar-benar tersedia. Jangan mengklaim review divisi sudah dilakukan.
+- **Kapan aturan dibuka kembali:** hanya setelah otomasi QA/review/integration terbukti stabil pada beberapa siklus PR berturut-turut: berjalan otomatis pada SHA terbaru, hasilnya dapat ditindaklanjuti, tidak tergantung kuota free-tier yang tidak tersedia atau pemicu manual, dan tidak menimbulkan antrean yang dapat dihindari maupun regresi yang lolos. Pembukaan kembali wajib keputusan eksplisit BOS/Executive Office dengan bukti; tidak otomatis dan tidak boleh dilakukan hanya karena satu PR sukses.
+
+**Catatan rekonsiliasi aturan lama:** catatan PR #87 yang menyebut harus menunggu Divisi 01/05 adalah catatan kondisi/ketentuan saat itu dan telah dikesampingkan oleh keputusan BOS serta aturan sementara ini. Review manual PR #87 tidak dilakukan; bukti yang tersedia adalah 177/177 test dan secret/security scan pada head sebelum merge. Keputusan merge #87 tetap dicatat terpisah dan tidak menjadi bukti bahwa review independen telah terjadi.
+
+**Status:** aturan sementara ditambahkan ke AGENTS.md dan master context pada main. Perubahan ini hanya dokumentasi kebijakan; tidak mengubah kode runtime, environment, database, permission, atau deployment.
