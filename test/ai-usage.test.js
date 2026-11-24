@@ -148,3 +148,12 @@ test('provider rate-limit header values reject arbitrary reflected text and mode
   assert.equal(view.providers.openai.model, null);
   assert.equal(JSON.stringify(view).includes('Bearer-secret'), false);
 });
+
+
+test('malformed response with HTTP 200 is classified as request failure, not provider HTTP error', () => {
+  const state = emptyUsageState();
+  recordProviderUsage(state, 'groq', { ok: false, statusCode: 200 }, new Date('2026-11-24T13:00:00.000Z'));
+  const view = getProviderUsageSnapshot(state, { GROQ_API_KEY: 'configured' }, Date.parse('2026-11-24T13:01:00.000Z'));
+  assert.equal(view.providers.groq.last_error_code, 'REQUEST_FAILED');
+  assert.equal(view.providers.groq.status, 'ERROR');
+});
