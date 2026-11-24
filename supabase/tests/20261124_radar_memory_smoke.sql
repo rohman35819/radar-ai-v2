@@ -31,7 +31,7 @@ VALUES
    'Approved knowledge must be scoped and traceable.',
    'github', 'https://github.com/rohman35819/radar-ai-v2/issues/82',
    'test-revision-1', 'ci', now() + interval '365 days');
-DO $
+DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.radar_memory_records WHERE memory_key = 'qa-memory-provenance-01') THEN
     RAISE EXCEPTION 'service_role cannot read its inserted proposal';
@@ -41,7 +41,7 @@ BEGIN
     RAISE EXCEPTION 'service_role unexpectedly updated memory status';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
-END $;
+END $$;
 RESET ROLE;
 
 DO $$
