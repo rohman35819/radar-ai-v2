@@ -3108,9 +3108,25 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ### Status implementasi pada 24 November 2026
 - Branch permanen `develop` dibuat dari main SHA `859818456228152643b350002a3366910d445a1e`.
 - Pemeriksaan GitHub branch list menunjukkan `main` saat itu `protected=false`; rulesets kosong. Endpoint admin branch protection mengembalikan 403 pada koneksi yang tersedia. Dengan demikian, aturan main locked sudah ditetapkan tetapi belum dipaksakan oleh GitHub. Perlu konfigurasi manual oleh repository administrator.
-- Workflow test dan security sebelumnya hanya memicu PR ke main dan belum mengenali develop. Perubahan workflow pada branch develop sedang disiapkan untuk memicu pemeriksaan pada PR ke main/develop dan push ke branch kerja.
+- Workflow test dan security telah diperbarui di branch develop untuk memicu PR ke main/develop dan push ke branch kerja; pemeriksaan sumber PR juga ditambahkan pada workflow test. Perubahan ini sedang diajukan melalui PR #102.
 - `package.json` belum memiliki script lint/build terpisah. `npm test` menjalankan syntax checks Node dan test suite. Jangan mengklaim lint/build check mandiri tersedia.
 - Git worktrees, multi-agent runtime, independent AI reviewer, automated SemVer tagging, deployment rollback dan auto rollback belum dibuktikan aktif. Kebijakan sudah mendefinisikan desain; implementasi harus bertahap dan diuji.
 
 **NEXT TASK:** selesaikan workflow branch-aware, PR template dan pemeriksaan exact-head pada develop; kemudian repository administrator aktifkan branch protection/rulesets untuk main/develop dan required status checks. Setelah itu baru migrasikan alur kerja fitur secara bertahap ke develop.
 
+
+
+## 105. GOVERNANCE BOOTSTRAP DELIVERY — 24 NOVEMBER 2026
+
+- Created permanent `develop` branch from main SHA `859818456228152643b350002a3366910d445a1e`.
+- Governance and AI rule-evolution charter recorded in `AGENTS.md` and this master context on develop.
+- Updated `.github/workflows/test.yml`: pull_request targets main/develop; push targets main, develop, feat/*, fix/*, exp/*, hotfix/*; added source-branch policy job (main accepts develop/hotfix/*; develop accepts feat/fix/exp).
+- Updated `.github/workflows/security.yml` to scan PRs to main/develop and pushes to main/develop.
+- Added `.github/pull_request_template.md` with purpose, legacy parity, data/provider, exact-head test, risk, migration, rollback and review provenance sections.
+- Opened bootstrap PR #102 from develop to main: https://github.com/rohman35819/radar-ai-v2/pull/102. PR head at opening: `0df1f03098505a4dc5495ce883250a87f7003090`; base main: `859818456228152643b350002a3366910d445a1e`; 6 commits / 5 changed files reported by GitHub.
+- Exact-head workflow lookup at the time of this note returned no PR workflow runs yet. Tests/security are therefore PENDING, not passed. Do not merge until current head has successful checks and mergeability is true.
+- GitHub branch listing showed `main` unprotected; rulesets endpoint returned empty. Branch-protection admin endpoint returned 403 for the current integration. The `main`/ `develop` lock and required status checks are NOT technically enforced yet; repository administrator must configure them in GitHub Settings and verify.
+- `package.json` has `npm test` (Node syntax checks + Node test suite), but no standalone lint/build scripts. Do not claim separate lint/build gates.
+- No runtime application code, production database, credentials, Hostless configuration, deployment, paid service or trading behavior changed.
+
+**NEXT TASK:** monitor PR #102 exact-head test/security checks; fix any workflow failures. Before merging, have repository administrator configure branch protection/rulesets for main (and develop) with direct push/force-push/deletion disabled, PR-only updates, required exact-head test/security checks, and main source restriction to develop/hotfix. Then verify protection state and merge bootstrap PR only after all gates pass.
