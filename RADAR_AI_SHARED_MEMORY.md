@@ -24,18 +24,18 @@
 - Explicit BOS approval is required for paid spend/service activation, production credential/access changes, destructive or materially risky production operations, and live trading/withdrawal/financial execution.
 - Do not claim always-on/background autonomy unless scheduler, durable queue/state, workers, permissions, audit, budgets, approval gates and kill switch are implemented and verified.
 
-## Verified project handoff — 25 November 2026
-- `develop` HEAD: `406962a0692b8e0c4cb3bdd468068c80c5aec99e`; `main` HEAD: `0f8521a4ab2399f80a102af4e422b2586d32e437` at last check. Re-check before action.
-- PR #108 (cloud-worker hardening) and PR #109 (master-context status) are merged to `develop`. Exact-head tests, PostgreSQL disposable migration/queue/memory smoke tests, Gitleaks, Trivy and branch-source policy passed for PR #108.
-- PR #107 (older shared-memory/Groq authority policy) is open but stale/diverged (2 commits behind develop); replace it with the current shared-memory policy PR and close/supersede #107 after integration.
-- PR #106 (mobile sidebar drawer) remains open and needs rebase/validation against current develop plus Android/iOS/browser QA. Prior Termux report: 5 frontend tests passed and `git diff --check` clean; device QA was not completed.
-- Cloud worker hardening exists on `develop`, not yet released to `main`. GitHub Actions worker is periodic (every two hours), not continuous 24/7. It can run without the phone/Termux, but workflow must reach default branch `main` before scheduled runs use the new version.
+## Verified project handoff — 25 November 2026 (updated after integration cycle)
+- `develop` HEAD: `c9c3a1403b19e5fe52250d0354e03bf7a1af1319`; `main` HEAD: `0f8521a4ab2399f80a102af4e422b2586d32e437` at last check. Re-check before action.
+- PR #108 (cloud-worker hardening), #109 (status), #110 (shared-memory policy) are merged to `develop`; stale PR #107 was closed/superseded. PR #111 (follow-up handoff refresh) is open. Exact-head tests, disposable PostgreSQL smoke, Gitleaks, Trivy and branch-source policy passed for PR #108.
+- PR #106 (mobile sidebar drawer) was rebased onto current `develop`: head `b3161df12ccbc8da53409b2b5582867ac44d3bae`, base `c9c3a14`, `mergeable=true`, CI test/security started after push. Device QA is still outstanding. Locally: `npm test` 196/196 pass, `git diff --check` clean. No merge yet.
+- Frontend integration branch `integration/frontend-ux-20261125` head `79ae17b1f34dac8cd77d55ed2c275d2d7062bb4f` combines the latest `develop` with dashboard freshness/state/a11y, Market Intelligence truthfulness, Solscan observation-time truthfulness and PWA shell v13. Local `npm test`: 208/208 pass, 25 files. PR not created: the available token returns HTTP 403 `Resource not accessible by personal access token` for `POST /pulls`.
+- Cloud worker hardening exists on `develop`, not yet released to `main`. GitHub Actions worker is periodic (every two hours), not continuous 24/7. It can run without the phone/Termux, but the workflow must reach default branch `main` before scheduled runs use the new version.
 - Groq provider support is opt-in and OFF by default. Do not configure `GROQ_API_KEY` or enable `GROQ_AUTONOMOUS_ENABLED=1` without BOS explicitly approving after quota/billing review. OpenRouter fallback is pinned to `openrouter/free`.
 - PostgreSQL Agent Platform queue/control plane is not activated for production: pause + kill switch defaults, USD 0 budget and restrictive grants remain. No VPS or paid service has been provisioned.
-- Hostless Build/LIVE status was not verified by the above GitHub work. Do not infer deployment from a merge.
+- Hostless Build/LIVE status was not verified by the above GitHub work. Do not infer deployment from a merge or CI.
 
 ## Next actions
-1. Integrate this memory policy PR after exact-head tests and security checks; close/supersede stale PR #107.
-2. Rebase/revalidate PR #106 against current develop and complete mobile/browser device QA before merging.
+1. Verify exact-head CI for PR #106 (test, Branch source policy, Gitleaks, Trivy), then complete Android/iOS/browser drawer QA before merging.
+2. Have BOS/maintainer create PRs with a `pull_requests: write` token: PR #106 already exists; the frontend integration branch needs one at https://github.com/rohman35819/radar-ai-v2/pull/new/integration/frontend-ux-20261125 . Do not merge before all gates pass.
 3. Prepare a normal `develop` → `main` release PR for the cloud worker; verify exact-head release checks. Keep Groq disabled.
 4. After release, run a controlled manual worker test; later design a least-privilege non-production adapter to the existing PostgreSQL queue before any production activation.
