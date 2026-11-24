@@ -18,7 +18,7 @@
 
 ## Working agreement
 - Preserve existing features, routes, menus, API contracts, data and workflows.
-- Groq/OpenCode has repository-wide autonomous engineering authority under `AGENTS.md` and the master context. Safe engineering may be implemented and proposed through coherent PRs; numeric PR quota is not the limiting factor.
+- Groq/OpenCode and Grok/xAI are distinct tools. Groq/OpenCode follows the shared engineering rules; Grok has a dedicated `GROK.md` charter and must read it at each RADAR session. Both remain subject to the same branch, CI, security, cost and production-safety gates.
 - All agents follow branch, test, security, review, documentation and production-safety rules. No task writes directly to `main`.
 - Never claim CI, merge, Hostless build or LIVE deployment without checking each separately.
 - Explicit BOS approval is required for paid spend/service activation, production credential/access changes, destructive or materially risky production operations, and live trading/withdrawal/financial execution.
@@ -34,6 +34,11 @@
 - Groq provider support is opt-in and OFF by default. Do not configure `GROQ_API_KEY` or enable `GROQ_AUTONOMOUS_ENABLED=1` without BOS explicitly approving after quota/billing review. OpenRouter fallback is pinned to `openrouter/free`.
 - PostgreSQL Agent Platform queue/control plane is not activated for production: pause + kill switch defaults, USD 0 budget and restrictive grants remain. No VPS or paid service has been provisioned.
 - Hostless Build/LIVE status was not verified by the above GitHub work. Do not infer deployment from a merge.
+
+## Grok onboarding
+- `GROK.md` is the dedicated Grok/xAI startup and engineering charter. `AGENTS.md` links it and requires Grok to read it with shared memory and master context at session start.
+- Repository docs alone do not force Grok to load them. The Grok project/client must have repository access and a startup/custom instruction to read `GROK.md`; verify this separately before claiming automatic onboarding.
+- Grok is xAI's assistant; Groq is a separate inference provider. Groq provider activation remains OFF unless BOS explicitly approves.
 
 ## Next actions
 1. Keep this shared memory concise and current; every AI contributor must read it first on startup.
