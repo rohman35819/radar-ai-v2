@@ -68,3 +68,23 @@ test('queue exposes only operational counters and reports idle after draining', 
   assert.equal(snapshot.max_total, 14);
   assert.equal(JSON.stringify(snapshot).includes('api_key'), false);
 });
+
+test('queue-full rejection does not call provider or count provider usage', async () => {
+  const { requestStructured } = require('../lib/ai/chat-completions');
+  const gates = [deferred(), deferred()];
+  const first = runWithAIRequestSlot(() => gates[0].promise);
+  const second = runWithAIRequestSlot(() => gates[1].promise);
+  await Promise.resolve();
+  const waiting = Array.from({ length: MAX_PENDING_REQUESTS }, () => runWithAIRequestSlot(async () => 'done'));
+  const events = [];
+  await assert.rejects(requestStructured({
+    provider: 'groq', apiKey: 'configured', baseUrl: 'https://example.invalid', model: 'mock',
+    messages: [{ role: 'user', content: 'test' }],
+    onUsage: (event) => events.push(event),
+    fetchImpl: async () => { throw new Error('provider must not be called'); }
+  }), (error) => error.code === 'AI_QUEUE_FULL');
+  assert.deepEqual(events, []);
+  gates[0].resolve();
+  gates[1].resolve();
+  await Promise.all([first, second, ...waiting]);
+});
