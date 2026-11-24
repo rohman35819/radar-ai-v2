@@ -58,3 +58,5 @@
 - Added `test/dashboard-runtime.test.js`: executes `public/app.js` in a VM with a minimal DOM shim and asserts real helper behavior (connection states, link scheme guard, missing timestamp, focus/cursor/scroll restoration after DOM replacement). 4/4 pass; full suite 212/212 pass across 26 files. This supplements but does not replace browser/device QA.
 
 - Dashboard `dateTime()` now validates parsed timestamps; 5 runtime QA tests pass and the full suite is 213/213 across 26 files on the integration branch.
+
+- Local HTTP smoke (integration branch, temp DATA_DIR, port 38711): 19/19 probed assets/routes returned 200; strict CSP and nosniff confirmed; `/api/health` ok on writable temp storage. Not browser QA and not evidence about Hostless production mount.

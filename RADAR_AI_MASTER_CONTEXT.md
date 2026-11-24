@@ -3460,3 +3460,13 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Uji runtime baru di `test/dashboard-runtime.test.js` memastikan ketiga kondisi tersebut dan memastikan timestamp valid tidak salah ditandai. `node --test test/dashboard-runtime.test.js` 5 pass, 0 fail; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
 - Tidak ada perubahan backend/API/data. Riwayat dan atribusi sumber tetapseperti pada `sourceFootnote()`.
 - NEXT TASK: verifikasi tampilan tanggal pada browser nyata saat PR integrasi tersedia; pastikan tidak ada `Invalid Date` pada News, Unlock, Alert, dan AI Council.
+
+---
+
+## 129. SMOKE TEST HTTP LOKAL — 25 NOVEMBER 2026
+
+- Menjalankan `node server.js` pada port 38711 dengan `DATA_DIR` direktori sementara (bukan produksi), lalu melakukan probe curl nyata terhadap 19 path.
+- Hasil: **19/19 HTTP 200** — `/`, `/app.js`, `/style.css`, `/market.html`, `/market.js`, `/market.css`, `/solscan.html`, `/solscan.js`, `/solscan.css`, `/trading.html`, `/trading.js`, `/trading.css`, `/command.html`, `/command.js`, `/membership.html`, `/sw.js`, `/manifest.webmanifest`, `/icon.svg`, `/api/health`.
+- Header `/`: `x-content-type-options: nosniff`; CSP `default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'` — konsisten dengan penggunaan aset eksternal Command Center (tidak ada `<script>`/`<style>` inline pada `command.html`).
+- `/api/health`: `{"status":"ok","storage":{"status":"ok","code":null}}` pada filesystem sementara yang writable. Ini **tidak** membuktikan mount Hostless produksi atau menyelesaikan insiden EROFS.
+- Batasan: ini smoke HTTP, bukan QA browser. Tidak ada render, gesture, console, atau offline PWA yang diuji. Server dihentikan setelah probe; tidak ada deployment; tidak ada kredensial yang dipakai atau dibuka.
