@@ -2706,3 +2706,53 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - Tests: not run locally; GitHub Actions after these changes must validate exact new head.
 - Hostless Build/Live: not applicable to this PR branch update and not checked.
 - NEXT TASK: obtain exact-head CI/security result, independent Divisi 01/05 review, and BOS provider-cost confirmation; only then merge/activate under the documented gates. In parallel, design/implement Stage A task + memory persistence without provisioning paid infrastructure.
+
+
+## 82. BOS DIRECTIVE — DAILY DASHBOARD EVOLUTION & TWO-HOURLY OPEN-SOURCE DISCOVERY — 24 NOVEMBER 2026
+
+### Additional mandate
+BOS memperluas Master Development Directive dengan dua kewajiban lintas divisi:
+1. Dashboard RADAR AI V2 harus dievaluasi setiap hari dan ditingkatkan berdasarkan kegunaan trading, bukan kosmetik. Perubahan penting meliputi freshness/latency data, sumber dan timestamp, status koneksi, kualitas/kelengkapan data, market breadth, liquidity/volume, funding/open interest, whale/on-chain, token discovery, news/sentiment, alerts, dan AI intelligence hanya ketika sumber mendukung serta metrik tervalidasi. Pertahankan semua menu/fitur yang ada.
+2. Setiap siklus pengembangan dua jam, Divisi 08 Procurement & Tools menjalankan discovery sumber informasi, API, dataset, open-source project, library, dan alat gratis yang relevan untuk crypto intelligence/trading, backend, frontend, observability, QA, security, dan Agent Platform.
+
+### Dashboard operating requirements
+- Daily dashboard review: audit UX dan alur keputusan trading, cari gap informasi terbaru, periksa freshness/source attribution/last-updated/connection state, data empty/error/loading states, mobile/desktop responsiveness, dan performa.
+- Prioritaskan insight actionable dan data yang benar-benar tersedia; jangan membuat angka real-time palsu, sinyal tanpa provenance, chart statis yang menyamar sebagai live, atau metrik yang tidak punya timestamp.
+- Perubahan dashboard harus dibuat melalui branch/PR terisolasi, menjaga routes/menu/data contracts yang sudah ada, dengan screenshot/visual review jika tersedia, regression tests, dan QA independen sebelum integrasi.
+- Daily update bukan kewajiban merilis UI setiap hari. Jika tidak ada peningkatan yang tervalidasi, buat audit singkat dan backlog prioritas; jangan mengubah UI sekadar agar terlihat berbeda.
+
+### Two-hourly discovery protocol — Division 08 lead
+Pada setiap siklus dua jam, discovery mencakup:
+- Temukan kandidat sumber data/tool open-source atau free tier yang relevan dan belum terpasang.
+- Cek repository/license, dokumentasi resmi, status pemeliharaan/aktivitas, API access/registration, rate limits, attribution, data coverage/latency, security/privacy, hosting/dependency requirements, dan total biaya/risiko overage.
+- Bandingkan dengan integrasi yang sudah ada agar tidak duplikatif; catat kandidat yang ditolak beserta alasannya.
+- Kelompokkan hasil: (A) gratis dan layak diuji; (B) gratis dengan batasan/akses belum terbukti; (C) berbayar/risiko biaya; (D) tidak layak/duplikat.
+- Hanya kandidat A yang boleh masuk backlog eksperimen. Domain division wajib menilai kecocokan teknis, Divisi 01 Security menilai risiko, Divisi 05 QA menguji, dan Executive Office mengurutkan prioritas.
+- Tidak boleh otomatis memasang dependency, menjalankan kode pihak ketiga, memberikan token/secret, membuat akun, menambah kartu pembayaran, mengaktifkan layanan, atau mengubah production provider tanpa review dan approval yang sesuai. Free trial bukan layanan gratis permanen.
+- Gunakan sumber resmi untuk klaim harga/limit/license. Simpan URL, tanggal pemeriksaan, versi/license, bukti akses, limit, hasil uji, dan rekomendasi.
+
+### Division ownership
+- Divisi 04 Frontend: daily dashboard audit dan implementasi UX/visualisasi.
+- Divisi 02 Data Intelligence + Divisi 03 Trading Intelligence: validasi freshness, kualitas, coverage, dan relevansi informasi.
+- Divisi 08 Procurement & Tools: discovery alat/sumber setiap dua jam dan registry procurement agar tidak mengulang integrasi.
+- Divisi 01 Security dan Divisi 05 QA: mandatory cross-functional gates.
+- Divisi 06 Agent Platform: scheduler/queue/orchestration untuk memastikan pekerjaan benar-benar berjalan dan tercatat.
+- Divisi 07 Knowledge & Memory: simpan hasil discovery, pertanyaan BOS, keputusan, dashboard audit, eksperimen, serta evaluasi.
+- Direktur Utama mengoordinasikan siklus, menghindari duplikasi, dan memilih pekerjaan yang dapat diselesaikan dengan aman.
+
+### Current implementation boundary
+- Cron dua jam pada PR #81 hanya menjadwalkan autonomous worker pilot; worker yang ada saat ini hanya membaca tiga file AI workspace/group, hanya boleh mengubah file existing `lib/ai/*.js` dan `test/*.test.js`, dan tidak memiliki kemampuan web research/tool procurement atau dashboard frontend editing.
+- Karena itu, dashboard daily evolution dan two-hourly procurement discovery adalah mandat/backlog yang tercatat, BELUM menjadi pekerjaan otomatis yang dieksekusi worker sekarang.
+- Jangan mengklaim discovery dua jam, dashboard update harian, atau seluruh divisi otomatis aktif sebelum workflow khusus, durable task state, worker scope, evidence log, dan scheduled runs benar-benar dibangun serta diuji.
+
+### Next implementation tasks
+1. Divisi 08: buat registry tools/data sources dengan deduplication, license/cost/access evidence, dan status A–D; mulai dari integrasi yang sudah ada di main.
+2. Divisi 04: audit dashboard current main, petakan gap fungsional/data dan susun dashboard release backlog harian tanpa merusak menu/route.
+3. Divisi 02/03: buat freshness/quality contracts untuk data yang sudah terintegrasi; utamakan indikator source/time/status.
+4. Divisi 06/07: persist per-cycle tasks, discovery results, dashboard audit, decisions, and execution outcomes; baru kemudian jadwalkan worker per divisi.
+5. Perluas allowlist worker untuk frontend dan procurement hanya melalui desain terpisah, security review, QA, serta test khusus; jangan memperluas pilot workspace saat ini secara diam-diam.
+
+### Session delivery record
+- Request tambahan BOS disimpan pada branch `feat/autonomous-agent-pilot`, bukan main, sebagai bagian dari PR #81.
+- Dashboard code dan procurement research executor tidak diubah pada sesi ini; tidak ada deployment Hostless.
+- Next: selesaikan PR #81 gates, kemudian buat registry procurement + audit dashboard dari current main sebagai PR terpisah.
