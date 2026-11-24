@@ -243,3 +243,13 @@ The develop integration lane accepts not only feature/fix/validated experiment b
 This delegation means broad autonomy over **engineering work inside the repository**, not unrestricted authority over external accounts, money, production data, organization permissions, or irreversible operations. Where an older rule appears to impose a fixed PR-count cap, this section supersedes that cap for Groq contributions only; all branch, test, security, review, compatibility, cost and production-safety requirements remain active. Where this section conflicts with a hard safety prohibition, the safety prohibition wins.
 
 **Enforcement status:** policy text only. It does not itself grant Groq additional GitHub token scopes, create background execution, enable a worker, or alter GitHub branch protection. The agent must use permissions already granted to its runtime and report access failures accurately.
+
+## Shared AI memory — all agents (BOS directive — 25 November 2026)
+
+- Every AI/contributor joining RADAR AI (ChatGPT, Groq/OpenCode, and future agents) must read RADAR_AI_SHARED_MEMORY.md at the start of every new conversation/session, then read AGENTS.md and the relevant complete master-context guidance before acting.
+- RADAR_AI_SHARED_MEMORY.md is the compact, cross-agent source for durable project context and handoff. It is **not** a transcript archive.
+- Never append raw conversations, full prompts, routine chat logs or every message to GitHub. Record only distilled, durable decisions, architecture/contracts, verified status, blockers and actionable next steps.
+- Update the shared memory only when meaningful durable context changes. Replace/supersede stale status instead of endlessly appending. Keep it compact (target under 12 KB); detailed technical history belongs only in the master context or a focused document when needed.
+- Native/private memory in ChatGPT or another AI may be used as an optional convenience, but it is agent-specific and must never be assumed available to other AIs. The shared project memory and current repository state are the common handoff.
+- Never store secrets, credentials, tokens or sensitive personal/account data in shared or private project memory.
+- Always verify current GitHub branches, PRs, CI, source code and deployment evidence; shared memory is a handoff snapshot, not live truth.
