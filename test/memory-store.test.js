@@ -145,3 +145,28 @@ test('memory proposals reject Supabase secret keys and JWT credentials', () => {
   assert.throws(() => validateProposal({ ...sample, artifactRefs: [jwt] }, { id: 'division-07' }),
     (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
 });
+
+test('memory proposals reject secrets in identifiers and source revisions before persistence', () => {
+  assert.throws(() => validateProposal({ ...sample, sourceRevision: 'sb_secret_1234567890abcdefghijklmnop' }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+  assert.throws(() => validateProposal({ ...sample, memoryKey: 'sk-12345678901234567890' }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+});
+
+test('memory proposal artifact references are bounded before secret scanning', () => {
+  assert.throws(() => validateProposal({ ...sample, artifactRefs: Array(21).fill('https://example.test/ref') }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_INVALID_ARTIFACT_REFS');
+  assert.throws(() => validateProposal({ ...sample, artifactRefs: ['https://example.test/ref', 42] }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_INVALID_ARTIFACT_REFS');
+});
+
+test('memory store rejects Supabase URLs containing paths, query strings or fragments', () => {
+  for (const url of [
+    'https://example.supabase.co/rest/v1',
+    'https://example.supabase.co?apikey=not-allowed',
+    'https://example.supabase.co#fragment'
+  ]) {
+    assert.throws(() => createMemoryStore({ url, serviceKey: 'test-service-secret' }),
+      (e) => e.code === 'MEMORY_INVALID_URL');
+  }
+});
