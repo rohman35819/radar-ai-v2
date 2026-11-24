@@ -14,6 +14,7 @@ const { createGoPlusService } = require('./lib/goplus');
 const { analyzeMarket } = require('./lib/ai/gemini');
 const { runGroup } = require('./lib/ai/group');
 const { runWorkspaceReview } = require('./lib/ai/workspace');
+const { emptyUsageState, recordProviderUsage, getProviderUsageSnapshot } = require('./lib/ai/usage');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
@@ -87,6 +88,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
     ? ingest.loadAsync(cfg).then((loaded) => {
       Object.assign(st, loaded);
       st.goplusUsage = Object.assign(st.goplusUsage || {}, loaded.goplusUsage || {});
+      st.aiUsage = Object.assign(st.aiUsage || emptyUsageState(), loaded.aiUsage || {});
       storageChecked = true; storageErrorCode = null;
       return st;
     }).catch((error) => {
@@ -97,6 +99,11 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
     })
     : Promise.resolve(st);
   st.goplusUsage = st.goplusUsage && typeof st.goplusUsage === 'object' ? st.goplusUsage : { day: null, month: null, day_count: 0, month_count: 0 };
+  st.aiUsage = st.aiUsage && typeof st.aiUsage === 'object' ? st.aiUsage : emptyUsageState();
+  const recordAIUsage = (event) => {
+    recordProviderUsage(st.aiUsage, event?.provider, event);
+    persistState();
+  };
   const goPlus = goPlusService || createGoPlusService({ appKey: process.env.GOPLUS_APP_KEY || '', appSecret: process.env.GOPLUS_APP_SECRET || '', accessToken: process.env.GOPLUS_ACCESS_TOKEN || '', usageState: st.goplusUsage, onUsage: persistState });
   let busy = null;
   let aiBusy = null;
@@ -127,7 +134,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   });
   const runWorkspace = () => {
     if (workspaceBusy) return workspaceBusy;
-    workspaceBusy = runWorkspaceReview(workspaceContext())
+    workspaceBusy = runWorkspaceReview(workspaceContext(), { onUsage: recordAIUsage })
       .then((result) => { st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result }; persistState(); return result; })
       .catch((e) => { console.error('AI workspace error', String(e.message || e).slice(0, 160)); return null; })
       .finally(() => { workspaceBusy = null; });
@@ -301,6 +308,9 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             config_needed: { telegram: !(cfg.tgToken && cfg.tgChat), coingecko_key: !cfg.cgKey, onchain_key: !cfg.cgKey, early_gems_enabled: cfg.earlyGemsEnabled !== false, onchain_refresh_min: cfg.onchainRefreshMin || 60, goplus_enabled: Boolean(process.env.GOPLUS_ACCESS_TOKEN || (process.env.GOPLUS_APP_KEY && process.env.GOPLUS_APP_SECRET)), goplus_usage: { day_count: Number(st.goplusUsage?.day_count || 0), month_count: Number(st.goplusUsage?.month_count || 0), daily_limit: 1000, monthly_limit: 5000 }, unlock_source: !cfg.unlocksUrl && !st.unlocks.length } },
           'application/json', { 'cache-control': 'public, max-age=30' });
         }
+        if (url.pathname === '/api/ai/usage' && req.method === 'GET') {
+          return send(res, 200, { status: 'success', usage: getProviderUsageSnapshot(st.aiUsage) }, 'application/json', { 'cache-control': 'no-store' });
+        }
         if (url.pathname === '/api/ai/group' && req.method === 'GET') {
           return send(res, 200, { status: 'success', group: st.aiGroup || null }, 'application/json', { 'cache-control': 'no-store' });
         }
@@ -321,7 +331,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             if (!participants.length) return send(res, 400, { status: 'error', message: 'Pilih minimal satu peserta rapat' });
             if (workspaceBusy) return send(res, 409, { status: 'running', message: 'Rapat sebelumnya masih berlangsung' });
             const commandId = 'meeting-' + Date.now();
-            workspaceBusy = runWorkspaceReview({ ...workspaceContext(), instruction, participants })
+            workspaceBusy = runWorkspaceReview({ ...workspaceContext(), instruction, participants }, { onUsage: recordAIUsage })
               .then((result) => { result.command_id = commandId; result.instruction = instruction; st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result }; persistState(); return result; })
               .catch((e) => { console.error('AI command error', String(e.message || e).slice(0, 160)); return null; })
               .finally(() => { workspaceBusy = null; });
@@ -338,7 +348,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
         if (url.pathname === '/api/ai/group/run' && req.method === 'POST') {
           if (!hasValidAdminToken(req.headers['x-admin-token'])) return send(res, 403, { status: 'error', message: 'Dilarang' });
           if (aiBusy) return send(res, 202, { status: 'running' });
-          aiBusy = runGroup({ tokens: st.tokens, stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 })
+          aiBusy = runGroup({ tokens: st.tokens, stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 }, { onUsage: recordAIUsage })
             .then((result) => { st.aiGroup = { ...(st.aiGroup || {}), last: result }; persistState(); return result; })
             .catch((e) => { console.error('AI group error', e.message); return null; })
             .finally(() => { aiBusy = null; });
