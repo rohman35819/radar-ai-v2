@@ -156,6 +156,9 @@ body{
 }
 
 .news-health{margin:10px 0 14px;padding:12px}.news-health .health-line{margin:4px 0}.news-health-error{margin:8px 0 0;font-size:10px}
+.freshness-note{margin:10px 0 2px;font-size:9px;color:var(--muted)}
+.state-panel{display:grid;gap:8px;justify-items:center;text-align:center;padding:24px}
+.state-panel .freshness-note{margin:0}
 
 /* Early Gem Scanner */
 .gem-status{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:10px}
@@ -199,3 +202,11 @@ body{
 .gem-validation-line{display:grid;gap:2px;padding-top:5px;border-top:1px solid var(--line)}
 .gem-validation-line>b{color:var(--text)}
 .gem-validation-line>small{font-size:9px}
+
+/* AI Workspace — token admin hanya di memori halaman */
+.workspace-access{align-items:center}
+.workspace-access label{font-size:9px;white-space:nowrap}
+.workspace-access input{flex:2;min-width:180px}
+.workspace-access .mini-btn{width:34px;flex:none}
+.workspace-access button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:760px){.workspace-access{display:flex;flex-wrap:wrap}.workspace-access label{width:100%}.workspace-access input{flex:1 1 100%;min-width:0}.workspace-access .mini-btn,.workspace-access .secondary-btn{flex:none}}

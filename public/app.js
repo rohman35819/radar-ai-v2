@@ -21,8 +21,63 @@ const dateTime = (v) => v ? new Date(v).toLocaleString('id-ID',{dateStyle:'mediu
 const esc = (v) => String(v ?? '—');
 const FLAG = {fdv_unknown:'FDV tidak diketahui',fdv_gt_5x_mcap:'FDV > 5x MCap',volume_gt_mcap:'Volume > MCap',stale:'Data basi'};
 const TITLES = {'early-gems':'Early Gem Scanner',solscan:'Solana Intelligence',overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
-let data=null, aiGroup=null, aiWorkspace=null, solscanOverview=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false;
+let data=null, aiGroup=null, aiWorkspace=null, solscanOverview=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false, loadFailed=false;
 let screenerFilters={q:'',trend:'all',sort:'market_cap'},screenerVisible=[],earlyGemFilters={q:'',minLiquidity:0};
+// Token admin AI Workspace hanya berada di memori halaman, tidak pernah di localStorage.
+let workspaceToken='';
+const clearWorkspaceToken=()=>{
+  workspaceToken='';
+  const field=$('#workspace-token');if(field)field.value='';
+};
+const ageLabel=(v)=>{
+  if(!v)return '—';
+  const ms=Date.now()-Date.parse(v);
+  if(!Number.isFinite(ms)||ms<0)return '—';
+  const menit=Math.floor(ms/60000);
+  if(menit<1)return 'baru saja';
+  if(menit<60)return menit+' menit lalu';
+  const jam=Math.floor(menit/60);
+  if(jam<24)return jam+' jam lalu';
+  return Math.floor(jam/24)+' hari lalu';
+};
+const connectionState=()=>{
+  if(!data)return loadFailed
+    ?{label:'GAGAL MEMUAT',cls:'negative',detail:'Snapshot tidak dapat diambil dari server.'}
+    :{label:'MENGHUBUNGKAN',cls:'muted',detail:'Menunggu snapshot pertama dari server.'};
+  if(!snapshotReachable)return {label:'KONEKSI TERPUTUS',cls:'negative',detail:'Server tidak dapat dijangkau; data lama mungkin masih tampil.'};
+  if(data.stale)return {label:'DATA BASI',cls:'negative',detail:'Snapshot terakhir sudah melewati ambang kesegaran.'};
+  return {label:'TERHUBUNG',cls:'positive',detail:'Snapshot terakhir berhasil diambil.'};
+};
+const sourceFootnote=()=>el('p',{class:'freshness-note'},'Sumber: /api/snapshot · Diperbarui '+dateTime(data?.last_ok)+' · '+ageLabel(data?.last_ok));
+// Auto-refresh menyusun ulang #view. Kembalikan fokus, kursor, dan posisi scroll
+// agar pengguna tidak kehilangan tempat saat mengetik di filter atau membaca tabel.
+const renderPreservingFocus=()=>{
+  const view=$('#view'),active=document.activeElement;
+  const focusedId=active&&view&&view.contains(active)&&active.id?active.id:null;
+  const selection=focusedId&&typeof active.selectionStart==='number'
+    ?{start:active.selectionStart,end:active.selectionEnd}:null;
+  const viewScroll=view?view.scrollTop:0,pageScroll=window.scrollY;
+  render();
+  if(view&&view.scrollTop!==viewScroll)view.scrollTop=viewScroll;
+  if(window.scrollY!==pageScroll)window.scrollTo(0,pageScroll);
+  if(focusedId){
+    const target=document.getElementById(focusedId);
+    if(target&&typeof target.focus==='function'){
+      target.focus({preventScroll:true});
+      if(selection&&typeof target.setSelectionRange==='function'){
+        try{target.setSelectionRange(selection.start,selection.end);}catch{}
+      }
+    }
+  }
+};
+// Tautan berita berasal dari feed eksternal; hanya izinkan http/https.
+const safeExternalLink=(value)=>{
+  if(!value)return null;
+  try{
+    const url=new URL(String(value),window.location.href);
+    return url.protocol==='http:'||url.protocol==='https:'?url.href:null;
+  }catch{return null;}
+};
 try {
  const stored=JSON.parse(localStorage.getItem('radar-watch')||'[]');
  if(Array.isArray(stored))watch=[...new Set(stored.filter(x=>typeof x==='string'&&x.length>0&&x.length<=128))];
@@ -47,7 +102,7 @@ function tokenRow(t,showDetail=false){
   pctPill(t.change_24h),
   el('div',{class:'token-metric'},money(t.market_cap)),
   el('div',{class:'token-metric'},money(t.volume_24h)),
-  el('div',{class:'token-actions'},el('button',{class:'mini-btn '+(favorite?'saved':''),title:'Watchlist',onclick:()=>toggleWatch(t.id)},favorite?'★':'☆'),showDetail?el('button',{class:'mini-btn',title:'Detail',onclick:()=>{expanded=expanded===t.id?null:t.id;render();}},'↗'):null)
+  el('div',{class:'token-actions'},el('button',{class:'mini-btn '+(favorite?'saved':''),title:'Watchlist','aria-label':favorite?'Hapus '+esc(t.symbol)+' dari watchlist':'Tambahkan '+esc(t.symbol)+' ke watchlist',onclick:()=>toggleWatch(t.id)},favorite?'★':'☆'),showDetail?el('button',{class:'mini-btn',title:'Detail','aria-label':'Lihat detail '+esc(t.symbol),onclick:()=>{expanded=expanded===t.id?null:t.id;render();}},'↗'):null)
  );
  if(showDetail && expanded===t.id) row.append(tokenDetail(t));
  return row;
@@ -65,14 +120,21 @@ function tokenDetail(t){
 function tokenTable(list,limit=100){
  const wrap=el('div',{class:'table-wrap'});
  wrap.append(el('div',{class:'table-head'},el('span',{},'ASET'),el('span',{},'HARGA'),el('span',{},'24J'),el('span',{},'MARKET CAP'),el('span',{},'VOLUME 24J'),el('span',{},'AKSI')));
- if(!list.length) wrap.append(empty('Tidak ada token','Coba ubah filter atau tunggu pembaruan data.'));
+ if(!list.length) wrap.append(!data
+   ? empty(loadFailed?'Gagal memuat data':'Menunggu data',loadFailed?'Snapshot tidak dapat diambil. Coba muat ulang.':'Data sedang diambil dari server.')
+   : empty('Tidak ada token','Coba ubah filter atau tunggu pembaruan data.'));
  list.slice(0,limit).forEach(t=>wrap.append(tokenRow(t,true)));
  return wrap;
 }
 function renderOverview(){
  const v=$('#view');v.replaceChildren();
+ if(!data){
+  const st=connectionState();
+  v.append(card(el('div',{class:'state-panel'},el('b',{},st.label),el('p',{class:'muted'},st.detail),sourceFootnote(),loadFailed?el('button',{class:'secondary-btn',onclick:()=>refreshNow()},'Coba muat ulang'):null)));
+  return;
+ }
  const s=totals(),ts=getTokens(),health=Object.values(data?.health||{}),healthy=health.filter(x=>x.ok).length;
- v.append(el('div',{class:'welcome-row'},el('div',{},el('div',{class:'eyebrow'},'MARKET PULSE / LIVE DATA'),el('h2',{},'Selamat datang di RADAR.'),el('p',{class:'muted'},'Satu ruang untuk memantau pasar, menemukan peluang, dan membaca analisis AI.')),el('div',{class:'updated-box'},el('small',{},'PEMBARUAN TERAKHIR'),el('b',{},dateTime(data?.last_ok)),el('span',{class:'live-chip'},(data?.stale||!snapshotReachable)?'DATA PERLU DICEK':'● DATA TERHUBUNG'))));
+ v.append(el('div',{class:'welcome-row'},el('div',{},el('div',{class:'eyebrow'},'MARKET PULSE / LIVE DATA'),el('h2',{},'Selamat datang di RADAR.'),el('p',{class:'muted'},'Satu ruang untuk memantau pasar, menemukan peluang, dan membaca analisis AI.')),el('div',{class:'updated-box'},el('small',{},'PEMBARUAN TERAKHIR'),el('b',{},dateTime(data?.last_ok)),el('span',{class:'live-chip '+connectionState().cls},connectionState().label),el('small',{},ageLabel(data?.last_ok)+' · sumber /api/snapshot'))));
  v.append(el('div',{class:'stats-grid'},
   statCard('ASET TERPANTAU',s.count.toLocaleString('id-ID'),'Token lolos filter screener','◈'),
   statCard('TOTAL MARKET CAP',money(s.cap),'Agregat aset dalam radar','◫'),
@@ -118,7 +180,7 @@ function renderScreener(){
   $('#result-count').textContent=list.length+' aset ditemukan';
   results.replaceChildren(tokenTable(list));
  };
- v.append(sectionHead('Temukan aset','Cari dan saring token berdasarkan aktivitas pasar.',el('button',{class:'secondary-btn',onclick:exportCSV},'↓ Ekspor hasil CSV')),controls,el('div',{class:'result-meta'},el('b',{id:'result-count'},'Memuat…'),el('span',{class:'muted'},'Filter tetap tersimpan saat data diperbarui')),results);
+ v.append(sectionHead('Temukan aset','Cari dan saring token berdasarkan aktivitas pasar.',el('button',{class:'secondary-btn',onclick:exportCSV},'↓ Ekspor hasil CSV')),controls,el('div',{class:'result-meta'},el('b',{id:'result-count','aria-live':'polite'},'Memuat…'),el('span',{class:'muted'},'Filter tetap tersimpan saat data diperbarui')),results,sourceFootnote());
  $('#filter-trend').value=screenerFilters.trend;
  $('#filter-sort').value=screenerFilters.sort;
  ['filter-q','filter-trend','filter-sort'].forEach(id=>$('#'+id).addEventListener(id==='filter-q'?'input':'change',update));
@@ -129,7 +191,7 @@ function renderWatch(){
  const list=getTokens().filter(t=>watch.includes(t.id));
  v.append(sectionHead('Watchlist','Daftar aset pilihan tersimpan di perangkat ini.',el('button',{class:'secondary-btn',onclick:()=>navigate('screener')},'＋ Tambah aset')));
  v.append(el('div',{class:'stats-grid compact'},statCard('ASET DISIMPAN',watch.length,'Tersimpan lokal di browser','☆'),statCard('TERSEDIA DI RADAR',list.length,'Aset yang saat ini ada di feed','◈')));
- v.append(card(list.length?tokenTable(list):empty('Watchlist masih kosong','Buka Market Screener lalu tekan ikon ☆ untuk menyimpan token.')));
+ v.append(card(list.length?tokenTable(list):empty('Watchlist masih kosong',!data?(loadFailed?'Snapshot gagal dimuat; coba muat ulang.':'Data sedang diambil dari server.'):'Buka Market Screener lalu tekan ikon ☆ untuk menyimpan token.')),sourceFootnote());
 }
 function renderAnalytics(){
  const v=$('#view');v.replaceChildren();const s=totals(),ts=getTokens();
@@ -137,6 +199,8 @@ function renderAnalytics(){
  const bars=(items,key)=>el('div',{class:'bar-list'},...items.map(t=>{const max=Math.max(1,...items.map(x=>Number(x[key])||0));return el('div',{class:'bar-item'},el('div',{class:'bar-caption'},el('b',{},esc(t.symbol)),el('span',{},money(t[key]))),el('div',{class:'bar-track'},el('progress',{class:'bar-fill',max:String(max),value:String(Math.max(0,Number(t[key])||0)),'aria-label':esc(t.symbol)+' '+key})));}));
  v.append(sectionHead('Market Analytics','Pembacaan statistik dari token yang sedang terpantau.'));
  v.append(el('div',{class:'stats-grid'},statCard('NAIK',s.positive,'Aset dengan return positif','↗','positive'),statCard('TURUN',s.negative,'Aset dengan return negatif','↘','negative'),statCard('MARKET CAP',money(s.cap),'Total dalam universe radar','◫'),statCard('VOLUME',money(s.vol),'Agregat volume 24 jam','⇅')));
+ v.append(sourceFootnote());
+ if(!ts.length){v.append(card(empty('Belum ada token untuk dianalisis',!data?'Data sedang diambil atau gagal dimuat.':'Screener belum menghasilkan aset yang memenuhi filter server.')));return;}
  v.append(el('div',{class:'two-col'},card(sectionHead('Top Market Cap','Aset dengan kapitalisasi terbesar'),bars(capSorted,'market_cap')),card(sectionHead('Top Volume','Aset dengan volume perdagangan terbesar'),bars(volSorted,'volume_24h'))));
  v.append(card(sectionHead('Distribusi Market Breadth','Jumlah token berdasarkan arah perubahan 24 jam'),el('progress',{class:'breadth-progress',max:String(s.count||1),value:String(s.positive),'aria-label':'Market breadth: '+s.positive+' naik dari '+s.count+' aset'}),el('div',{class:'legend'},el('span',{class:'positive'},'● Naik '+s.positive),el('span',{class:'negative'},'● Turun '+s.negative),el('span',{},'● Netral '+Math.max(0,s.count-s.positive-s.negative)))));
 }
@@ -152,20 +216,24 @@ function renderNews(){
   status.append(el('div',{class:'health-line'},el('span',{},esc(source.host)),el('b',{class:source.ok?'positive':'negative'},label)));
  });
  if(health?.error)status.append(el('p',{class:'muted news-health-error'},'Kode diagnostik: '+esc(health.error)));
- v.append(status);
+ status.append(el('div',{class:'health-line'},el('span',{},'Waktu ambil snapshot'),el('b',{},dateTime(data?.last_ok)+' · '+ageLabel(data?.last_ok))));
+ v.append(status,sourceFootnote());
  if(!news.length)return v.append(empty(health&&!health.ok?'Sumber RSS bermasalah':'Belum ada berita',health?.error?'Status: '+health.error+' — periksa NEWS_FEEDS dan akses jaringan server.':'Feed terhubung tetapi belum mengirim artikel, atau refresh berikutnya belum berjalan.'));
- news.forEach(n=>v.append(el('article',{class:'news-card'},el('div',{class:'news-meta'},el('span',{},esc(n.source)),el('time',{},dateTime(n.published_at))),el('a',{href:n.link,target:'_blank',rel:'noopener noreferrer'},esc(n.title)),el('p',{},esc(n.summary||n.description||'Buka sumber untuk membaca detail artikel.')))));
+ news.forEach(n=>{
+  const href=safeExternalLink(n.link);
+  v.append(el('article',{class:'news-card'},el('div',{class:'news-meta'},el('span',{},esc(n.source)),el('time',{},dateTime(n.published_at))),href?el('a',{href,target:'_blank',rel:'noopener noreferrer'},esc(n.title)):el('b',{},esc(n.title)),el('p',{},esc(n.summary||n.description||'Buka sumber untuk membaca detail artikel.'))));
+ });
 }
 function renderUnlock(){
  const v=$('#view');v.replaceChildren();const items=[...(data?.unlocks||[])].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
  v.append(sectionHead('Token Unlock Calendar','Jadwal pelepasan token berdasarkan sumber data yang dikonfigurasi.'));
- if(!items.length)return v.append(empty('Data unlock belum tersedia','Tambahkan data/unlocks.json atau UNLOCKS_URL. RADAR tidak mengarang jadwal unlock.'));
+ if(!items.length)return v.append(empty('Data unlock belum tersedia',data?.config_needed?.unlock_source?'Sumber belum dikonfigurasi; RADAR tidak mengarang jadwal unlock.':'Sumber telah dikonfigurasi tetapi belum mengirim jadwal. RADAR tidak mengarang data.'),sourceFootnote());
  items.forEach(u=>v.append(el('div',{class:'unlock-row'},el('div',{class:'unlock-date'},el('b',{},u.date?new Date(u.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short'}):'—'),el('small',{},u.date?new Date(u.date).getFullYear():'')),el('div',{class:'unlock-asset'},el('b',{},esc(u.symbol||u.id)),el('small',{},esc(u.source))),el('div',{class:'unlock-value'},money(u.amount_usd),el('small',{},u.pct_supply==null?'Persentase tidak tersedia':u.pct_supply+'% supply')))));
 }
 function renderAlerts(){
  const v=$('#view');v.replaceChildren();const items=data?.alerts||[];
  v.append(sectionHead('Alert Center','Riwayat peringatan dari sistem pemantauan RADAR.'));
- if(!items.length)return v.append(empty('Belum ada alert','Alert akan muncul saat kondisi pemantauan terpenuhi.'));
+ if(!items.length)return v.append(empty('Belum ada alert','Alert akan muncul saat kondisi pemantauan terpenuhi.'),sourceFootnote());
  items.forEach(a=>v.append(el('article',{class:'alert-row'},el('span',{class:'alert-symbol'},a.type==='health'?'!':'⌁'),el('div',{class:'alert-copy'},el('b',{},esc(a.type).replaceAll('_',' ').toUpperCase()),el('p',{},esc(a.msg)),el('small',{},dateTime(a.at)+' · Telegram: '+(a.delivered?'terkirim':'tidak terkirim'))))));
 }
 function renderAI(){
@@ -210,7 +278,18 @@ function renderAI(){
 }
 function renderWorkspace(){
  const v=$('#view');v.replaceChildren();const r=aiWorkspace?.last;
- v.append(sectionHead('AI Workspace','Ruang kolaborasi untuk menemukan kekurangan dan mengusulkan peningkatan RADAR.',el('button',{class:'secondary-btn',onclick:runWorkspaceNow},'✳ Jalankan 4 AI sekarang')));
+ v.append(sectionHead('AI Workspace','Ruang kolaborasi untuk menemukan kekurangan dan mengusulkan peningkatan RADAR.'));
+ const tokenInput=el('input',{id:'workspace-token',type:'password',placeholder:'ADMIN_TOKEN RADAR',value:workspaceToken,autocomplete:'off',spellcheck:'false','aria-label':'ADMIN_TOKEN RADAR'});
+ const tokenToggle=el('button',{class:'mini-btn',id:'workspace-token-toggle',type:'button','aria-label':'Tampilkan token',title:'Tampilkan / sembunyikan token'},'◉');
+ tokenToggle.addEventListener('click',()=>{
+  const reveal=tokenInput.type==='password';
+  tokenInput.type=reveal?'text':'password';
+  tokenToggle.setAttribute('aria-label',reveal?'Sembunyikan token':'Tampilkan token');
+  tokenInput.focus();
+ });
+ tokenInput.addEventListener('input',()=>{workspaceToken=tokenInput.value;});
+ const runButton=el('button',{class:'secondary-btn',id:'workspace-run',type:'button',onclick:runWorkspaceNow},'✳ Jalankan 4 AI sekarang');
+ v.append(el('div',{class:'filter-panel workspace-access'},el('label',{class:'muted',for:'workspace-token'},'Token admin (hanya untuk permintaan ini, tidak disimpan)'),tokenInput,tokenToggle,runButton));
  if(!r)return v.append(empty('Belum ada hasil review workspace','Empat model akan memberi usulan pada jadwal 10.00 WIB setelah fitur ini aktif di server.'));
  v.append(card(el('div',{class:'row-between'},el('div',{},el('div',{class:'eyebrow'},'INDEPENDENT REVIEW'),el('h2',{},'Rapat perbaikan RADAR')),el('span',{class:r.status==='completed'?'positive':'warning'},r.status==='completed'?'● SELESAI':'◌ BELUM LENGKAP')),el('p',{class:'muted'},dateTime(r.created_at)+' · '+(r.agent_count||0)+'/4 AI aktif'),el('p',{},'Setiap model menilai dari sudut pandang berbeda. Usulan belum menjadi perubahan kode.')));
  (r.agents||[]).forEach(a=>{
@@ -231,12 +310,15 @@ function renderWorkspace(){
  v.append(card(el('b',{},'Keputusan Direktur Utama'),el('p',{},r.director_status||'Menunggu penilaian.'),el('p',{class:'muted'},'Perubahan kode hanya melalui branch terpisah, tes, Draft PR, dan persetujuan pemilik. Tidak ada auto-merge atau auto-trading.')));
 }
 async function runWorkspaceNow(){
- const token=window.prompt('Masukkan ADMIN_TOKEN RADAR untuk menjalankan rapat 4 AI. Token hanya dipakai untuk permintaan ini dan tidak disimpan.');
- if(!token)return;
+ const input=$('#workspace-token'),token=(input?.value||'').trim();
+ if(!token){toast('Masukkan ADMIN_TOKEN RADAR terlebih dahulu.');if(input)input.focus();return;}
+ const runButton=$('#workspace-run');if(runButton)runButton.disabled=true;
  try{
   const response=await fetch('/api/ai/workspace/run',{method:'POST',headers:{'x-admin-token':token}});
   if(response.status===403)throw new Error('ADMIN_TOKEN tidak cocok.');
   if(!response.ok)throw new Error('Endpoint belum aktif di server ('+response.status+').');
+  // Token tidak diperlukan lagi setelah server menerima permintaan; hapus sebelum render ulang.
+  clearWorkspaceToken();
   toast('Rapat 4 AI dimulai. Hasil akan dimuat otomatis.');
   for(let i=0;i<12;i++){
    await new Promise(resolve=>setTimeout(resolve,5000));
@@ -245,6 +327,10 @@ async function runWorkspaceNow(){
   }
   render();toast('AI masih memproses. Buka kembali Ruang Kerja sebentar lagi.');
  }catch(e){toast(e.message||'Gagal menjalankan review AI');}
+ finally{
+  clearWorkspaceToken();
+  const button=$('#workspace-run');if(button)button.disabled=false;
+ }
 }
 function renderEarlyGems(){
  const v=$('#view');v.replaceChildren();
@@ -354,7 +440,7 @@ function renderEarlyGems(){
   });
   $('#gem-count').textContent=rows.length+' pool ditampilkan';
  };
- v.append(controls,el('div',{class:'result-meta'},el('b',{id:'gem-count'},'Memuat…'),el('span',{class:'muted'},'Feed lintas-chain · maksimum 10 halaman API')),results,
+ v.append(controls,el('div',{class:'result-meta'},el('b',{id:'gem-count','aria-live':'polite'},'Memuat…'),el('span',{class:'muted'},'Feed lintas-chain · maksimum 10 halaman API')),results,
   card(el('b',{},'Catatan risiko & cakupan'),
    el('p',{class:'muted'},'Pool baru bukan bukti token baru dibuat. Feed ini menampilkan pool DEX yang telah terindeks (jendela data sekitar 48 jam), bukan seluruh kontrak token di semua blockchain. Token tanpa pool likuid, chain yang belum didukung, atau pool yang belum terindeks tidak akan muncul.'),
    el('p',{class:'muted'},'Flag hanya menunjukkan data yang kosong/rendah; ini bukan audit kontrak, pemeriksaan honeypot, verifikasi pemilik, analisis holder, atau rekomendasi beli. Market cap yang tidak diverifikasi tetap ditampilkan sebagai N/A.')));
@@ -365,10 +451,10 @@ function renderEarlyGems(){
 function renderSystem(){
  const v=$('#view');v.replaceChildren();const health=data?.health||{};
  v.append(sectionHead('System Health','Transparansi status sumber data dan runtime.'));
- v.append(el('div',{class:'stats-grid'},statCard('API STATUS',data&&snapshotReachable?'ONLINE':'OFFLINE',snapshotReachable?'Snapshot berhasil dijangkau':'Server tidak dapat dijangkau; data lama mungkin tampil','◉',snapshotReachable?'positive':'negative'),statCard('LAST SUCCESS',dateTime(data?.last_ok),'Refresh terakhir yang berhasil','↻'),statCard('TOKEN FEED',getTokens().length,'Token tersedia','◈'),statCard('ALERT LOG',(data?.alerts||[]).length,'Riwayat tersimpan','⌁')));
+ v.append(el('div',{class:'stats-grid'},statCard('API STATUS',connectionState().label,connectionState().detail,'◉',connectionState().cls),statCard('LAST SUCCESS',dateTime(data?.last_ok),'Refresh terakhir yang berhasil','↻'),statCard('TOKEN FEED',getTokens().length,'Token tersedia','◈'),statCard('ALERT LOG',(data?.alerts||[]).length,'Riwayat tersimpan','⌁')));
  const rows=Object.entries(health);
  v.append(card(sectionHead('Data Source Monitor','Status setiap sumber yang dipakai server.'),...rows.map(([name,s])=>el('div',{class:'source-row'},el('div',{},el('b',{},name.toUpperCase()),el('small',{},dateTime(s.at)),s.error?el('small',{class:'negative'},s.error):null),el('span',{class:s.ok?'source-ok':'source-error'},s.ok?'HEALTHY':'ERROR')))));
- v.append(card(sectionHead('Konfigurasi & batas sistem','Informasi yang dapat dibaca dari API snapshot.'),el('div',{class:'detail-grid'},el('div',{},el('small',{},'Status data'),el('b',{},(data?.stale||!snapshotReachable)?'Stale / koneksi perlu dicek':'Aktif')),el('div',{},el('small',{},'Telegram'),el('b',{},data?.config_needed?.telegram?'Belum dikonfigurasi':'Terkonfigurasi')),el('div',{},el('small',{},'CoinGecko key'),el('b',{},data?.config_needed?.coingecko_key?'Tidak tersedia':'Terkonfigurasi')),el('div',{},el('small',{},'Unlock source'),el('b',{},data?.config_needed?.unlock_source?'Belum tersedia':'Terkonfigurasi'))),el('p',{class:'muted'},'API key dan token tidak pernah ditampilkan di dashboard.')));
+ v.append(card(sectionHead('Konfigurasi & batas sistem','Informasi yang dapat dibaca dari API snapshot.'),el('div',{class:'detail-grid'},el('div',{},el('small',{},'Status data'),el('b',{},(data?.stale||!snapshotReachable)?'Stale / koneksi perlu dicek':'Aktif')),el('div',{},el('small',{},'Telegram'),el('b',{},data?.config_needed?.telegram?'Belum dikonfigurasi':'Terkonfigurasi')),el('div',{},el('small',{},'CoinGecko key'),el('b',{},data?.config_needed?.coingecko_key?'Tidak tersedia':'Terkonfigurasi')),el('div',{},el('small',{},'Unlock source'),el('b',{},data?.config_needed?.unlock_source?'Belum tersedia':'Terkonfigurasi'))),el('p',{class:'muted'},'API key dan token tidak pernah ditampilkan di dashboard.')));v.append(sourceFootnote());
 }
 function render(){
  $('#page-title').textContent=TITLES[tab]||'RADAR AI';$('#crumb').textContent=(tab||'overview').toUpperCase();
@@ -385,19 +471,18 @@ function setSidebarOpen(open){
 function closeSidebar(){setSidebarOpen(false);}
 function navigate(next){tab=next;render();closeSidebar();window.scrollTo({top:0,behavior:'smooth'});}
 function updateStatus(){
- if(!data)return;
- const age=data.last_ok?Date.now()-Date.parse(data.last_ok):Infinity,stale=Boolean(data.stale)||age>30*60000;
- $('#status').textContent=stale?'Data perlu diperiksa':'Semua sistem berjalan';
- $('#side-status').textContent=stale?'Data perlu diperiksa':'Feed terhubung';
- $('#banner').hidden=!stale;
- $('#banner').textContent=stale?'Sebagian data mungkin sudah lama atau belum tersedia. Periksa System Health sebelum mengambil keputusan.':'';
+ const st=connectionState();
+ $('#status').textContent=st.label;
+ $('#side-status').textContent=st.label;
+ $('#banner').hidden=st.cls==='positive';
+ $('#banner').textContent=st.cls==='positive'?'':st.detail+' Diperbarui: '+dateTime(data?.last_ok)+' ('+ageLabel(data?.last_ok)+').';
 }
 async function load(){
  let snapshotOk=false;
  try{
-  const r=await fetch('/api/snapshot',{cache:'no-store'});if(!r.ok)throw new Error('snapshot '+r.status);data=await r.json();snapshotOk=true;snapshotReachable=true;
+  const r=await fetch('/api/snapshot',{cache:'no-store'});if(!r.ok)throw new Error('snapshot '+r.status);data=await r.json();snapshotOk=true;snapshotReachable=true;loadFailed=false;
  }catch(e){
-  snapshotReachable=false;
+  snapshotReachable=false;loadFailed=true;
   $('#status').textContent='Gagal menghubungkan';
   $('#side-status').textContent='Koneksi bermasalah';
   $('#banner').hidden=false;
@@ -406,8 +491,8 @@ async function load(){
  try{const r=await fetch('/api/ai/group',{cache:'no-store'});if(r.ok)aiGroup=(await r.json()).group;}catch{}
  try{const r=await fetch('/api/solscan/overview',{cache:'no-store'});solscanOverview=await r.json();}catch{solscanOverview={ok:false,code:'SOLSCAN_UNAVAILABLE'};}
  try{const r=await fetch('/api/ai/workspace',{cache:'no-store'});if(r.ok)aiWorkspace=(await r.json()).workspace;}catch{}
- if(snapshotOk)updateStatus();
- render();
+ updateStatus();
+ renderPreservingFocus();
  return snapshotOk;
 }
 async function refreshNow(){

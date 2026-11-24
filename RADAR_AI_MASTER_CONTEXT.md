@@ -3221,3 +3221,58 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   3. QA ponsel: buka Menu, swipe daftar menu sampai item terbawah; pastikan hanya `.side-nav` bergerak; tutup drawer lalu swipe halaman utama; uji backdrop, tombol Menu, dan Escape.
   4. QA desktop: wheel/trackpad pada daftar menu dan pastikan konten utama tidak ikut bergeser, termasuk saat scroll lock aktif.
   5. Jika perangkat masih meneruskan gesture, terapkan opsi §20.4 butir 5 (accordion/rail navigasi) tanpa menghapus menu atau fitur.
+## 110. DASHBOARD FRESHNESS, SOURCE ATTRIBUTION & DATA STATE — 25 NOVEMBER 2026
+
+> Catatan penomoran: bagian 109 ditambahkan oleh PR #106 pada branch `fix/sidebar-drawer-scroll`. Branch ini berbasis `develop` sebelum PR tersebut merged, sehingga bagian ini memakai nomor 110. Saat integrasi, rapikan urutan nomor tanpa menghapus isi salah satu bagian.
+
+### Routing dan ruang lingkup
+- Lead: Divisi 02 — UI/UX & Frontend. Tidak ada perubahan backend, kontrak API, exchange, trading, withdrawal, atau secret.
+- Melanjutkan prioritas §82/§85: audit dan perbaikan dashboard data freshness, source attribution, timestamp, connection status, serta loading/empty/error state.
+- Branch kerja: `feat/dashboard-freshness` dari `develop` SHA `4b37426f519ba91483f11a37a0023180134f9c62`. Sidebar tidak disentuh.
+
+### Perubahan
+- `public/app.js`:
+  - Helper `ageLabel()` menghitung umur `last_ok` dari data server (`baru saja` / menit / jam / hari); tanpa timestamp menampilkan `—`.
+  - Helper `connectionState()` membedakan `MENGHUBUNGKAN`, `GAGAL MEMUAT`, `KONEKSI TERPUTUS`, `DATA BASI`, dan `TERHUBUNG` secara eksklusif dari `data`, `loadFailed`, `snapshotReachable`, dan `data.stale`.
+  - Helper `sourceFootnote()` menampilkan sumber `/api/snapshot`, timestamp `last_ok`, dan umur data. Dipasang pada Ringkasan, Screener, News, Unlock, dan Alerts.
+  - Ringkasan menampilkan loading/error state sebelum snapshot pertama; status chip memakai warna sesuai `connectionState()`.
+  - Empty state tabel token membedakan gagal memuat, menunggu data, dan hasil filter kosong.
+  - News menampilkan waktu ambil snapshot di samping status per-sumber; Unlock membedakan sumber belum dikonfigurasi (`config_needed.unlock_source=true`) dari sumber aktif tanpa jadwal.
+  - `updateStatus()` kini konsisten dengan `connectionState()` dan selalu dipanggil setelah `load()`, termasuk saat gagal. `load()` masih mengembalikan `snapshotOk` seperti sebelumnya.
+- `public/style.css`: menambah `.freshness-note` dan `.state-panel` (responsif melalui layout grid yang sudah ada).
+- `test/frontend-ui.test.js`: satu regression test untuk helper di atas, sumber `/api/snapshot`, penggunaan `data.stale`/`snapshotReachable`, absennya `Math.random`, keberadaan kelas CSS baru, dan cakupan footnote pada minimal delapan view.
+- Lanjutan aman pada commit `b92ad4d96aa0de93022eed82fea9972279908881`: Watchlist, Analytics, dan System Health memakai `connectionState()`/`sourceFootnote()`; Analytics memperoleh empty state ketika tidak ada token; API STATUS pada System Health tidak lagi mengklaim ONLINE tanpa bukti snapshot.
+
+### Pengujian dan commit
+- Commit kode: `47cd00f89b0e74f883ac4e5a44c00ced3e99dc92` (`feat: show truthful dashboard freshness, source and state`).
+- `node --check public/app.js`: lulus. `node --test test/frontend-ui.test.js`: 4 pass, 0 fail. `npm test`: 194 pass, 0 fail, 0 skipped. `git diff --check`: bersih.
+- Self-review menemukan dan memperbaiki satu kesalahan interpretasi `config_needed.unlock_source` sebelum commit: nilai `true` berarti sumber **belum** tersedia.
+- Tidak ada data simulasi, angka buatan, atau klaim koneksi aktif tanpa bukti dari field snapshot.
+
+### Status dan NEXT TASK
+- GitHub: branch `feat/dashboard-freshness` sudah di-push ke origin dengan upstream tracking. PR ke `develop` **belum terbuat**: `POST /pulls` ditolak HTTP 403 `Resource not accessible by personal access token`; izin `pull_requests: write` tidak tersedia pada satu-satunya kredensial, sama seperti kasus PR #106. Tidak ada secret yang dibuka/diubah. Tautan pembuatan manual: https://github.com/rohman35819/radar-ai-v2/pull/new/feat/dashboard-freshness . PR #106 (sidebar) tetap berdiri sendiri dan tidak di-merge.
+- Hostless Build/LIVE: tidak dicek; tidak ada deployment. QA browser desktop/mobile belum dilakukan.
+- NEXT TASK:
+  1. Buat PR ke `develop` lewat GitHub UI/token berizin `pull_requests: write` (tautan di atas), lalu verifikasi head SHA PR memuat `47cd00f89b0e74f883ac4e5a44c00ced3e99dc92` (kode+test) dan commit dokumentasi, serta pantau test, Gitleaks/Trivy, dan branch-source policy pada event PR. Jangan merge sebelum gate lulus.
+  2. QA browser: status koneksi, umur data, empty/loading/error state, dan atribusi sumber di Ringkasan/Screener/News/Unlock/Alerts pada desktop dan mobile.
+  3. Lanjutkan audit fungsi tersisa yang tercatat di §23/§25: Watchlist, Analytics, AI Council/Workspace, System Health, serta PWA cache sesuai perubahan UI ini.
+  4. Selesaikan gate PR #106 secara terpisah; koordinasikan penomoran bagian 109/110 saat integrasi ke `develop`.
+
+### Lanjutan 25 November 2026 — interaksi, token workspace, dan aksesibilitas
+- Lead: Divisi 02 — UI/UX & Frontend. Tidak ada perubahan backend, kontrak API, kredensial, exchange, trading, atau deployment.
+- Temuan dan perbaikan:
+  - `render()` dipanggil setiap auto-refresh 120 detik dan mengganti seluruh `#view`, sehingga fokus/kursor input filter dan posisi scroll hilang saat pengguna mengetik. Ditambahkan `renderPreservingFocus()` yang mempertahankan `activeElement.id`, `selectionStart/End`, `scrollTop` view, dan `window.scrollY`, lalu dipakai oleh `load()`.
+  - AI Workspace memakai `window.prompt` untuk `ADMIN_TOKEN`. Diganti dengan kolom password inline beserta toggle tampil/sembunyikan, label, dan `aria-label`. Token hanya berada di variabel memori `workspaceToken`, tetap dikirim lewat header `x-admin-token` yang sama, dihapus segera setelah server menerima permintaan (sebelum polling yang merender ulang) serta di `finally`. Tidak ada localStorage/sessionStorage untuk token.
+  - Tautan berita dari feed eksternal kini lolos `safeExternalLink()` (hanya `http:`/`https:`); input kosong ditolak agar tidak berubah menjadi URL halaman dashboard itu sendiri.
+  - Aksesibilitas: `aria-label` pada tombol refresh/tema dan tombol aksi token, `role="status" aria-live="polite"` pada banner, `aria-live="polite"` pada penghitung hasil Screener dan Early Gems.
+  - `public/style.css`: gaya `.workspace-access` termasuk breakpoint mobile.
+- Self-review menemukan dua masalah sebelum commit: (1) token masih bisa tampil setelah `render()` saat polling karena `workspaceToken` belum dikosongkan, (2) tautan kosong berubah menjadi URL halaman melalui `new URL('', location.href)`. Keduanya diperbaiki lalu diuji ulang.
+- Pengujian lokal (Node v24.22.3): `node --check public/app.js` lulus; `node --test test/frontend-ui.test.js` 8 pass, 0 fail; `npm test` **198 pass, 0 fail, 0 skipped**; `git diff --check` bersih. README diselaraskan dari 99/12 menjadi 198/24 test case.
+- Commit kode: `b6a21c35ff231ec216f69a92466b53f460a17eca` (`feat: preserve dashboard state and harden workspace token UX`).
+- GitHub: `POST /pulls` untuk PR ke `develop` kembali ditolak HTTP 403 `Resource not accessible by personal access token` pada kredensial yang tersedia. Seluruh pekerjaan tetap berada di `feat/dashboard-freshness`; tidak ada secret yang dibuka atau diubah.
+- Hostless Build/LIVE: tidak dicek; tidak ada deployment dari perubahan ini. QA browser desktop/mobile belum dilakukan. Ini perubahan source-level yang sudah diuji otomatis, bukan klaim lulus QA visual.
+- Risiko tersisa: PR belum terbuat karena izin token; QA visual/interaksi nyata dan verifikasi Hostless masih terbuka.
+- NEXT TASK:
+  1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write` (https://github.com/rohman35819/radar-ai-v2/pull/new/feat/dashboard-freshness), verifikasi head memuat `b6a21c35ff231ec216f69a92466b53f460a17eca`, lalu pantau gate test/Gitleaks/Trivy/branch-source policy. Jangan merge sebelum gate lulus.
+  2. QA browser: ketik di filter Screener/Early Gems saat auto-refresh 2 menit dan pastikan fokus/kursor tidak hilang; uji kolom token Workspace, toggle, penghapusan setelah request, dan respons 403.
+  3. Lanjutkan audit loading/error/empty state pada `market.html`, `solscan.html`, dan `membership.html` memakai pola yang sama tanpa mengubah kontrak backend.

@@ -39,6 +39,7 @@ test('Membership preview keeps the registration name field hidden in login mode'
 });
 
 const css=fs.readFileSync(require.resolve('../public/style.css'),'utf8');
+const styleCss=css;
 function ruleBodies(selector,source){
   const escaped=selector.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   const pattern=new RegExp('(?:^|[\\s{}])'+escaped+'\\s*\\{([^{}]*)\\}','g');
@@ -72,4 +73,58 @@ test('Drawer controls close the drawer and the main shell stays fixed',()=>{
   assert.match(css,/body\.sidebar-open\{overflow:hidden\}/);
   assert.match(css,/\.main-shell\{margin-left:0\}/);
   assert.match(css,/\.sidebar\{position:fixed/);
+});
+
+test('Dashboard exposes truthful freshness, source and connection states',()=>{
+  for(const marker of ['const ageLabel','const connectionState','const sourceFootnote','loadFailed'])
+    assert.ok(app.includes(marker),'missing '+marker);
+  assert.match(app,/Sumber: \/api\/snapshot/);
+  assert.match(app,/data\.stale/);
+  assert.match(app,/snapshotReachable/);
+  assert.doesNotMatch(app,/Math\.random/,'dashboard must not fabricate data');
+  assert.ok((app.match(/sourceFootnote\(\)/g)||[]).length>=8,'freshness footnote appears across dashboard views');
+  assert.match(styleCss,/\.freshness-note/);
+  assert.match(styleCss,/\.state-panel/);
+});
+
+test('Auto-refresh preserves input focus, cursor and scroll instead of resetting the view',()=>{
+  assert.ok(app.includes('const renderPreservingFocus='),'focus-preserving render helper exists');
+  assert.match(app,/renderPreservingFocus\(\);\s*return snapshotOk;/,'load() uses the helper after refreshing data');
+  const start=app.indexOf('const renderPreservingFocus=');
+  const source=app.slice(start,start+900);
+  assert.match(source,/selectionStart/,'cursor position is captured');
+  assert.match(source,/focus\(\{preventScroll:true\}\)/,'focus is restored without scrolling');
+  assert.match(source,/setSelectionRange/,'text selection is restored');
+  assert.match(source,/scrollTop/,'view scroll is preserved');
+  assert.match(source,/window\.scrollY/,'page scroll is preserved');
+});
+
+test('AI Workspace token is entered inline and never persisted',()=>{
+  assert.doesNotMatch(app,/window\.prompt/,'no blocking native prompt for the admin token');
+  assert.match(app,/id:'workspace-token'/,'inline password field exists');
+  assert.match(app,/type:'password'/,'token input is masked by default');
+  assert.match(app,/headers:\{'x-admin-token':token\}/,'existing API contract is unchanged');
+  assert.match(app,/workspaceToken='';/,'token is cleared after the request');
+  assert.match(app,/clearWorkspaceToken\(\);\s*toast\('Rapat 4 AI dimulai/,'token is cleared before polling re-renders the field');
+  assert.doesNotMatch(app,/localStorage\.setItem\([^)]*workspaceToken/,'token is never written to localStorage');
+  assert.match(styleCss,/\.workspace-access/,'token field has responsive styling');
+});
+
+test('External news links only accept http(s) schemes',()=>{
+  const start=app.indexOf('const safeExternalLink=');
+  assert.ok(start>=0,'scheme guard exists');
+  const source=app.slice(start,start+400);
+  assert.match(source,/if\(!value\)return null;/,'empty link is rejected instead of resolving to the current page');
+  assert.match(source,/url\.protocol==='http:'\|\|url\.protocol==='https:'/);
+  assert.match(app,/href\?el\('a',\{href,target:'_blank',rel:'noopener noreferrer'\}/,'anchor is rendered only for a safe href');
+});
+
+test('Dashboard icon buttons and live result counts are screen-reader accessible',()=>{
+  assert.match(html,/id="refresh"[^>]*aria-label="Muat ulang data"/);
+  assert.match(html,/id="theme"[^>]*aria-label="Ganti tema"/);
+  assert.match(html,/id="banner"[^>]*role="status"[^>]*aria-live="polite"/);
+  assert.match(app,/id:'result-count','aria-live':'polite'/);
+  assert.match(app,/id:'gem-count','aria-live':'polite'/);
+  assert.match(app,/'aria-label':favorite\?'Hapus '/);
+  assert.match(app,/'aria-label':'Lihat detail '/);
 });
