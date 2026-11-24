@@ -3330,3 +3330,21 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   1. Buat PR ke `develop` melalui GitHub UI/token berizin `pull_requests: write`, verifikasi head `02b4f3b...`, lalu jalankan gate test/Gitleaks/Trivy/branch-source policy.
   2. Terapkan pola waktu jujur yang sama pada `membership.html`/`membership.js` dan `command.html` bila ada field timestamp yang tidak divalidasi.
   3. Koordinasikan integrasi empat branch frontend (`feat/dashboard-freshness`, `fix/market-truthful-state`, `fix/solscan-truthful-observability`, dan PR #106) ke `develop`: selesaikan konflik dokumen §109–§112 dan jalankan suite penuh pada HEAD gabungan sebelum merge.
+
+---
+
+## 113. INTEGRASI FRONTEND TERVERIFIKASI — 25 NOVEMBER 2026
+
+- Branch integrasi: `integration/frontend-ux-20261125` dari `develop` SHA `4b37426f519ba91483f11a37a0023180134f9c62`. Menggabungkan `fix/sidebar-drawer-scroll`, `feat/dashboard-freshness`, `fix/market-truthful-state`, dan `fix/solscan-truthful-observability`. Tidak ada push langsung ke `develop` atau `main`.
+- Konflik diselesaikan secara eksplisit, bukan dengan membuang salah satu sisi:
+  - `test/frontend-ui.test.js`: dua regression test sidebar dan delapan test dashboard/freshness/aksesibilitas digabung dengan satu pembacaan stylesheet bersama (`styleCss=css`).
+  - `README.md`: hitungan dan deskripsi fitur digabung menjadi 206 test case pada 25 file.
+  - `RADAR_AI_MASTER_CONTEXT.md`: bagian §109, §110, §111, dan §112 semuanya dipertahankan; marker konflik dihapus setelah isi kedua sisi disatukan.
+- Verifikasi pada working tree gabungan (Node v24.22.3): `npm test` **206 pass, 0 fail, 0 skipped**; `node --check public/app.js`, `public/market.js`, dan `public/solscan.js` lulus; `git diff --check` bersih; pencarian marker konflik tidak menemukan sisa.
+- HEAD gabungan setelah tiga merge: `8f900a6c000c2fd27369f22808a4bcceb8067cf5` (merge `fix/solscan-truthful-observability`). Catatan ini menjadi commit dokumentasi berikutnya.
+- Status GitHub: branch integrasi siap di-PR ke `develop`, tetapi `POST /pulls` masih ditolak HTTP 403 karena kredensial tidak memiliki izin `pull_requests: write`. Gate PR (test exact-head, branch-source policy, Gitleaks, Trivy) belum dapat dijalankan sebelum PR ada. Tidak ada secret yang dibuka atau diubah.
+- Hostless Build/LIVE: tidak dicek. QA browser desktop/mobile, console/network, dan gesture sidebar belum dilakukan; ini bukan klaim lulus QA visual.
+- NEXT TASK:
+  1. Buat PR `integration/frontend-ux-20261125` → `develop` melalui GitHub UI/token berizin `pull_requests: write`; verifikasi head memuat seluruh SHA kode gabungan dan pantau gate test/branch-source/Gitleaks/Trivy sebelum merge.
+  2. Setelah PR lulus, QA browser: drawer/sidebar, filter Screener/Early Gems saat auto-refresh, token Workspace, freshness Market Intelligence, dan waktu observasi Solscan pada desktop serta mobile.
+  3. Lanjutkan ke `membership.html`/`command.html` untuk pola timestamp jujur yang sama, lalu verifikasi Hostless Build dan LIVE secara terpisah.
