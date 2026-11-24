@@ -2971,3 +2971,13 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 - Actor IDs in SQL functions are caller parameters; this is acceptable only while functions remain owner-only. Do not grant EXECUTE to worker/service roles until a trusted identity-bound gateway replaces caller-supplied actor assertions.
 - No production DB migration, role grants, worker, scheduler, Hostless config, deployment, or trading action was performed. Manual Division 01/05 review not performed (temporary override); objective CI/security checks are required before merge.
 - NEXT: verify exact-head CI/security, mergeability and PR merge; then proceed to PR #88. Production activation remains a separate BOS-approved task.
+
+
+## 96. DIVISI 07 — MEMORY STORE V1 PORTED AND HARDENED (24 NOVEMBER 2026)
+
+- PR #88 was 10 commits behind/diverged from main after PR #89 merged. Its unique proposal-only memory store, SQL migration, tests and environment documentation were ported onto current main.
+- Memory records require provenance (source reference + revision), scope, sensitivity, actor and retention. Database retrieval excludes expired retention and records outside valid_from/valid_until; confidential records remain excluded from normal retrieval.
+- Secret-like detection covers Supabase secret keys, JWT-shaped tokens, provider keys and artifact references; Supabase base URL must be HTTPS and cannot contain credentials/query/hash/path.
+- RLS enabled; anon/authenticated have no table access. service_role gets schema USAGE and table SELECT/INSERT only; UPDATE/DELETE/TRUNCATE remain revoked. Smoke test exercises service_role insert/read and denied update on disposable PostgreSQL.
+- Manual Divisi 01/05 review not performed (temporary BOS override); exact-head PostgreSQL + unit + Gitleaks/Trivy checks are required. No production migration, secret, API route, memory activation, Hostless setting or deployment.
+- NEXT: exact-head validation and self-review, then merge only if clean-main compatibility and all checks pass. Memory remains proposal-only and inactive pending explicit BOS-approved production setup.
