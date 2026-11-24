@@ -108,7 +108,7 @@ function loadDashboard() {
   const source = fs.readFileSync(require.resolve('../public/app.js'), 'utf8');
   const probe = `
     globalThis.__t = {
-      connectionState, ageLabel, safeExternalLink, renderPreservingFocus,
+      connectionState, ageLabel, dateTime, safeExternalLink, renderPreservingFocus,
       setRender: (fn) => { render = fn; },
       setState: (s) => {
         if ('data' in s) data = s.data;
@@ -152,6 +152,15 @@ test('ageLabel tidak mengarang umur ketika timestamp tidak tersedia', () => {
   const { context } = loadDashboard();
   assert.equal(context.__t.ageLabel(null), '—');
   assert.equal(context.__t.ageLabel('bukan-tanggal'), '—');
+});
+
+test('dateTime tidak merender Invalid Date untuk nilai yang tidak valid', () => {
+  const { context } = loadDashboard();
+  const t = context.__t;
+  assert.equal(t.dateTime(null), 'Belum tersedia');
+  assert.equal(t.dateTime('bukan-tanggal'), 'Waktu tidak tersedia');
+  assert.notEqual(t.dateTime('bukan-tanggal'), 'Invalid Date');
+  assert.notEqual(t.dateTime(new Date().toISOString()), 'Waktu tidak tersedia');
 });
 
 test('renderPreservingFocus mengembalikan fokus, kursor, dan scroll setelah DOM diganti', () => {

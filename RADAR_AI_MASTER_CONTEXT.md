@@ -3451,3 +3451,12 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Hasil nyata: `node --test test/dashboard-runtime.test.js` 4 pass, 0 fail; `npm test` **212 pass, 0 fail, 0 skipped** (26 file); `git diff --check` bersih. README diselaraskan ke 212/26.
 - Batasan: shim bukan pengganti browser. Render penuh, gesture sentuh, CSP, layout responsif, dan PWA offline tetap memerlukan QA perangkat nyata. Tidak ada perubahan kode aplikasi pada perubahan ini—hanya test dan dokumentasi.
 - NEXT TASK: jalankan QA browser pada PR integrasi setelah gate terpenuhi, bandingkan dengan hasil runtime-test ini, dan perbaiki bila perilaku nyata berbeda.
+
+---
+
+## 128. VALIDASI WAKTU PADA HELPER DASHBOARD — 25 NOVEMBER 2026
+
+- Lanjutan audit §126: `dateTime()` merender `Invalid Date` bila menerima string tanggal yang tidak dapat diparse. Helper kini memeriksa `Number.isFinite(parsed.getTime())` dan menampilkan `Waktu tidak tersedia`; tanpa nilai tetap `Belum tersedia`.
+- Uji runtime baru di `test/dashboard-runtime.test.js` memastikan ketiga kondisi tersebut dan memastikan timestamp valid tidak salah ditandai. `node --test test/dashboard-runtime.test.js` 5 pass, 0 fail; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
+- Tidak ada perubahan backend/API/data. Riwayat dan atribusi sumber tetapseperti pada `sourceFootnote()`.
+- NEXT TASK: verifikasi tampilan tanggal pada browser nyata saat PR integrasi tersedia; pastikan tidak ada `Invalid Date` pada News, Unlock, Alert, dan AI Council.
