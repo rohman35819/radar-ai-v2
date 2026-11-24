@@ -58,6 +58,7 @@ CREATE TRIGGER radar_memory_proposal_only
   FOR EACH ROW EXECUTE FUNCTION public.radar_memory_require_proposal();
 
 ALTER TABLE public.radar_memory_records ENABLE ROW LEVEL SECURITY;
+GRANT USAGE ON SCHEMA public TO service_role;
 REVOKE ALL ON TABLE public.radar_memory_records FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT ON TABLE public.radar_memory_records TO service_role;
 REVOKE UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE public.radar_memory_records FROM service_role;
