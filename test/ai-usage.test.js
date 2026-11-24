@@ -56,3 +56,38 @@ test('rate-limit header allowlist is intentionally narrow', () => {
   const parsed = readHeaders(headers({ 'retry-after': '30', 'set-cookie': 'session=secret', 'x-ratelimit-reset-tokens': '2s' }));
   assert.deepEqual(parsed, { 'x-ratelimit-reset-tokens': '2s', 'retry-after': '30' });
 });
+
+test('Groq, OpenRouter and OpenAI adapters forward telemetry callbacks', async () => {
+  const envNames = ['GROQ_API_KEY', 'OPENROUTER_API_KEY', 'OPENAI_API_KEY'];
+  const previous = Object.fromEntries(envNames.map((key) => [key, process.env[key]]));
+  for (const key of envNames) process.env[key] = 'test-only-key';
+  try {
+    const adapters = [
+      ['groq', require('../lib/ai/groq').analyzeMarket],
+      ['openrouter', require('../lib/ai/openrouter').analyzeMarket],
+      ['openai', require('../lib/ai/openai').analyzeMarket]
+    ];
+    for (const [provider, analyze] of adapters) {
+      let event;
+      await analyze({ tokens: [{ symbol: 'BTC' }] }, {
+        retryDelayMs: 0,
+        onUsage: (value) => { event = value; },
+        fetchImpl: async () => ({
+          ok: true, status: 200,
+          headers: headers({ 'x-ratelimit-remaining-requests': '7' }),
+          json: async () => ({ usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 }, choices: [{ message: { content: JSON.stringify({
+            decision: 'WAIT', confidence_score: 10, timeframe: '1h', reasons: [], risks: [], missing_data: [], summary: 'test'
+          }) } }] })
+        })
+      });
+      assert.equal(event.provider, provider);
+      assert.equal(event.ok, true);
+      assert.equal(event.usage.total_tokens, 15);
+    }
+  } finally {
+    for (const key of envNames) {
+      if (previous[key] === undefined) delete process.env[key];
+      else process.env[key] = previous[key];
+    }
+  }
+});
