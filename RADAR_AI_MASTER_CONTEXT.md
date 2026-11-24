@@ -2866,7 +2866,7 @@ Pada setiap siklus dua jam, discovery mencakup:
 ## 90. Audit keamanan dan perbaikan lifecycle antrean PR #87 — 24 November 2026 (Asia/Jakarta)
 
 ### Divisi dan akar masalah
-- Lead: Divisi 06 — Agent Platform & Automation. Supporting: Divisi 01 — Security & Reliability; Divisi 05 — QA, Testing & DevOps.
+- Lead: Divisi 04 — AI Intelligence & Research. Supporting: Divisi 01 — Security & Reliability; Divisi 05 — QA, Testing & DevOps.
 - Audit terhadap PR #87 menemukan bahwa slot queue sebelumnya hanya membungkus pemanggilan `fetch()`. Slot dilepas saat response headers diterima, sementara `response.json()` masih membaca body di luar queue. Karena itu batas dua request aktif belum mencakup seluruh lifecycle HTTP.
 - Endpoint telemetry/queue memang publik karena dipakai panel AI Council. Kontrak yang dipertahankan adalah data operasional tersanitasi saja; API key, authorization header, prompt, isi response, dan raw error tidak boleh dikembalikan. Header rate-limit dan label model diperlakukan sebagai input tidak tepercaya.
 
