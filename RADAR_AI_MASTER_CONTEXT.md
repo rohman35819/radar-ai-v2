@@ -3022,3 +3022,13 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 - Deferred feature ports remain tracked in issue #95 (and cross-PR integration issue #79): provider registry/GitHub App gateway, trade setup, Marketlight, dashboard refresh/Bubblemaps, GDELT, Solscan, macro, GoPlus and whale-detector specification. PR closure does not mean these features are implemented, merged or LIVE.
 - Hostless Build/LIVE status was not checked as part of PR cleanup. Existing Hostless EROFS/readiness blocker remains separate; no production Supabase migration, worker/scheduler activation, secrets, paid service or trading action was performed.
 - NEXT: continue issue #95 in priority order, starting with AI provider registry (#43) and read-only GitHub App gateway (#45) as clean-main ports, while separately prioritizing Hostless DATA_DIR/EROFS recovery and LIVE verification.
+
+
+## 100. DIVISI 07 — MEMORY SECURITY HARDENING PORTED TO CURRENT MAIN (24 NOVEMBER 2026)
+
+- Re-port incremental hardening from superseded PR #98 onto the latest main because source branch diverged by 2 commits; no stale history merged.
+- Adapter rejects Supabase sb_secret_, JWT-shaped credentials, provider tokens and secret-like content across memory keys, scope IDs, source revision and bounded artifact references. Supabase URL requires HTTPS and rejects credentials/path/query/hash.
+- Proposal/approved retrieval filters retention expiry and valid_from/valid_until at database query. SQL grants schema USAGE to server-side service_role, keeps table privilege SELECT/INSERT only, and rejects UPDATE.
+- PostgreSQL 16 CI models service_role BYPASSRLS, then runs Agent Platform + Memory migration/privilege smoke. Smoke SQL dollar-quoted block corrected and verified on prior exact-head run.
+- No production migration, secret, endpoint, frontend, Hostless config, scheduler/worker or memory activation. Manual Divisi 01/05 review not performed (temporary override); exact-head tests/security remain mandatory.
+- NEXT: run exact-head CI/security, inspect mergeability and full diff; merge only if latest-main compatible and all checks pass.
