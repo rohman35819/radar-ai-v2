@@ -44,3 +44,6 @@
 2. Have BOS/maintainer create a PR for `integration/frontend-ux-20261125` with a `pull_requests: write` token: https://github.com/rohman35819/radar-ai-v2/pull/new/integration/frontend-ux-20261125
 3. Prepare a normal `develop` → `main` release PR for the cloud worker; verify exact-head release checks. Keep Groq disabled.
 4. After release, run a controlled manual worker test; later design a least-privilege non-production adapter to the existing PostgreSQL queue before any production activation.
+
+## Known credential limitation
+- The available PAT can push normal source/docs branches and can merge an existing PR via `PUT /pulls/{n}/merge`, but it cannot create PRs (`POST /pulls` → 403) and cannot push changes under `.github/workflows/` (`workflow` scope missing). Workflow edits require a maintainer token with that scope; do not attempt to bypass or change permissions without BOS approval.

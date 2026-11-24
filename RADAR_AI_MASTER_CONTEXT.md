@@ -3432,3 +3432,12 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - PR #106 (`fix/sidebar-drawer-scroll` → `develop`) berhasil di-merge melalui API GitHub dengan `merge_method=merge`; `merge_commit_sha` `ee53b04d39e51f5f95f88a2c02ff38a30c4cc638`. Sebelum merge: `mergeable=true`, `mergeable_state=clean`, job `test` dan `Branch source policy` sukses pada run `45471504331`, security scans sukses pada run `45471504258`. Status lama "CI masih berjalan" dinyatakan **superseded**.
 - Branch integrasi kembali digabung dengan `develop` `ee53b04`. Duplikat bagian sidebar §117 dihapus; `develop` memakai §114 dari PR #106, sedangkan perubahan frontend lain tetap §118–§122. `RADAR_AI_SHARED_MEMORY.md` diperbarui dengan status PR #106 merged.
 - QA perangkat Android/iOS/desktop untuk drawer **masih belum dilakukan**; merge bukan bukti perilaku gesture benar di perangkat nyata. Hostless Build/LIVE tidak dicek.
+
+---
+
+## 116. BLOKER IZIN PUSH WORKFLOW — 25 NOVEMBER 2026
+
+- Audit menemukan `.github/workflows/autonomous-development.yml` masih memakai Actions v4/Node 20 sementara `test.yml` sudah v7/Node 24 (§36). Perbaikan diimplementasikan pada branch lokal `ci/autonomous-worker-actions-v7` commit `d1a55a9b0f8d553d77ca43d1d2a08364faa94c61`: action dinaikkan ke v7, Node 24, satu test assertion statis baru, README diselaraskan ke 197/25. `npm test` lokal 197 pass, 0 fail.
+- Push ditolakGitHub: `refusing to allow a Personal Access Token to create or update workflow .github/workflows/autonomous-development.yml without workflow scope`. Branch.remote tidak dibuat; perubahan **tidak** masuk repository. Ini bukan kegagalan test melainkan batas izin kredensial.
+- Keputusan: tidak mencoba bypass, tidak mengubah izin repository, tidak memaksa push. Perbaikan tetap tersimpan lokal sebagai bukti siap pakai bila token ber-`workflow` tersedia.
+- NEXT TASK: maintainer dengan scope `workflow` mendorong branch tersebut atau menerapkan ulang perubahan tiga baris workflow dan test assertion, lalu menjalankan gate CI sebelum merge. Sementara itu gunakan `test.yml` v7/Node 24 sebagai referensi runtime.
