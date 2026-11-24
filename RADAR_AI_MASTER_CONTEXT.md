@@ -2756,3 +2756,5 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Request tambahan BOS disimpan pada branch `feat/autonomous-agent-pilot`, bukan main, sebagai bagian dari PR #81.
 - Dashboard code dan procurement research executor tidak diubah pada sesi ini; tidak ada deployment Hostless.
 - Next: selesaikan PR #81 gates, kemudian buat registry procurement + audit dashboard dari current main sebagai PR terpisah.
+
+- Tracking issue dibuat: [#82 — Daily dashboard evolution & two-hour open-source intelligence discovery](https://github.com/rohman35819/radar-ai-v2/issues/82). Issue ini memecah implementasi Divisi 04/08; belum ada perubahan dashboard runtime atau discovery worker aktif.
