@@ -111,3 +111,37 @@ test('memory storage errors expose status codes only, never upstream response bo
     return true;
   });
 });
+
+test('memory proposals reject secrets embedded in artifact references', () => {
+  assert.throws(() => validateProposal({
+    ...sample,
+    artifactRefs: ['https://example.test/callback?token=supersecretcredentialvalue123']
+  }, { id: 'division-07' }), (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+});
+
+test('memory store accepts only HTTPS base URLs without embedded credentials or path', () => {
+  assert.throws(() => createMemoryStore({ url: 'http://example.supabase.co', serviceKey: 'secret' }), (e) => e.code === 'MEMORY_INVALID_URL');
+  assert.throws(() => createMemoryStore({ url: 'https://user:pass@example.supabase.co', serviceKey: 'secret' }), (e) => e.code === 'MEMORY_INVALID_URL');
+});
+
+test('memory retrieval excludes expired and not-yet-valid records at the database query', async () => {
+  let call;
+  const store = createMemoryStore({
+    url: 'https://example.supabase.co',
+    serviceKey: 'test-service-secret',
+    fetchImpl: async (url) => { call = new URL(String(url)); return new Response('[]', { status: 200 }); }
+  });
+  await store.searchApproved({ type: 'project', id: 'radar-ai-v2' }, 'current policy');
+  assert.match(call.searchParams.get('retention_until'), /^gt\./);
+  const validity = call.searchParams.get('and');
+  assert.match(validity, /valid_from\.is\.null/);
+  assert.match(validity, /valid_until\.is\.null/);
+});
+
+test('memory proposals reject Supabase secret keys and JWT credentials', () => {
+  assert.throws(() => validateProposal({ ...sample, content: 'sb_secret_1234567890abcdefghijklmnop' }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+  const jwt = ['eyJhbGciOiJIUzI1NiJ9', 'eyJzdWIiOiJ0ZXN0In0', 'signaturevalue123'].join('.');
+  assert.throws(() => validateProposal({ ...sample, artifactRefs: [jwt] }, { id: 'division-07' }),
+    (e) => e.code === 'MEMORY_SECRET_LIKE_CONTENT_REJECTED');
+});
