@@ -168,3 +168,22 @@ test('AI Workspace holds provider queue slot until response body is consumed', a
   assert.equal(getAIRequestQueueSnapshot().active, 0);
   assert.equal(getAIRequestQueueSnapshot().pending, 0);
 });
+
+
+test('AI Workspace preserves response status when provider JSON parsing fails', async () => {
+  const { requestCompatible } = require('../lib/ai/workspace');
+  const events = [];
+  await assert.rejects(requestCompatible({
+    provider: 'groq', apiKey: 'test-key', baseUrl: 'https://example.invalid',
+    model: 'mock-model', context: {}, retryDelayMs: 0,
+    onUsage: (event) => events.push(event),
+    fetchImpl: async () => ({
+      ok: true, status: 200,
+      headers: { get: () => null },
+      json: async () => { throw new Error('synthetic malformed response'); }
+    })
+  }), /respons bukan JSON/);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].statusCode, 200);
+  assert.equal(events[0].ok, false);
+});
