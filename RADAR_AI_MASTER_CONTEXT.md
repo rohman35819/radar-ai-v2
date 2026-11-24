@@ -2810,3 +2810,15 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Sumber utama: Treasury API docs + terms; World Bank API v2 + public license; OECD API + 60/hour best practices + terms; ECB SDMX + reuse policy; GDELT Project terms/data docs; GDELT Cloud acceptable-use terms. URL lengkap disimpan di dokumen registry.
 - Commit registry: 4b98d39e28b12d26395c0b906d9bf1d73b5610fb.
 - NEXT TASK: setelah CI terbaru selesai, Divisi 04 memilih seri Treasury/World Bank/ECB/OECD dan membuat adapter terisolasi; Divisi 05 QA; Divisi 01 compliance review. Divisi 08 lanjutkan riset ToS/kuota sumber on-chain dan exchange sebelum perluasan.
+
+
+## 87. Review hak penggunaan API Solana/exchange — 24 November 2026
+
+- Registry Divisi 08 diperbarui dengan review Jupiter Tokens API v2, Bybit public API, dan Hyperliquid.
+- Jupiter Tokens API secara teknis sangat bernilai: token verification, Organic Score, holder/liquidity, mint/freeze authority, top-holder concentration, serta statistik transaksi multi-timeframe. Dokumentasi teknis menyatakan keyless 0.5 RPS dan free key 1 RPS. Namun SDK & API License Agreement menyebut fee-bearing license dan biaya dapat diberitahukan melalui portal; scope perjanjian terhadap Tokens API belum jelas. Keputusan: HOLD; jangan pakai API/key untuk production sampai ada konfirmasi tertulis tentang $0 dan hak display/internal/commercial.
+- Bybit API Terms melarang repackaging/resale, commercial exploitation, dan penggunaan untuk mereplikasi/bersaing dengan layanan Bybit. Keputusan: REJECT untuk analytics production RADAR tanpa izin tertulis.
+- Hyperliquid API docs tersedia, tetapi hak komersial/redistribusi dan batas rate belum dikonfirmasi secara memadai. Keputusan: HOLD.
+- Tidak ada panggilan live, pendaftaran, atau key creation yang dilakukan untuk kandidat ini.
+- Sumber dan detail tercatat di docs/procurement-tool-registry-2026-11-24.md.
+- Commit update registry: f8f60c2b24bd5fe41d49b9312bd7a8088a462510.
+- NEXT TASK: lanjutkan evaluasi rights/quota untuk Solscan (actual plan/CU), CoinGecko Demo, GeckoTerminal, DeFiLlama, GoPlus, Binance public market data, dan GDELT Project; Divisi 04/03 memilih kandidat makro dari section 86.
