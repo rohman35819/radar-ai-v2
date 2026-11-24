@@ -3174,9 +3174,49 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
 - Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
 
+## 111. CLOUD AUTONOMOUS WORKER PILOT — 25 NOVEMBER 2026
+
+**Status: Stage 1 worker hardening merged to develop; not yet released to main or verified running with Groq.**
+
+- BOS requested a cloud-based autonomous worker so Android/Termux does not need to remain open and drain the phone battery.
+- Audit found an existing GitHub Actions workflow scheduled every two hours plus a narrowly scoped autonomous patch worker. It uses an ephemeral GitHub-hosted runner, validates a patch against a three-file allowlist, runs `npm test`, and opens a Draft PR. It is periodic automation, not a continuously running process.
+- Audit found PostgreSQL Agent Platform migrations `001_agent_platform.sql` and `002_queue_operations.sql` already define registry, durable queue, leases/heartbeat/retry, audit, approvals and pause/kill switch. They are not active: platform defaults paused/kill=true; worker concurrency=1; daily budget USD 0; control/queue functions are revoked from service_role and runtime roles. No production DB worker credentials or grants were added.
+- PR #108 merged to `develop` as `02fea51fc440db3d611e3490e5a89662a951f742`: opt-in Groq provider support, default-off `GROQ_AUTONOMOUS_ENABLED`, explicit OpenRouter Free-only fallback, checkout from `develop`, and Draft PRs targeting `develop` with a `fix/*` branch (replacing the old policy-incompatible `ai-dev/*` → `main` route).
+- Added `docs/AUTONOMOUS_AGENT_RUNTIME.md` describing staged rollout, queue security, operational limits, activation gates and rollback.
+- Exact PR-head CI on `665a2492c541534eb96340f0719f352a06f2390f`: RADAR AI tests SUCCESS (run #45466754679, including npm test and disposable PostgreSQL Agent Platform/queue/Memory migration smoke); Gitleaks SUCCESS and Trivy SUCCESS (run #45466754825); Branch source policy SUCCESS. PR #108 merged only after these checks passed.
+- The default branch `main` was still at SHA `0f8521a4ab2399f80a102af4e422b2586d32e437` when checked. Therefore the updated workflow and Groq provider support are on `develop`, not yet on the default branch; the updated schedule is not active until a normal release PR reaches `main`.
+- Groq activation is deliberately NOT enabled. GitHub Actions secret `GROQ_API_KEY` and repository variable `GROQ_AUTONOMOUS_ENABLED=1` must only be configured after BOS reviews provider billing/quota and explicitly authorizes activation. No paid service or VPS was provisioned.
+- Phone/Termux can be off while a GitHub-hosted scheduled job runs. The worker runs only on its schedule/manual dispatch; it is not 24/7 between runs. GitHub Actions and provider connectivity are still required.
+- Files delivered: `lib/ai/autonomous-agent.js`, `test/autonomous-agent.test.js`, `.github/workflows/autonomous-development.yml`, `docs/AUTONOMOUS_AGENT_RUNTIME.md`, this master context.
+- Hostless Build/LIVE: not changed and not re-verified; no production deployment is claimed.
+- Rollback: revert PR #108 or release revert; set `AUTONOMOUS_AGENT_ENABLED=0` to pause the scheduled worker or `GROQ_AUTONOMOUS_ENABLED=0` to disable Groq.
+
+**NEXT TASK:** update the shared AI memory handoff when PR #107 is integrated; then prepare a normal develop-to-main release PR and verify exact-head CI before activating the updated schedule. Run a controlled manual worker test after release. Keep Groq disabled until BOS explicitly authorizes provider usage. Then implement a least-privilege queue adapter against the existing PostgreSQL schema in a non-production test environment before considering production activation.
+
+
+## 112. SINGLE SHARED AI MEMORY — NO CHAT ARCHIVING (BOS DIRECTIVE — 25 NOVEMBER 2026)
+
+**Decision:** BOS wants every AI contributor to join a new chat/session already understanding RADAR AI, without storing conversations or filling GitHub with chat logs. This is a standing project-wide rule.
+
+- `RADAR_AI_SHARED_MEMORY.md` is the one compact, shared cross-agent handoff for ChatGPT, Groq/OpenCode and future agents.
+- The shared file stores only distilled durable context: project identity, architecture/contracts, durable decisions and rationale, approved working preferences, verified current state, blockers, and the next actionable task.
+- No conversations with BOS or any other person, raw transcripts, chat exports, routine prompts/responses, chain-of-thought/reasoning logs, or message-by-message histories may be saved in the shared memory or elsewhere in the repository (including master context, README, issues, PR bodies, commit messages or docs).
+- The master context remains technical project documentation and durable engineering history only. It is not a second shared-memory dump and must not contain conversation transcripts.
+- All agents must read the shared memory first at new-session startup, then `AGENTS.md` and the relevant master-context sections, then verify current repository/PR/CI/deployment state. A memory snapshot never replaces live verification.
+- Update the shared memory only when a durable fact or handoff materially changes. Rewrite stale status in place, remove/supersede obsolete facts, and target under 12 KB. Do not append each interaction.
+- Agent-native private memory is optional and product-specific. The shared file remains the only common cross-agent handoff. Do not claim a new AI product will auto-read it unless that product's repository access/startup mechanism is configured and verified.
+- No secrets, credentials, tokens, passwords, sensitive account data, or unnecessary personal identifiers in shared memory or repository docs.
+- This policy does not create a background worker or guarantee 24/7 execution. Cloud runtime status is tracked separately in section 111 and `docs/AUTONOMOUS_AGENT_RUNTIME.md`.
+
+**Current implementation note (25 November 2026):** PR #107 contains an earlier version of this policy but is stale/diverged from current `develop` (2 commits behind). This replacement PR re-applies the shared memory and startup rules against current `develop`; do not merge the stale PR #107 as-is. PR #106 remains an independent frontend drawer change with device QA still outstanding. PR #108 and #109 are merged to `develop`; cloud worker code is still not released to `main`, and Groq remains disabled.
+
+**NEXT TASK:** merge this shared-memory policy PR after exact-head checks; then close/supersede stale PR #107. Continue with current master-context NEXT TASK: validate PR #106 against latest develop and complete device/browser QA; prepare the normal release from develop to main for the phone-free worker only after exact-head release checks. Keep Groq disabled until BOS explicitly approves provider usage.
+
 ---
 
-## 109. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
+## 113. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
+
+> Catatan penomoran: bagian ini awalnya ditulis sebagai §109 pada branch `fix/sidebar-drawer-scroll` sebelum `develop` menerima §111 (cloud worker) dan §112 (shared memory). Dinomorkan ulang menjadi §113 saat branch diperbarui ke `develop` terbaru; isi aslinya dipertahankan.
 
 ### Routing dan tujuan
 - Lead: Divisi 02 — UI/UX & Frontend. QA: Divisi 05 (temporary override aktif; QA browser belum dilakukan).
@@ -3221,3 +3261,10 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   3. QA ponsel: buka Menu, swipe daftar menu sampai item terbawah; pastikan hanya `.side-nav` bergerak; tutup drawer lalu swipe halaman utama; uji backdrop, tombol Menu, dan Escape.
   4. QA desktop: wheel/trackpad pada daftar menu dan pastikan konten utama tidak ikut bergeser, termasuk saat scroll lock aktif.
   5. Jika perangkat masih meneruskan gesture, terapkan opsi §20.4 butir 5 (accordion/rail navigasi) tanpa menghapus menu atau fitur.
+
+### Revalidasi terhadap `develop` terbaru — 25 November 2026 (supersedes status di atas)
+- `origin/develop` telah maju dari `4b37426f519ba91483f11a37a0023180134f9c62` ke `c9c3a1403b19e5fe52250d0354e03bf7a1af1319` (cloud worker + shared memory). **PR #106 kini benar-benar terbuka** (`fix/sidebar-drawer-scroll` → `develop`); catatan lama "PR belum dibuat / kueri 0 PR" dinyatakan **superseded** oleh fakta ini.
+- Branch `fix/sidebar-drawer-scroll` digabung dengan `origin/develop` menggunakan merge commit biasa (bukan force-reset), sehingga PR mengikuti basis integrasi terbaru. Konflik hanya terjadi pada dokumen master; bagian sidebar dinomorkan ulang menjadi §113 agar tidak bentrok dengan §111 (cloud worker) dan §112 (shared memory). Tidak ada konflik pada `public/style.css` maupun `test/frontend-ui.test.js`.
+- Pengujian lokal setelah revalidasi (Node v24.22.3): `npm test` **196 pass, 0 fail, 0 skipped**; `git diff --check` bersih; tidak ada marker konflik yang tersisa. Belum ada CI exact-head untuk HEAD setelah merge ini.
+- Tidak ada perubahan kredensial, exchange, trading, atau konfigurasi produksi. Hostless Build/LIVE tidak dicek.
+- NEXT TASK: setelah push, verifikasi CI exact-head PR #106 (test, Branch source policy, Gitleaks, Trivy), lanjutkan QA perangkat Android/iOS/desktop, dan merge hanya bila seluruh gate lulus.
