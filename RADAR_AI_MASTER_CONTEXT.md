@@ -2899,3 +2899,22 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Tidak ada chat divisi yang dibangunkan atau worker lintas-divisi yang terbukti berjalan.
 - Tidak ada merge, deploy, perubahan secret/permission, transaksi, withdrawal, live trading, atau pengeluaran berbayar.
 - **NEXT TASK utama:** keputusan BOS untuk storage; kemudian browser QA Dashboard dan Exchange Hub, review worker Divisi 01/05, dan remediation PR #74. Fitur baru tetap ditahan sampai P0/P1 memiliki bukti kelulusan.
+
+
+---
+
+## 86. Divisi 08 — kandidat QA browser gratis/open-source (24 November 2026)
+
+- Kandidat A untuk menutup gap Dashboard dan Exchange Hub browser QA: **Microsoft Playwright Test**.
+- Pemeriksaan sumber resmi: repository Microsoft Playwright dan paket `@playwright/test` memakai lisensi Apache-2.0; dokumentasi resmi mendukung Chromium, Firefox, WebKit, mobile emulation, GitHub Actions, HTML report, trace, dan upload artifact.
+- Sumber:
+  - https://github.com/microsoft/playwright
+  - https://github.com/microsoft/playwright/blob/main/LICENSE
+  - https://playwright.dev/docs/ci
+  - https://playwright.dev/docs/ci-intro
+- Tidak memerlukan API key atau akun provider. Namun instalasi menambah dev dependency, browser binary, unduhan CI, dan pemakaian GitHub Actions minutes. Software-nya gratis; penggunaan runner tetap tunduk pada kuota/overage GitHub, sehingga tidak boleh diklaim tanpa biaya dalam semua kondisi.
+- Status procurement: **layak diuji sebagai dev-only QA tool, belum diinstal dan belum disetujui untuk ditambahkan ke package.json**. Jangan menjalankan `npm init playwright` atau mengubah lockfile sebelum review Divisi 01/05 dan persetujuan BOS atas dependency/runner usage.
+- Rancangan pilot setelah persetujuan: Chromium saja terlebih dahulu, satu worker di CI, timeout tegas, mock API privat, tanpa credential exchange, screenshot desktop/mobile, console/network capture, HTML report/trace artifact, dan tidak menyentuh endpoint order.
+- Acceptance Dashboard: semua menu/route tetap ada; sidebar scroll independen; tidak ada horizontal overflow pada viewport mobile; theme/navigation tetap berfungsi; tidak ada console error atau request gagal yang tidak ditangani.
+- Acceptance Exchange Hub: tab Binance/Bybit, empty/loading/error/success state, mock read-only account, token invalid, permission unknown/non-read-only warning, timeout/rate-limit, calculator simulation; pastikan tidak ada POST/order/transfer/withdrawal.
+- NEXT: Divisi 05 menilai biaya runner, scope dan test isolation; Divisi 02/03 menulis skenario UI; Divisi 01 meninjau penanganan credential/mock. Tidak ada dependency, workflow, atau produksi yang diubah pada siklus ini.
