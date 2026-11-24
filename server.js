@@ -365,7 +365,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
             try { marketData = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); }
             catch { return send(res, 400, { status: 'error', message: 'Format JSON tidak valid' }, 'application/json', { 'cache-control': 'no-store' }); }
             try {
-              const analysis = await analyzeMarket(marketData);
+              const analysis = await analyzeMarket(marketData, { onUsage: recordAIUsage });
               return send(res, 200, { status: 'success', analysis }, 'application/json', { 'cache-control': 'no-store' });
             } catch (e) {
               return send(res, 502, { status: 'error', message: String(e.message || e).slice(0, 200) }, 'application/json', { 'cache-control': 'no-store' });
@@ -392,7 +392,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
     const jakarta = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
     const day = [jakarta.getFullYear(), String(jakarta.getMonth() + 1).padStart(2, '0'), String(jakarta.getDate()).padStart(2, '0')].join('-');
     if (jakarta.getHours() < reportHour || st.aiGroup?.dailyReportDate === day || aiBusy || !st.lastOk) return;
-    aiBusy = runGroup({ tokens: st.tokens, stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 })
+    aiBusy = runGroup({ tokens: st.tokens, stale: !st.lastOk || Date.now() - Date.parse(st.lastOk) > cfg.refreshMs * 3 }, { onUsage: recordAIUsage })
       .then((result) => {
         st.aiGroup = { ...(st.aiGroup || {}), last: result, dailyReportDate: day };
         persistState();
@@ -407,7 +407,7 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
     const jakarta = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
     const day = [jakarta.getFullYear(), String(jakarta.getMonth() + 1).padStart(2, '0'), String(jakarta.getDate()).padStart(2, '0')].join('-');
     if (jakarta.getHours() < workspaceHour || st.aiWorkspace?.dailyReviewDate === day || workspaceBusy) return;
-    workspaceBusy = runWorkspaceReview(workspaceContext())
+    workspaceBusy = runWorkspaceReview(workspaceContext(), { onUsage: recordAIUsage })
       .then((result) => { st.aiWorkspace = { ...(st.aiWorkspace || {}), last: result, dailyReviewDate: day }; persistState(); })
       .catch((e) => console.error('AI daily workspace error', String(e.message || e).slice(0, 160)))
       .finally(() => { workspaceBusy = null; });
