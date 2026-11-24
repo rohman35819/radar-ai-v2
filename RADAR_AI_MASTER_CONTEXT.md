@@ -3201,11 +3201,21 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Commit dokumentasi bagian ini: SHA dicatat pada pembaruan status berikutnya.
 
 ### Status dan NEXT TASK
-- GitHub: commit lokal pada branch `fix/sidebar-drawer-scroll`; **belum di-push, belum PR, belum merge** ke `develop`/`main`.
+- GitHub: branch `fix/sidebar-drawer-scroll` sudah **di-push** ke origin dengan upstream tracking; `origin/develop` tetap `4b37426f519ba91483f11a37a0023180134f9c62`. Posisi perubahan ada di branch kerja, bukan `main`/`develop`. Belum ada merge.
+- PR ke `develop`: **belum berhasil dibuat**. `POST /repos/rohman35819/radar-ai-v2/pulls` ditolak HTTP 403 `Resource not accessible by personal access token`; kredensial git yang tersedia hanya berhak membaca PR. Tidak ada secret yang dibuka/diubah. Tautan pembuatan manual: https://github.com/rohman35819/radar-ai-v2/pull/new/fix/sidebar-drawer-scroll
 - Hostless Build/LIVE: tidak dicek; **tidak ada deployment**.
 - QA browser/perangkat: **belum dilakukan**. Gesture nyata, scroll chaining iOS/Android, dan kemungkinan pergeseran layout saat `body.sidebar-open{overflow:hidden}` menghilangkan scrollbar masih harus diuji langsung.
+
+### Pembaruan CI exact-head — 25 November 2026
+- HEAD `d77f93e8f5c9ac52914dab14c9a8d840460c8118` (commit dokumentasi): workflow `RADAR AI tests` run #1034 (ID `45458181042`) **completed / success**. Job `test` sukses pada `npm test`, migrasi Agent Platform, queue/lease/retry/approval/kill-switch, serta migrasi memory dengan RLS/privilege/provenance smoke. Job `Branch source policy` skipped karena ini event push, bukan PR; dua langkah diagnostik Hostless LIVE skipped dan bersifat non-blocking.
+- HEAD kode `fcbbf8aec65a3fe88fc35e92132e85c71a1fff49`: tidak ada run push terpisah, tetapi kode yang sama terangkum pada HEAD dokumentasi yang diuji run #1034.
+- Combined commit status API masih `pending` dengan nol status legacy; bukti CI diambil dari daftar dan job Actions, bukan dari status check lama.
+- Security scan GitHub **belum berjalan** pada branch ini: `.github/workflows/security.yml` hanya memicu PR ke `main`/`develop` dan push ke `main`/`develop`, bukan `fix/**`. `gitleaks` dan `trivy` tidak terpasang lokal; pemeriksaan pola pada diff tidak menemukan literal secret, tetapi ini bukan pengganti Gitleaks/Trivy.
+- Tidak ada merge, Hostless check, atau klaim LIVE.
+
 - NEXT TASK:
-  1. Push branch, buka PR ke `develop`, jalankan exact-head CI test/security, lalu integrasi hanya jika seluruh gate lulus.
-  2. QA ponsel: buka Menu, swipe daftar menu sampai item terbawah; pastikan hanya `.side-nav` bergerak; tutup drawer lalu swipe halaman utama; uji backdrop, tombol Menu, dan Escape.
-  3. QA desktop: wheel/trackpad pada daftar menu dan pastikan konten utama tidak ikut bergeser, termasuk saat scroll lock aktif.
-  4. Jika perangkat masih meneruskan gesture, terapkan opsi §20.4 butir 5 (accordion/rail navigasi) tanpa menghapus menu atau fitur.
+  1. Buat PR ke `develop` melalui GitHub UI/token dengan izin `pull_requests: write` (tautan di atas), lalu verifikasi `Branch source policy`, test, dan security scan pada exact head PR.
+  2. Selesaikan security scan Gitleaks/Trivy sebelum integrasi; jangan merge hanya dengan CI test yang hijau.
+  3. QA ponsel: buka Menu, swipe daftar menu sampai item terbawah; pastikan hanya `.side-nav` bergerak; tutup drawer lalu swipe halaman utama; uji backdrop, tombol Menu, dan Escape.
+  4. QA desktop: wheel/trackpad pada daftar menu dan pastikan konten utama tidak ikut bergeser, termasuk saat scroll lock aktif.
+  5. Jika perangkat masih meneruskan gesture, terapkan opsi §20.4 butir 5 (accordion/rail navigasi) tanpa menghapus menu atau fitur.
