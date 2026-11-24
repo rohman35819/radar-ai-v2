@@ -3497,3 +3497,5 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Verifikasi endpoint nyata: server lokal (port 38712, `DATA_DIR` sementara) mengembalikan `status=success`, `coin_id=bitcoin`, `days=7`, **169 titik harga**, `cached=true`, `stale=false`, `updated_at=2026-11-24T20:38:13.830Z`. Ini bukti endpoint, bukan bukti tampilan browser.
 - Batasan: QA klik/visual di browser desktop dan ponsel belum dilakukan; Hostless Build/LIVE tidak dicek. Grafik memakai data historis pihak ketiga melalui server RADAR dan bukan saran transaksi.
 - NEXT TASK: QA interaksi modal (buka, ganti rentang, Escape, backdrop, error/empty) pada browser nyata setelah PR tersedia; evaluasi perluasan grafik ke Early Gem bila ada endpoint on-chain yang terverifikasi.
+
+- Pembaruan hitungan: satu assertion runtime tambahan memastikan `tokenRow()` merender `chart-btn` dan `web-btn` hanya untuk identifier valid, sehingga total suite menjadi **220 pass, 0 fail, 0 skipped** (26 file). README diselaraskan ke 220/26.
