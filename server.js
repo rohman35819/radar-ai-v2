@@ -66,13 +66,36 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
   const privateExchangeToken = String(exchangeAccessToken !== undefined ? exchangeAccessToken : (process.env.EXCHANGE_ACCESS_TOKEN || cfg.adminToken || ''));
   const hasValidExchangeToken = (provided) => matchesToken(privateExchangeToken, provided);
   const hasValidAdminToken = (provided) => matchesToken(cfg.adminToken, provided);
-  const st = state || ingest.load(cfg);
+  const remoteStorage = Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
+  const st = state || (remoteStorage ? ingest.emptyState() : ingest.load(cfg));
   let storageChecked = false;
   let storageErrorCode = null;
+  let saveQueue = Promise.resolve();
   const persistState = () => {
-    try { ingest.save(cfg, st); storageChecked = true; storageErrorCode = null; }
-    catch (error) { storageChecked = true; storageErrorCode = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'STORAGE_WRITE_FAILED'; throw error; }
+    const snapshot = JSON.parse(JSON.stringify(st));
+    saveQueue = saveQueue.then(() => ingest.saveAsync(cfg, snapshot)).then(() => {
+      storageChecked = true; storageErrorCode = null;
+    }).catch((error) => {
+      storageChecked = true;
+      storageErrorCode = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'STORAGE_WRITE_FAILED';
+      console.error('storage write error', storageErrorCode);
+      throw error;
+    });
+    return saveQueue;
   };
+  const ready = remoteStorage && !state
+    ? ingest.loadAsync(cfg).then((loaded) => {
+      Object.assign(st, loaded);
+      st.goplusUsage = { ...(loaded.goplusUsage || {}) };
+      storageChecked = true; storageErrorCode = null;
+      return st;
+    }).catch((error) => {
+      storageChecked = true;
+      storageErrorCode = /^[A-Z0-9_]+$/.test(String(error.code || '')) ? error.code : 'STORAGE_READ_FAILED';
+      console.error('storage initialization error', storageErrorCode);
+      throw error;
+    })
+    : Promise.resolve(st);
   st.goplusUsage = st.goplusUsage && typeof st.goplusUsage === 'object' ? st.goplusUsage : { day: null, month: null, day_count: 0, month_count: 0 };
   const goPlus = goPlusService || createGoPlusService({ appKey: process.env.GOPLUS_APP_KEY || '', appSecret: process.env.GOPLUS_APP_SECRET || '', accessToken: process.env.GOPLUS_ACCESS_TOKEN || '', usageState: st.goplusUsage, onUsage: persistState });
   let busy = null;
@@ -381,22 +404,24 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
     await workspaceBusy;
   };
   const start = () => {
-    doRefresh();
-    timer = setInterval(doRefresh, cfg.refreshMs);
+    ready.then(() => {
+      doRefresh();
+      timer = setInterval(doRefresh, cfg.refreshMs);
     aiTimer = setInterval(runDailyReport, 60000);
     workspaceTimer = setInterval(runDailyWorkspace, 60000);
-    runDailyReport();
-    runDailyWorkspace();
+      runDailyReport();
+      runDailyWorkspace();
+    }).catch(() => {});
     return server;
   };
   const stop = () => { clearInterval(timer); clearInterval(aiTimer); clearInterval(workspaceTimer); server.close(); };
-  return { server, start, stop, state: st, refresh: doRefresh };
+  return { server, start, stop, state: st, refresh: doRefresh, ready };
 }
 
 if (require.main === module) {
   const cfg = ingest.loadConfig();
   const app = createApp({ cfg });
-  app.start().listen(cfg.port, () => console.log(`RADAR AI V2 di port ${cfg.port}`));
+  app.ready.then(() => app.start().listen(cfg.port, () => console.log(`RADAR AI V2 di port ${cfg.port}`))).catch((error) => { console.error('RADAR storage unavailable:', String(error.code || error.message || error)); process.exitCode = 1; });
   process.on('SIGTERM', () => { app.stop(); process.exit(0); });
 }
 module.exports = { createApp, resolveClientIp, createRateLimiter };
