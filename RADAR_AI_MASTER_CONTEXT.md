@@ -2508,3 +2508,253 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 3. Port PR #43 and #45 manually onto current main; port PR #55 and #57 only as isolated UI/data modules after current API contract review.
 4. Keep PR #55/#57/#43/#45 in Draft until their current-main port and exact-head tests/security/reviews pass.
 5. Resolve Hostless EROFS with BOS-approved persistent storage decision before claiming durable tracking or LIVE readiness.
+
+## 75. AUTONOMOUS DEVELOPMENT PILOT — 23 NOVEMBER 2026
+
+### Division and objective
+- Lead: Divisi 06 — Agent Platform & Automation (pilot implementation); supporting Divisi 04 for model/provider execution, Divisi 01 for security boundaries, and Divisi 05 for independent QA.
+- Objective: introduce a scheduled, bounded code-maintenance worker that can operate while BOS is offline and submit reviewable Draft PRs. This is not a persistent ChatGPT conversation; execution belongs to GitHub Actions.
+
+### Pilot implementation (PR #81)
+- Branch: `feat/autonomous-agent-pilot`.
+- PR: https://github.com/rohman35819/radar-ai-v2/pull/81 (Draft; not merged).
+- Files: `.github/workflows/autonomous-development.yml`, `lib/ai/autonomous-agent.js`, `test/autonomous-agent.test.js`.
+- Schedule: every six hours plus manual dispatch.
+- Providers: Groq first; OpenRouter `openrouter/free` fallback. No OpenAI paid API path. Provider secrets must be configured separately in GitHub Actions; Hostless secrets are not copied or read by this worker.
+- Worker reads the AI workspace/group modules and their tests; a model may propose at most one patch of 3 existing files / 40 KiB. Only existing `lib/ai/*.js` and `test/*.test.js` targets are allowed.
+- Patch validation rejects binary/new/deleted/renamed files, mode changes, path traversal, path substitution, and untracked targets. It runs `git apply --check`, `git diff --check`, and the full `npm test` before pushing a task branch and opening a Draft PR.
+- A single outstanding autonomous Draft PR blocks subsequent worker runs. No auto-merge, deploy, secret/config/permission changes, database migrations, exchange operations, or trading actions.
+- Workflow default is disabled (`AUTONOMOUS_AGENT_ENABLED=0`) until Security (Divisi 01) and QA (Divisi 05) approve the exact implementation and BOS configures the required GitHub Actions variable/secrets. This avoids silently enabling a code-writing worker before review.
+- The worker is a narrow pilot: it does not yet perform broad external web research, modify dashboard/backend outside the AI module, or coordinate multiple concurrent agents.
+
+### Verification status
+- Initial exact-head CI on commit `993da1721e513b1df3559c254972df2962747415` failed two new assertions (new-file rejection message and prompt wording); this was a real failure and was corrected in subsequent commits.
+- Security scans on commit `993da1721e513b1df3559c254972df2962747415` completed successfully. This does not certify the later exact head.
+- Latest implementation commit at time of this note: `9f6ca8bce3fd7bc817ac72ad87292da92db44768`. Exact-head tests/security are pending; do not claim green.
+- No merge, Hostless deployment, or LIVE verification. No worker has run on schedule yet. The feature is not active until PR review/merge and repository configuration are completed.
+
+### Next task
+1. Run exact-head `npm test`, Gitleaks, and Trivy for PR #81; repair any failures.
+2. Divisi 01 independently review patch validation, token handling, workflow permissions, and untrusted model output.
+3. Divisi 05 verify schedule/manual triggers, concurrency, exact-head CI, and PR creation behavior.
+4. BOS configures GitHub Actions secrets `GROQ_API_KEY` and optionally `OPENROUTER_API_KEY`, and repository variable `AUTONOMOUS_AGENT_ENABLED=1`, only after the reviews pass. If free-tier keys are not available, the worker safely skips.
+5. After activation, monitor at least three scheduled cycles before expanding file allowlists or additional agents.
+
+
+### Verification update — 23 November 2026, 19:07 UTC
+- CI on `993da1721e513b1df3559c254972df2962747415` and `4ec3ef42e31c946357b708a7e5d6be5e4e4bedc8` failed only in newly added test assertions (new-file/path-mismatch error expectation and prompt capitalization); failures were inspected from workflow logs, not hidden.
+- Corrected the assertions and added explicit checks for file-mode changes and source/destination path mismatch.
+- Corrected worker repository root resolution (`lib/ai/autonomous-agent.js` now resolves repository root two levels above the module).
+- Latest branch head: `b0e129d848084b15e238d122ddcdb042e33c5c68`. Exact-head test run #884 is queued; final test/security outcome remains pending.
+- Security scan #423 succeeded on previous head `4ec3ef42e31c946357b708a7e5d6be5e4e4bedc8`; it must be repeated/verified on latest head.
+
+
+### Final pilot CI evidence — exact documented head
+- Commit `194de8f8c3fddd0818e10621d2a0c86872040631`: GitHub Actions test workflow #885 completed/success.
+- Security workflow #425 completed/success: Gitleaks and Trivy filesystem/secret scan both passed.
+- This establishes source/test/security workflow status only. It does not establish provider quota, scheduled worker activation, Hostless build, deployment, or LIVE behavior.
+- Trivy's filesystem scan is not proof of full dependency CVE coverage when no supported lockfile/manifest is available; retain this limitation.
+- PR #81 remains Draft and unmerged. Security and QA independent review, plus BOS's GitHub Actions variable/secret configuration, remain required before enabling.
+
+
+## 76. AUTONOMOUS WORKER SECRET-ISOLATION HARDENING — 24 NOVEMBER 2026
+
+### Routing
+- Lead: Divisi 06 — Agent Platform & Automation.
+- Required independent supporting gates: Divisi 01 — Security & Reliability; Divisi 05 — QA, Testing & DevOps.
+- Scope is limited to PR #81 pilot. No production settings, credentials, merge, deployment, or trading actions were changed.
+
+### Finding and remediation
+- Source review found that the autonomous worker launched `npm test` and Git child processes with the worker's inherited `process.env`. That environment contains `GITHUB_TOKEN` and provider API keys. Although model output cannot invoke tools directly, a model-proposed test file is executed by `npm test`; inheriting credentials into that subprocess would create an avoidable secret-exposure path.
+- Added `safeChildEnv()` in `lib/ai/autonomous-agent.js`. All child processes launched through the worker now receive an explicit environment allowlist (PATH/HOME/CI/temp/locale/platform basics), not GitHub or provider secrets. This includes test execution and Git operations. The worker process itself retains credentials only for its narrowly scoped provider and GitHub API operations.
+- Added a regression test in `test/autonomous-agent.test.js` proving GitHub, Groq, OpenRouter, and worker-control variables are stripped from child environments.
+- No secrets were printed, copied, or changed. No provider request was made.
+
+### Files and commits
+- `lib/ai/autonomous-agent.js`
+- `test/autonomous-agent.test.js`
+- Code commits: `b478399f56e4d1e5b78077a5d82c4b082be75f16` and `b4b2410af0ab53cd7dfb33970b6bc969312b81c7`.
+- Latest observed PR head: `b4b2410af0ab53cd7dfb33970b6bc969312b81c7`; PR #81 remains Draft, open, unmerged, and 15 commits ahead / 0 behind main at the time of verification.
+
+### Validation and remaining gates
+- GitHub Actions exact-head test and security runs for `b4b2410af0ab53cd7dfb33970b6bc969312b81c7` were queued at 23:32:12 UTC on 24 November 2026. Results are pending; no local test was run in this connector-only session.
+- Earlier exact-head green checks on `e14ef4eb2fa64e2916a12ca6e05d8406c5bc5b90` do not certify this newer change.
+- PR #81 still has no independent PR review. Divisi 01 must review the child-process environment isolation and broader credential boundary; Divisi 05 must review the regression test, schedule/manual trigger, concurrency and runtime behavior.
+- Worker remains disabled by default. The workflow's repository variable `AUTONOMOUS_AGENT_ENABLED` defaults to `0`. Do not enable until both independent gates are documented and exact-head checks pass.
+- The worker remains a proposal-only code maintenance pilot. It does not implement durable multi-division queue, shared memory, market-data scheduling, Director runtime, Hostless worker, or automatic merge/deploy.
+
+### Deployment and NEXT TASK
+- GitHub PR code: updated; exact-head CI/security pending.
+- Hostless Build: not applicable to this GitHub Actions worker change and not checked.
+- Hostless LIVE: not checked; no deployment claim.
+- Next: verify exact-head Actions; request and obtain independent Divisi 01/05 reviews; close any findings; then obtain BOS authorization/configuration for the GitHub Actions variable and free-provider secrets. After activation, collect at least three successful scheduled run records before expanding scope.
+
+## 77. AUTONOMOUS WORKER EXECUTION GATES & FREE-ONLY PROVIDER — 24 NOVEMBER 2026
+
+### Divisi dan ruang lingkup
+- Lead: Divisi 06 — Agent Platform & Automation.
+- Supporting gates: Divisi 01 — Security & Reliability; Divisi 05 — QA, Testing & DevOps.
+- Scope tetap worker proposal maintenance yang berjalan di GitHub Actions; tidak mencakup Director runtime, durable queue, memory service, Hostless worker, market-data scheduler, merge/deploy otomatis, atau tindakan trading.
+
+### Temuan lanjutan dan perbaikan
+1. Audit secret-isolation sebelumnya menemukan bahwa environment allowlist juga menghapus GIT_CONFIG_* yang dibutuhkan oleh proses git push. Worker dapat lulus tes tetapi gagal mengirim branch. Perbaikan sekarang hanya mengizinkan tiga variabel Git extra-header dengan nama konfigurasi dan format header yang divalidasi, dan hanya jika pemanggil secara eksplisit menandai subprocess sebagai trusted Git push. Raw GITHUB_TOKEN dan provider key tetap tidak diteruskan ke child process.
+2. Kebijakan biaya diperketat: worker hanya menggunakan OPENROUTER_API_KEY dengan model router eksplisit openrouter/free. Jalur Groq dan variabel Groq dihapus dari workflow worker. Tidak ada fallback berbayar. Jika free router tidak tersedia, worker berhenti dengan error/skip; tidak mencoba model berbayar.
+3. main() kini menerima dependency injection untuk fetch, command runner, pembacaan source, provider call, dan clock agar jalur kontrol dapat diuji tanpa memanggil jaringan, GitHub, atau provider sungguhan.
+4. Ditambahkan tes untuk environment child process dan Git auth config yang sangat terbatas; worker disabled tanpa akses jaringan/filesystem/Git; outstanding autonomous Draft PR menghentikan worker sebelum source/provider dipanggil; dan ketiadaan OpenRouter key gratis menghentikan provider call.
+5. Perbaikan wiring: main() memakai injected source reader dan command runner untuk membaca file kandidat dan daftar tracked files; jalur git push mengaktifkan allowlist Git auth config secara eksplisit.
+
+### Commit perubahan
+- bbf54ce921a32818527917c4b6849f000da889ec: scoped Git auth dan free-only provider.
+- e3932577b6b9538c9672568a0e1965ebd742c8db: dependency injection wiring.
+- cd8d242d387b328eac83f809eb80545a13fa49fa: regression tests.
+- ea7536d1210036a44991bc0d5dfd47c42ce94132: workflow removes Groq secrets/model.
+- Latest observed branch head at documentation time: ea7536d1210036a44991bc0d5dfd47c42ce94132.
+
+### Verifikasi
+- Tests/security for the new exact head are pending GitHub Actions at time of this entry; do not reuse earlier green results from 70729bc....
+- No provider call, GitHub push from the worker, scheduled run, Hostless Build, or Hostless LIVE was executed in this session.
+- OpenRouter's explicit free router is the only configured route. This prevents deliberate paid-model fallback in code; it does not prove provider availability or guarantee external account-level quotas/terms remain unchanged. Verify usage and zero-charge behavior before enabling the schedule.
+- PR #81 remains Draft and unmerged. Independent Divisi 01/05 reviews are still absent. No repository settings or secrets were changed.
+
+### NEXT TASK
+1. Verify exact-head tests and security scans for the latest branch commit.
+2. Review the complete worker control flow for failure cleanup, provider error behavior, patch rejection, Git push failure and PR creation failure; add regression coverage.
+3. Divisi 01 independently reviews token scope, child-process isolation and free-only routing; Divisi 05 independently reviews schedule/concurrency and test evidence.
+4. Only after both gates and a verified zero-cost provider path, obtain BOS approval for repository variable/secret configuration and activate. Observe at least three scheduled runs before expanding scope.
+5. Keep PR Draft/disabled until the above acceptance criteria are met.
+
+## 78. AUTONOMOUS WORKER FAILURE-PATH TESTING & ORPHAN CLEANUP — 24 NOVEMBER 2026
+
+### Perbaikan tambahan
+- Worker sekarang menghapus branch remote yang telanjur ter-push jika pembuatan Draft PR gagal. Penghapusan memakai jalur Git extra-header yang sama, dibatasi dan divalidasi; kegagalan cleanup tidak menutupi error PR asli.
+- Temporary patch file memakai nama unik per proses dan selalu dibersihkan melalui finally. Writer/remover dapat diinjeksi agar failure path bisa diuji tanpa filesystem produksi.
+- Penambahan tes main() untuk malformed JSON/model-hostile path, provider failure (tidak boleh mutasi repository), patch apply failure (temporary patch selalu dihapus), dan PR creation failure (remote orphan branch dihapus).
+- Total deklarasi tes autonomous-agent.test.js setelah penambahan: 13.
+
+### Commit
+- fb8b918c816f07eb1d7f2f1c5fe58177f51e26cd: cleanup orphaned remote branch when PR creation fails.
+- 2abc76cccc70235ea28bf9e4a87822948be5fae7: regression tests for provider, patch cleanup and PR failure paths.
+- Branch head at this documentation point: 2abc76cccc70235ea28bf9e4a87822948be5fae7.
+
+### Validasi
+- Exact-head GitHub Actions test and security scans for 2abc76cccc70235ea28bf9e4a87822948be5fae7 were running when this entry was prepared. Results must be checked before reporting completion.
+- Earlier commit fb8b918c816f07eb1d7f2f1c5fe58177f51e26cd had test and security workflows both report success; this does not certify the later test-only commit.
+- No worker schedule, provider request, GitHub remote push by the worker, Hostless Build, or Hostless LIVE was exercised.
+- PR #81 remains Draft/unmerged and disabled. Independent Divisi 01/05 review is still outstanding.
+
+### NEXT TASK
+1. Check exact-head tests/security for latest docs+code commit and correct any failures.
+2. Inspect workflow permissions and one-outstanding-PR concurrency semantics; confirm no provider path other than OpenRouter free router remains.
+3. Obtain genuine independent Divisi 01 and Divisi 05 reviews; do not self-approve or fabricate review submissions.
+4. Keep disabled until review gates, zero-cost provider verification, and BOS authorization for repository configuration are complete.
+
+## 79. AUTONOMOUS WORKER TEST FIXTURE CORRECTION — 24 NOVEMBER 2026
+
+- Exact-head CI for commit 2abc76cccc70235ea28bf9e4a87822948be5fae7 exposed three failing tests. Root cause was test fixture strings containing literal backslash+n instead of newline characters; tracked-file lists and unified diffs were therefore malformed before the intended failure-path assertions ran.
+- Corrected the fixture escaping in test/autonomous-agent.test.js; the file now contains 13 autonomous-worker test declarations.
+- Fix commit: 8e3e23f5216f4dcaf801c20dc16112633ba37704.
+- Exact-head tests and security scans for this fix were queued at documentation time. Do not claim pass until both finish.
+- Prior CI failure is retained in history; it was not hidden or treated as success.
+- NEXT: inspect exact-head Actions logs; if green, verify current PR metadata/reviews and continue Divisi 01/05 review request. Keep Draft/disabled.
+
+## 80. EXACT-HEAD AUTONOMOUS WORKER CI EVIDENCE — 24 NOVEMBER 2026
+
+- Verified latest PR #81 documentation head at start of this entry: e92a77296e621465e05d00f0b73c145991770c4b.
+- GitHub Actions test run #45290352780: SUCCESS. Inspected job log: 154 tests, 154 passed, 0 failed, 0 skipped.
+- GitHub Actions security run #45290352808: SUCCESS. Gitleaks and Trivy filesystem/secret jobs both completed successfully.
+- The preceding code/test head 8e3e23f5216f4dcaf801c20dc16112633ba37704 also passed tests and security; the earlier 2abc76... test failure is documented in section 79 and fixed by the subsequent fixture commit.
+- These results certify repository tests/security only. They do not certify a scheduled execution, OpenRouter zero-charge behavior, Hostless Build, or Hostless LIVE.
+- PR #81 remains Draft/open/unmerged; no independent Divisi 01 or Divisi 05 review has been submitted. Worker variable defaults to disabled.
+- NEXT: obtain actual independent Divisi 01/05 review, verify free-route usage/zero charges in provider account without exposing the key, then obtain BOS authorization before setting AUTONOMOUS_AGENT_ENABLED=1. After activation, capture three scheduled run IDs and results.
+
+
+## 81. MASTER DEVELOPMENT DIRECTIVE & TWO-HOURLY AUTONOMOUS CADENCE — 24 NOVEMBER 2026
+
+### Mandate saved
+- BOS menetapkan RADAR AI-V2 Master Development Directive sebagai mandat pengembangan berkelanjutan: system reliability/security; crypto data & intelligence; AI analysis/evaluation/memory; trading dashboard; background automation; conversation/decision/analysis memory; QA; documentation and handoff.
+- Berlaku lintas Divisi 01–08, dengan Direktur Utama sebagai koordinator. Setiap siklus wajib membaca status repository/kanban dan catatan siklus sebelumnya, memilih pekerjaan paling berdampak, menghindari duplikasi, menetapkan acceptance criteria, menguji perubahan, dan mencatat hasil.
+- Prinsip biaya: Rp0/no-overage; tidak ada fallback model berbayar. API/secret tetap server-side. Tidak ada auto-merge/deploy, perubahan secret/permission, migrasi produksi, tindakan exchange, transaksi, withdrawal, atau live trading.
+
+### Cadence decision
+- Target siklus pengembangan: setiap 2 jam, menit ke-17 pada jam genap, timezone UTC (cron GitHub Actions): `17 */2 * * *`.
+- Monitoring teknis terpisah: workflow Hostless monitor yang sudah ada berjalan setiap 5 menit; test/security berjalan sesuai trigger masing-masing. Jadwal ini bukan instruksi agar setiap divisi memanggil provider AI pada setiap interval.
+- PR #81 workflow pada branch `feat/autonomous-agent-pilot` diperbarui dari setiap 6 jam menjadi setiap 2 jam. Perubahan ini masih Draft PR dan belum aktif pada main.
+
+### Actual scope and limitations — do not overstate
+- Worker PR #81 saat ini hanya pilot proposal untuk peningkatan kecil pada modul AI workspace/group dan test terkait; maksimal 3 file / 40 KiB; hasilnya Draft PR setelah patch checks dan `npm test`.
+- Worker hanya memakai OpenRouter `openrouter/free`; jika key/provider gratis tidak tersedia, worker skip/fail safely. Label free router bukan jaminan availability, quota, atau zero-charge; BOS harus memeriksa usage/billing.
+- Worker tidak menyimpan task queue atau memory di PostgreSQL, tidak menjalankan semua divisi, tidak melakukan riset market/data secara luas, dan tidak merge/deploy. Satu Draft PR autonomous yang belum direview akan menahan siklus berikutnya.
+- `AUTONOMOUS_AGENT_ENABLED` default `0`; PR #81 belum merge, belum ada bukti scheduled run sukses, dan belum ada independent Divisi 01 Security / Divisi 05 QA sign-off.
+
+### Activation gates
+1. Divisi 01 review token scope, patch validation, child-process environment isolation, untrusted input handling, and workflow permissions.
+2. Divisi 05 independently verify workflow cadence, concurrency, exact-head test/security, and PR lifecycle.
+3. Verify OpenRouter free-route usage/charges and BOS confirms acceptable Rp0/no-overage behavior.
+4. Only after reviews and verification, BOS may configure GitHub Actions secret `OPENROUTER_API_KEY` and repository variable `AUTONOMOUS_AGENT_ENABLED=1`. Do not copy Hostless secrets.
+5. Capture at least three successful scheduled run IDs and results before widening worker scope.
+
+### Next architecture increments — Divisions 06/07
+- Stage A: persistent task/memory schema and audit contracts; PostgreSQL only if a verified existing free/no-overage database is available. No paid provisioning or production migration without BOS approval.
+- Stage B: scheduler + durable queue + lease/idempotency/retry/dead-letter + task history; do not treat workflow cron alone as a durable queue.
+- Stage C: division-specific workers with allowlisted tools, isolated branches, scoped memory, budgets, QA/Security gates, human approval queue, kill switch and recovery.
+- Stage D: expand from proposal-only to controlled integration only after independent gates and operational evidence. Production deployment and financial actions remain BOS-approved.
+
+### Session record
+- Repository main HEAD verified: `bb4c002c9f3cccae266504131a54583a406dbb5b`.
+- PR #81 current head at audit: `75d1d275d22193a2803badd0ed5865b72e431a67`; open, Draft, unmerged. Combined commit status API returned pending with no status records; no fresh exact-head CI result was established in this session. Earlier documented test/security success on prior head does not certify this head.
+- Changed file on PR branch: `.github/workflows/autonomous-development.yml` (cron only); this master-context entry is also on the PR branch.
+- Tests: not run locally; GitHub Actions after these changes must validate exact new head.
+- Hostless Build/Live: not applicable to this PR branch update and not checked.
+- NEXT TASK: obtain exact-head CI/security result, independent Divisi 01/05 review, and BOS provider-cost confirmation; only then merge/activate under the documented gates. In parallel, design/implement Stage A task + memory persistence without provisioning paid infrastructure.
+
+
+## 82. BOS DIRECTIVE — DAILY DASHBOARD EVOLUTION & TWO-HOURLY OPEN-SOURCE DISCOVERY — 24 NOVEMBER 2026
+
+### Additional mandate
+BOS memperluas Master Development Directive dengan dua kewajiban lintas divisi:
+1. Dashboard RADAR AI V2 harus dievaluasi setiap hari dan ditingkatkan berdasarkan kegunaan trading, bukan kosmetik. Perubahan penting meliputi freshness/latency data, sumber dan timestamp, status koneksi, kualitas/kelengkapan data, market breadth, liquidity/volume, funding/open interest, whale/on-chain, token discovery, news/sentiment, alerts, dan AI intelligence hanya ketika sumber mendukung serta metrik tervalidasi. Pertahankan semua menu/fitur yang ada.
+2. Setiap siklus pengembangan dua jam, Divisi 08 Procurement & Tools menjalankan discovery sumber informasi, API, dataset, open-source project, library, dan alat gratis yang relevan untuk crypto intelligence/trading, backend, frontend, observability, QA, security, dan Agent Platform.
+
+### Dashboard operating requirements
+- Daily dashboard review: audit UX dan alur keputusan trading, cari gap informasi terbaru, periksa freshness/source attribution/last-updated/connection state, data empty/error/loading states, mobile/desktop responsiveness, dan performa.
+- Prioritaskan insight actionable dan data yang benar-benar tersedia; jangan membuat angka real-time palsu, sinyal tanpa provenance, chart statis yang menyamar sebagai live, atau metrik yang tidak punya timestamp.
+- Perubahan dashboard harus dibuat melalui branch/PR terisolasi, menjaga routes/menu/data contracts yang sudah ada, dengan screenshot/visual review jika tersedia, regression tests, dan QA independen sebelum integrasi.
+- Daily update bukan kewajiban merilis UI setiap hari. Jika tidak ada peningkatan yang tervalidasi, buat audit singkat dan backlog prioritas; jangan mengubah UI sekadar agar terlihat berbeda.
+
+### Two-hourly discovery protocol — Division 08 lead
+Pada setiap siklus dua jam, discovery mencakup:
+- Temukan kandidat sumber data/tool open-source atau free tier yang relevan dan belum terpasang.
+- Cek repository/license, dokumentasi resmi, status pemeliharaan/aktivitas, API access/registration, rate limits, attribution, data coverage/latency, security/privacy, hosting/dependency requirements, dan total biaya/risiko overage.
+- Bandingkan dengan integrasi yang sudah ada agar tidak duplikatif; catat kandidat yang ditolak beserta alasannya.
+- Kelompokkan hasil: (A) gratis dan layak diuji; (B) gratis dengan batasan/akses belum terbukti; (C) berbayar/risiko biaya; (D) tidak layak/duplikat.
+- Hanya kandidat A yang boleh masuk backlog eksperimen. Domain division wajib menilai kecocokan teknis, Divisi 01 Security menilai risiko, Divisi 05 QA menguji, dan Executive Office mengurutkan prioritas.
+- Tidak boleh otomatis memasang dependency, menjalankan kode pihak ketiga, memberikan token/secret, membuat akun, menambah kartu pembayaran, mengaktifkan layanan, atau mengubah production provider tanpa review dan approval yang sesuai. Free trial bukan layanan gratis permanen.
+- Gunakan sumber resmi untuk klaim harga/limit/license. Simpan URL, tanggal pemeriksaan, versi/license, bukti akses, limit, hasil uji, dan rekomendasi.
+
+### Division ownership
+- Divisi 04 Frontend: daily dashboard audit dan implementasi UX/visualisasi.
+- Divisi 02 Data Intelligence + Divisi 03 Trading Intelligence: validasi freshness, kualitas, coverage, dan relevansi informasi.
+- Divisi 08 Procurement & Tools: discovery alat/sumber setiap dua jam dan registry procurement agar tidak mengulang integrasi.
+- Divisi 01 Security dan Divisi 05 QA: mandatory cross-functional gates.
+- Divisi 06 Agent Platform: scheduler/queue/orchestration untuk memastikan pekerjaan benar-benar berjalan dan tercatat.
+- Divisi 07 Knowledge & Memory: simpan hasil discovery, pertanyaan BOS, keputusan, dashboard audit, eksperimen, serta evaluasi.
+- Direktur Utama mengoordinasikan siklus, menghindari duplikasi, dan memilih pekerjaan yang dapat diselesaikan dengan aman.
+
+### Current implementation boundary
+- Cron dua jam pada PR #81 hanya menjadwalkan autonomous worker pilot; worker yang ada saat ini hanya membaca tiga file AI workspace/group, hanya boleh mengubah file existing `lib/ai/*.js` dan `test/*.test.js`, dan tidak memiliki kemampuan web research/tool procurement atau dashboard frontend editing.
+- Karena itu, dashboard daily evolution dan two-hourly procurement discovery adalah mandat/backlog yang tercatat, BELUM menjadi pekerjaan otomatis yang dieksekusi worker sekarang.
+- Jangan mengklaim discovery dua jam, dashboard update harian, atau seluruh divisi otomatis aktif sebelum workflow khusus, durable task state, worker scope, evidence log, dan scheduled runs benar-benar dibangun serta diuji.
+
+### Next implementation tasks
+1. Divisi 08: buat registry tools/data sources dengan deduplication, license/cost/access evidence, dan status A–D; mulai dari integrasi yang sudah ada di main.
+2. Divisi 04: audit dashboard current main, petakan gap fungsional/data dan susun dashboard release backlog harian tanpa merusak menu/route.
+3. Divisi 02/03: buat freshness/quality contracts untuk data yang sudah terintegrasi; utamakan indikator source/time/status.
+4. Divisi 06/07: persist per-cycle tasks, discovery results, dashboard audit, decisions, and execution outcomes; baru kemudian jadwalkan worker per divisi.
+5. Perluas allowlist worker untuk frontend dan procurement hanya melalui desain terpisah, security review, QA, serta test khusus; jangan memperluas pilot workspace saat ini secara diam-diam.
+
+### Session delivery record
+- Request tambahan BOS disimpan pada branch `feat/autonomous-agent-pilot`, bukan main, sebagai bagian dari PR #81.
+- Dashboard code dan procurement research executor tidak diubah pada sesi ini; tidak ada deployment Hostless.
+- Next: selesaikan PR #81 gates, kemudian buat registry procurement + audit dashboard dari current main sebagai PR terpisah.
+
+- Tracking issue dibuat: [#82 — Daily dashboard evolution & two-hour open-source intelligence discovery](https://github.com/rohman35819/radar-ai-v2/issues/82). Issue ini memecah implementasi Divisi 04/08; belum ada perubahan dashboard runtime atau discovery worker aktif.

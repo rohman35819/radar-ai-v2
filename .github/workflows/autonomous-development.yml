@@ -1,0 +1,37 @@
+name: RADAR Autonomous Development Worker
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: radar-autonomous-development
+  cancel-in-progress: false
+
+jobs:
+  autonomous-maintenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run guarded autonomous worker
+        env:
+          AUTONOMOUS_AGENT_ENABLED: ${{ vars.AUTONOMOUS_AGENT_ENABLED || '0' }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: node lib/ai/autonomous-agent.js
