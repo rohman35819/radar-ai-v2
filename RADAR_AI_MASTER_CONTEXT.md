@@ -2842,3 +2842,60 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Dokumen ini diperbarui pada branch terisolasi untuk review; tidak ada merge/deploy.
 - Hostless Build: tidak diketahui. Hostless LIVE: monitor gagal pada run `45390120197`; deployed SHA tidak diketahui.
 - NEXT TASK utama: DATA_DIR/EROFS, Dashboard browser QA, Exchange Hub browser QA, dan stabilitas deployment sebelum fitur baru.
+
+
+---
+
+## 85. Update siklus Direktur — bukti monitor LIVE dan audit QA (24 November 2026, 19:30 WIB)
+
+### Main dan CI exact-head
+- Main HEAD tetap `6bb67f5e2bd0161f7dee435895c7a32262f559ce`; tidak ada perubahan pada main selama siklus ini.
+- Main Test run `45390120192`: completed/success, **154 passed, 0 failed, 0 skipped**.
+- Main Security run `45390120015`: completed/success. Gitleaks tidak menemukan secret. Trivy secret scan tidak menemukan isu, tetapi Trivy mengeluarkan `Supported files for scanner(s) not found` untuk vulnerability scanner; dependency CVE coverage **NOT AVAILABLE**, bukan clean CVE scan.
+- PR #83 sebelum addendum ini berada pada head `0a74d00e225ac89687ff6aa9c92416db941c0db8`; Test #910 `45392908976` lulus 154/154 dan Security #450 `45392908975` sukses. Belum ada review submission atau review thread. Commit addendum ini memerlukan exact-head CI baru; hasil lama tidak boleh dipakai untuk SHA baru.
+
+### Hostless LIVE — hasil log terbaru
+- Hostless monitor run `45390120197` selesai **failure** pada 24 Nov 2026 12:28 UTC (19:28 WIB). Step pembacaan daftar deployment Hostless berhasil, tetapi log yang tersedia tidak menampilkan status deployment dan deployed commit secara terbaca; Build status dan deployed LIVE SHA tetap **UNKNOWN**.
+- Probe publik terhadap `https://radar-ai-v2.hostless.app` berhasil menjangkau aplikasi, tetapi `GET /api/ready` mengembalikan **HTTP 503**, status `degraded`, `storage.status=error`, `storage.code=EROFS`. Ini bukti terkini bahwa readiness LIVE masih gagal karena filesystem read-only.
+- `GET /api/snapshot` mengembalikan **HTTP 200**. Snapshot melaporkan 50 berita; TechCrunch 20 dan Cointelegraph 30 sehat. `early_gems` berisi 73 pool dari CoinGecko Onchain/GeckoTerminal, dengan health sukses dan fetch time 12:13:54 UTC. Ini bukti data parsial tersedia, bukan bukti readiness sehat.
+- Provider probe pada monitor yang sama: Binance Futures HTTP 200 dengan funding, open interest, open-interest history, dan taker flow tersedia; DEX Screener HTTP 200 dengan 1 pair dan pool pembanding ditemukan. GoPlus melaporkan `credentials_configured=false`; monitor hanya membaca status credential dan tidak memakai kuota.
+- Kesimpulan: domain LIVE merespons, tetapi aplikasi **DEGRADED / NOT READY**. Jangan menyebut deployment SHA tertentu sebagai LIVE sampai output deployment Hostless yang cocok dengan main dapat dibuktikan.
+
+### DATA_DIR / EROFS — P0 belum berubah
+- Audit ulang `lib/ingest.js` pada main: `DATA_DIR` masih default ke `./data`; `save()` membuat direktori lalu menulis `state.json.tmp` dan me-rename ke `state.json`. Belum ada writable preflight atau fallback yang aman/persisten.
+- Log monitor terbaru mengonfirmasi EROFS, bukan sekadar insiden historis. Jangan mengubah ke `/tmp/radar-ai-v2` karena state akan ephemeral; jangan mengubah ke `/data` atau membuat volume tanpa keputusan BOS dan pemeriksaan biaya. Tidak ada Hostless setting, secret, volume, atau data produksi yang diubah.
+
+### Dashboard QA — status dan gap
+- PR #77 tetap Draft/open, branch `feat/dashboard-executive-visual-refresh-v2`, **5 ahead / 4 behind** terhadap main. Net diff terhadap main menyentuh `public/style.css`, `public/sw.js`, dan `test/service-worker.test.js`; tidak ada review submission. PR #6 telah ditutup tanpa merge.
+- Pencarian kode main tidak menemukan Playwright/Puppeteer atau browser-test harness. `npm test` menjalankan pemeriksaan sintaks Node dan `node --test test/*.test.js`; ini bukan visual/browser QA.
+- PR #55 dan #57 juga mengubah area dashboard, termasuk `public/style.css`; jangan port PR tersebut paralel dengan #77. Divisi 02 harus memilih satu baseline UI, lalu Divisi 05 memverifikasi semua menu, sidebar, responsive layout, console/network, dan screenshot desktop/mobile sebelum integrasi.
+
+### Exchange Hub — audit kode aktual
+- Kode main kini memiliki jalur akun read-only: `GET /api/exchanges/status`, `GET /api/exchanges/binance/account`, `GET /api/exchanges/bybit/account`, dan `GET /api/exchanges/market`. `lib/exchanges.js` menggunakan HTTP GET untuk account, permission inspection, dan market data. Tidak ditemukan route order, transfer, atau withdrawal.
+- `public/trading.js` memiliki alur koneksi akun dan pemeriksaan permission; kalkulator tetap simulasi. Ini lebih maju daripada catatan handoff lama yang menyebut integrasi akun belum ada, tetapi konfigurasi credential dan private-account connectivity di Hostless LIVE belum diverifikasi dan belum ada browser QA. Jangan menganggap akun telah terhubung hanya dari keberadaan kode.
+- PR #59 Binance Futures sudah merged. PR #60 DEX Screener ditutup tanpa merge; probe DEX Screener pada monitor hanya membuktikan endpoint publik merespons, bukan bahwa UI/PR #60 terintegrasi di main.
+- NEXT QA Divisi 03/05: mock success, missing credential, invalid access token, permission read unavailable, non-read-only permission warning, partial positions, timeout/rate limit, dan mobile layout. Pastikan semua permintaan tetap GET/read-only; tidak ada order.
+
+### Autonomous worker — aktivasi tidak sama dengan bukti eksekusi
+- PR #81 telah merged. Workflow main terjadwal `17 */2 * * *` UTC; default `AUTONOMOUS_AGENT_ENABLED` adalah `1`, dengan repository variable eksplisit `0` sebagai kill switch.
+- Pada audit ini, pencarian branch `autonomous` hanya menemukan `feat/autonomous-agent-pilot`; pencarian PR terbuka tidak menemukan Draft PR hasil worker. Konektor yang tersedia tidak menyediakan daftar scheduled workflow runs, dan secret/repository variable tidak dapat dibaca. Karena itu run cron 19:17 WIB, pemanggilan provider, dan hasil worker **belum terverifikasi**; jangan mengklaim worker telah bekerja.
+- Scope worker tetap sempit: proposal patch pada modul AI workspace/group dan test, maksimal 3 file/40 KiB, wajib `npm test`, Draft PR saja. Ini bukan agent multi-divisi, bukan dashboard worker, bukan procurement/research worker, dan belum memiliki durable task queue/shared memory.
+- `openrouter/free` bukan jaminan availability atau zero-charge. Divisi 01/05 harus meninjau worker dan BOS perlu memeriksa usage/billing secara langsung tanpa membagikan secret sebelum scope/biaya dianggap aman. Tidak ada dispatch manual atau provider call dilakukan pada siklus ini.
+
+### PR dan konflik yang perlu dijaga
+- PR #74 Marketlight tetap Draft/open, **48 ahead / 4 behind**. Review procurement yang ada menerima sumber secara kondisional, tetapi mencatat blocker teknis: body-size cap saat ini dilakukan setelah `response.text()` membuffer seluruh body; UI perlu menampilkan long dan short liquidations; timestamp observasi harus dibedakan dari retrieval time; funding antar-exchange harus mempertimbangkan interval pembayaran; dan exact-head provider tests masih diperlukan. Divisi 01/03/05 harus menutup ini sebelum merge.
+- PR #83 adalah dokumentasi siklus pada branch terisolasi; tetap Draft, tidak merge. Tidak ada source aplikasi atau production configuration yang diubah.
+
+### Pembagian ownership dan NEXT TASK
+1. **01 Security & Reliability (P0):** owner audit storage/readiness dan worker secret isolation. Siapkan rekomendasi writable path dan test EROFS; tidak mengubah Hostless sebelum keputusan BOS.
+2. **02 UI/UX & Frontend (P1):** owner `public/index.html`, `public/app.js`, `public/style.css`, `public/sw.js`. Pilih baseline dashboard tunggal; port/QA PR #77 tanpa menumpuk #55/#57.
+3. **03 Exchange & Trading (P1):** owner `public/trading.*`, `lib/exchanges.js`, `lib/derivatives.js`. Jalankan QA read-only/mock dan review semantik Binance/Bybit; tidak ada order/transfer/withdrawal.
+4. **04 AI Intelligence & Research:** audit freshness/provenance provider dan review Marketlight #74 bersama Divisi 03; jangan mengubah UI milik Divisi 02.
+5. **05 QA/DevOps:** reviewer independen; buat browser QA desktop/mobile untuk Dashboard dan Exchange Hub, exact-head regression, serta monitor Hostless. CI hijau tidak menggantikan browser QA atau LIVE.
+6. **06 Agent Platform:** owner workflow/worker; kumpulkan run ID, log, skip/failure reason dan bukti provider usage. Tetap proposal-only; durable queue/lease/idempotency belum ada.
+7. **07 Knowledge & Memory:** owner desain provenance/retention; belum ada persistent memory runtime. Jangan provisioning database/layanan berbayar.
+8. **08 Procurement & Tools:** lanjut issue #82 sebagai discovery registry terpisah; tidak auto-install atau mengubah provider produksi.
+
+- Tidak ada chat divisi yang dibangunkan atau worker lintas-divisi yang terbukti berjalan.
+- Tidak ada merge, deploy, perubahan secret/permission, transaksi, withdrawal, live trading, atau pengeluaran berbayar.
+- **NEXT TASK utama:** keputusan BOS untuk storage; kemudian browser QA Dashboard dan Exchange Hub, review worker Divisi 01/05, dan remediation PR #74. Fitur baru tetap ditahan sampai P0/P1 memiliki bukti kelulusan.
