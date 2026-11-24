@@ -2960,3 +2960,15 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 **Catatan rekonsiliasi aturan lama:** catatan PR #87 yang menyebut harus menunggu Divisi 01/05 adalah catatan kondisi/ketentuan saat itu dan telah dikesampingkan oleh keputusan BOS serta aturan sementara ini. Review manual PR #87 tidak dilakukan; bukti yang tersedia adalah 177/177 test dan secret/security scan pada head sebelum merge. Keputusan merge #87 tetap dicatat terpisah dan tidak menjadi bukti bahwa review independen telah terjadi.
 
 **Status:** aturan sementara ditambahkan ke AGENTS.md dan master context pada main. Perubahan ini hanya dokumentasi kebijakan; tidak mengubah kode runtime, environment, database, permission, atau deployment.
+
+
+## 96. KONSOLIDASI DIVISI 06 + 07 — AGENT QUEUE DAN MEMORY FOUNDATION (24 NOVEMBER 2026)
+
+- PR #89 (Agent Platform transactional queue) dan PR #88 (provenance-first memory) memiliki fondasi berguna, tetapi keduanya diverged dari main dan mengubah workflow/master yang sama. Perubahan unik dipindahkan secara selektif ke branch integrasi baru dari main terkini: `integration/agent-platform-memory-foundations-20261124`.
+- File baru yang dipertahankan: `db/migrations/001_agent_platform.sql`, `db/migrations/002_queue_operations.sql`, `db/tests/001_agent_platform_smoke.sql`, `db/tests/002_queue_operations_smoke.sql`, `lib/knowledge/memory.js`, `supabase/migrations/20261124_radar_memory.sql`, `supabase/tests/20261124_radar_memory_smoke.sql`, `test/memory-store.test.js`.
+- `.env.example` hanya menambah nama variabel Supabase server-side; tidak ada credential atau production config. GitHub Actions menjalankan npm test dan kedua rangkaian migration/smoke test dalam satu disposable PostgreSQL 16 instance.
+- Self-review queue: fungsi SECURITY DEFINER memakai fixed search_path; EXECUTE dicabut dari PUBLIC/anon/authenticated/service_role/runtime. Queue/control/approval tables tidak diberi akses ke application runtime. Kill switch dan pause default tetap aktif. Caller-supplied actor ID belum layak dipakai worker production; trusted identity gateway tetap prasyarat sebelum grant/aktivasi.
+- Self-review memory: status insert dipaksa proposed, RLS aktif, anon/authenticated tanpa privilege, service_role hanya SELECT/INSERT, dan belum ada approval API. Jangan jalankan migration Supabase tanpa backup, pemilihan project dan persetujuan BOS.
+- Exact-head CI/security branch integrasi masih menunggu. PR #88/#89 tidak di-merge dari branch lama; branch dan riwayatnya tetap tersimpan sebagai sumber asal.
+- Hostless Build/LIVE tidak diubah atau diverifikasi. Tidak ada scheduler/worker aktif, production DB migration, credential, paid resource, atau trading action.
+- NEXT: periksa full diff branch integrasi, jalankan exact-head npm + PostgreSQL migration/lifecycle smoke + Gitleaks/Trivy; setelah pass, pastikan mergeable=true lalu merge dan tutup PR sumber #88/#89 sebagai superseded.
