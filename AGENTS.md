@@ -205,3 +205,8 @@ BOS authorizes AI contributors to propose and adopt additional repository engine
 10. **Reporting.** Record the action, rationale, risk classification, exact head/merge SHA, test/security evidence, rollback/recovery path, and any remaining blocker in the master context. Clearly separate merged code, deployment, and verified LIVE behavior.
 
 **Conflict resolution:** Any older sentence requiring BOS approval for every routine PR, routine merge, ordinary feature, or low-risk engineering decision is superseded by this section. Existing prohibitions on secrets exposure, paid spend, permission/security weakening, destructive production actions, live financial/trading execution and irreversible production actions remain in force.
+
+
+## Branch source policy clarification (24 November 2026)
+
+The develop integration lane accepts not only feature/fix/validated experiment branches, but also scoped maintenance branches: docs/*, chore/*, ci/*, security/*, test/*, and refactor/*. These categories are necessary for safe repository governance, documentation, workflow, testing and maintenance changes. The main source restriction remains develop or hotfix/* only. The workflow check is the technical enforcement; this list must stay synchronized with .github/workflows/test.yml.
