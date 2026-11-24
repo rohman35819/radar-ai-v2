@@ -2971,3 +2971,13 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 - Actor IDs in SQL functions are caller parameters; this is acceptable only while functions remain owner-only. Do not grant EXECUTE to worker/service roles until a trusted identity-bound gateway replaces caller-supplied actor assertions.
 - No production DB migration, role grants, worker, scheduler, Hostless config, deployment, or trading action was performed. Manual Division 01/05 review not performed (temporary override); objective CI/security checks are required before merge.
 - NEXT: verify exact-head CI/security, mergeability and PR merge; then proceed to PR #88. Production activation remains a separate BOS-approved task.
+
+
+## 97. DIVISI 07 — MEMORY FOUNDATION DIREBASE KE MAIN TERBARU (24 NOVEMBER 2026)
+
+- PR #89 telah merged ke main pada commit `e228b97ee5ca0d43602047d11c4f3e21858f6ce4`; Agent Platform schema, transactional queue dan PostgreSQL smoke sudah menjadi bagian main. PR #34 (schema lama) dan #51 (Phase 0 docs lama) dievaluasi sebagai superseded; riwayat/branch tetap tersimpan.
+- PR #88 memory source diverged dari main. Hanya empat file unik yang dipindahkan ke branch baru `feat/knowledge-memory-main-20261124`: `lib/knowledge/memory.js`, `supabase/migrations/20261124_radar_memory.sql`, `supabase/tests/20261124_radar_memory_smoke.sql`, `test/memory-store.test.js`.
+- Workflow PostgreSQL 16 terbaru dari main dipertahankan dan ditambah migration/smoke memory setelah Agent Platform queue tests; env example menambah nama variabel Supabase server-side saja.
+- Memory tetap proposal-only: RLS aktif, anon/authenticated tanpa privilege, service_role SELECT/INSERT saja, tidak ada approval API. Tidak ada Supabase production migration, secret, API route, frontend integration atau activation.
+- Exact-head CI/security untuk branch baru masih harus diverifikasi. Manual Divisi 01/05 review: not performed (temporary override); fokus self-review pada service-key handling, scope filters, SQL privilege dan proposal-only trigger.
+- NEXT: exact-head npm + PostgreSQL queue + memory smoke + Gitleaks/Trivy, pastikan mergeable=true, lalu merge hanya jika seluruh bukti lulus. Tutup PR #88 sebagai superseded oleh branch terbaru setelah PR pengganti siap.
