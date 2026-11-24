@@ -2773,3 +2773,63 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Aktivasi workflow pada `main` terkonfigurasi, tetapi eksekusi pertama dan pembuatan PR belum terbukti. Verifikasi workflow run setelah jadwal berikutnya atau dispatch manual melalui GitHub Actions UI.
 - Hard cost gate: pertahankan hanya model router eksplisit free; hentikan jika provider meminta pembayaran/credit atau menampilkan biaya. Tidak ada auto-merge/deploy.
 - NEXT TASK: verifikasi Actions run pertama, secret availability tanpa menampilkan nilainya, output/log worker, dan hasil draft PR; lalu Divisi 01/05 audit independen sebelum perluasan scope.
+
+
+## 84. Penguatan health gate Hostless — 24 November 2026 (Asia/Jakarta)
+
+- Pemeriksaan Hostless ulang pukul 13:14 UTC membuktikan `/api/ready` HTTP 200, `status=ready`, `storage.status=ok`, dan `code=null`; masalah EROFS tidak muncul.
+- `/api/snapshot` HTTP 200 dan `stale=false`; refresh terakhir tercatat 2026-11-24T13:06:25.487Z. News berisi 50 item; TechCrunch (20) dan Cointelegraph (30) sehat. Early Gems berisi 80 pool dan health on-chain/trending sehat.
+- Probe Binance Futures BTCUSDT HTTP 200, non-partial; funding, open interest, OI history, dan taker flow seluruhnya sehat. Probe DEX Screener HTTP 200 dan memvalidasi pool yang sama.
+- Ditemukan celah pada `scripts/hostless-live-check.js`: proses monitor hanya menggagalkan job untuk readiness, snapshot HTTP, dan news; kegagalan storage atau provider probes belum otomatis menggagalkan job.
+- Perubahan: menambahkan `evaluateHealth()` agar job memeriksa storage OK, snapshot tidak stale, news sehat, seluruh metrik Binance Futures non-partial, dan validasi pool DEX Screener. Menambahkan unit test untuk kondisi sehat dan skenario gagal.
+- Commit: `3b6bba01f7048026a4bd54546932cf6d5dfe0ee8` (monitor gate); `694c49776e2a32f24822ecc66b7f531b9fee266d` (unit tests).
+- Tes: CI untuk commit baru belum selesai saat catatan ini ditulis. Hasil live check sebelumnya sukses pada versi monitor lama; monitor yang diperketat perlu dijalankan ulang setelah CI.
+- Security: ditemukan Gitleaks false positive di PR #84 pada fixture `test/memory-store.test.js:31` yang berisi string contoh `OPENAI_API_KEY=`; file tersebut berada di branch PR, bukan main. Belum ada bukti credential nyata bocor. Divisi 07 perlu mengganti fixture menjadi placeholder sintetis yang tidak menyerupai secret, lalu rerun scan.
+- Batasan: uji live membuktikan endpoint dan provider dapat diakses pada saat pemeriksaan, tetapi belum membuktikan persistensi melewati restart proses. Uji restart yang aman masih diperlukan; jangan menambahkan endpoint publik untuk memaksa restart.
+- NEXT TASK: tunggu CI pada dua commit monitor; rerun Hostless live monitor dengan gate baru; buat uji adapter Supabase mocked untuk read/upsert/hydration; rancang uji persistence-after-restart tanpa mengganggu layanan Live.
+
+
+## 85. Uji adapter Supabase dan gate live — 24 November 2026 (Asia/Jakarta)
+
+- Perluasan monitor pada `scripts/hostless-live-check.js` dan test gate di `test/hostless-live-check.test.js` telah melewati GitHub Actions pada commit `1a931a889a17d2b8684327a86ab18e42e3cd0342`: RADAR AI tests SUCCESS, security scans SUCCESS, Hostless deployment monitor SUCCESS.
+- Monitor terbaru menampilkan semua lima gate bernilai true: storage, snapshot, news, Binance Futures, dan DEX Screener. LIVE readiness HTTP 200, status ready, storage ok.
+- Menambahkan uji adapter Supabase di `test/radar.test.js`: simulasi REST upsert lalu load untuk membuktikan payload dan timestamp dapat dipulihkan; uji HTTP 503 harus dipropagasi sebagai error dan tidak diam-diam mengosongkan state.
+- Commit pengujian Supabase: `aefd5a0a4ed63e8d3956856c5266ed86dfb0c204`; perbaikan assertion metode GET: `271298355701603054de9803bb07e401d36d82b5`.
+- Status CI untuk commit `27129835` masih berjalan saat catatan ini ditulis. Jangan menganggap tes adapter sudah lulus sampai run selesai.
+- Pengujian ini memakai mock fetch; ini bukan bukti bahwa restart proses Hostless sudah diuji. Persistensi lintas restart live masih belum dibuktikan secara langsung.
+- NEXT TASK: pastikan CI commit `27129835` lulus; jika lulus, rancang verifikasi restart yang tidak mengganggu production (mis. deployment/restart terkontrol oleh pemilik atau uji cold-start di environment staging). Setelah itu lanjut audit dashboard data freshness dan Exchange Hub read-only.
+
+
+## 86. Registry pengadaan dan shortlist makro — 24 November 2026 (Asia/Jakarta)
+
+- Membuat docs/procurement-tool-registry-2026-11-24.md untuk registry deduplication dan shortlist provider yang sudah dicek dari dokumentasi/terms resmi.
+- Kandidat paling layak: U.S. Treasury Fiscal Data (tanpa key/akun, gratis, terms memperbolehkan penggunaan komersial), World Bank Indicators API v2 (tanpa key, CC BY 4.0 default tetapi wajib cek lisensi tiap dataset), ECB SDMX (gratis dengan atribusi dan larangan modifikasi statistik/metadata), OECD Data Explorer (gratis; limit 60 downloads/hour; metadata pihak ketiga wajib diperiksa), dan GDELT Project (dataset gratis untuk penggunaan komersial; citation/link wajib; throttle konservatif).
+- Klarifikasi compliance: GDELT Project dan GDELT Cloud adalah layanan berbeda. GDELT Cloud Free hanya untuk personal evaluation dan tidak layak untuk produksi RADAR; jangan tertukar dengan dataset/API GDELT Project.
+- Existing integrations dicatat agar tidak diduplikasi: Binance Futures, CoinGecko/GeckoTerminal, DeFiLlama, DEX Screener, GoPlus, Solscan, RSS.
+- Tidak ada provider baru yang dipasang atau dipanggil ke production. Registry ini merupakan procurement/research handoff untuk Divisi 04/03/01/05.
+- Sumber utama: Treasury API docs + terms; World Bank API v2 + public license; OECD API + 60/hour best practices + terms; ECB SDMX + reuse policy; GDELT Project terms/data docs; GDELT Cloud acceptable-use terms. URL lengkap disimpan di dokumen registry.
+- Commit registry: 4b98d39e28b12d26395c0b906d9bf1d73b5610fb.
+- NEXT TASK: setelah CI terbaru selesai, Divisi 04 memilih seri Treasury/World Bank/ECB/OECD dan membuat adapter terisolasi; Divisi 05 QA; Divisi 01 compliance review. Divisi 08 lanjutkan riset ToS/kuota sumber on-chain dan exchange sebelum perluasan.
+
+
+## 87. Review hak penggunaan API Solana/exchange — 24 November 2026
+
+- Registry Divisi 08 diperbarui dengan review Jupiter Tokens API v2, Bybit public API, dan Hyperliquid.
+- Jupiter Tokens API secara teknis sangat bernilai: token verification, Organic Score, holder/liquidity, mint/freeze authority, top-holder concentration, serta statistik transaksi multi-timeframe. Dokumentasi teknis menyatakan keyless 0.5 RPS dan free key 1 RPS. Namun SDK & API License Agreement menyebut fee-bearing license dan biaya dapat diberitahukan melalui portal; scope perjanjian terhadap Tokens API belum jelas. Keputusan: HOLD; jangan pakai API/key untuk production sampai ada konfirmasi tertulis tentang $0 dan hak display/internal/commercial.
+- Bybit API Terms melarang repackaging/resale, commercial exploitation, dan penggunaan untuk mereplikasi/bersaing dengan layanan Bybit. Keputusan: REJECT untuk analytics production RADAR tanpa izin tertulis.
+- Hyperliquid API docs tersedia, tetapi hak komersial/redistribusi dan batas rate belum dikonfirmasi secara memadai. Keputusan: HOLD.
+- Tidak ada panggilan live, pendaftaran, atau key creation yang dilakukan untuk kandidat ini.
+- Sumber dan detail tercatat di docs/procurement-tool-registry-2026-11-24.md.
+- Commit update registry: f8f60c2b24bd5fe41d49b9312bd7a8088a462510.
+- NEXT TASK: lanjutkan evaluasi rights/quota untuk Solscan (actual plan/CU), CoinGecko Demo, GeckoTerminal, DeFiLlama, GoPlus, Binance public market data, dan GDELT Project; Divisi 04/03 memilih kandidat makro dari section 86.
+
+## 85. DIVISI 06 — TRANSACTIONAL AGENT QUEUE OPERATIONS V1 (24 NOVEMBER 2026)
+
+- Branch `feat/agent-platform-queue-operations-v1` is a clean-main implementation candidate. It ports the audited Agent Platform schema-only foundation from PR #34 and extends it with transactional queue functions.
+- Adds owner-only PostgreSQL operations for idempotent enqueue, atomic `FOR UPDATE SKIP LOCKED` claim, per-agent concurrency=1 locking, lease-token fencing, heartbeat, completion, bounded retry/dead-letter, expired lease recovery, dependency cycle prevention and dependency completion gating.
+- Adds owner approval requests/resolution and a global pause/kill switch. Platform control defaults to `paused=true` and `kill_switch=true`; no worker can dispatch by default.
+- Queue functions are SECURITY DEFINER with fixed search_path; EXECUTE is revoked from PUBLIC, anon, authenticated, service_role and observer runtime. App roles receive no task queue, dependency, approval or control-table access. This is deliberately not a deployed worker runtime.
+- Task updates and audit events occur in the same database transaction. Audit remains append-only. No Redis, vector DB, paid service or new runtime dependency.
+- CI applies both migrations and runs SQL smoke tests on disposable PostgreSQL 16. Exact-head CI pending.
+- No production DB migration, Hostless config, worker credentials, service-role permission, scheduler, worker process, API route, deployment or trading capability activated. Rp0 remains.
+- NEXT: exact-head npm/PostgreSQL/security validation; independent Divisi 01 security and Divisi 05 QA review; then build a trusted actor-bound gateway and durable scheduler/worker. Do not grant function execution or activate workers until identity and recovery controls are reviewed.

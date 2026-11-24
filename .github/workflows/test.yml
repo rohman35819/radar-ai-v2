@@ -9,12 +9,36 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: radar_test
+          POSTGRES_USER: radar_test
+          POSTGRES_PASSWORD: radar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U radar_test -d radar_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
       - run: npm test
+      - name: Prepare disposable PostgreSQL roles
+        run: docker exec ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test -c "CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN;"
+      - name: Apply Agent Platform schema migration
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < db/migrations/001_agent_platform.sql
+      - name: Verify Agent Platform schema and least-privilege observer
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < db/tests/001_agent_platform_smoke.sql
+      - name: Apply transactional queue operations migration
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < db/migrations/002_queue_operations.sql
+      - name: Verify queue, lease, retry, approval and kill-switch semantics
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < db/tests/002_queue_operations_smoke.sql
       - name: Hostless LIVE readiness and News probe (diagnostic only)
         if: github.head_ref == 'ops/hostless-live-check'
         run: npm run hostless-check
