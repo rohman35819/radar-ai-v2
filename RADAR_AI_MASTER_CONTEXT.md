@@ -2822,3 +2822,14 @@ Pada setiap siklus dua jam, discovery mencakup:
 - Sumber dan detail tercatat di docs/procurement-tool-registry-2026-11-24.md.
 - Commit update registry: f8f60c2b24bd5fe41d49b9312bd7a8088a462510.
 - NEXT TASK: lanjutkan evaluasi rights/quota untuk Solscan (actual plan/CU), CoinGecko Demo, GeckoTerminal, DeFiLlama, GoPlus, Binance public market data, dan GDELT Project; Divisi 04/03 memilih kandidat makro dari section 86.
+
+## 88. DIVISI 07 — PROVENANCE-FIRST MEMORY STORE V1 (24 NOVEMBER 2026)
+
+- Implementation branch `feat/division-07-memory-store-v3`, rebased directly on latest main `a4dcdc3a13325e1b0d63a2a82e8685fa6c6f45da`.
+- Adds a proposal-only Supabase/PostgREST adapter and PostgreSQL migration for `radar_memory_records`; durable records require source reference + exact source revision, scope, sensitivity, actor and retention date.
+- Retrieval applies scope and approved-status filters in the database before full-text search; default access excludes confidential records. Proposal listing is scoped and excludes confidential items.
+- RLS enabled; anon/authenticated receive no table privileges. Backend service role receives SELECT/INSERT only; UPDATE/DELETE/TRUNCATE are revoked. Trigger prevents direct insertion of reviewed/approved records. No approval API yet.
+- Secret-like content is rejected; upstream error bodies are not returned. No public API route or frontend exposure is added.
+- Unit tests and PostgreSQL 16 migration/privilege smoke are included in GitHub Actions. Previous clean-history exact-head CI passed 163/163 tests, PostgreSQL smoke, Gitleaks and Trivy; this latest-main rebased head requires a fresh exact-head run.
+- No production Supabase migration, Hostless setting, secret, paid resource or deployment has been changed. Memory is not active until a BOS-approved DB migration and server-side service credentials are configured.
+- NEXT: exact-head CI/security; independent Divisi 01/05 review; trusted actor-bound approval writer and memory API integration. Do not activate memory or workers until Agent Platform identity/queue gates pass.
