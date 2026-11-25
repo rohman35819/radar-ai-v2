@@ -3484,3 +3484,24 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ### NEXT TASK
 - Complete exact-head CI/security for PR #133; review and merge to develop only if all gates pass.
 - Then implement a separately testable bounded one-shot ingestion orchestrator over the typed store with deterministic failure/checkpoint semantics and mock provider/store tests. Keep it disabled and unconnected to production runtime until explicit operational readiness review.
+
+---
+
+## 141. BOUNDED PARALLEL INGESTION REFRESH — 26 NOVEMBER 2026
+
+### Implementasi
+- Branch `exp/bounded-ingestion-concurrency-v2` dibuat ulang dari latest develop setelah branch percobaan pertama diverged; PR #134 ditutup sebagai superseded agar tidak menggabungkan basis lama.
+- `lib/ingest.js` menambahkan `INGEST_CONCURRENCY` (default 3, minimum 1, hard cap 3) dan `runBounded()` dengan jumlah worker tetap serta hasil dalam urutan input.
+- Fetch CoinGecko utama dan exchange yang bergantung pada token tetap berurutan. Setelah itu DefiLlama, News, Unlocks dan On-chain (hanya jika due) berjalan sebagai task independen dengan bounded concurrency.
+- Error isolation per provider dipertahankan: kegagalan satu task tidak menggagalkan task lain dan data lama tetap dipertahankan sesuai perilaku existing.
+- `test/ingest-concurrency.test.js` memverifikasi max concurrency, stable result ordering, overlap aktual pada refresh, health provider dan clamp konfigurasi.
+
+### QA dan status
+- Exact-head `b1ec37c302f4579312193e4bd3f05f352712f5ec`: push run `45700925243` sukses; PR test run `45700979865` sukses (npm **226/226**, strict TypeScript, Python **5/5**, seluruh disposable PostgreSQL migrations/smoke tests); PR security run `45700979903` sukses (Gitleaks + Trivy).
+- PR #135 masih draft dan perlu final mergeability check setelah dokumentasi diperbarui; belum di-merge.
+- Tidak ada provider fetch nyata dalam test; semua sumber dimock. Tidak ada retry baru, kuota berbayar, perubahan database, secrets, Hostless config atau LIVE deployment.
+- Belum ada benchmark end-to-end terhadap provider LIVE; concurrency overlap teruji, tetapi persentase pengurangan waktu refresh belum diukur.
+
+### NEXT TASK
+- Selesaikan exact-head rerun setelah update dokumentasi, lalu merge PR #135 ke develop jika seluruh checks lulus.
+- Fase berikutnya: buat ingestion worker terpisah yang memakai durable queue/checkpoint dan adapter market-data OFF-by-default; lakukan failure/restart/rate-limit tests sebelum integrasi apa pun ke runtime production.
