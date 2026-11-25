@@ -3326,3 +3326,53 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Smoke HTTP lokal (port 38714, DATA_DIR sementara): `/`, `/app.js`, `/top5.js`, `/style.css`, `/api/health` → 200; marker fitur ditemukan pada `/app.js` yang disajikan.
 - Batasan: rencana trading adalah perhitungan mekanis dari volatilitas teramati, bukan prediksi; tidak ada order/transfer/withdrawal; profit tidak dijamin. QA browser desktop/mobile dan Hostless Build/LIVE belum diverifikasi.
 - NEXT TASK: buat PR ke `develop`, verifikasi exact-head test/security/branch-source, QA modal pada browser nyata, lalu promosi `develop`→`main` terpisah.
+
+---
+
+## 134. RILIS v2.3.0 KE MAIN — 26 NOVEMBER 2026
+
+- PR #116 (`feat/top5-action-center` → `develop`) dibuat dan **di-merge** setelah gate hijau: `merge_commit_sha` `96181f901a242b7912c1a6d45d08d42b75694324`. CI head `7e37968a01350a50edba9e9cae0b5924da829b25`: run `45672541371` (`test`, `Branch source policy` success) dan `45672541742` (`Gitleaks`, `Trivy` success); `mergeable=true`, `mergeable_state=clean`.
+- PR #117 (`develop` → `main`) dibuat dan **di-merge** setelah gate hijau: `merge_commit_sha` `1ed78c50006197709b1ace20170641dc29ad46de`. CI head `96181f901a242b7912c1a6d45d08d42b75694324`: run `45672767788` (`test`, `Branch source policy` success) dan `45672767821` (`Gitleaks`, `Trivy` success); `mergeable=true`, `mergeable_state=clean`.
+- Tag immutable `v2.3.0` dibuat dan di-push pada commit rilis `1ed78c5...` (SemVer; tidak ada tag sebelumnya di repository).
+- Verifikasi lokal pada checkout `origin/main`: `public/top5.js` ada, menu `action` dan `intel` ada di `index.html`, `npm test` **207 pass, 0 fail, 0 skipped**.
+- Perubahan yang ikut rilis: Top 5 Action Center + Radar Intelligence (§133), Top Movers dual chart (PR #114), cloud worker hardening, sidebar drawer fix, dan perbaikan dokumentasi terkait. Tidak ada migrasi database baru pada rilis ini; rollback = revert merge PR #117 pada `main` + redeploy commit sebelumnya.
+- Status Hostless pada saat penulisan belum diverifikasi; **superseded** oleh §135 setelah BOS melaporkan Live `1ed78c5` dan verifikasi publik berhasil.
+- NEXT TASK: verifikasi Hostless build/deploy SHA dan QA browser desktop/mobile pada menu Top 5 Action Center, Radar Intelligence, dan modal Trading Analysis.
+
+## 135. VERIFIKASI LIVE v2.3.0 — 26 NOVEMBER 2026
+
+- BOS melaporkan Hostless menunjukkan **Live `1ed78c5`** (build `2fab35ee`, git push ~11 menit lalu oleh rohman35819),yaitu commit rilis `v2.3.0`.
+- Verifikasi publik mandiri dengan cache-buster: `https://radar-ai-v2.hostless.app/` → HTTP 200; `top5.js` → **HTTP 200**, ukuran 9.582 byte, isi dimulai dengan modul `public/top5.js`; HTML memuat `data-t="action"`, `data-t="intel"`, dan tag `<script src="/top5.js">`.
+- Ini adalah bukti LIVE yang terpisah dari CI/GitHub merge: commit di GitHub → Hostless build → LIVE sudah dikonfirmasi untuk SHA yang sama.
+- Batasan: QA klik/visual pada browser desktop dan ponsel belum dilakukan; verifikasi ini hanya HTTP/HTML/asset, bukan render interaktif.
+- NEXT TASK: QA browser nyata untuk Top 5 Action Center, Radar Intelligence, dan modal Trading Analysis; pastikan `NOT ENOUGH DATA` tampil ketika histori harga tidak cukup.
+
+---
+
+## 136. INVESTIGASI MIME ROUTING TOP 5 / RADAR INTELLIGENCE — 26 NOVEMBER 2026
+
+### Akar masalah yang terbukti
+- BOS melaporkan menu **Top 5 Action Center** dan **Radar Intelligence** membuka halaman **System Health**, termasuk pada mode samaran.
+- Reproduksi teknis di LIVE:
+  - `GET /app.js` **tanpa cache-buster** → HTTP 200, ukuran **44.322 byte**, `grep renderAction` = **0**. Header: `cf-cache-status: HIT`, `age: 3885`, `cache-control: max-age=14400`, `last-modified: 2026-11-25T18:16:21 GMT`.
+  - `GET /app.js?v=<acak>` → HTTP 200, ukuran **53.400 byte**, `grep renderAction` = **2**.
+  - `GET /index.html?v=<acak>` memuat menu `data-t="action"`, `data-t="intel"`, dan `<script src="/top5.js">`.
+- Artinya: HTML baru (menu baru) dipasangkan dengan `app.js` lama yang tidak memiliki `renderAction()`/`renderIntel()` dan dispatcher-nya jatuh ke `else renderSystem()`. Cache-first Service Worker di `main` (`radar-shell-v13`) memperparah, tetapi **bukan satu-satunya penyebab**: Cloudflare edge cache menyimpan `app.js` lama selama 4 jam, sehingga mode samaran dengan origin yang sama tetap menerima aset lama.
+- Kode `main` sendiri **tidak salah**: `public/app.js` baris 468 memuat `else if(tab==='action')renderAction();else if(tab==='intel')renderIntel();else renderSystem();` dan `index.html` memuat menu yang benar. Masalah ini murni ketidaksinkronan aset yang dikirim, bukan identifier/event listener yang salah.
+
+### Hubungan dengan pekerjaan QA
+- QA (commit `09b191b`, PR #121) sudah mengubah SW menjadi network-first dengan fallback dan menaikkan shell ke v14 — ini **benar dan dipertahankan**, tetapi **tidak cukup** karena jaringan itu sendiri melewati Cloudflare cache HIT. Tidak ada duplikasi perbaikan; perbaikan ini melengkapi QA.
+
+### Perbaikan
+- `public/index.html`: aset dashboard diberi versi eksplisit `/style.css?v=v2.3.1`, `/top5.js?v=v2.3.1`, `/app.js?v=v2.3.1`. URL baru tidak ada di edge cache lama sehingga CDN diharuskan `MISS` dan mengambil aset dari origin.
+- `public/sw.js`: shell dinaikkan v14 → **v15**, konstanta `ASSET_VERSION='v2.3.1'`, dan entri precache dashboard memakai URL berversi yang sama dengan HTML. Strategi network-first QA tetap dipertahankan.
+- Regression test: `test/frontend-ui.test.js` menolak tag skrip tak berversi dan memeriksa `ASSET_VERSION`/v15 pada SW; `test/service-worker.test.js` fixture dan assertion diperbarui ke v15 + aset berversi.
+
+### Pengujian
+- `node --check public/sw.js` lulus; `npm test` **211 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
+- Verifikasi LIVE sebelum perbaikan: `app.js` tanpa cache-buster = 44.322 byte / 0 marker; dengan cache-buster = 53.400 byte / 2 marker (bukti di atas).
+
+### Status dan NEXT TASK
+- Branch: `fix/cdn-cache-busted-assets` dari `develop` `09b191b`; commit dan PR dicatat setelah push.
+- Perlu rilis `develop` → `main` agar perbaikan sampai ke LIVE; setelah deploy, verifikasi ulang `GET /app.js` (tanpa cache-buster) mengandung `renderAction`, lalu klik kedua menu pada browser nyata.
+- Hostless Build/LIVE untuk perbaikan ini **belum diverifikasi** pada saat penulisan.

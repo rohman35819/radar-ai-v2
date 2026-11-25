@@ -1,7 +1,9 @@
 'use strict';
-const SHELL = 'radar-shell-v13';
+const SHELL = 'radar-shell-v15';
+// Versi aset dashboard mengikat HTML ke JS/CSS yang benar bila CDN edge cache menyimpan respons lama.
+const ASSET_VERSION = 'v2.3.1';
 const FILES = [
-  '/', '/index.html', '/app.js', '/top5.js', '/style.css', '/market.html', '/market.js', '/market.css',
+  '/', '/index.html?v=' + ASSET_VERSION, '/app.js?v=' + ASSET_VERSION, '/top5.js?v=' + ASSET_VERSION, '/style.css?v=' + ASSET_VERSION, '/market.html', '/market.js', '/market.css',
   '/trading.html', '/trading.js', '/trading.css',
   '/command.html', '/command.css', '/command.js', '/membership.html', '/membership.js', '/membership.css',
   '/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png'
@@ -25,7 +27,18 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(event.request, { cache: 'no-store' }));
     return;
   }
+  // Keep HTML and app assets in sync with the deployed release. A cache-first
+  // response can pair a new index.html with an old app.js, sending new tabs
+  // to the default System Health renderer. Use network-first with offline fallback.
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(event.request).then((response) => {
+      if (!response || !response.ok) return response;
+      return caches.open(SHELL)
+        .then((cache) => cache.put(event.request, response.clone()).then(() => response));
+    }).catch(async (error) => {
+      const cached = await caches.match(event.request);
+      if (cached) return cached;
+      throw error;
+    })
   );
 });
