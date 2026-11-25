@@ -47,3 +47,5 @@
 4. After release, run a controlled manual worker test; later design a least-privilege non-production adapter to the existing PostgreSQL queue before any production activation.
 
 - Top Movers cards now expose "Grafik RADAR" (internal chart by validated CoinGecko id via existing chart endpoint) and "Grafik Eksternal" (allowlisted DEX Screener when contract+chain valid, otherwise CoinGecko by id). Symbol collisions cannot mix assets. Branch `feat/top-movers-dual-chart`; 202/202 tests pass. PR creation still blocked by PAT scope; browser QA pending.
+
+- PR #114 (Top Movers chart links on Market Intelligence page) merged to develop at `2673606` after exact-head test, branch-source, Gitleaks and Trivy gates passed. The dashboard-side implementation remains on `feat/top-movers-dual-chart` (head `8a6c1ea`) and still needs a PR; the available PAT still cannot create PRs (`POST /pulls` 403).
