@@ -997,7 +997,6 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Tombol koneksi setelah request selesai memakai label berbeda dari label awal; tombol refresh akun tidak tersedia. Token dapat berada di variabel memori, tetapi tidak tersedia kontrol eksplisit untuk menghapusnya dari sesi halaman.
 - Request akun/ticker belum memiliki batas waktu eksplisit di browser. Pergantian exchange ketika request akun masih berjalan berpotensi membuat hasil lama mengubah status UI exchange yang baru dipilih.
 - Pair ticker belum divalidasi di browser sebelum request (backend tetap melakukan validasi).
-
 ### 28.2 Perubahan implementasi
 - `public/trading.html`: kontrol tampil/sembunyikan token, hapus token dan tampilan saldo dari halaman, tombol refresh akun yang baru aktif setelah koneksi berhasil, serta status akses yang lebih jelas.
 - `public/trading.css`: penyegaran visual khusus Exchange Hub; memperjelas hierarki header/hero, kartu exchange, panel koneksi, statistik akun, tabel, kalkulator, safety panel, dan roadmap. Breakpoint tablet/mobile diperbaiki, termasuk layout switcher dua kolom, kontrol sentuh penuh, safe spacing, dan fokus keyboard.
@@ -1998,7 +1997,6 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - PR #48 is open, Draft, and GitHub reports mergeable; it is not merged. No Hostless configuration or deployment was changed.
 - Hostless Build/LIVE, real CoinGecko provider responses using the deployed Demo key, and browser/device visual QA remain unverified. Independent Divisi 01/05 review is still required.
 - Follow-on P2 items remain outside this PR: manual portfolio tracking, strategy backtesting, and On-chain DEX/Early Gem dashboard integration. Early Gem remains separate Draft PR #46.
-
 ### 61.12 Quota protection refinement
 - Feed yang gagal tanpa data cache kini mendapat negative-cache cooldown 5 menit. Tujuan: polling UI tidak mengulang request upstream setiap 5 menit ketika CoinGecko sedang rate-limit/down atau key ditolak.
 - Added test for failed-feed cooldown/retry-after-window; test suite expected to increase by one.
@@ -2997,7 +2995,6 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 8. **Kapan meminta BOS.** Hanya untuk keputusan Owner (produksi, credential/permission, biaya berbayar, data destruktif, live trading/financial action), atau identitas reviewer manusia yang benar-benar wajib dan tidak dapat diverifikasi.
 
 **Rekonsiliasi:** aturan ini memperjelas kebijakan otonomi dan temporary QA override. Tidak menghapus quality gate, branch protection, WIP limit, atau larangan produksi. Tidak memberi wewenang membuat identitas palsu, mengubah izin, mengeluarkan biaya, atau menjalankan aksi finansial.
-
 **NEXT TASK:** terapkan pembagian peran secara mandiri pada antrean PR dan lakukan triase sesuai batas WIP; lanjutkan hanya PR berbasis main terbaru yang lolos exact-head checks.
 
 
@@ -3291,3 +3288,26 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Branch `fix/sidebar-drawer-scroll` digabung lagi dengan `origin/develop` `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`. Konflik hanya pada dokumen master; bagian sidebar dinomorkan ulang menjadi §114 agar tidak bentrok dengan §113 (Grok charter). Tidak ada perubahan pada `public/style.css` atau `test/frontend-ui.test.js`.
 - Gate CI telah lolos pada HEAD lama `b3161df` (test, Branch source policy, security scans), tetapi **tidak boleh dipakai untuk HEAD baru**. CI exact-head harus dijalankan ulang setelah push ini sebelum merge dipertimbangkan.
 - Hostless Build/LIVE dan QA perangkat masih belum diverifikasi. Tidak ada kredensial, exchange, trading, atau konfigurasi produksi yang diubah.
+
+
+---
+
+## ADDENDUM — TOP MOVERS CHART NAVIGATION — 25 NOVEMBER 2026
+
+### Implementasi
+- `public/market.js`: setiap aset pada Top Gainers dan Top Losers menampilkan tombol **Grafik RADAR** dan **Grafik eksternal**.
+- Tombol internal memilih aset berdasarkan CoinGecko `coin.id` (bukan simbol ticker), mengatur chart 7 hari / harga, lalu menggulir ke Historical Market Chart.
+- Tautan eksternal menuju halaman aset CoinGecko berdasarkan ID aset yang tervalidasi; halaman tersebut menyediakan grafik dan data pasar eksternal. Link dibuka di tab baru dengan `noopener noreferrer`.
+- Ringkasan mover menampilkan harga, market cap, volume 24 jam, dan perubahan 24 jam.
+- `public/market.html` memberi anchor `#historical-chart`; `public/market.css` menambahkan styling tombol dan layout mover.
+
+### Batasan dan keamanan
+- Feed Top 100 saat ini tidak menyediakan chain + contract address yang dapat diverifikasi untuk seluruh mover. Karena itu link eksternal menggunakan CoinGecko ID, bukan menebak pair/URL DEX Screener dari ticker.
+- Tidak ada API key, secret, dependency, atau layanan berbayar baru.
+- Perubahan dibuat pada branch `feat/top-movers-dual-chart-links-develop` dan PR menuju `develop`.
+
+### Verifikasi dan NEXT TASK
+- Kode telah dikomit di branch kerja; PR dan CI masih perlu dibuat/diverifikasi.
+- `npm test` belum dinyatakan lulus dan QA browser belum dilakukan.
+- Hostless Build dan LIVE belum diverifikasi; perubahan belum disebut deployed.
+- NEXT: buat PR ke `develop`, tunggu CI exact-head, review diff, uji tombol internal/eksternal, lalu koordinasikan promosi melalui PR develop ke main.
