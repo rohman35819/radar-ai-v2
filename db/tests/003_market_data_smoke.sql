@@ -83,7 +83,7 @@ BEGIN
     RAISE EXCEPTION 'Invalid payload hash unexpectedly accepted';
   EXCEPTION WHEN check_violation THEN NULL;
   END;
-  IF (SELECT count(*) FROM pg_inherits i JOIN pg_class c ON c.oid=i.inhrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='radar_market') <> 2 THEN
+  IF (SELECT count(*) FROM pg_inherits i JOIN pg_class c ON c.oid=i.inhrelid JOIN pg_class parent ON parent.oid=i.inhparent JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='radar_market' AND parent.relname='market_candles' AND c.relkind='r') <> 2 THEN
     RAISE EXCEPTION 'Monthly candle partitions were not created';
   END IF;
 END $$;
