@@ -1,6 +1,6 @@
 # Instructions for AI contributors
 
-Before doing any work in this repository, read `RADAR_AI_MASTER_CONTEXT.md` completely.
+Before doing any work in this repository, read `RADAR_AI_SHARED_MEMORY.md` first, then read this `AGENTS.md` and `RADAR_AI_MASTER_CONTEXT.md` completely. The shared memory is the compact cross-agent handoff; the master context is technical project documentation, not a conversation archive.
 
 Treat it as the project handoff and operating guide. Then inspect the latest `main` commit and the actual files relevant to the task. The master document can be stale; verify before acting.
 
@@ -187,3 +187,51 @@ BOS authorizes AI contributors to propose and adopt additional repository engine
 
 **Current implementation caveat:** GitHub currently reports `main` as unprotected (`protected=false`); the available repository connection cannot read/write the branch-protection administration endpoint (403). Therefore the policy is defined here, but the actual GitHub lock/required-status-check enforcement is NOT YET ACTIVE. Do not claim `main` is protected until a repository administrator configures and verifies it in GitHub Settings. See the master-context next action.
 
+
+
+## BOS DIRECTIVE — AUTONOMOUS SAFE EXECUTION & MERGE AUTHORITY (24 November 2026)
+
+**Status: ACTIVE; supersedes older wording that requires BOS approval for every routine change or routine merge.** The objective is to prevent avoidable idle time and PR accumulation while retaining objective safety controls.
+
+1. **Default to action.** AI contributors may independently plan, implement, test, self-review, document, open/update PRs, resolve routine conflicts, and merge routine low/medium-risk changes when all applicable gates pass. Do not ask BOS to approve ordinary engineering decisions, routine feature work, bug fixes, refactors, tests, documentation, free-tool research, or routine merges.
+2. **Merge without waiting.** A routine PR may be merged by its responsible AI contributor as soon as it is non-draft, mergeable, based on the latest target branch, its exact current head SHA has all applicable required test/security/integration checks passing, and the diff/self-review show no unresolved material risk. No human approval is required by default for routine low/medium-risk changes. Do not leave a completed safe PR idle merely to wait for BOS or an internal division.
+3. **PR-first, not direct-push-first.** Keep PR-based integration and required checks. AI may merge through the normal GitHub PR mechanism; this authority does not mean bypassing required checks or branch rules. Direct pushes to protected branches remain disabled where rulesets enforce that policy.
+4. **Main and develop.** AI may merge routine, validated changes into develop. AI may also merge a routine release PR from develop to main after exact-head release checks, compatibility and rollback checks pass. A routine hotfix PR may merge when focused checks and rollback are satisfactory. No separate BOS approval is required merely because the target is main.
+5. **Keep safeguards, not permission theater.** Required automated test/security checks, exact-head validation, latest-base compatibility, self-review, secret scanning, relevant integration/database smoke tests, and a documented recovery path remain mandatory. Missing, stale, failed, skipped-required, or inconclusive checks are not passes. Never fabricate a green result or bypass a failed gate to clear the queue.
+6. **Escalate only material high-risk actions.** Pause and obtain the appropriate explicit authorization only for: spending money or activating paid services; exposing, rotating, or changing access to production secrets/credentials; changing repository/admin permissions or weakening/disabling security controls; destructive or irreversible production data operations; production database migrations with material data-loss/compatibility risk; enabling production financial execution, live trading, withdrawals, or moving user funds; and other irreversible production actions whose impact cannot be bounded or rolled back safely. Prepare code, tests, documentation and a safe proposal while awaiting that specific authorization; do not idle unrelated work.
+7. **Risk-based autonomy.** Low/medium-risk changes are autonomous by default. High-risk changes may proceed autonomously in isolated branches and disposable test environments, but production activation or irreversible execution remains gated as above. If a high-risk code change can be merged safely without activating it and all objective controls pass, document the disabled/proposal-only state and merge only when doing so cannot trigger unsafe production behavior.
+8. **PR queue discipline.** The 3-PR WIP limit is a planning limit, not a reason to delay urgent or materially valuable work. Prefer completing/merging safe ready PRs promptly; reuse an existing PR when scope matches. Emergency exceptions remain documented and do not waive safety gates.
+9. **No false background-autonomy claims.** This policy grants decision autonomy to an active contributor/runtime; it does not create continuous workers. Claim offline/always-on work only after scheduler, durable queue/state, workers, audit logs, permissions, quotas, kill switch and operational tests are implemented.
+10. **Reporting.** Record the action, rationale, risk classification, exact head/merge SHA, test/security evidence, rollback/recovery path, and any remaining blocker in the master context. Clearly separate merged code, deployment, and verified LIVE behavior.
+
+**Conflict resolution:** Any older sentence requiring BOS approval for every routine PR, routine merge, ordinary feature, or low-risk engineering decision is superseded by this section. Existing prohibitions on secrets exposure, paid spend, permission/security weakening, destructive production actions, live financial/trading execution and irreversible production actions remain in force.
+
+
+## Branch source policy clarification (24 November 2026)
+
+The develop integration lane accepts not only feature/fix/validated experiment branches, but also scoped maintenance branches: docs/*, chore/*, ci/*, security/*, test/*, and refactor/*. These categories are necessary for safe repository governance, documentation, workflow, testing and maintenance changes. The main source restriction remains develop or hotfix/* only. The workflow check is the technical enforcement; this list must stay synchronized with .github/workflows/test.yml.
+
+
+## Shared AI memory — mandatory for every agent (BOS directive — 25 November 2026)
+
+**One shared memory, no conversation archive.** `RADAR_AI_SHARED_MEMORY.md` is the single compact, cross-agent handoff for ChatGPT, Groq/OpenCode, and every future AI contributor.
+
+1. At the start of every new chat/session/task, read `RADAR_AI_SHARED_MEMORY.md` first, then this file and the relevant sections of `RADAR_AI_MASTER_CONTEXT.md`. Verify live GitHub state, code, PRs, CI and deployment before acting; memory is a handoff, not live telemetry.
+2. Store only distilled, durable project context in the shared memory: stable product/architecture facts, decisions and their rationale, approved working preferences, current verified status, blockers, and the next actionable task.
+3. **Never store conversations with BOS or any other person, raw transcripts, chat exports, routine prompts/responses, thought/reasoning logs, or message-by-message histories** in the shared memory, master context, README, issues, PR descriptions, commit messages, or other repository files. Do not turn GitHub into a chat archive.
+4. Do not copy the same memory into multiple files. The shared memory is the cross-agent handoff; the master context contains durable technical documentation, architecture, decisions, test evidence and change records only—not dialogue.
+5. Update memory only when a durable fact changes or a handoff materially changes. Rewrite/summarize stale status in place; do not append every task or conversation. Keep it compact (target under 12 KB). Put detailed technical specifications in a focused design document only when needed.
+6. Never store credentials, API keys, tokens, passwords, private personal data, sensitive account information, or unnecessary identifying information.
+7. Each AI may use its own private/native memory if the product supports it, but it is optional and never replaces the shared file. All agents must leave the shared memory understandable to a newly joining AI without requiring access to previous chats.
+8. If an agent cannot access the shared file or current repository, it must state that limitation honestly and request repository access—not ask BOS to retell the project or paste old conversations.
+
+**Completion standard:** after a meaningful task, update the shared memory with only the durable result and next task; do not paste the conversation or a verbose activity diary.
+
+## Grok-specific startup and autonomous engineering charter (25 November 2026)
+
+- The dedicated Grok/xAI operating charter is `GROK.md`. Every Grok conversation or Grok-powered coding session working on RADAR AI V2 must read `RADAR_AI_SHARED_MEMORY.md`, this `AGENTS.md`, `RADAR_AI_MASTER_CONTEXT.md`, and `GROK.md` at startup, then verify live GitHub/CI/source state.
+- Grok must resume the latest valid NEXT TASK, audit risks, research independently, run bounded experiments, implement safe improvements, test, self-review, document durable results, and continue to the next task while its active session/runtime permits.
+- Grok must not stop at recommendations when safe implementation is possible, ask BOS to repeat documented context, invent test/deployment results, or claim work continues while the session is inactive.
+- Follow all existing branch/PR, exact-head CI, security, documentation, cost, and production-safety policies. Grok does not receive authority to enable paid services, expose secrets, change repository permissions, perform destructive production actions, enable live trading/withdrawals, or replace LIVE without the required BOS authorization.
+- This is a repository instruction, not proof that Grok automatically reads GitHub. The Grok client/project must be configured with repository access and a startup instruction to read these files; verify that configuration separately. If Grok cannot access the repository, it must disclose the limitation.
+- Grok is xAI's assistant; Groq is a separate inference provider. Do not confuse their access, credentials, or activation controls.

@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { extractJson, validatePatchPaths, buildPrompt, safeChildEnv, main } = require('../lib/ai/autonomous-agent');
+const { extractJson, validatePatchPaths, buildPrompt, safeChildEnv, buildProviderCandidates, main } = require('../lib/ai/autonomous-agent');
 
 test('accepts only existing allowlisted AI source and test files', () => {
   const tracked = new Set(['lib/ai/workspace.js']);
@@ -93,7 +93,27 @@ test('main stops before provider or source access when an autonomous draft is ou
   assert.equal(gitCalled, false);
 });
 
-test('main skips provider use when no free OpenRouter key is configured', async () => {
+test('Groq autonomous provider is opt-in and OpenRouter fallback is pinned to free routing', () => {
+  assert.deepEqual(buildProviderCandidates({ GROQ_API_KEY: 'groq-key' }), []);
+  assert.deepEqual(buildProviderCandidates({ GROQ_AUTONOMOUS_ENABLED: '1', GROQ_API_KEY: 'groq-key' }), [
+    ['groq', 'groq-key', 'openai/gpt-oss-20b']
+  ]);
+  assert.deepEqual(buildProviderCandidates({
+    GROQ_AUTONOMOUS_ENABLED: '1', GROQ_API_KEY: 'groq-key', GROQ_MODEL: 'openai/gpt-oss-20b',
+    OPENROUTER_API_KEY: 'router-key'
+  }), [
+    ['groq', 'groq-key', 'openai/gpt-oss-20b'],
+    ['openrouter', 'router-key', 'openrouter/free']
+  ]);
+  assert.deepEqual(buildProviderCandidates({ OPENROUTER_API_KEY: 'router-key', OPENROUTER_MODEL: 'paid-model' }), [
+    ['openrouter', 'router-key', 'openrouter/free']
+  ]);
+  assert.throws(() => buildProviderCandidates({
+    GROQ_AUTONOMOUS_ENABLED: '1', GROQ_API_KEY: 'groq-key', GROQ_MODEL: 'invalid model'
+  }), /GROQ_MODEL tidak valid/);
+});
+
+test('main skips provider use when no explicitly enabled provider key is configured', async () => {
   let providerCalled = false;
   const result = await main({
     AUTONOMOUS_AGENT_ENABLED: '1',
@@ -194,5 +214,5 @@ test('failed PR creation attempts to delete the orphaned remote branch', async (
     now: () => new Date('2026-11-24T00:00:00.000Z'),
   }), /PR gagal: permission denied/);
   assert.deepEqual(requests, ['GET', 'POST']);
-  assert.ok(commands.some((command) => command.startsWith('push origin --delete ai-dev/autonomous-')));
+  assert.ok(commands.some((command) => command.startsWith('push origin --delete fix/ai-autonomous-')));
 });

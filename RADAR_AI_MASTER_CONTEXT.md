@@ -997,7 +997,6 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Tombol koneksi setelah request selesai memakai label berbeda dari label awal; tombol refresh akun tidak tersedia. Token dapat berada di variabel memori, tetapi tidak tersedia kontrol eksplisit untuk menghapusnya dari sesi halaman.
 - Request akun/ticker belum memiliki batas waktu eksplisit di browser. Pergantian exchange ketika request akun masih berjalan berpotensi membuat hasil lama mengubah status UI exchange yang baru dipilih.
 - Pair ticker belum divalidasi di browser sebelum request (backend tetap melakukan validasi).
-
 ### 28.2 Perubahan implementasi
 - `public/trading.html`: kontrol tampil/sembunyikan token, hapus token dan tampilan saldo dari halaman, tombol refresh akun yang baru aktif setelah koneksi berhasil, serta status akses yang lebih jelas.
 - `public/trading.css`: penyegaran visual khusus Exchange Hub; memperjelas hierarki header/hero, kartu exchange, panel koneksi, statistik akun, tabel, kalkulator, safety panel, dan roadmap. Breakpoint tablet/mobile diperbaiki, termasuk layout switcher dua kolom, kontrol sentuh penuh, safe spacing, dan fokus keyboard.
@@ -1998,7 +1997,6 @@ Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan si
 - PR #48 is open, Draft, and GitHub reports mergeable; it is not merged. No Hostless configuration or deployment was changed.
 - Hostless Build/LIVE, real CoinGecko provider responses using the deployed Demo key, and browser/device visual QA remain unverified. Independent Divisi 01/05 review is still required.
 - Follow-on P2 items remain outside this PR: manual portfolio tracking, strategy backtesting, and On-chain DEX/Early Gem dashboard integration. Early Gem remains separate Draft PR #46.
-
 ### 61.12 Quota protection refinement
 - Feed yang gagal tanpa data cache kini mendapat negative-cache cooldown 5 menit. Tujuan: polling UI tidak mengulang request upstream setiap 5 menit ketika CoinGecko sedang rate-limit/down atau key ditolak.
 - Added test for failed-feed cooldown/retry-after-window; test suite expected to increase by one.
@@ -2997,7 +2995,6 @@ BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu 
 8. **Kapan meminta BOS.** Hanya untuk keputusan Owner (produksi, credential/permission, biaya berbayar, data destruktif, live trading/financial action), atau identitas reviewer manusia yang benar-benar wajib dan tidak dapat diverifikasi.
 
 **Rekonsiliasi:** aturan ini memperjelas kebijakan otonomi dan temporary QA override. Tidak menghapus quality gate, branch protection, WIP limit, atau larangan produksi. Tidak memberi wewenang membuat identitas palsu, mengubah izin, mengeluarkan biaya, atau menjalankan aksi finansial.
-
 **NEXT TASK:** terapkan pembagian peran secara mandiri pada antrean PR dan lakukan triase sesuai batas WIP; lanjutkan hanya PR berbasis main terbaru yang lolos exact-head checks.
 
 
@@ -3143,3 +3140,189 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - `main` and `develop` both contain the governance policy. The bootstrap is merged; it does not mean multi-agent workers, worktrees, independent AI reviewer, SemVer release automation, deployment rollback or autonomous health rollback are active. Those remain staged implementation tasks.
 
 **NEXT TASK:** configure and verify GitHub branch protection/rulesets for `main` and `develop`; then implement the AI task orchestrator and independent review gate on top of the now-established branch/CI foundation. Separately investigate Hostless deployment metadata/status failure while preserving the successful LIVE probes.
+
+
+## 107. AUTONOMOUS SAFE EXECUTION & MERGE AUTHORITY — BOS DIRECTIVE (24 NOVEMBER 2026)
+
+**Status: ACTIVE; supersedes older blanket-approval wording.** BOS instructs AI contributors not to pause for approval on every routine engineering decision. The default is autonomous action when the change is safe and advances RADAR AI V2.
+
+- AI may independently implement features, fix bugs, improve dashboard/UX, refactor safely, add tests/docs/monitoring, research free tools, create branches/PRs, resolve routine conflicts, and merge validated routine low/medium-risk PRs.
+- Routine PRs do not require BOS or divisional human approval by default. Merge promptly when PR is mergeable, current with target, exact-head applicable tests/security/integration checks pass, self-review is complete, and rollback/recovery is understood. Do not allow completed safe work to accumulate waiting for a human response.
+- Keep PR-first integration and required checks. This is permission to merge through normal PR flow, not permission to bypass failed/missing/stale checks or weaken branch protection.
+- AI may merge routine PRs to develop and routine release PRs from develop to main without separate BOS approval once the relevant exact-head gates, compatibility and rollback checks pass. Routine hotfix PRs follow focused equivalent gates.
+- Escalate only for actual high-impact authorization boundaries: paid spend/service activation; production credential exposure/rotation/access changes; repository/admin permission changes or weakening security controls; destructive/irreversible production data operations; materially risky production DB migrations; live trading, withdrawals, financial execution or movement of user funds; and other irreversible production actions without a safe rollback.
+- Work on isolated code, tests, documentation, safe migrations in disposable environments, and proposals may continue while a gated production action awaits authorization. Do not block unrelated work.
+- Low/medium-risk work is autonomous by default. High-risk work may be developed and tested in isolation; do not activate unsafe production behavior. A code merge that leaves a feature disabled/proposal-only may proceed only if it cannot cause unsafe production side effects and objective checks pass.
+- The 3-PR WIP limit is a planning aid, not a blanket prohibition. Prioritize closing/merging safe ready work and reusing matching PRs.
+- This policy does not create always-on/offline workers. Continuous autonomy requires a verified scheduler, durable queue/state, worker runtime, audit, permission gateway, budget/quota limits, kill switch and operational tests.
+- Record rationale, risk classification, exact SHA, test/security evidence, rollback and deployment/LIVE status. Never claim deployment or LIVE verification from a GitHub merge alone.
+
+**Supersession note:** Older blanket wording that requires BOS approval for every routine change or merge is superseded. Existing hard boundaries for secrets, spending, permission/security changes, destructive production actions and live financial/trading actions remain active.
+
+**Implementation record:** Policy documentation only at this stage. It does not change GitHub Rulesets, grant new repository permissions, or create an always-on agent runtime. BOS is separately configuring GitHub Rulesets; verify actual enforcement before claiming branch protection is active.
+
+**NEXT:** Complete the GitHub Rulesets configuration for main and develop with required test and security checks, then verify the actual status-check names and merge behavior. Continue implementing the task orchestrator so multiple AI contributors can work in isolated branches without overlapping writes.
+
+
+## 108. BRANCH SOURCE POLICY CLARIFICATION (24 NOVEMBER 2026)
+
+- The first branch-source policy allowed only feat/*, fix/* and exp/* into develop. That blocked legitimate documentation/governance PR #104 before test execution completed.
+- Corrected the policy to accept scoped docs/*, chore/*, ci/*, security/*, test/* and refactor/* branches in addition to feat/*, fix/* and exp/* for PRs targeting develop.
+- PRs targeting main remain restricted to develop or hotfix/*. No direct-push, force-push, deletion, required-check or Rulesets settings are changed by this correction.
+- Exact-head CI must be rerun after the workflow change. This is a policy/workflow correction, not a waiver of checks.
+
+## 111. CLOUD AUTONOMOUS WORKER PILOT — 25 NOVEMBER 2026
+
+**Status: Stage 1 worker hardening merged to develop; not yet released to main or verified running with Groq.**
+
+- BOS requested a cloud-based autonomous worker so Android/Termux does not need to remain open and drain the phone battery.
+- Audit found an existing GitHub Actions workflow scheduled every two hours plus a narrowly scoped autonomous patch worker. It uses an ephemeral GitHub-hosted runner, validates a patch against a three-file allowlist, runs `npm test`, and opens a Draft PR. It is periodic automation, not a continuously running process.
+- Audit found PostgreSQL Agent Platform migrations `001_agent_platform.sql` and `002_queue_operations.sql` already define registry, durable queue, leases/heartbeat/retry, audit, approvals and pause/kill switch. They are not active: platform defaults paused/kill=true; worker concurrency=1; daily budget USD 0; control/queue functions are revoked from service_role and runtime roles. No production DB worker credentials or grants were added.
+- PR #108 merged to `develop` as `02fea51fc440db3d611e3490e5a89662a951f742`: opt-in Groq provider support, default-off `GROQ_AUTONOMOUS_ENABLED`, explicit OpenRouter Free-only fallback, checkout from `develop`, and Draft PRs targeting `develop` with a `fix/*` branch (replacing the old policy-incompatible `ai-dev/*` → `main` route).
+- Added `docs/AUTONOMOUS_AGENT_RUNTIME.md` describing staged rollout, queue security, operational limits, activation gates and rollback.
+- Exact PR-head CI on `665a2492c541534eb96340f0719f352a06f2390f`: RADAR AI tests SUCCESS (run #45466754679, including npm test and disposable PostgreSQL Agent Platform/queue/Memory migration smoke); Gitleaks SUCCESS and Trivy SUCCESS (run #45466754825); Branch source policy SUCCESS. PR #108 merged only after these checks passed.
+- The default branch `main` was still at SHA `0f8521a4ab2399f80a102af4e422b2586d32e437` when checked. Therefore the updated workflow and Groq provider support are on `develop`, not yet on the default branch; the updated schedule is not active until a normal release PR reaches `main`.
+- Groq activation is deliberately NOT enabled. GitHub Actions secret `GROQ_API_KEY` and repository variable `GROQ_AUTONOMOUS_ENABLED=1` must only be configured after BOS reviews provider billing/quota and explicitly authorizes activation. No paid service or VPS was provisioned.
+- Phone/Termux can be off while a GitHub-hosted scheduled job runs. The worker runs only on its schedule/manual dispatch; it is not 24/7 between runs. GitHub Actions and provider connectivity are still required.
+- Files delivered: `lib/ai/autonomous-agent.js`, `test/autonomous-agent.test.js`, `.github/workflows/autonomous-development.yml`, `docs/AUTONOMOUS_AGENT_RUNTIME.md`, this master context.
+- Hostless Build/LIVE: not changed and not re-verified; no production deployment is claimed.
+- Rollback: revert PR #108 or release revert; set `AUTONOMOUS_AGENT_ENABLED=0` to pause the scheduled worker or `GROQ_AUTONOMOUS_ENABLED=0` to disable Groq.
+
+**NEXT TASK:** update the shared AI memory handoff when PR #107 is integrated; then prepare a normal develop-to-main release PR and verify exact-head CI before activating the updated schedule. Run a controlled manual worker test after release. Keep Groq disabled until BOS explicitly authorizes provider usage. Then implement a least-privilege queue adapter against the existing PostgreSQL schema in a non-production test environment before considering production activation.
+
+
+## 112. SINGLE SHARED AI MEMORY — NO CHAT ARCHIVING (BOS DIRECTIVE — 25 NOVEMBER 2026)
+
+**Decision:** BOS wants every AI contributor to join a new chat/session already understanding RADAR AI, without storing conversations or filling GitHub with chat logs. This is a standing project-wide rule.
+
+- `RADAR_AI_SHARED_MEMORY.md` is the one compact, shared cross-agent handoff for ChatGPT, Groq/OpenCode and future agents.
+- The shared file stores only distilled durable context: project identity, architecture/contracts, durable decisions and rationale, approved working preferences, verified current state, blockers, and the next actionable task.
+- No conversations with BOS or any other person, raw transcripts, chat exports, routine prompts/responses, chain-of-thought/reasoning logs, or message-by-message histories may be saved in the shared memory or elsewhere in the repository (including master context, README, issues, PR bodies, commit messages or docs).
+- The master context remains technical project documentation and durable engineering history only. It is not a second shared-memory dump and must not contain conversation transcripts.
+- All agents must read the shared memory first at new-session startup, then `AGENTS.md` and the relevant master-context sections, then verify current repository/PR/CI/deployment state. A memory snapshot never replaces live verification.
+- Update the shared memory only when a durable fact or handoff materially changes. Rewrite stale status in place, remove/supersede obsolete facts, and target under 12 KB. Do not append each interaction.
+- Agent-native private memory is optional and product-specific. The shared file remains the only common cross-agent handoff. Do not claim a new AI product will auto-read it unless that product's repository access/startup mechanism is configured and verified.
+- No secrets, credentials, tokens, passwords, sensitive account data, or unnecessary personal identifiers in shared memory or repository docs.
+- This policy does not create a background worker or guarantee 24/7 execution. Cloud runtime status is tracked separately in section 111 and `docs/AUTONOMOUS_AGENT_RUNTIME.md`.
+
+**Current implementation note (25 November 2026):** PR #107 contains an earlier version of this policy but is stale/diverged from current `develop` (2 commits behind). This replacement PR re-applies the shared memory and startup rules against current `develop`; do not merge the stale PR #107 as-is. PR #106 remains an independent frontend drawer change with device QA still outstanding. PR #108 and #109 are merged to `develop`; cloud worker code is still not released to `main`, and Groq remains disabled.
+
+**NEXT TASK:** merge this shared-memory policy PR after exact-head checks; then close/supersede stale PR #107. Continue with current master-context NEXT TASK: validate PR #106 against latest develop and complete device/browser QA; prepare the normal release from develop to main for the phone-free worker only after exact-head release checks. Keep Groq disabled until BOS explicitly approves provider usage.
+
+## 113. GROK AUTONOMOUS ENGINEERING CHARTER — 25 NOVEMBER 2026
+
+- Added `GROK.md` as the dedicated startup and operating charter for Grok/xAI assistants contributing to RADAR AI V2.
+- Updated `AGENTS.md` to require Grok sessions to read the shared memory, AGENTS, complete master context and GROK charter before acting, verify live repository/CI state, resume NEXT TASK, perform bounded research/experiments, implement safe work, test, self-review and document.
+- Charter distinguishes Grok (xAI assistant) from Groq (inference provider), keeps provider activation opt-in, and preserves existing cost, secrets, branch, CI, production and financial safety gates.
+- Repository instructions do not automatically configure Grok's client or guarantee it can read GitHub. BOS/Grok workspace must have repository access and a startup/project instruction pointing to these files. No always-on execution is implied.
+- Change scope: documentation/governance only; no runtime code, provider activation, secrets, production data, Hostless deployment or trading behavior changed.
+- Validation: file content checked on the working branch; exact CI status must be checked on the PR head. No application test result is claimed for this documentation-only change.
+- Files changed: `GROK.md` (new), `AGENTS.md`, `RADAR_AI_MASTER_CONTEXT.md`, `RADAR_AI_SHARED_MEMORY.md`.
+
+**NEXT TASK:** verify exact-head branch-source, test and security workflows for the updated documentation PR. After merge, configure Grok's project/custom instructions to read `GROK.md` at every new conversation and verify repository access. Do not claim automatic startup until tested.
+
+---
+
+## 114. SIDEBAR SCROLL & DRAWER — HAPUS ATURAN GANDA (25 NOVEMBER 2026)
+
+> Catatan penomoran: bagian ini awalnya ditulis sebagai §109 pada branch `fix/sidebar-drawer-scroll` sebelum `develop` menerima §111 (cloud worker) dan §112 (shared memory). Dinomorkan ulang menjadi §113 saat branch diperbarui ke `develop` terbaru; isi aslinya dipertahankan.
+
+### Routing dan tujuan
+- Lead: Divisi 02 — UI/UX & Frontend. QA: Divisi 05 (temporary override aktif; QA browser belum dilakukan).
+- Melanjutkan NEXT TASK §20.4 butir 3–5: swipe hanya menggerakkan `.side-nav`, backdrop/Menu/Escape menutup drawer, konten utama tidak ikut bergeser.
+- Branch isolasi: `fix/sidebar-drawer-scroll` dari `develop` SHA `4b37426f519ba91483f11a37a0023180134f9c62`.
+
+### Akar masalah
+- `public/style.css` memuat dua generasi aturan `.sidebar`: blok lama memberi `overflow-y:auto`, `overscroll-behavior:contain`, dan lebar `min(82vw,300px)`; blok baru memberi `overflow:hidden`, `overscroll-behavior:none`, dan lebar `min(84vw,320px)`.
+- Media query 760px lama juga mendefinisikan ulang `.sidebar` dan `.sidebar.open` (lebar 260px, transisi `.22s`). Aturan lawas menjadi deklarasi mati yang saling bertabrakan dan melemahkan kepemilikan scroll yang tunggal.
+
+### Perubahan
+- `public/style.css`: blok sidebar lawas dan duplikasi aturan drawer pada media 760px dihapus. Tersisa satu blok struktural `.sidebar` sebagai sumber tunggal (`height:100dvh`, `overflow:hidden`, `overscroll-behavior:none`) dengan `.side-nav` sebagai satu-satunya kontainer scroll (`flex:1 1 0`, `min-height:0`, `overflow-y:auto`, `overscroll-behavior-y:contain`, `touch-action:pan-y`). Menambahkan `.main-shell{min-width:0}` pada media mobile. Aturan warna/tema dan lebar responsif yang tidak bertabrakan dipertahankan.
+- `public/index.html` dan `public/app.js`: tidak diubah. Markup backdrop, `aria-controls`/`aria-expanded`, dan pengendali backdrop/Menu/Escape/resize sudah sesuai §20.2 dan kini diverifikasi oleh regression test.
+- `test/frontend-ui.test.js`: dua test baru — tidak ada `.sidebar` dengan `overflow-y:auto`, tepat satu `.sidebar.open`, `.side-nav` memiliki kelima properti scroll, kontrol penutup drawer terikat, dan shell utama tetap fixed. Test menu lama diperluas dengan `early-gems`, `market.html`, dan `solscan.html`.
+- Tidak ada perubahan API/backend/exchange/withdrawal; tidak ada secret dalam diff.
+
+### Pengujian dan commit
+- Commit kode dan tes: `fcbbf8aec65a3fe88fc35e92132e85c71a1fff49` (`fix: consolidate sidebar scroll rules and add drawer regression tests`).
+- `npm test` pada branch ini dengan Node v24.22.3: **195 pass, 0 fail, 0 skipped**.
+- `node --test test/frontend-ui.test.js`: **5 pass, 0 fail**.
+- `git diff --stat` sebelum commit: 2 file diubah, +43/-26.
+- Commit dokumentasi bagian ini: SHA dicatat pada pembaruan status berikutnya.
+
+### Status dan NEXT TASK
+- GitHub: branch `fix/sidebar-drawer-scroll` sudah **di-push** ke origin dengan upstream tracking; `origin/develop` tetap `4b37426f519ba91483f11a37a0023180134f9c62`. Posisi perubahan ada di branch kerja, bukan `main`/`develop`. Belum ada merge.
+- PR ke `develop`: **belum berhasil dibuat**. `POST /repos/rohman35819/radar-ai-v2/pulls` ditolak HTTP 403 `Resource not accessible by personal access token`; kredensial git yang tersedia hanya berhak membaca PR. Tidak ada secret yang dibuka/diubah. Tautan pembuatan manual: https://github.com/rohman35819/radar-ai-v2/pull/new/fix/sidebar-drawer-scroll
+- Hostless Build/LIVE: tidak dicek; **tidak ada deployment**.
+- QA browser/perangkat: **belum dilakukan**. Gesture nyata, scroll chaining iOS/Android, dan kemungkinan pergeseran layout saat `body.sidebar-open{overflow:hidden}` menghilangkan scrollbar masih harus diuji langsung.
+
+### Pembaruan CI exact-head — 25 November 2026
+- HEAD `d77f93e8f5c9ac52914dab14c9a8d840460c8118` (commit dokumentasi): workflow `RADAR AI tests` run #1034 (ID `45458181042`) **completed / success**. Job `test` sukses pada `npm test`, migrasi Agent Platform, queue/lease/retry/approval/kill-switch, serta migrasi memory dengan RLS/privilege/provenance smoke. Job `Branch source policy` skipped karena ini event push, bukan PR; dua langkah diagnostik Hostless LIVE skipped dan bersifat non-blocking.
+- HEAD kode `fcbbf8aec65a3fe88fc35e92132e85c71a1fff49`: tidak ada run push terpisah, tetapi kode yang sama terangkum pada HEAD dokumentasi yang diuji run #1034.
+- Combined commit status API masih `pending` dengan nol status legacy; bukti CI diambil dari daftar dan job Actions, bukan dari status check lama.
+- Security scan GitHub **belum berjalan** pada branch ini: `.github/workflows/security.yml` hanya memicu PR ke `main`/`develop` dan push ke `main`/`develop`, bukan `fix/**`. `gitleaks` dan `trivy` tidak terpasang lokal; pemeriksaan pola pada diff tidak menemukan literal secret, tetapi ini bukan pengganti Gitleaks/Trivy.
+- Tidak ada merge, Hostless check, atau klaim LIVE.
+- Upaya kedua membuat PR dengan payload minimal (title/head/base saja) masih ditolak **HTTP 403 `Resource not accessible by personal access token`**. Respons GitHub mencantumkan `x-accepted-github-permissions: pull_requests=write`, artinya izin tersebut **dibutuhkan tetapi tidak dimiliki** oleh kredensial yang tersedia. Tidak ada `gh`, konfigurasi `~/.config/gh`, token environment, atau resource MCP sebagai alternatif; kredensial tidak diubah atau dibagikan.
+- Karena tidak ada event PR, job `Branch source policy` dan security Gitleaks/Trivy **tidak dapat dipantau**; keduanya baru berjalan setelah PR benar-benar dibuat. Kueri PR open dengan head `fix/sidebar-drawer-scroll` dan base `develop` mengembalikan 0 PR.
+
+- NEXT TASK:
+  1. Pemilik/maintainer membuat PR ke `develop` lewat GitHub UI atau token berizin `pull_requests: write`: https://github.com/rohman35819/radar-ai-v2/pull/new/fix/sidebar-drawer-scroll . Setelah PR ada, verifikasi head SHA PR mencakup `fcbbf8aec65a3fe88fc35e92132e85c71a1fff49` (kode+test) dan `d77f93e8f5c9ac52914dab14c9a8d840460c8118` (dokumentasi), lalu pantau `Branch source policy`, test, Gitleaks, dan Trivy pada event PR. Jangan merge sebelum seluruhnya lulus.
+  2. Selesaikan security scan Gitleaks/Trivy sebelum integrasi; jangan merge hanya dengan CI test yang hijau.
+  3. QA ponsel: buka Menu, swipe daftar menu sampai item terbawah; pastikan hanya `.side-nav` bergerak; tutup drawer lalu swipe halaman utama; uji backdrop, tombol Menu, dan Escape.
+  4. QA desktop: wheel/trackpad pada daftar menu dan pastikan konten utama tidak ikut bergeser, termasuk saat scroll lock aktif.
+  5. Jika perangkat masih meneruskan gesture, terapkan opsi §20.4 butir 5 (accordion/rail navigasi) tanpa menghapus menu atau fitur.
+
+### Revalidasi terhadap `develop` terbaru — 25 November 2026 (supersedes status di atas)
+- `origin/develop` telah maju dari `4b37426f519ba91483f11a37a0023180134f9c62` ke `c9c3a1403b19e5fe52250d0354e03bf7a1af1319` (cloud worker + shared memory). **PR #106 kini benar-benar terbuka** (`fix/sidebar-drawer-scroll` → `develop`); catatan lama "PR belum dibuat / kueri 0 PR" dinyatakan **superseded** oleh fakta ini.
+- Branch `fix/sidebar-drawer-scroll` digabung dengan `origin/develop` menggunakan merge commit biasa (bukan force-reset), sehingga PR mengikuti basis integrasi terbaru. Konflik hanya terjadi pada dokumen master; bagian sidebar dinomorkan ulang menjadi §114 agar tidak bentrok dengan §111 (cloud worker), §112 (shared memory) dan §113 (Grok charter). Tidak ada konflik pada `public/style.css` maupun `test/frontend-ui.test.js`.
+- Pengujian lokal setelah revalidasi (Node v24.22.3): `npm test` **196 pass, 0 fail, 0 skipped**; `git diff --check` bersih; tidak ada marker konflik yang tersisa. Belum ada CI exact-head untuk HEAD setelah merge ini.
+- Tidak ada perubahan kredensial, exchange, trading, atau konfigurasi produksi. Hostless Build/LIVE tidak dicek.
+- NEXT TASK: setelah push, verifikasi CI exact-head PR #106 (test, Branch source policy, Gitleaks, Trivy), lanjutkan QA perangkat Android/iOS/desktop, dan merge hanya bila seluruh gate lulus.
+
+### Verifikasi gate exact-head setelah revalidasi — 25 November 2026
+- HEAD PR `b3161df12ccbc8da53409b2b5582867ac44d3bae`: workflow `RADAR AI tests` run `45470390605` **completed / success** dengan job `Branch source policy` **success** dan job `test` **success**; workflow `RADAR AI security scans` run `45470390762` **completed / success**.
+- `GET /compare/c9c3a14...b3161df` melaporkan status `ahead`, `ahead_by=5`, `behind_by=0`; merge lokal dari `origin/develop` ke branch ini adalah fast-forward tanpa konflik. Namun API merge PR sempat mengembalikan HTTP 405 `Pull Request has merge conflicts` dengan `mergeable=false` / `mergeable_state=dirty`; status ini perlu dihitung ulang oleh GitHub sebelum merge.
+- Tidak ada perubahan kode pada pembaruan ini; Hostless Build/LIVE dan QA perangkat tetap belum diverifikasi.
+
+### Revalidasi kedua terhadap `develop` `b26d8b4` — 25 November 2026
+- `develop` maju lagi dengan PR #111 (refresh shared memory handoff) dan charter Grok (§113). Itu menjelaskan `mergeable=false` / `mergeable_state=dirty` yang dilaporkan GitHub setelah push pertama: basis PR bergeser, bukan konflik pada kode.
+- Branch `fix/sidebar-drawer-scroll` digabung lagi dengan `origin/develop` `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`. Konflik hanya pada dokumen master; bagian sidebar dinomorkan ulang menjadi §114 agar tidak bentrok dengan §113 (Grok charter). Tidak ada perubahan pada `public/style.css` atau `test/frontend-ui.test.js`.
+- Gate CI telah lolos pada HEAD lama `b3161df` (test, Branch source policy, security scans), tetapi **tidak boleh dipakai untuk HEAD baru**. CI exact-head harus dijalankan ulang setelah push ini sebelum merge dipertimbangkan.
+- Hostless Build/LIVE dan QA perangkat masih belum diverifikasi. Tidak ada kredensial, exchange, trading, atau konfigurasi produksi yang diubah.
+
+
+---
+
+## ADDENDUM — TOP MOVERS CHART NAVIGATION — 25 NOVEMBER 2026
+
+### Implementasi
+- `public/market.js`: setiap aset pada Top Gainers dan Top Losers menampilkan tombol **Grafik RADAR** dan **Grafik eksternal**.
+- Tombol internal memilih aset berdasarkan CoinGecko `coin.id` (bukan simbol ticker), mengatur chart 7 hari / harga, lalu menggulir ke Historical Market Chart.
+- Tautan eksternal menuju halaman aset CoinGecko berdasarkan ID aset yang tervalidasi; halaman tersebut menyediakan grafik dan data pasar eksternal. Link dibuka di tab baru dengan `noopener noreferrer`.
+- Ringkasan mover menampilkan harga, market cap, volume 24 jam, dan perubahan 24 jam.
+- `public/market.html` memberi anchor `#historical-chart`; `public/market.css` menambahkan styling tombol dan layout mover.
+
+### Batasan dan keamanan
+- Feed Top 100 saat ini tidak menyediakan chain + contract address yang dapat diverifikasi untuk seluruh mover. Karena itu link eksternal menggunakan CoinGecko ID, bukan menebak pair/URL DEX Screener dari ticker.
+- Tidak ada API key, secret, dependency, atau layanan berbayar baru.
+- Perubahan dibuat pada branch `feat/top-movers-dual-chart-links-develop` dan PR menuju `develop`.
+
+### Verifikasi dan NEXT TASK
+- Kode telah dikomit di branch kerja; PR dan CI masih perlu dibuat/diverifikasi.
+- `npm test` belum dinyatakan lulus dan QA browser belum dilakukan.
+- Hostless Build dan LIVE belum diverifikasi; perubahan belum disebut deployed.
+- NEXT: buat PR ke `develop`, tunggu CI exact-head, review diff, uji tombol internal/eksternal, lalu koordinasikan promosi melalui PR develop ke main.
+
+---
+
+## 133. TOP 5 ACTION CENTER & RADAR INTELLIGENCE — 25 NOVEMBER 2026
+
+- Branch: `feat/top5-action-center` dari `develop` `2673606dac0c75c4bd43cf81b36af2262c002152`. Tidak ada perubahan backend, endpoint berbayar, kredensial, trading/withdrawal, atau dependency baru.
+- Audit: data token nyata dari `/api/snapshot` hanya memuat `id`, simbol, nama, harga, market cap, volume, FDV, `change_24h`, `flags`, dan timestamp. Tidak tersedia liquidity, contract address, RSI/MACD, whale, atau holder distribution untuk seluruh aset. Karena itu field tersebut ditandai `NOT ENOUGH DATA`, tidak dikarang.
+- File baru `public/top5.js` (UMD, murni, tanpa DOM/jaringan): `rankTop5()` dengan breakdown skor transparan (momentum 24 jam ≤20, volume/market cap ≤25, likuiditas ≤15 bila ada, kesegaran 10, kelengkapan 10; data basi dibatasi ≤45 dan tidak boleh BUY SETUP); `buildTradePlan()` menghitung entry/TP1-3/SL dari volatilitas histori 12 titik terakhir dengan status `MECHANICAL_PLAN`, atau `NOT_ENOUGH_DATA` tanpa angka bila histori kurang; `indicatorSummary()` menghitung SMA20/EMA12/EMA26/RSI14/MACD dari harga nyata dan menandai VWAP `NOT ENOUGH DATA`. Confidence dinyatakan sebagai kualitas data, bukan probabilitas profit.
+- `public/index.html`: menambah menu `Top 5 Action Center` (`data-t="action"`) dan `Radar Intelligence` (`data-t="intel"`) tanpa menghapus menu lama; memuat `/top5.js` sebelum `/app.js`.
+- `public/app.js`: panel Top 5 ringkas di Ringkasan; halaman Action Center berisi 5 kartu dengan tombol **VIEW TRADE ANALYSIS**; modal analisis menampilkan identitas/provenansi, trading plan simulasi, indikator, dan signal quality; halaman Radar Intelligence berisi matriks 11 kemampuan dengan status jujur (AKTIF hanya untuk Live Market Scanner, Top 5 Action Center, Trading Analysis, Token Discovery; sisanya TERBATAS/BELUM TERSEDIA).
+- `public/sw.js`: shell dinaikkan v12 → v13 dan `/top5.js` masuk precache agar PWA tidak menyajikan aset lama; fixture test diperbarui.
+- Pengujian: `test/top5.test.js` 7 test (peringkat, data basi/invalid, duplikat simbol, plan mekanis, penolakan data kurang, indikator, tanpa `Math.random`); `test/top5-ui.test.js` 4 test (menu lama utuh, tombol analisis, matrix status, tanpa klaim profit/order); `npm test` **207 pass, 0 fail, 0 skipped** (26 file); `node --check public/app.js` dan `public/top5.js` lulus; `git diff --check` bersih.
+- Smoke HTTP lokal (port 38714, DATA_DIR sementara): `/`, `/app.js`, `/top5.js`, `/style.css`, `/api/health` → 200; marker fitur ditemukan pada `/app.js` yang disajikan.
+- Batasan: rencana trading adalah perhitungan mekanis dari volatilitas teramati, bukan prediksi; tidak ada order/transfer/withdrawal; profit tidak dijamin. QA browser desktop/mobile dan Hostless Build/LIVE belum diverifikasi.
+- NEXT TASK: buat PR ke `develop`, verifikasi exact-head test/security/branch-source, QA modal pada browser nyata, lalu promosi `develop`→`main` terpisah.

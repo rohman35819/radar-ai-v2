@@ -12,7 +12,7 @@ function loadWorker() {
       calls.cacheOpen.push(name);
       return { addAll: async (files) => { calls.staticFiles = files; } };
     },
-    keys: async () => ['radar-shell-v12', 'radar-shell-v7', 'radar-api-v7', 'old-cache', 'other-app-cache'],
+    keys: async () => ['radar-shell-v13', 'radar-shell-v12', 'radar-shell-v7', 'radar-api-v7', 'old-cache', 'other-app-cache'],
     delete: async (name) => { calls.cacheDeletes.push(name); return true; },
     match: async () => null,
   };
@@ -55,6 +55,8 @@ test('PWA shell menyediakan halaman Market Intelligence dan Exchange Hub serta m
   assert.ok(calls.staticFiles.includes('/market.html'));
   assert.ok(calls.staticFiles.includes('/market.js'));
   assert.ok(calls.staticFiles.includes('/market.css'));
+  assert.ok(calls.staticFiles.includes('/app.js'));
+  assert.ok(calls.staticFiles.includes('/top5.js'));
   assert.ok(calls.staticFiles.includes('/trading.html'));
   assert.ok(calls.staticFiles.includes('/trading.js'));
   assert.ok(calls.staticFiles.includes('/command.html'));
@@ -65,7 +67,7 @@ test('PWA shell menyediakan halaman Market Intelligence dan Exchange Hub serta m
   handlers.activate({ waitUntil: (promise) => { activatePromise = promise; } });
   await activatePromise;
   assert.ok(calls.cacheDeletes.includes('radar-api-v7'));
-  assert.equal(calls.cacheDeletes.includes('radar-shell-v12'), false);
+  assert.equal(calls.cacheDeletes.includes('radar-shell-v13'), false);
   assert.equal(calls.cacheDeletes.includes('other-app-cache'), false);
 });
 
