@@ -3525,3 +3525,31 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - PR #140 di-merge ke `develop` dengan `merge_commit_sha` `80c460133ddf16dfbbcf8bf5bd82e906401b4257`. Head terverifikasi `80bd31be2b37d285c5df5d6d508401af9f5b114f`; `mergeable=true`, `mergeable_state=clean`.
 - Gate exact-head: run `45702419852` (`test` **success**, `Branch source policy` **success**) dan `45702420025` (`Gitleaks` **success**, `Trivy` **success**). Lokal: `npm test` 226/226 pass sebelum merge.
 - Tidak ada rilis ke `main` yang saya lakukan pada siklus ini; Hostless Build/LIVE tidak diverifikasi untuk perubahan ini.
+
+
+---
+
+## 144. RADAR AI ENGINEERING CONSTITUTION — 26 NOVEMBER 2026
+
+### Tujuan dan keputusan
+- Atas arahan BOS, 12 area tata kelola permanen diformalkan menjadi `docs/architecture/engineering-constitution.md` untuk seluruh divisi, AI agent, kontributor manusia, arsitektur, data, API, operasi, QA dan transisi V2→V3.
+- Area yang distandarkan: (1) arsitektur/struktur proyek; (2) komunikasi dan ownership antar-agent; (3) keamanan/identitas/permission; (4) data, storage dan lifecycle; (5) AI memory/knowledge/provenance; (6) API/integration contracts; (7) reliability/recovery; (8) biaya/kuota/resource; (9) QA/testing/CI; (10) monitoring/observability/audit; (11) product UI/UX/accessibility; (12) versioning/change/release governance.
+- Strategi bahasa TypeScript-first, JavaScript incremental, Python untuk riset/backtest offline dan SQL untuk data relasional dirujuk ke keputusan BOS issue #138; tidak diduplikasi sebagai kebijakan baru.
+- Dokumen menetapkan modular monolith terlebih dahulu, bounded workloads, least privilege, provenance-first data/memory, zero-budget, exact-head CI, truthful status, rollback dan staged V3. Semua capability yang belum memiliki enforcement/test nyata harus ditandai policy-only/not verified.
+
+### Sinkronisasi aturan
+- `AGENTS.md` mewajibkan seluruh contributor membaca constitution sebelum perubahan lintas 12 area tersebut.
+- `RADAR_AI_SHARED_MEMORY.md` diperbarui ringkas sebagai handoff; tidak ada percakapan atau reasoning yang diarsipkan.
+- README tidak diubah karena tidak ada perubahan cara instalasi/penggunaan produk.
+
+### Risiko, batas dan validasi
+- Dokumentasi/policy-only; tidak mengubah kode aplikasi, API, database, secret, permission GitHub, Hostless, provider, worker, scheduler, trading atau konfigurasi produksi.
+- Tidak mengklaim branch protection, observability, durable worker, atau kontrol lain aktif hanya karena tertulis dalam constitution.
+- Tes aplikasi tidak dijalankan pada tahap dokumentasi; validasi yang diperlukan adalah pemeriksaan isi/diff, konsistensi referensi, batas ukuran shared memory, dan CI exact-head setelah PR dibuat.
+- Rollback: revert PR dokumentasi ini; tidak ada perubahan runtime/data yang perlu dipulihkan.
+
+### Status dan NEXT TASK
+- Branch kerja: `docs/engineering-constitution`, dibuat dari `develop`; target PR: `develop`.
+- Commit dan CI exact-head: menunggu penyelesaian file/PR; belum dinyatakan lulus.
+- Hostless Build/LIVE: tidak diperiksa dan tidak berubah.
+- NEXT TASK: verifikasi diff penuh dan ukuran shared memory, jalankan CI/security checks pada exact PR head, lalu integrasikan ke `develop` hanya jika gate lulus.
