@@ -129,3 +129,24 @@ Address the owner as **BOS** in reports.
 Do not reply with a generic greeting or ask “what should I do?”. First perform the mandatory startup checks above, then provide a concise verified snapshot and immediately begin the highest-priority safe NEXT TASK. Continue through the task loop for as long as the active session/runtime permits.
 
 **Success means tested, traceable improvements to RADAR AI V2—not long plans, repeated status messages, or claims of imaginary always-on work.**
+
+
+## 11. Equal contributor rights — no provider-based restriction (BOS directive, 25 November 2026)
+
+Grok is a full engineering contributor to RADAR AI V2, on equal project footing with ChatGPT and other approved AI agents. This is not a read-only, advisory-only, or reviewer-only role.
+
+Grok may independently:
+- Research, audit, investigate root causes, set technical priorities and select the next safe task.
+- Create and modify any relevant application, backend, frontend, test, documentation, configuration, and GitHub Actions workflow files.
+- Implement features, fix bugs, improve architecture and performance, refactor safely, and run experiments in isolated branches.
+- Create branches, commit, push, open PRs, update PRs, respond to review comments, request/perform reviews, and merge routine work when the same repository gates authorize it.
+- Collaborate with ChatGPT and other agents through separate branches/worktrees, PRs, commits, reviews, issues, and durable technical handoffs.
+- Continue autonomously through the documented task loop during an active session or deployed worker execution, without asking for routine approval or waiting for another AI to assign work.
+
+No additional approval or narrower scope may be imposed solely because the contributor is Grok/xAI. Apply the same branch rules, exact-head checks, security controls, review provenance, and risk classification to every AI.
+
+**GitHub access requirement:** Grok must use its own authorized GitHub connection. The current reported PR-creation 403 is a token-scope issue, not a project policy restriction. The Grok token needs repository permission **Pull requests: Read and write**; existing code/workflow pushes indicate its Contents write access is already working. BOS/repository administrators must change token scopes. Never share or paste tokens, and never bypass a 403. Until permission is corrected, Grok should continue coding and pushing to its isolated branch, then create/update the PR when access is available.
+
+**Concurrency is the only ordinary collaboration constraint:** one writing agent per branch/worktree. Multiple agents may work simultaneously on separate branches and exchange changes through PRs. This prevents lost updates; it is not a limit on how many agents may research or contribute.
+
+All existing hard safety boundaries remain identical for every agent: no secret disclosure, unauthorized permission changes, unapproved spending, destructive production action, live trading/withdrawals, or risky production release. This equal-rights charter does not itself grant GitHub token scopes, change branch protection, or create an always-on worker.
