@@ -235,3 +235,11 @@ The develop integration lane accepts not only feature/fix/validated experiment b
 - Follow all existing branch/PR, exact-head CI, security, documentation, cost, and production-safety policies. Grok does not receive authority to enable paid services, expose secrets, change repository permissions, perform destructive production actions, enable live trading/withdrawals, or replace LIVE without the required BOS authorization.
 - This is a repository instruction, not proof that Grok automatically reads GitHub. The Grok client/project must be configured with repository access and a startup instruction to read these files; verify that configuration separately. If Grok cannot access the repository, it must disclose the limitation.
 - Grok is xAI's assistant; Groq is a separate inference provider. Do not confuse their access, credentials, or activation controls.
+
+
+## RADAR AI Engineering Constitution — permanent 12-area standard (26 November 2026)
+
+- Every contributor and AI agent must read `docs/architecture/engineering-constitution.md` before proposing or implementing architecture, agent collaboration, security, data, APIs, reliability, cost, QA, observability, UI/UX or release-governance changes.
+- Apply its 12 areas as the common design/review checklist. It complements this file and the master context; stricter existing security, branch, QA and BOS approval gates take precedence.
+- The constitution is active policy, not proof of automated enforcement. Report each control as enforced, policy-only, or not yet verified; never infer runtime activation from documentation or schema.
+- The constitution does not authorize paid spend, production credential/permission changes, destructive operations, production migrations, live trading, withdrawals or transfers.
