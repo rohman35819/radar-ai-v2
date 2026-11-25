@@ -3411,14 +3411,13 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### QA dan status
 - Eksperimen sebelumnya pada branch `exp/python-backtest-typescript-contracts` telah lulus exact-code CI run `45691537934` pada SHA `6620346...`: npm 216/216, Python 4/4, dan disposable PostgreSQL Agent Platform/queue/memory smoke tests lulus. Ini adalah bukti pilot sebelumnya, bukan bukti branch baru.
-- Branch baru masih menunggu GitHub Actions exact-head untuk perubahan strict `tsc`, Python CI dan semua regression/PostgreSQL tests. Belum ada hasil lokal karena tidak tersedia working clone pada sesi ini.
-- Branch `develop` tertinggal 3 commit dari `main`; branch eksperimen dibuat dari main agar tidak kehilangan rilis v2.3.2. PR menuju develop akan membawa tiga commit main tersebut ke integration lane bersama fondasi baru.
-- Open PR yang terverifikasi saat audit: #121, #115, #112, #105 (empat PR dokumentasi). Branch eksperimen belum membuka PR; alasan pentingnya pekerjaan: membangun fondasi sebelum volume data dan biaya migrasi membesar. PR baru tetap memerlukan triage antrean dan exact-head checks.
+- Push CI exact-head run `45695083402` pada SHA `0cc6c32...` lulus: npm **217/217**, strict TypeScript typecheck sukses, Python **4/4**, serta seluruh disposable PostgreSQL Agent Platform/queue/memory smoke tests sukses. PR exact-head runs `45695317400` (tests/branch policy) dan `45695317344` (Gitleaks/Trivy) sedang berjalan saat update ini. Belum ada hasil lokal karena tidak tersedia working clone pada sesi ini.
+- Branch `develop` tertinggal 3 commit dari `main`; branch eksperimen dibuat dari main agar tidak kehilangan rilis v2.3.2. PR #126 menuju develop membawa tiga commit main tersebut ke integration lane bersama fondasi baru.
+- Open PR saat audit awal: #121, #115, #112, #105 (empat PR dokumentasi). PR #126 kini dibuka sebagai draft karena penting membangun fondasi sebelum volume data dan biaya migrasi membesar; ini pengecualian WIP yang dijelaskan di body PR. Exact-head test + security scans sedang berjalan.
 - GitHub branch tersimpan; CI branch baru pending; Hostless Build belum dijalankan; LIVE belum berubah dan tidak diklaim.
 - Tidak ada production route, data, schema, secret, service, atau deploy yang diubah.
 
 ### NEXT TASK
-- Tunggu exact-head CI branch ini. Perbaiki seluruh error `tsc`/test yang ditemukan.
-- Jalankan Gitleaks dan Trivy pada PR exact-head; review seluruh diff dan kompatibilitas develop/main.
-- Setelah lulus, buka PR ke `develop` dengan catatan bahwa branch berasal dari latest main dan membawa tiga commit rilis yang belum masuk develop.
+- Tunggu PR #126 exact-head tests + Gitleaks/Trivy; review hasil final dan mergeability.
+- Jika seluruh gate lulus, ubah PR dari draft menjadi ready, lakukan review akhir, dan integrasikan ke develop; branch berasal dari latest main dan membawa tiga commit rilis yang belum masuk develop.
 - Fase berikutnya: rancang additive PostgreSQL market-data schema + smoke tests di disposable PostgreSQL; jangan terapkan ke production sebelum backup, backfill, compatibility dan rollback plan tervalidasi.
