@@ -63,8 +63,12 @@ Do not introduce Java, C++, Rust or Go merely to increase the language count. Mo
 - Disposable PostgreSQL smoke coverage is in db/tests/003_market_data_smoke.sql and the test workflow applies it only to ephemeral CI PostgreSQL 16.
 - Production migration/backfill remains separate and requires backup, partition provisioning, retention policy, compatibility and rollback review.
 - Gate: duplicate/idempotency tests, partition/pruning query tests, data provenance, migration rollback/forward compatibility.
+- The ingestion adapter pilot targets the PostgREST schema API; the `radar_market` schema must be explicitly exposed in the database API before use. No schema exposure setting has been changed.
 
 ### Phase 3 — durable ingestion workers
+- A disabled-by-default TypeScript PostgREST adapter pilot now exists in `src/market-data-ingestion.mts`; it writes canonical assets, provenance observations, ingestion-run outcomes and durable checkpoints in bounded batches (maximum 100 records).
+- The pilot is not imported by `server.js`, has no scheduled entrypoint, and performs no network access unless a caller explicitly passes `enabled: true` together with a server-only HTTPS PostgREST URL and service-role key.
+- Provider polling, worker scheduling, queue leases, retry/dead-letter orchestration, automatic partition provisioning and production schema exposure are deliberately not implemented or activated by this pilot.
 - Connect worker processes to the existing PostgreSQL queue only after adapter, leases, retry/dead-letter, idempotency, permission and kill-switch tests pass.
 - Separate dashboard API lifecycle from ingestion lifecycle.
 - Gate: restart recovery, concurrency/rate-limit tests, failure injection and queue-age SLO.
