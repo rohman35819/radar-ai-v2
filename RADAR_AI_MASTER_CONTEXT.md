@@ -3447,7 +3447,7 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ## 140. TYPED MARKET DATA POSTGREST ADAPTER PILOT — 26 NOVEMBER 2026
 
 ### Implementasi
-- Branch `exp/market-data-adapter-pilot`, dibuat dari develop setelah market-data schema v1 dan handoff QA terintegrasi.
+- Branch `exp/market-data-adapter-pilot`, dibuat dari develop setelah market-data schema v1 dan handoff QA terintegrasi; PR #131 telah di-squash merge ke develop sebagai `852c2009338c8c75ec64df5dbde757145efda292`.
 - `src/contracts.mts` diperluas dengan kontrak `RadarAsset`, `RadarCandle`, `MarketObservation`, `IngestionRun`, dan `IngestionCheckpoint` sesuai schema `radar_market`, termasuk runtime validation OHLCV, ISO timestamp, payload hash, canonical asset ID, dan cursor/checkpoint.
 - `src/market-data-store.mts` menyediakan typed PostgREST adapter untuk schema `radar_market`: asset upsert, append-only observation, candle upsert, ingestion run, dan checkpoint.
 - Safety defaults: adapter OFF kecuali `enabled: true`; HTTPS saja; service-role key eksplisit; `Accept-Profile`/`Content-Profile` terkunci ke `radar_market`; batch maksimum 250; no-store; tidak ada retry otomatis; tidak membaca/log response body; hasil error tidak membocorkan credential/body.
@@ -3457,10 +3457,9 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### QA / status
 - CI awal menemukan TypeScript TS5097 (explicit .mts import) dan TS7060 (generic arrow syntax); diperbaiki dengan `allowImportingTsExtensions` pada no-emit tsconfig dan generic `<T,>`.
-- Exact-head sebelumnya `c5f4c06...` lulus push run `45699053064`: npm **223/223**, strict TypeScript, Python **5/5**, semua PostgreSQL smoke tests; PR run `45699063873` sukses, security `45699063915` sukses (Gitleaks + Trivy). Setelah itu kontrak diperketat agar timestamp/UUID/counter runtime guards sesuai constraint database; latest head `f7aecb76...` sedang menjalani exact-head test `45699312937`/`45699302998` dan security `45699312716`.
+- PR exact-head SHA `7be4f61e1218c0b6c44b7dac3df2ce2f05d5bf59`: PR test run `45699371566` lulus (npm **223/223**, strict TypeScript, Python **5/5**, semua PostgreSQL smoke tests, branch policy); security run `45699371565` lulus (Gitleaks + Trivy). Merge commit `852c2009338c8c75ec64df5dbde757145efda292` juga lulus: test run `45699522545` (npm 223/223, TS, Python 5/5, PostgreSQL) dan security run `45699522553` (Gitleaks + Trivy).
 - Production activation memerlukan konfirmasi Supabase PostgREST exposed schema `radar_market`, backup, permission review, secrets, quotas, and separate BOS-approved rollout. Jangan mengubah Supabase settings atau environment produksi di pilot ini.
 - Hostless Build tidak dijalankan; LIVE tidak berubah/tidak diklaim.
 
 ### NEXT TASK
-- Tunggu latest exact-head `f7aecb76...` tests + Gitleaks/Trivy; perbaiki seluruh regresi sebelum merge.
-- Jika lulus, merge hanya ke develop; lanjutkan desain bounded ingestion worker dan integration tests menggunakan mocked provider/store. Feature flag tetap OFF dan production runtime tetap tidak terhubung.
+- PR #131 telah merged ke develop; next implement bounded ingestion worker/orchestrator with provider-specific quotas, idempotency, backpressure and mocked provider/store integration tests. Feature flag tetap OFF dan production runtime tetap tidak terhubung.
