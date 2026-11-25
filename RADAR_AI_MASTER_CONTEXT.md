@@ -3420,3 +3420,25 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ### NEXT TASK
 - PR #126 code head tests, Branch source policy, Gitleaks, dan Trivy lulus pada SHA `a3187e8...`; documentation-only head `469006a...` checks queued. Setelah latest head lulus, review mergeability lalu tandai ready dan integrasikan ke develop.
 - Fase berikutnya: rancang additive PostgreSQL market-data schema + smoke tests di disposable PostgreSQL; jangan terapkan ke production sebelum backup, backfill, compatibility dan rollback plan tervalidasi.
+---
+
+## 139. MARKET DATA STORAGE SCHEMA V1 — 26 NOVEMBER 2026
+
+### Tujuan dan implementasi
+- Fase 2 dimulai dengan migration PostgreSQL aditif untuk menyimpan data pasar secara terstruktur, append-oriented, dan dapat diskalakan tanpa memutus kontrak JSON state V2.
+- `db/migrations/003_market_data.sql` membuat schema `radar_market` dengan `assets` (canonical asset identity), `ingestion_runs`, append-only `market_observations` (source/entity/time/payload-hash idempotency), partitioned `market_candles` (OHLCV; PK memakai asset_id, bukan ticker agar simbol lintas chain tidak bertabrakan), dan `ingestion_checkpoints`.
+- Candle memakai native PostgreSQL RANGE partition by bucket_at; migration sengaja tidak membuat default partition. Operator harus membuat partisi bulanan sebelum worker mengirim data agar retensi/pruning dapat dikelola.
+- RLS diaktifkan pada seluruh tabel; tidak ada client policy. Hanya `service_role` mendapat schema/table privileges yang diperlukan. Observations append-only; assets/runs/checkpoints dapat di-update; candles dapat di-upsert untuk koreksi provider; tidak ada DELETE/TRUNCATE.
+- `db/tests/003_market_data_smoke.sql` menguji RLS/privilege, append-only observations, idempotency, OHLCV checks, canonical asset key, upsert candle, checkpoint persistence, dan monthly partitions.
+- `.github/workflows/test.yml` menjalankan migration + smoke test ini hanya pada PostgreSQL 16 ephemeral CI. Tidak ada koneksi atau migrasi ke database produksi.
+
+### Status QA dan batasan
+- Branch eksperimen: `exp/market-data-schema-v1`, dibuat dari develop `f3e7b8c2fb193afa2ef09bf48fe2ca97c7467ff6` setelah PR #126 dan PR #127 terintegrasi.
+- Migration dan smoke test baru belum diverifikasi sampai workflow exact-head selesai. Belum ada hasil test lokal karena working clone tidak tersedia.
+- Tidak ada worker ingestion yang menggunakan schema ini, tidak ada backfill, tidak ada market-data production writes, dan tidak ada API route baru.
+- Hostless Build belum dijalankan; LIVE tidak berubah/tidak diklaim. Tidak ada secret, layanan berbayar, storage, exchange, trading, atau konfigurasi produksi yang diubah.
+
+### NEXT TASK
+- Jalankan exact-head GitHub Actions; perbaiki kegagalan SQL/privilege/partition jika ada.
+- Tambahkan Gitleaks/Trivy melalui PR, lakukan review seluruh diff dan mergeability.
+- Setelah schema pilot lulus, rancang migrasi/backfill bertahap dan worker adapter hanya di lingkungan disposable/staging; production rollout tetap memerlukan backup, partition provisioning, idempotency, retention, rollback dan persetujuan operasional.
