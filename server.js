@@ -303,11 +303,18 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
         }
         if (url.pathname === '/api/snapshot' && req.method === 'GET') {
           const age = st.lastOk ? Date.now() - Date.parse(st.lastOk) : null;
+          // ETag murah dari metadata state: berubah saat refresh atau saat daftar alert/news berubah.
+          // Menghindari serialisasi dan pengiriman payload besar pada request bersyarat (304).
+          const etag = '"' + [st.lastOk || '-', st.lastRefresh || '-', st.tokens.length, st.alerts.length, st.news.length, (st.earlyGems || []).length].join('-') + '"';
+          if (req.headers['if-none-match'] === etag) {
+            res.writeHead(304, { 'cache-control': 'public, max-age=30', etag, 'x-content-type-options': 'nosniff' });
+            return res.end();
+          }
           return send(res, 200, { status: 'success', server_time: new Date().toISOString(), last_refresh: st.lastRefresh, last_ok: st.lastOk,
             stale: age === null || age > cfg.refreshMs * 3, health: st.health, filters: { min_mcap: cfg.minMcap, max_mcap: cfg.maxMcap, min_volume: cfg.minVolume },
             tokens: st.tokens.map((t) => ({ ...t, fundamental: st.fundamentals[t.id] || null, vol10m: (st.vol10m || {})[t.id] || null })), exchange: st.exchStats || null, news: st.news, unlocks: st.unlocks, alerts: st.alerts.slice(0, 50), early_gems: Array.isArray(st.earlyGems) ? st.earlyGems : [], early_gems_meta: st.earlyGemsMeta || null,
             config_needed: { telegram: !(cfg.tgToken && cfg.tgChat), coingecko_key: !cfg.cgKey, onchain_key: !cfg.cgKey, early_gems_enabled: cfg.earlyGemsEnabled !== false, onchain_refresh_min: cfg.onchainRefreshMin || 60, goplus_enabled: Boolean(process.env.GOPLUS_ACCESS_TOKEN || (process.env.GOPLUS_APP_KEY && process.env.GOPLUS_APP_SECRET)), goplus_usage: { day_count: Number(st.goplusUsage?.day_count || 0), month_count: Number(st.goplusUsage?.month_count || 0), daily_limit: 1000, monthly_limit: 5000 }, unlock_source: !cfg.unlocksUrl && !st.unlocks.length } },
-          'application/json', { 'cache-control': 'public, max-age=30' });
+          'application/json', { 'cache-control': 'public, max-age=30', etag });
         }
         if (url.pathname === '/api/ai/queue' && req.method === 'GET') {
           return send(res, 200, { status: 'success', queue: getAIRequestQueueSnapshot() }, 'application/json', { 'cache-control': 'no-store' });

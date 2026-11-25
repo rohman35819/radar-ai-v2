@@ -3487,7 +3487,7 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ---
 
-## 141. BOUNDED PARALLEL INGESTION REFRESH — 26 NOVEMBER 2026
+## 142. BOUNDED PARALLEL INGESTION REFRESH — 26 NOVEMBER 2026
 
 ### Implementasi
 - Branch `exp/bounded-ingestion-concurrency-v2` dibuat ulang dari latest develop setelah branch percobaan pertama diverged; PR #134 ditutup sebagai superseded agar tidak menggabungkan basis lama.
@@ -3505,3 +3505,18 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ### NEXT TASK
 - Selesaikan exact-head rerun setelah update dokumentasi, lalu merge PR #135 ke develop jika seluruh checks lulus.
 - Fase berikutnya: buat ingestion worker terpisah yang memakai durable queue/checkpoint dan adapter market-data OFF-by-default; lakukan failure/restart/rate-limit tests sebelum integrasi apa pun ke runtime production.
+
+## 143. SNAPSHOT CONDITIONAL GET / ETag — 26 NOVEMBER 2026
+
+- Peran: Independent Principal Engineer & Performance Architect. Branch `perf/snapshot-etag` dari `develop` `0a2619f70fff306118bfb4922edd591c8829f5f4`. Tidak menyentuh `lib/ingest.js` atau test konkurensi yang dikerjakan PR #135 (hindari duplikasi).
+- Temuan arsitektur: `GET /api/snapshot` melakukan `st.tokens.map(...)` dengan spread per token dan mengirim seluruh payload (token + fundamental + vol10m + news + alerts + early gems) pada setiap request, meskipun state tidak berubah. Polling dashboard dan beberapa klien/agent menggandakan biaya serialisasi & bandwidth secara linear terhadap jumlah token.
+- Root cause: tidak ada validator cache (ETag/Last-Modified) pada endpoint snapshot; `cache-control: public, max-age=30` saja tidak membantu klien yang harus melakukan revalidasi atau request dengan header berbeda.
+- Solusi: ETag murah dari metadata state (`lastOk`, `lastRefresh`, jumlah token/alert/news/earlyGems) tanpa meng-hash seluruh payload. Bila `If-None-Match` cocok, server mengembalikan **304 tanpa body**. ETag ikut dikirim pada respons 200. Tidak ada perubahan kontrak data pada respons 200.
+- File: `server.js` (handler `/api/snapshot`), `test/radar.test.js` (assertion ETag/304 kosong), `scripts/benchmark-snapshot.js` (benchmark reproduktif, dataset sintetis), `README.md` (hitungan test diselaraskan 223/29).
+- Benchmark nyata (Node v24, server lokal disposable, dataset **sintetis**, 30 request per kasus):
+  - 205 token: payload penuh **51.534 byte/request**, p50 **4,204 ms**, p95 **12,436 ms**, p99 **24,365 ms**; kondisional **2 byte/request**, p50 **2,134 ms**, p95 **2,893 ms**, p99 **3,775 ms**.
+  - 1.000 token: payload penuh **249.372 byte/request**, p50 **8,376 ms**, p95 **20,948 ms**, p99 **27,497 ms**; kondisional **2 byte/request**, p50 **2,260 ms**, p95 **5,740 ms**, p99 **5,742 ms**.
+  - Penghematan total 30 request: **1.545.964 byte** (205 token) dan **7.481.104 byte** (1.000 token). Angka ini hasil eksekusi `scripts/benchmark-snapshot.js`, bukan estimasi.
+- Batasan: benchmark lokal dengan data sintetis, bukan produksi/Hostless; manfaat penuh bergantung pada klien/CDN yang mengirim `If-None-Match`. Tidak ada database migration, dependency, secret, service berbayar, atau perubahan produksi. Belum ada pengukuran CPU/RAM terpisah.
+- Pengujian: `node --check server.js` lulus; `node --test test/radar.test.js` 26/26 pass; `npm test` **226 pass, 0 fail, 0 skipped** (30 file); `git diff --check` bersih.
+- NEXT TASK: PR ke `develop`, verifikasi gate exact-head, lalu evaluasi apakah CDN/Hostless meneruskan conditional request; setelah itu pertimbangkan kompresi gzip/br dan pagination untuk endpoint dengan payload terbesar.
