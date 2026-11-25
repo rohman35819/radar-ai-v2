@@ -41,7 +41,7 @@ const task = (source, fetchBatch, cursor = { page: 1 }) => ({
 test('worker is disabled by default and does not touch store or providers', async () => {
   const { store, calls } = makeStore();
   let fetched = 0;
-  const worker = createWorker({ store });
+  const worker = await createWorker({ store });
   const result = await worker.runOnce([task('fixture', async () => { fetched++; return { nextCursor: {} }; })]);
   assert.equal(result.code, 'DISABLED');
   assert.equal(fetched, 0);
@@ -50,7 +50,7 @@ test('worker is disabled by default and does not touch store or providers', asyn
 
 test('worker writes validated data and commits the next cursor only after successful writes', async () => {
   const { store, calls } = makeStore();
-  const worker = createWorker({ enabled: true, store, createRunId: () => '20000000-0000-4000-8000-000000000001' });
+  const worker = await createWorker({ enabled: true, store, createRunId: () => '20000000-0000-4000-8000-000000000001' });
   const result = await worker.runOnce([task('fixture', async cursor => {
     assert.deepEqual(cursor, { page: 1 });
     return { assets: [asset], observations: [observation], nextCursor: { page: 2 } };
@@ -65,7 +65,7 @@ test('failed data write leaves the original cursor unadvanced and marks the task
   const { store, calls } = makeStore({
     appendObservations: async () => ({ ok: false, code: 'HTTP_503', records: 0 }),
   });
-  const worker = createWorker({ enabled: true, store, createRunId: () => '20000000-0000-4000-8000-000000000002' });
+  const worker = await createWorker({ enabled: true, store, createRunId: () => '20000000-0000-4000-8000-000000000002' });
   const result = await worker.runOnce([task('fixture', async () => ({
     assets: [asset], observations: [observation], nextCursor: { page: 99 },
   }))]);
@@ -78,7 +78,7 @@ test('failed data write leaves the original cursor unadvanced and marks the task
 
 test('provider failure does not advance checkpoint and does not stop another source', async () => {
   const { store } = makeStore();
-  const worker = createWorker({ enabled: true, concurrency: 2, store });
+  const worker = await createWorker({ enabled: true, concurrency: 2, store });
   const result = await worker.runOnce([
     task('broken', async () => { throw new Error('private provider detail'); }),
     task('healthy', async () => ({ nextCursor: { page: 2 } })),
@@ -94,7 +94,7 @@ test('worker bounds parallel tasks and preserves input result order', async () =
   const { store } = makeStore();
   let active = 0;
   let maximum = 0;
-  const worker = createWorker({ enabled: true, concurrency: 99, store });
+  const worker = await createWorker({ enabled: true, concurrency: 99, store });
   const tasks = Array.from({ length: 7 }, (_, index) => task(`source-${index}`, async () => {
     active++;
     maximum = Math.max(maximum, active);
@@ -109,7 +109,7 @@ test('worker bounds parallel tasks and preserves input result order', async () =
 
 test('worker rejects duplicate streams, malformed provider payloads and oversized batches', async () => {
   const { store, calls } = makeStore();
-  const worker = createWorker({ enabled: true, store });
+  const worker = await createWorker({ enabled: true, store });
   const duplicate = await worker.runOnce([
     task('same', async () => ({ nextCursor: {} })),
     task('same', async () => ({ nextCursor: {} })),
