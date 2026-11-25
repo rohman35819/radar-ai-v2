@@ -128,8 +128,34 @@ const isIsoTimestamp = (value: unknown): value is string =>
   typeof value === 'string' && /(?:Z|[+-][0-9]{2}:[0-9]{2})$/.test(value) &&
   Number.isFinite(Date.parse(value));
 
-const isStringRecord = (value: unknown): value is Record<string, unknown> =>
-  isRecord(value);
+function isBoundedJsonObject(value: unknown, maxBytes: number, stringValuesOnly = false): value is Record<string, unknown> {
+  if (!isRecord(value)) return false;
+  const ancestors = new Set<object>();
+  const visit = (item: unknown, depth: number): boolean => {
+    if (depth > 32) return false;
+    if (item === null || typeof item === 'string' || typeof item === 'boolean') return true;
+    if (typeof item === 'number') return Number.isFinite(item);
+    if (typeof item !== 'object') return false;
+    if (ancestors.has(item)) return false;
+    ancestors.add(item);
+    let valid = true;
+    if (Array.isArray(item)) valid = item.every(entry => visit(entry, depth + 1));
+    else {
+      const prototype = Object.getPrototypeOf(item);
+      valid = prototype === Object.prototype || prototype === null;
+      if (valid) valid = Object.values(item as Record<string, unknown>).every(entry => visit(entry, depth + 1));
+    }
+    ancestors.delete(item);
+    return valid;
+  };
+  if (!visit(value, 0)) return false;
+  if (stringValuesOnly && !Object.values(value).every(item => typeof item === 'string')) return false;
+  try {
+    return new TextEncoder().encode(JSON.stringify(value)).byteLength <= maxBytes;
+  } catch {
+    return false;
+  }
+}
 
 const isNonEmptyString = (value: unknown, max = 160): value is string =>
   typeof value === 'string' && value.length > 0 && value.length <= max;
@@ -150,8 +176,8 @@ export function isRadarAsset(value: unknown): value is RadarAsset {
   if ((value.chain == null) !== (value.contract_address == null)) return false;
   if (value.decimals !== undefined && value.decimals !== null &&
       (!Number.isInteger(value.decimals) || Number(value.decimals) < 0 || Number(value.decimals) > 36)) return false;
-  if (value.provider_ids !== undefined && !isStringRecord(value.provider_ids)) return false;
-  if (value.metadata !== undefined && !isStringRecord(value.metadata)) return false;
+  if (value.provider_ids !== undefined && !isBoundedJsonObject(value.provider_ids, 8192, true)) return false;
+  if (value.metadata !== undefined && !isBoundedJsonObject(value.metadata, 16384)) return false;
   return true;
 }
 
@@ -178,7 +204,7 @@ export function isMarketObservation(value: unknown): value is MarketObservation 
     isNonEmptyString(value.entity_type, 48) && isNonEmptyString(value.entity_id) &&
     isIsoTimestamp(value.observed_at) && isOptionalIsoTimestamp(value.source_updated_at) &&
     (value.schema_version === undefined || (Number.isInteger(value.schema_version) && Number(value.schema_version) >= 1 && Number(value.schema_version) <= 100)) &&
-    isRecord(value.payload) && typeof value.payload_hash === 'string' && /^[a-f0-9]{64}$/.test(value.payload_hash) &&
+    isBoundedJsonObject(value.payload, 65536) && typeof value.payload_hash === 'string' && /^[a-f0-9]{64}$/.test(value.payload_hash) &&
     (value.ingestion_run_id === undefined || value.ingestion_run_id === null || isUuid(value.ingestion_run_id));
 }
 
@@ -189,7 +215,7 @@ export function isIngestionRun(value: unknown): value is IngestionRun {
       !isNonEmptyString(value.stream, 80) || !statuses.includes(String(value.status)) ||
       !isIsoTimestamp(value.started_at) || !isOptionalIsoTimestamp(value.completed_at) ||
       !isOptionalString(value.error_code) ||
-      (value.metadata !== undefined && !isRecord(value.metadata))) return false;
+      (value.metadata !== undefined && !isBoundedJsonObject(value.metadata, 8192))) return false;
   const counters = ['records_received', 'records_inserted', 'records_updated', 'records_rejected'];
   if (!counters.every(key => value[key] === undefined || (Number.isInteger(value[key]) && Number(value[key]) >= 0))) return false;
   const received = Number(value.records_received ?? 0);
@@ -202,7 +228,7 @@ export function isIngestionCheckpoint(value: unknown): value is IngestionCheckpo
   const statuses = ['idle', 'running', 'succeeded', 'partial', 'failed', 'paused'];
   return isNonEmptyString(value.source, 80) && isNonEmptyString(value.stream, 80) &&
     statuses.includes(String(value.status)) &&
-    (value.cursor === undefined || isRecord(value.cursor)) &&
+    (value.cursor === undefined || isBoundedJsonObject(value.cursor, 8192)) &&
     isOptionalIsoTimestamp(value.last_attempt_at) && isOptionalIsoTimestamp(value.last_success_at) &&
     isOptionalIsoTimestamp(value.next_run_at) &&
     (value.consecutive_failures === undefined || (Number.isInteger(value.consecutive_failures) && Number(value.consecutive_failures) >= 0)) &&
