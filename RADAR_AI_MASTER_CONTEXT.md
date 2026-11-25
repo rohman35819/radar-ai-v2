@@ -997,7 +997,6 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - Tombol koneksi setelah request selesai memakai label berbeda dari label awal; tombol refresh akun tidak tersedia. Token dapat berada di variabel memori, tetapi tidak tersedia kontrol eksplisit untuk menghapusnya dari sesi halaman.
 - Request akun/ticker belum memiliki batas waktu eksplisit di browser. Pergantian exchange ketika request akun masih berjalan berpotensi membuat hasil lama mengubah status UI exchange yang baru dipilih.
 - Pair ticker belum divalidasi di browser sebelum request (backend tetap melakukan validasi).
-
 ### 28.2 Perubahan implementasi
 - `public/trading.html`: kontrol tampil/sembunyikan token, hapus token dan tampilan saldo dari halaman, tombol refresh akun yang baru aktif setelah koneksi berhasil, serta status akses yang lebih jelas.
 - `public/trading.css`: penyegaran visual khusus Exchange Hub; memperjelas hierarki header/hero, kartu exchange, panel koneksi, statistik akun, tabel, kalkulator, safety panel, dan roadmap. Breakpoint tablet/mobile diperbaiki, termasuk layout switcher dua kolom, kontrol sentuh penuh, safe spacing, dan fokus keyboard.
@@ -1098,26 +1097,2070 @@ Aturan jangka panjang ini ditambahkan pada 22 November 2026. Aturan berlaku untu
 - `README.md`: jumlah suite diperbarui menjadi 58 test case. Commit `135807b59cab2f9cdba1ff2cb0c8193d65ec5696`.
 - Tidak ada perubahan endpoint, kredensial, permission exchange, kalkulator, atau kemampuan trading. Tidak ada dependency baru.
 
+### 30.3 Pengujian
+- GitHub Actions run #272 untuk commit test `fb5c1bcc01284318d27efe76732aad22e1e2b532`: job `test` dan langkah `npm test` completed / success.
+- Hasil: 58 tests, 58 pass, 0 fail. Pipeline menjalankan seluruh pemeriksaan `node --check` pada server, modul exchange, frontend Exchange Hub, Dashboard, service worker, Command Center, dan modul AI OpenAI.
+- Run #271 untuk perubahan frontend juga success. Run #270 untuk dokumentasi regresi CI sebelumnya success.
+- Tes ini adalah regression/static + Node test suite; bukan QA browser/device dan bukan bukti koneksi akun nyata.
+
+### 30.4 Status dan NEXT TASK
+- GitHub: perubahan kode dan tes telah masuk branch `main`; README telah disinkronkan. Catatan ini menjadi commit dokumentasi berikutnya.
+- Hostless Build: belum terverifikasi. Hostless Live/SHA: belum terverifikasi; URL publik tidak dapat diakses dari pemeriksaan sesi ini.
+- EROFS/DATA_DIR masih menunggu log runtime dan konfigurasi volume Hostless. QA visual desktop/mobile, Console/Network, dan koneksi Binance/Bybit read-only nyata masih terbuka.
+- NEXT TASK:
+  1. Verifikasi Actions pada HEAD final setelah commit dokumentasi ini.
+  2. Lakukan QA browser Exchange Hub: gagal refresh setelah sukses harus mengosongkan tabel akun; hapus token saat request pending tidak boleh memunculkan saldo; uji switch exchange, timeout, 401/503, dan mobile.
+  3. Verifikasi Hostless Build dan SHA Live secara terpisah; jangan klaim deploy dari CI.
+  4. Audit DATA_DIR/EROFS berdasarkan log serta mount writable yang benar dari Hostless.
+  5. Lanjutkan Dashboard, Command Center, dan modul intelijen lainnya setelah stabilitas Exchange Hub terjaga.
+- Trading live, withdrawal, dan transfer tetap tidak tersedia/tidak diaktifkan.
 
 ---
 
-## 29. TOP MOVERS — NAVIGASI GRAFIK INTERNAL & EKSTERNAL — 25 NOVEMBER 2026
+## 29. HARDENING RATE LIMIT MEMORY BOUND — 22 NOVEMBER 2026 (ASIA/JAKARTA)
 
-### 29.1 Implementasi
-- `public/market.js`: setiap aset pada Top Gainers dan Top Losers kini menampilkan tombol **Grafik RADAR** dan **Grafik eksternal**.
+### 29.1 Temuan
+- Rate limiter sebelumnya membatasi jumlah key dengan menghapus seluruh Map saat jumlah alamat melewati 5.000. Perilaku ini membuang bucket aktif dan membuat klien yang sudah dibatasi dapat memperoleh jatah baru.
+
+### 29.2 Perbaikan
+- server.js: ekstrak createRateLimiter dengan jendela 60 detik, batas 60 request, tabel maksimum 5.000 identitas, dan sweep berkala untuk bucket kedaluwarsa.
+- Ketika tabel penuh, identitas baru ditolak dengan hasil rate-limited sampai sweep membebaskan ruang. Bucket aktif tidak pernah dihapus massal. Identitas yang sudah dikenal tetap dinilai dari riwayat request-nya.
+- test/radar.test.js: tambah satu test deterministik untuk batas identitas, fail-closed saat penuh, keberlanjutan bucket aktif, dan pemulihan setelah jendela kedaluwarsa.
+- README: dokumentasi batas memori dan perilaku fail-closed diperbarui; jumlah suite menjadi 58 test case pada 8 file.
+
+### 29.3 File
+- server.js
+- test/radar.test.js
+- README.md
+- RADAR_AI_MASTER_CONTEXT.md
+
+### 29.4 Keamanan dan kompatibilitas
+- Batas publik tetap 60 request per menit per identitas; tidak ada perubahan route atau kontrak API.
+- Maksimum memori untuk tabel identitas tetap 5.000 key. Dalam kondisi ekstrem saat tabel penuh, klien baru mungkin menerima HTTP 429 sementara; ini dipilih daripada menghapus seluruh perlindungan untuk klien yang sedang aktif.
+- Tidak ada kredensial, izin exchange, atau perilaku trading yang diubah.
+
+### 29.5 Verifikasi
+- Review source memastikan cabang hits.clear() sudah dihapus dan rate limiter memakai tabel bounded dengan sweep.
+- GitHub Actions run #274 pada SHA server.js, #275 pada SHA test, #277 pada SHA README, dan #278 pada HEAD master context saat ini semuanya completed/success. Run #274/#275 menguji source/test; #278 menguji HEAD dokumentasi. Tes lokal tidak dijalankan karena tidak tersedia working copy Node.js.
+- Hostless Build dan LIVE tidak dapat diverifikasi dari akses yang tersedia.
+
+### 29.6 Commit dan NEXT TASK
+- Commit server.js: 2f2829d1af8e1c32622a1c4b979190411f8284f5.
+- Commit test/radar.test.js: 6da99582095fb47e1e13e382937bafd457209a9b.
+- Commit README: edb1a1ab43edb78d1926b5e2d7bd2a58fc052195. Commit master context saat verifikasi CI: 9e79b97da3736eea8d58c1c6cf20220497d98ab6.
+- NEXT TASK: audit dan verifikasi volume DATA_DIR/EROFS dengan konfigurasi Hostless aktual; lanjutkan QA dashboard dan Exchange Hub pada browser desktop/mobile; pastikan deployment Hostless dan SHA LIVE dibuktikan terpisah. Jangan mengubah TRUSTED_PROXY_HOPS tanpa bukti rantai proxy.
+
+## 31. RATE LIMITER BOUNDED-MEMORY HARDENING — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 31.1 Temuan dan perubahan
+- Audit keamanan lanjutan menemukan limiter lama dapat mengosongkan seluruh tabel identitas saat jumlah IP melewati ambang, sehingga bucket aktif ikut ter-reset. Perilaku ini dapat melemahkan pembatasan untuk klien yang sudah terkena limit.
+- `server.js` kini menggunakan `createRateLimiter()` dengan tabel maksimum, sweep berkala yang hanya membuang timestamp kedaluwarsa, dan fail-closed untuk identitas baru ketika tabel masih penuh. Bucket aktif tidak dihapus hanya karena ada identitas baru.
+- Opsi `now`, `limit`, `windowMs`, `maxKeys`, dan `sweepIntervalMs` memudahkan tes deterministik. Default API tetap 60 request/menit dan maksimum 5000 identitas.
+
+### 31.2 File dan commit
+- `server.js`: implementasi bounded rate limiter. Commit `2f2829d1af8e1c32622a1c4b979190411f8284f5`.
+- `test/radar.test.js`: coverage tabel identitas terbatas tanpa reset bucket aktif. Commit `6da99582095fb47e1e13e382937bafd457209a9b`.
+- `README.md`: jumlah suite disinkronkan menjadi 59 test case. Commit `b41623009810d2a38e33b180d43ba55b5aee271f`.
+
+### 31.3 Verifikasi dan status
+- GitHub Actions run #274 untuk implementasi dan #275 untuk tes selesai success. Run #275 menjalankan seluruh pemeriksaan sintaks dan `npm test`: 59 tests, 59 pass, 0 fail.
+- Run #272 juga membuktikan tes regresi penghapusan data akun privat lulus: 58/58 pada snapshot sebelum tambahan tes rate limiter.
+- Hostless Build dan SHA Live belum terverifikasi. Tidak ada bukti browser QA atau koneksi akun nyata.
+- NEXT TASK: verifikasi CI untuk HEAD setelah dokumentasi ini; lanjutkan QA browser Exchange Hub dan Dashboard; audit DATA_DIR/EROFS berdasarkan konfigurasi volume/log Hostless; kemudian audit modul intelijen lainnya.
+
+### 29.7 Penutupan dan bukti CI
+- GitHub Actions #274 (SHA 2f2829d), #275 (SHA 6da9958), #277 (SHA edb1a1a), dan #278 (SHA 9e79b97) seluruhnya completed/success. Ini memverifikasi tes source, tes baru, dokumentasi README, dan master context; #278 adalah CI sukses untuk HEAD master context sebelum catatan penutupan ini.
+- HEAD branch main yang diperiksa: 9e79b97da3736eea8d58c1c6cf20220497d98ab6. Perubahan dokumentasi penutupan ini akan menghasilkan commit berikutnya.
+- Hostless Build/Live tetap belum diverifikasi. CI GitHub tidak membuktikan deployment Hostless.
+## 32. STANDAR MONITORING BINANCE DENGAN PERINGATAN IZIN TRADING — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 32.1 Keputusan operasional
+- Pemilik melaporkan API Key Binance yang saat ini dipakai tidak dapat diedit. RADAR tidak memaksa perubahan izin pada key tersebut dan tidak memblokir koneksi monitoring hanya karena flag canTrade aktif.
+- Peringatan izin trading tetap terlihat dan secara eksplisit menyatakan bahwa izin pada kredensial masih berisiko. Ini bukan penetapan bahwa API Key sudah aman.
+- Batas keamanan aplikasi tidak berubah: Exchange Hub hanya melakukan pembacaan melalui request HTTP GET. Tidak ada endpoint pembuatan/pembatalan order, transfer, atau withdrawal. Kalkulator tetap simulasi.
+- Standar yang direkomendasikan tetap membuat API Key baru terpisah dengan izin baca saja dan withdrawal/trading/transfer dinonaktifkan ketika memungkinkan. Jangan meminta API Secret melalui chat.
+
+### 32.2 File dan commit
+- public/trading.js: pesan peringatan dan feedback dibuat lebih jelas; status koneksi monitoring tetap tersedia tanpa menyembunyikan risiko. Commit 2f86454ac2aadd95cc73255aa4685b87f242b36a.
+- test/exchange-ui.test.js: tambah regresi untuk memastikan peringatan tidak mengubah standar read-only dan tidak ada route order. Commit 8b42b33220096befe0582cdfabb07a57fc2ff9be.
+- README.md: dokumentasi membedakan izin kredensial dari kemampuan aplikasi; jumlah tes diperbarui menjadi 60. Commit af0d6665f77134e6717e4e71828adccbd1b670dc.
+- Tidak ada perubahan API key/secret, environment Hostless, backend signing, route, permission exchange, atau dependency.
+
+### 32.3 Verifikasi dan status
+- Test baru ditambahkan untuk status warning, pernyataan read-only, request GET, dan ketiadaan route order. Hasil CI untuk rangkaian commit ini masih menunggu pemeriksaan; jangan menyatakan 60/60 lulus sebelum run selesai.
+- Hostless Build dan SHA LIVE belum diverifikasi. Perubahan GitHub tidak membuktikan aplikasi sudah diperbarui.
+- Koneksi monitoring pada akun nyata belum diuji ulang setelah perubahan pesan UI. Peringatan tetap perlu diperhatikan karena izin trading pada key tetap aktif.
+
+### 32.4 NEXT TASK
+1. Verifikasi GitHub Actions untuk commit tes dan HEAD dokumentasi; pastikan seluruh 60 tes lulus.
+2. Setelah CI, verifikasi Hostless Build dan SHA LIVE secara terpisah.
+3. QA Exchange Hub desktop/mobile dan uji refresh akun tanpa menampilkan data privat kedaluwarsa.
+4. Lanjutkan audit DATA_DIR/EROFS berdasarkan konfigurasi volume/log Hostless, lalu QA Dashboard.
+5. Jika pemilik nanti dapat membuat API Key baru, gunakan izin baca saja; jangan meminta secret dikirim lewat chat.
+### 32.5 Koreksi regresi tes dan status CI
+- Run awal #44991867504 dan #44991871567 gagal karena assertion tes memeriksa method GET pada frontend, padahal method request didefinisikan di lib/exchanges.js. Implementasi aplikasi tidak gagal; tes diarahkan ke modul backend yang benar.
+- test/exchange-ui.test.js diperbaiki untuk memastikan request exchange memakai GET dan tidak menggunakan POST/PUT/PATCH/DELETE. Commit koreksi: 9b95b257660793aa5a1f8803476e1ac44244ac0b.
+- GitHub Actions run #44991933604 untuk commit koreksi sedang berjalan pada saat catatan ini diperbarui. Status 60/60 belum boleh diklaim sampai run selesai.
+
+## 33. KOREKSI FALSE POSITIVE IZIN API KEY BINANCE — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 33.1 Temuan dan akar masalah
+- Pemilik melaporkan Exchange Hub masih menampilkan peringatan izin Spot Trading meskipun API Key dikonfigurasi read-only.
+- Audit menemukan frontend memakai `account.spot.can_trade` dari `GET /api/v3/account` dan `account.futures.can_trade` dari `GET /fapi/v2/account` sebagai izin trading API Key. Kedua field itu menggambarkan kemampuan trading akun, bukan permission khusus API Key. Ini dapat menimbulkan false positive.
+- Endpoint resmi untuk memeriksa permission Key adalah signed `GET /sapi/v1/account/apiRestrictions`, dengan field `enableSpotAndMarginTrading`, `enableFutures`, `enableWithdrawals`, `enableInternalTransfer`, dan `permitsUniversalTransfer`. Referensi: https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/account dan https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/rest-api/account.
+
+### 33.2 Perbaikan
+- `lib/exchanges.js`: pemeriksaan permission API Key ditambahkan melalui endpoint khusus Binance, tetap signed HTTP GET server-side. Permission dikembalikan terpisah dari metadata kemampuan trading akun.
+- `public/trading.js`: warning hanya dipicu field permission API Key yang benar. Jika endpoint permission gagal atau field boolean tidak tersedia, UI menyatakan izin belum terverifikasi, bukan false positive atau klaim aman.
+- `test/exchanges.test.js`: cakupan permission nonaktif, permission aktif, dan endpoint permission tidak tersedia; skenario account `canTrade=true` tetapi izin API Key nonaktif juga diverifikasi.
+- `test/exchange-ui.test.js`: frontend harus membaca `account.api_permissions`, bukan `can_trade` akun; pemeriksaan memastikan tidak ada endpoint order.
+- `README.md`: dokumentasi diperbarui untuk endpoint permission yang benar.
+
+### 33.3 File dan commit
+- `lib/exchanges.js`: 491fff481b92a3d3b78b39aaf01dcdd16f22f252.
+- `public/trading.js`: c8c7757a098c73841255bacf8f3042b05ad07ee8.
+- `test/exchanges.test.js`: f9ce5b83e1975f130459e372937ca2b7bb61a7de dan 7ae0ad6f9680c70cb19b661885162f46aede6c67.
+- `test/exchange-ui.test.js`: 9ba5805bc299cb63c08183eb8e580f55feb59c05.
+- `README.md`: a4e8b17d1609fb0aed969b98c034446bba937e0e.
+- Tidak ada perubahan API Secret, environment Hostless, permission akun, endpoint order, trading live, withdrawal, atau dependency.
+
+### 33.4 Verifikasi dan status
+- GitHub Actions pada HEAD terbaru perlu diperiksa. Tes lokal tidak dijalankan pada sesi ini karena tidak tersedia working copy Node.js.
+- Hostless Build dan SHA LIVE belum diverifikasi. Perubahan GitHub tidak membuktikan halaman Live sudah menerima perbaikan.
+- Koneksi akun nyata belum diuji; hasil permission aktual baru dapat diketahui setelah versi ini dideploy dan tombol refresh akun dijalankan.
+- Batas keamanan tetap: tidak ada POST/PUT/PATCH/DELETE exchange; tidak ada order, transfer, atau withdrawal dari RADAR.
+
+### 33.5 NEXT TASK
+1. Verifikasi GitHub Actions pada HEAD terbaru; perbaiki regresi jika ditemukan.
+2. Verifikasi Hostless Build dan SHA Live secara terpisah.
+3. Setelah deploy, refresh akun Exchange Hub dan cocokkan UI dengan permission API Key yang sebenarnya.
+4. Lanjutkan QA Exchange Hub desktop/mobile, lalu audit DATA_DIR/EROFS dan QA Dashboard.
+
+### 33.6 Hasil CI final dan deployment
+- GitHub Actions run #44992363868 untuk HEAD `9427a7f53e1f58ffe4a1cfec74657ce9b7f9ea25`: completed / success. Pipeline menjalankan `node --check` untuk server, modul exchange, frontend Exchange Hub, dashboard, service worker, Command Center, dan modul AI OpenAI; `npm test`: 61 tests, 61 pass, 0 fail.
+- Run awal pada commit bertahap gagal karena tes belum diselaraskan dengan endpoint keempat dan assertion UI lama; penyebab tercatat dari log Actions. Tes diperbarui dan run final pada HEAD dokumentasi sukses.
+- Hostless: pemeriksaan URL publik masih gagal diakses dari sesi ini (cache miss/Internal Error). Build Hostless dan SHA Live tetap tidak diketahui; jangan mengklaim perubahan sudah LIVE.
+- HEAD yang diverifikasi saat pencatatan ini: `9427a7f53e1f58ffe4a1cfec74657ce9b7f9ea25`. Commit dokumentasi status final akan menghasilkan HEAD berikutnya dan perlu CI baru.
+
+
+## 34. IDENTITAS AKUN EXCHANGE HUB — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 34.1 Tujuan dan keputusan
+- Pemilik meminta Exchange Hub menampilkan nama/identitas akun setelah token akses privat dimasukkan, agar jelas akun mana yang benar-benar terhubung.
+- API resmi Binance yang dipakai untuk membaca akun tidak menyediakan username/email akun. RADAR tidak akan mengarang atau menebak identitas pribadi.
+- Keputusan UI: tampilkan label akun opsional dari environment `BINANCE_ACCOUNT_LABEL` / `BYBIT_ACCOUNT_LABEL`; bila kosong, tampilkan nama exchange generik. Sertakan fingerprint SHA-256 satu arah 10 karakter dari API Key untuk membedakan konfigurasi key. Fingerprint bukan kredensial dan tidak dapat digunakan untuk autentikasi.
+- API Key dan Secret mentah tetap server-side. Label tidak membuktikan identitas legal pemilik akun; keberhasilan request private API yang sudah ditandatangani menjadi bukti bahwa konfigurasi key tersebut merespons.
+
+### 34.2 Perubahan file
+- `lib/exchanges.js`: normalisasi identitas akun Binance/Bybit; label opsional dan fingerprint satu arah.
+- `public/trading.html`, `public/trading.js`, `public/trading.css`: panel identitas akun pada bagian atas Ringkasan Akun; status hanya tampil setelah respons private account berhasil.
+- `test/exchanges.test.js`: uji label, fingerprint, dan tidak bocornya API Key/Secret.
+- `test/exchange-ui.test.js`: uji panel identitas dan render field identitas.
+- `README.md`: dokumentasi environment label dan batasan username API.
+- Tidak ada perubahan permission, route order, transaksi, withdrawal, transfer, token Exchange Hub, atau dependency.
+
+### 34.3 Pengujian dan deployment
+- Pemeriksaan diff GitHub mengonfirmasi hanya delapan file yang berubah sesuai lingkup fitur; tidak ada secret atau API credential nyata pada diff.
+- Tes lokal tidak dijalankan karena sesi ini tidak memiliki working copy Node.js.
+- GitHub Actions run #296 (44992834181) untuk commit fitur 14745010a388973f7fdeafaf8fc2326f7496f72a: completed / success. Job `test` dan langkah `npm test` completed / success; seluruh pemeriksaan sintaks dan test suite lulus. README memperkirakan 63 test case setelah dua test baru.
+- Hostless Build dan SHA Live belum diverifikasi. URL `/trading.html` dan `/api/exchanges/status` tidak dapat diakses dari pemeriksaan sesi ini; jangan menyimpulkan aplikasi sudah LIVE.
+- Tidak ada kredensial nyata yang dibaca atau ditambahkan ke repository.
+
+### 34.4 NEXT TASK
+1. Verifikasi Hostless Build dan SHA Live secara terpisah; perubahan GitHub dan CI sukses bukan bukti deploy.
+2. Setelah deployment, pemilik dapat mengisi `BINANCE_ACCOUNT_LABEL` / `BYBIT_ACCOUNT_LABEL` di Hostless Production jika ingin nama tampilan khusus, lalu redeploy dan uji koneksi akun.
+3. Lanjutkan QA Exchange Hub desktop/mobile: identitas saat switch exchange, gagal koneksi, refresh token, dan tampilan tabel di layar kecil.
+4. Lanjutkan audit DATA_DIR/EROFS berdasarkan log serta mount Hostless.
+5. Lanjutkan QA Dashboard dan Command Center sesuai roadmap.
+
+
+## 35. ORGANISASI MULTI-DIVISI AI DAN PROTOKOL ROUTING OBROLAN — 22 NOVEMBER 2026
+
+### 35.1 Tujuan dan prinsip
+Aturan ini menetapkan cara semua obrolan ChatGPT, AI worker, dan kontributor berikutnya memahami posisi mereka di organisasi pengembangan RADAR AI. Tujuannya agar pemilik tidak perlu mengulang pembagian tugas atau menjelaskan kembali konteks proyek.
+
+Model organisasi: **1 Owner + 1 Main Director/Orchestrator + 5 Divisi Spesialis + 1 QA Gate + 1 Research & Innovation Board**.
+
+Penting: lima divisi adalah pembagian tanggung jawab AI/engineering, bukan klaim bahwa lima halaman UI RADAR yang sudah ada otomatis menjadi lima agen mandiri. Percakapan ChatGPT biasa tidak terus bekerja di latar belakang hanya karena diberi jabatan. Kerja mandiri tanpa pesan baru membutuhkan scheduler, task queue, AI worker, penyimpanan status, integrasi Git, dan kontrol eksekusi yang kelak dibangun di backend RADAR.
+
+### 35.2 Hierarki dan wewenang
+1. **OWNER** — pemilik produk dan pemegang keputusan tertinggi. Menentukan arah, prioritas bisnis, serta menyetujui tindakan berisiko tinggi.
+2. **MAIN DIRECTOR / ORCHESTRATOR** — menjaga arsitektur dan kesinambungan, membaca master context, memilih divisi, membagi tugas, menghindari konflik file, mengintegrasikan hasil, dan menetapkan NEXT TASK. Direktur tidak boleh mengklaim pekerjaan divisi lain selesai tanpa bukti.
+3. **DIVISION LEADS** — bertanggung jawab atas audit, backlog, implementasi, dokumentasi, dan laporan di area masing-masing.
+4. **QA GATE** — pemeriksa independen sebelum perubahan digabungkan atau dirilis. QA boleh menolak perubahan yang gagal tes, menimbulkan regresi, membocorkan secret, atau tidak memiliki rollback yang layak.
+5. **RESEARCH & INNOVATION BOARD** — tempat semua divisi mengirim ide, temuan, evaluasi teknologi, dan peluang peningkatan. Board memberi rekomendasi; direktur menentukan prioritas.
+
+### 35.3 Pembagian lima divisi tetap
+**DIVISI 01 — SECURITY & RELIABILITY**
+- Fokus: keamanan aplikasi, backend, autentikasi/otorisasi, validasi input, rate limit, proteksi abuse, secrets, logging aman, storage, DATA_DIR, EROFS, ketahanan proses, backup, dan pemulihan.
+- Area utama: server.js, lib backend/storage/security, konfigurasi environment, security tests, dan dokumentasi keamanan.
+- Hasil wajib: temuan dengan tingkat risiko, akar masalah, patch minimal, tes keamanan/regresi, dan rekomendasi mitigasi.
+- Tidak boleh: menaruh secret di kode/frontend/log/chat, melemahkan autentikasi untuk mempermudah tes, atau mengubah izin exchange/trading tanpa persetujuan.
+
+**DIVISI 02 — UI/UX & FRONTEND**
+- Fokus: dashboard, seluruh halaman dan menu, navigasi, sidebar, responsivitas desktop/mobile, aksesibilitas, visual hierarchy, feedback tombol, loading/empty/error states, dan konsistensi desain.
+- Area utama: public/*.html, public/*.css, public/*.js dan UI tests.
+- Hasil wajib: audit per halaman, bukti interaksi, pemeriksaan ukuran layar, dan tes agar fitur/menu lama tidak hilang.
+- Tidak boleh: mengubah kontrak API/backend atau menghapus fitur tanpa koordinasi direktur.
+
+**DIVISI 03 — EXCHANGE & TRADING SYSTEMS**
+- Fokus: Exchange Hub, koneksi Binance/Bybit dan exchange berikutnya, identitas akun, saldo, posisi, permission API key, signature, sinkronisasi, rate/precision rules, serta kontrol risiko.
+- Area utama: lib/exchanges.js, public/trading.*, route terkait, environment docs, dan exchange tests.
+- Hasil wajib: status koneksi yang dapat dibuktikan, identitas akun yang tidak dikarang, data privat yang aman, serta pemisahan jelas antara account capability dan API-key permissions.
+- Batas mutlak: read-only terlebih dahulu; tidak ada withdrawal; trading live OFF secara default; tidak mengirim order nyata tanpa persetujuan eksplisit dan semua safeguard. Jangan pernah meminta secret melalui chat.
+
+**DIVISI 04 — AI INTELLIGENCE & RESEARCH**
+- Fokus: AI Council, AI Workspace, Command Center, prompt/workflow, provider/model integration, analisis pasar, berita, riset sumber data, kualitas reasoning, evaluasi output, dan inovasi produk.
+- Area utama: lib/AI modules, command center, research/source modules, dan AI tests.
+- Hasil wajib: sumber dan batas data yang jelas, evaluasi kualitas, fallback/error handling, biaya dan latensi yang terukur, serta pemisahan fakta dari estimasi.
+- Tidak boleh: mengarang data pasar/berita, mengirim kredensial ke provider yang tidak disetujui, atau menyajikan output AI sebagai kepastian finansial.
+
+**DIVISI 05 — QA, TESTING & DEVOPS**
+- Fokus: test suite, syntax checks, integration/regression testing, CI, release readiness, observability, deployment, Hostless build/live verification, smoke tests, dan rollback.
+- Area utama: test/*, .github/workflows/*, scripts/*, package scripts, deployment documentation.
+- Hasil wajib: laporan pass/fail beserta bukti, cakupan risiko, commit SHA yang diuji, status build, SHA LIVE bila dapat diverifikasi, dan rollback guidance.
+- Tidak boleh: menyamakan GitHub commit sukses dengan build Hostless atau aplikasi LIVE.
+
+### 35.4 Protokol routing untuk setiap obrolan baru
+Setiap obrolan baru yang berkaitan dengan RADAR wajib menjalankan urutan berikut sebelum mengubah kode:
+1. Identifikasi bahwa proyek adalah RADAR AI V2 yang berkelanjutan.
+2. Baca seluruh RADAR_AI_MASTER_CONTEXT.md dan AGENTS.md dari branch main.
+3. Periksa HEAD branch main, commit terbaru, CI terbaru, dan status issue/PR relevan bila tersedia.
+4. Baca NEXT TASK terbaru serta file dan dependensi yang terkait.
+5. Klasifikasikan permintaan pemilik ke satu divisi utama. Jika lintas area, tetapkan satu divisi lead dan daftar divisi pendukung.
+6. Nyatakan secara internal/di laporan singkat: **Divisi penanggung jawab**, **tujuan**, **file/area kerja**, **risiko/dependensi**, dan **acceptance criteria**.
+7. Jika pesan pemilik hanya "lanjut", "teruskan", "ok", atau sejenisnya, jangan bertanya apa yang harus dikerjakan. Ambil NEXT TASK aktif dari master context dan lanjutkan.
+8. Jika pesan tidak menyebut area tertentu, direktur memilih pekerjaan berprioritas tertinggi berdasarkan roadmap, dampak pengguna, tingkat risiko, dan dependensi.
+9. Jika tugas merupakan permintaan khusus, tugas tersebut masuk ke divisi yang paling sesuai; jangan memaksakan semua divisi mengerjakan hal yang sama.
+10. Jika repository atau dokumen tidak dapat diakses, laporkan sumber yang gagal diakses dan lanjutkan hanya dari bukti/konteks yang benar-benar tersedia.
+
+### 35.5 Matriks routing cepat
+- Keamanan, autentikasi, API abuse, secret, storage, DATA_DIR, EROFS → **Divisi 01**.
+- Tampilan, warna, layout, dashboard, sidebar, halaman, tombol, mobile/desktop → **Divisi 02**.
+- Binance, Bybit, API key exchange, identitas akun, saldo, posisi, permission, trading safety → **Divisi 03**.
+- Model AI, prompt, AI Council, AI Workspace, Command Center, berita, riset, analisis → **Divisi 04**.
+- Bug lintas fitur, tes, CI, build, deploy, Hostless, smoke test, regresi, rilis → **Divisi 05**.
+- Arsitektur lintas divisi, konflik prioritas, integrasi, roadmap, pembagian tugas → **Main Director** dengan divisi spesialis sebagai pelaksana.
+
+### 35.6 Aturan kolaborasi dan isolasi perubahan
+1. Setiap task memiliki satu lead division; divisi lain hanya membantu pada subtask yang jelas.
+2. Sebelum mengedit, cek apakah ada pekerjaan aktif atau perubahan terbaru pada file yang sama. Hindari dua worker mengedit file yang sama bersamaan.
+3. Setiap worker menggunakan branch/PR terpisah bila sistem multi-agent sudah tersedia. Jangan melakukan force push atau menimpa perubahan worker lain.
+4. Perubahan lintas divisi harus disepakati melalui kontrak file/API/data dan direview direktur.
+5. Semua hasil dikirim sebagai: ringkasan, file, commit/PR, tes, risiko, bukti, dan NEXT TASK.
+6. QA bersifat independen dari implementer. Implementer tidak boleh menandai pekerjaannya sendiri sebagai lolos QA tanpa pemeriksaan yang ditentukan.
+7. Jika tes gagal, jangan merge/deploy. Perbaiki atau rollback; dokumentasikan alasan dan hasil.
+8. Jika tidak ada pekerjaan yang aman untuk dikerjakan, worker membuat temuan/backlog yang dapat ditindaklanjuti, bukan membuat perubahan kosmetik tanpa tujuan.
+
+### 35.7 Siklus kerja otonom yang ditargetkan
+Ketika scheduler dan AI worker sudah tersedia, setiap divisi mengikuti siklus:
+- **Audit:** memeriksa area tanggung jawab, log, tes, dan backlog.
+- **Detect:** membuat temuan dengan bukti, severity, dampak, dan confidence.
+- **Prioritize:** memilih tugas sesuai roadmap dan dependensi.
+- **Plan:** menuliskan acceptance criteria, file terdampak, risiko, dan rollback.
+- **Implement:** bekerja pada branch terisolasi dengan hak akses minimum.
+- **Test:** menjalankan unit, integration, regression, syntax, dan security checks yang relevan.
+- **Review:** meminta QA independen dan persetujuan direktur sesuai tingkat risiko.
+- **Integrate:** merge hanya jika seluruh gate terpenuhi.
+- **Observe:** memantau CI, build, LIVE, log, dan regresi.
+- **Report:** memperbarui status dan NEXT TASK.
+
+Frekuensi awal yang direkomendasikan setelah sistem otonom dibangun: audit ringan harian; review backlog mingguan; security/dependency review mingguan; full regression sebelum setiap rilis. Jadwal harus menghormati kuota API, biaya model, batas rate, dan jam operasional. Jangan menjalankan worker tanpa batas atau membuat loop perubahan otomatis.
+
+### 35.8 Tingkat otonomi dan persetujuan
+- **Level 0 — Observe:** baca, audit, dan laporkan.
+- **Level 1 — Propose:** buat backlog dan rencana perubahan.
+- **Level 2 — Implement in isolated branch:** boleh membuat patch dan tes di branch terpisah.
+- **Level 3 — Merge after independent QA:** hanya untuk perubahan risiko rendah/menengah yang memenuhi kebijakan repository dan gate.
+- **Level 4 — Production/security/financial actions:** memerlukan persetujuan eksplisit pemilik. Termasuk perubahan secret/environment/permission, migrasi data berisiko, perubahan autentikasi besar, deployment manual, dan seluruh transaksi/trading live.
+
+Sistem tidak boleh menaikkan level otonomi sendiri. Hak akses worker harus minimum dan dapat dicabut. Semua tindakan harus tercatat dalam audit log.
+
+### 35.9 Format handoff wajib antar-obrolan/divisi
+Setiap handoff harus mencantumkan:
+- Divisi lead dan divisi pendukung:
+- Tujuan dan alasan prioritas:
+- Status aktual dan bukti:
+- File/komponen yang diperiksa:
+- Perubahan yang dibuat:
+- Tes dan hasil:
+- Commit/PR SHA:
+- GitHub CI:
+- Hostless build:
+- Hostless LIVE:
+- Risiko/blocker:
+- Keputusan yang menunggu Owner:
+- NEXT TASK yang dapat langsung dieksekusi:
+
+### 35.10 Instruksi pembuka untuk lima obrolan spesialis
+Gunakan salah satu instruksi ini sebagai pesan awal pada percakapan spesialis. Semua percakapan tetap wajib membaca dokumen master dan memeriksa repository sebelum bekerja.
+
+**OBROLAN 01 — SECURITY & RELIABILITY**
+"Kamu adalah Lead Divisi 01 Security & Reliability RADAR AI. Tugasmu hanya memimpin audit dan pengembangan keamanan, backend reliability, storage/DATA_DIR/EROFS, autentikasi, rate limiting, secrets, dan pemulihan. Baca master context dan AGENTS.md, periksa main HEAD/CI, lalu ambil NEXT TASK yang termasuk divisi ini. Jangan mengubah UI/exchange/AI di luar kebutuhan keamanan. Buat patch kecil, tes, dokumentasi, dan laporkan bukti."
+
+**OBROLAN 02 — UI/UX & FRONTEND**
+"Kamu adalah Lead Divisi 02 UI/UX & Frontend RADAR AI. Tugasmu memimpin audit dan pengembangan dashboard, seluruh halaman, navigasi, sidebar, responsivitas desktop/mobile, aksesibilitas, dan interaksi. Baca master context dan AGENTS.md, periksa main HEAD/CI, lalu ambil NEXT TASK divisi ini. Pertahankan semua menu dan fitur lama. Jangan mengubah kontrak backend tanpa koordinasi direktur. Tes dan dokumentasikan setiap perubahan."
+
+**OBROLAN 03 — EXCHANGE & TRADING SYSTEMS**
+"Kamu adalah Lead Divisi 03 Exchange & Trading Systems RADAR AI. Tugasmu memimpin Exchange Hub, integrasi Binance/Bybit, identitas akun, saldo/posisi, permission API key, dan kontrol risiko. Baca master context dan AGENTS.md, periksa main HEAD/CI, lalu ambil NEXT TASK divisi ini. Read-only dahulu, withdrawal OFF, trading live OFF. Jangan meminta atau menulis secret di chat/repository/frontend. Jangan mengirim order nyata tanpa persetujuan eksplisit."
+
+**OBROLAN 04 — AI INTELLIGENCE & RESEARCH**
+"Kamu adalah Lead Divisi 04 AI Intelligence & Research RADAR AI. Tugasmu memimpin AI Council, AI Workspace, Command Center, integrasi model, prompt/workflow, analisis pasar, berita, riset data, dan evaluasi kualitas AI. Baca master context dan AGENTS.md, periksa main HEAD/CI, lalu ambil NEXT TASK divisi ini. Jangan mengarang fakta atau data. Ukur kualitas, biaya, latensi, dan fallback. Koordinasikan perubahan lintas divisi dengan direktur."
+
+**OBROLAN 05 — QA, TESTING & DEVOPS**
+"Kamu adalah Lead Divisi 05 QA, Testing & DevOps RADAR AI. Tugasmu mengaudit test suite, regresi, CI, release readiness, observability, Hostless build/live, smoke tests, dan rollback. Baca master context dan AGENTS.md, periksa main HEAD/CI, lalu ambil NEXT TASK divisi ini. Jadilah reviewer independen; jangan menyatakan lulus tanpa bukti. Pisahkan status GitHub, Hostless Build, dan Hostless LIVE."
+
+### 35.11 Prompt pembuka universal untuk obrolan RADAR
+"Ini adalah kelanjutan RADAR AI V2. Kamu otomatis menjadi Main Director kecuali saya menyebut divisi spesialis tertentu. Baca seluruh RADAR_AI_MASTER_CONTEXT.md dan AGENTS.md dari branch main; periksa HEAD, commit terbaru, CI, dan file relevan. Tentukan divisi penanggung jawab berdasarkan matriks routing dan ambil NEXT TASK terbaru. Jangan minta saya mengulang konteks. Pertahankan fitur lama, kerjakan perubahan yang aman, uji, dokumentasikan, dan laporkan bukti. Jika tugas lintas divisi, tunjuk satu lead dan koordinasikan sisanya. Jangan mengklaim deployment LIVE tanpa verifikasi. Patuhi semua batas keamanan dan persetujuan Owner."
+
+### 35.12 NEXT TASK penerapan organisasi
+1. Tetapkan aturan organisasi dan routing ini sebagai kebijakan proyek (dokumen ini dan AGENTS.md).
+2. Buat backlog awal terpisah untuk lima divisi berdasarkan kondisi kode aktual; jangan menganggap lima percakapan ChatGPT otomatis aktif.
+3. Rancang arsitektur AI Department System: scheduler, task queue, worker registry, shared state/memory, isolated Git branches, QA gate, approval queue, audit log, biaya/kuota, dan kill switch.
+4. Implementasikan fondasi organisasi terlebih dahulu dalam mode observe/propose; jangan langsung memberi worker hak merge/deploy.
+5. Setelah audit DATA_DIR/EROFS dan QA prioritas saat ini, mulai pilot satu worker dengan ruang lingkup kecil, lalu ukur sebelum memperluas ke lima divisi.
+6. Tetap lanjutkan roadmap yang sudah berjalan: Hostless verification bila akses tersedia, audit DATA_DIR/EROFS, QA Exchange Hub, dan QA Dashboard. Organisasi baru tidak boleh menjadi alasan menunda bug/stabilitas yang sudah tercatat.
+
+
+---
+
+## 36. QA GATE & CI MAINTENANCE — 22 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### 36.1 Repository and scope verification
+- Divisi lead: 05 — QA, Testing & DevOps. Scope: independent CI/release audit; supporting owners for Exchange Hub, Dashboard/UI, Security & Reliability, and AI/Command Center remain responsible for domain implementation.
+- Full `RADAR_AI_MASTER_CONTEXT.md` and `AGENTS.md` were fetched from `main`; section 35 routing and latest NEXT TASK were reviewed.
+- Latest pre-audit main HEAD: `6a52a4a0fe89dd6b309a65cd5c58ad100ddf841a` (`docs: add AI division routing rules for contributors`). Recent preceding commits `bb7f819` and `95cd69c` are documentation changes; latest feature implementation commit in the reviewed chain is `14745010a388973f7fdeafaf8fc2326f7496f72a` (Exchange Hub account identity).
+- Reviewed current package scripts, workflow `.github/workflows/test.yml`, server.js, lib/exchanges.js, lib/ingest.js, public/index.html, public/app.js, public/style.css, public/trading.html, public/trading.js, test/radar.test.js, test/exchanges.test.js, and test/exchange-ui.test.js.
+- `package.json` defines `npm test` as syntax checks for server/exchange/dashboard/PWA/Command Center/OpenAI files followed by `node --test test/*.test.js`. No runtime npm dependencies are declared.
+
+### 36.2 Verified CI evidence
+- GitHub Actions run #296 / run ID `44992834181`, job `test`, was fetched. Job status: completed; conclusion: success.
+- The job log confirms the workflow executed the package test command and reported **63 tests, 63 pass, 0 fail, 0 skipped**. This CI evidence is associated with the Exchange Hub identity implementation commit `14745010a388973f7fdeafaf8fc2326f7496f72a`, as recorded in the prior verified project history. Do not treat it as a new local test run or proof that the newest documentation HEAD has a separate completed CI run.
+- CI warnings in the retrieved log: Node.js 20 deprecation warnings from `actions/checkout@v4` and `actions/setup-node@v4`; Node's `punycode` module deprecation warning. They did not fail the run.
+- Commit CI maintenance patch below upgrades both workflow actions to v7, whose documented runtime is Node 24. Punycode warning remains untriaged; no evidence yet identifies its originating dependency/call path.
+
+### 36.3 QA changes
+- `.github/workflows/test.yml`: upgraded `actions/checkout@v4` and `actions/setup-node@v4` to `@v7` to remove the observed Node 20 action-runtime deprecation and align workflow actions with the Node 24 test runtime.
+- Workflow action v7 compatibility is documented by the upstream action repositories; the workflow still uses the same trigger, runner, Node version, and `npm test` command. No application runtime, secrets, exchange permissions, or deployment settings were changed.
+- CI workflow patch commit: `67e8ab0004feddbe1267440d3c63b8ff91b7960d`.
+- A separate documentation commit is expected to follow this entry. New CI for the workflow patch / documentation HEAD has not yet been verified in this audit.
+
+### 36.4 Test and deployment status
+- CI (previous feature commit): **PASS**, 63/63 tests, 0 failures; job and logs fetched from GitHub Actions.
+- Local `npm test`: **NOT RUN**. A local clone attempt was blocked because the execution environment could not resolve `github.com`; no claim of local execution is made.
+- GitHub combined status API for the latest pre-audit HEAD returned no status entries. The available workflow-run connector only exposes pull-request-triggered runs and returned an empty list for that push commit; therefore it cannot establish the latest push-run result.
+- Hostless Build: **UNKNOWN / NOT VERIFIED**. No Hostless account connector or deployment log access is available in this session.
+- Hostless LIVE: **NOT VERIFIED**. Public root and `/api/health` checks could not be fetched from this environment. No active deployment SHA was established.
+- Desktop/mobile browser QA, browser console/network inspection, and visual checks were **NOT RUN**; no browser automation or Hostless session is available here.
+
+### 36.5 Findings and ownership
+- **P2 — CI maintenance:** workflow used Actions v4 and emitted Node.js 20 deprecation warnings despite testing on Node 24. Mitigation committed in `.github/workflows/test.yml`; verify next Actions run and confirm warnings disappear. Owner: Divisi 05.
+- **P3 — CI warning:** `punycode` deprecation appears during test job cleanup. Source not identified; do not suppress until dependency/call path is established. Owner: Divisi 05 to trace; route dependency update to the owning module when identified.
+- **P1/P2 — Deployment verification blocker:** Hostless build and active Live SHA remain unknown. This is an evidence/access blocker, not a confirmed deployment failure.
+- **P2 — Storage reliability:** historical EROFS concern remains unresolved pending Hostless volume/runtime logs. Do not change DATA_DIR, reset state, or introduce ephemeral fallback without verified mount configuration.
+- **Exchange Hub:** automated coverage includes account permission separation, server-side signing, account identity/fingerprint, no credential exposure in UI tests, and safe failure handling. Real account connection and responsive visual behavior remain unverified until deployed/browser-tested.
+- **Dashboard/Command Center:** menu shell and source files were reviewed; no live rendering, console/network, or viewport test was possible. Do not mark frontend QA passed.
+
+### 36.6 QA Gate decision
+- Application release readiness: **NOT VERIFIED** (Hostless build/live and visual QA evidence missing).
+- Automated test suite: **PASS on the previously verified feature commit only**; current main HEAD requires a fresh successful workflow run.
+- No release/deployment action was performed. No production settings, credentials, account permissions, or exchange endpoints were changed.
+
+### 36.7 NEXT TASK
+1. Verify GitHub Actions for the newest main HEAD after the workflow and documentation commits; confirm Node 20 action warnings are gone and all tests pass.
+2. Obtain read-only Hostless deployment/log access through the project's authorized integration; verify build state, deployment commit SHA, runtime health, and public app separately. Do not request or reveal secrets.
+3. Complete Exchange Hub desktop/mobile QA after deployment: switch exchange, failed private API request, refresh, account identity, responsive tables, and keyboard focus.
+4. Complete Dashboard and Command Center desktop/mobile QA: all 12 navigation destinations, sidebar independent scroll, mobile drawer, data loading/error states, console and network.
+5. Continue EROFS investigation with actual Hostless mount and runtime logs; coordinate storage code changes with Divisi 01.
+6. Trace the `punycode` deprecation warning to its source; add a regression check only if a meaningful behavior risk is identified.
+
+
+---
+
+## 37. CHIEF STRATEGY ADVISOR & RADAR AI OFFLINE AUTONOMY — 22 NOVEMBER 2026
+
+### 37.1 Permintaan Owner dan keputusan organisasi
+- Owner meminta folder penasihat strategis baru yang bertugas menyusun organisasi, menentukan divisi/kapabilitas yang harus dibentuk, dan merancang RADAR AI agar terus bekerja saat Owner offline.
+- Folder baru: `00-CHIEF-STRATEGY-ADVISOR`. Mandat lengkap, prompt pembuka, ringkasan percakapan, struktur, dan backlog penerus ada di `RADAR_AI_ADVISOR_HANDOFF.md`.
+- Penasihat adalah arsitek strategi/organisasi; Direktur Utama tetap pemimpin operasional; divisi tetap pemilik implementasi domain.
+- Organisasi awal lima divisi dan Executive Office tetap berlaku (section 35). Rekomendasi penambahan:
+  - **Divisi 06 — Agent Platform & Automation:** registry, scheduler, queue, orchestrator, worker runtime, permission gateway, isolated workspaces, retry, budget, approval, kill switch.
+  - **Divisi 07 — Knowledge & Memory Systems:** shared knowledge, durable state, memory retrieval, provenance, deduplication, retention, versioning, handoff.
+  - QA Gate dan Security Gate adalah fungsi lintas divisi, bukan divisi baru.
+- Divisi 06/07 adalah rancangan, belum boleh disebut aktif sebelum implementasi dan pengujian runtime.
+
+### 37.2 Definisi kerja otomatis saat Owner offline
+ChatGPT folders/obrolan tidak otomatis saling berkomunikasi atau berjalan terus di background. Kemampuan offline harus dibangun di aplikasi RADAR AI sendiri dengan scheduler, persistent task queue, orchestrator, worker runtime, registry, shared memory, permission gateway, independent QA, audit/observability, budget manager, approval queue, kill switch, serta backup/recovery.
+- Siklus target: Observe → Plan → Queue → Assign → Execute → Test → Independent Review → Approve/Merge → Monitor → Learn.
+- Mulai dari Stage 0/1 (observe/propose); pilot satu worker low-risk/isolated setelah fondasi dan guardrail siap.
+- Worker tidak boleh menaikkan haknya sendiri, mengubah policy, menjalankan transaksi, withdraw, atau live trading.
+- Merge/deploy/production/secret/permission/migrasi berisiko dan seluruh tindakan finansial mengikuti approval eksplisit Owner sesuai policy.
+- Setiap task memiliki scope, acceptance criteria, dependency, timeout, retry, biaya maksimum, audit trace, dan kondisi berhenti.
+
+### 37.3 Handoff dan konteks penerus
+- Ringkasan percakapan 22 November 2026, mandat Penasihat, struktur organisasi usulan, arsitektur target, tahapan otonomi, guardrails, KPI, prompt pembuka, dan NEXT TASK dicatat di `RADAR_AI_ADVISOR_HANDOFF.md`.
+- Snapshot saat penyusunan: main HEAD `cc6d9af9b9dd96989898db4058771211a712be7e`; GitHub Actions main run #307 completed/success. Hostless Build dan Live belum diverifikasi.
+- PR terbuka pada snapshot: #16 AI moderator fallback, #15 Bybit identity/permissions, #14 Screener/membership preview, #12 storage persistence health, #6 live deployment/visual verification (draft), #7 Trading Terminal foundation (draft). Periksa ulang sebelum bertindak.
+- Penerus wajib membaca file handoff dan memverifikasi ulang repository; snapshot bukan status permanen.
+
+### 37.4 NEXT TASK Penasihat
+1. Verifikasi ulang master, AGENTS, HEAD, PR, CI, dan status Hostless.
+2. Susun backlog Divisi 06/07 dengan milestone, acceptance criteria, permission matrix, KPI, dan resource budget.
+3. Audit batas runtime/cron/persistence Hostless sebelum memilih lokasi worker always-on.
+4. Bandingkan Hostless scheduler, GitHub Actions, dan worker service terpisah berdasarkan uptime, biaya, secret management, persistence, dan operasional.
+5. Rancang pilot Stage 0/1: Agent Registry, persistent Task Queue schema, dan Audit Event; tanpa merge/deploy otomatis.
+6. Jangan menunda NEXT TASK stabilitas dan QA yang telah tercatat di section 36.
+
+
+### 37.5 Scheduled Director automation (ChatGPT)
+- On 22 November 2026, the existing ChatGPT automation was updated successfully to **Direktur RADAR AI**.
+- Task ID: `Automation_d1c6d80958b481919b82e348bd186410`; daily flexible schedule targeting 19:00 Asia/Jakarta (not exact-time guaranteed).
+- It is instructed to re-check repository/docs/PR/CI/deploy evidence, prioritize DATA_DIR/EROFS and Dashboard/Exchange Hub QA, coordinate domain tasks, and document verified progress under the established security/approval policy.
+- This scheduled ChatGPT task is a limited recurring check; it does not wake all separate folder chats or provide continuous execution. Product-level always-on autonomy still requires the application-side Agent Platform and worker infrastructure described above and in `RADAR_AI_ADVISOR_HANDOFF.md`.
+
+## 38. DIVISI 08 — PROCUREMENT & TOOLS
+
+**Nama folder resmi:** `08 — PROCUREMENT & TOOLS` (24 karakter, di bawah batas 50 karakter).
+
+**Mandat:** Divisi pengadaan teknologi RADAR AI V2 yang proaktif menemukan, mengevaluasi, menguji kelayakan, dan menyiapkan rekomendasi tools untuk seluruh divisi. Fokus utama adalah solusi gratis, open-source, dan free tier yang benar-benar dapat digunakan; bukan sekadar free trial.
+
+### Ruang lingkup
+- AI model/API dan developer tooling.
+- Berita, ekonomi, crypto market data, dan sumber riset.
+- Database, storage, hosting, CDN, monitoring, dan observability.
+- Security scanning, QA, testing, dan reliability.
+- Automation, scheduler, agent runtime, task queue, dan orchestration.
+- Dokumentasi, knowledge management, serta alternatif vendor berbayar.
+
+### Prosedur evaluasi wajib
+Untuk setiap kandidat catat: nama, situs resmi, fungsi, divisi peminta, status biaya (gratis/open-source/free tier/trial/berbayar), kuota dan limit, kebutuhan kartu kredit, persyaratan pendaftaran/API key, kualitas dokumentasi, status layanan terkini, kompatibilitas arsitektur, keamanan/privasi, risiko vendor lock-in, alternatif, hasil uji, dan rekomendasi (layak / perlu uji / ditolak). Sertakan tanggal pemeriksaan dan sumber resmi.
+
+Jangan menyebut layanan "gratis" bila fungsi penting memerlukan pembayaran atau hanya tersedia selama trial. Bedakan lisensi open-source dari layanan hosted yang mungkin tetap berbayar. Jangan mengarang kuota atau ketersediaan.
+
+### Wewenang dan batas
+- Boleh melakukan riset publik, membandingkan opsi, membuat shortlist/backlog, dan menjalankan uji lokal yang aman serta tidak berbiaya.
+- Tidak boleh membeli paket, memasukkan metode pembayaran, menyetujui biaya, atau mengaktifkan layanan berbayar tanpa persetujuan BOS.
+- Tidak boleh mendaftarkan/menggunakan layanan dengan risiko keamanan yang belum dievaluasi.
+- API key/secret hanya boleh disimpan di secret storage/environment server; jangan pernah meminta BOS mengirim secret melalui chat atau menaruhnya di Git/frontend/log.
+- Tidak boleh mengganti provider produksi atau mengubah konfigurasi live tanpa tes, review divisi terkait, dan persetujuan sesuai kebijakan.
+- Divisi ini bukan otoritas untuk mengubah kebijakan keamanan atau izin agent.
+
+### Koordinasi
+Terima kebutuhan dari Divisi 01–07 dan Executive Office. Kirim hasil riset kepada divisi pemilik domain untuk penilaian teknis dan kepada Direktur untuk prioritas. Divisi 05 melakukan QA independen terhadap integrasi. Hindari mengedit file implementasi domain tanpa penugasan/koordinasi.
+
+### Cara kerja proaktif
+Pada setiap siklus kerja: periksa master context dan kondisi `main`; inventaris kebutuhan yang belum terpenuhi; riset kandidat; verifikasi situs/dokumentasi resmi; buat perbandingan; uji aman bila memungkinkan; serahkan rekomendasi dan handoff konkret; dokumentasikan keputusan dan NEXT TASK. Jangan menunggu BOS menyebut nama tool tertentu.
+
+### Prioritas awal
+1. Sumber berita dan data ekonomi gratis.
+2. Crypto market data API gratis.
+3. AI API/model lokal atau gratis yang cocok untuk agent.
+4. Scheduler, task queue, dan automation berbiaya rendah.
+5. Monitoring uptime, log, error, dan performa.
+6. Security scanning dan automated testing.
+
+### Format keluaran
+Setiap laporan memuat kandidat, manfaat, model biaya dan kuota, batasan, risiko, link resmi, tanggal verifikasi, bukti uji, divisi pemakai, rekomendasi, dan langkah integrasi berikutnya.
+
+**NEXT TASK Divisi 08:** lakukan inventaris kebutuhan dari roadmap master, lalu susun shortlist terverifikasi untuk kategori berita/data ekonomi dan crypto market data. Jangan mengintegrasikan provider sebelum review divisi pemilik dan QA.
+
+
+
+## 39. KEBIJAKAN PERMANEN SAPAAN PEMILIK — BOS
+Berlaku untuk seluruh divisi, agent, kontributor, laporan, notifikasi, handoff, template, dan semua obrolan RADAR AI yang baru maupun berlanjut.
+
+1. Selalu sapa pemilik proyek dengan **"BOS"** pada setiap jawaban atau komunikasi yang ditujukan langsung kepada pemilik.
+2. Jangan gunakan nama pribadi, nama akun, username, email, atau identitas pribadi pemilik sebagai sapaan.
+3. Gunakan sapaan persis **"BOS"** secara konsisten dalam Bahasa Indonesia maupun bahasa lain.
+4. Setiap divisi wajib menerapkan aturan ini pada system/prompt divisi, template laporan, notifikasi, dan hasil kerja yang ditujukan kepada pemilik.
+5. Obrolan RADAR AI yang baru wajib membaca kebijakan ini dari branch `main` sebelum menjawab. Jika akses repository tidak tersedia, gunakan "BOS" berdasarkan instruksi proyek yang tersedia.
+6. Kebijakan ini permanen sampai BOS sendiri mengubah atau mencabutnya. Ini adalah standar komunikasi, bukan izin untuk mengubah identitas atau data akun.
+
+
+## 40. PERBAIKAN NEWS FEED — 22 NOVEMBER 2026
+
+- Temuan audit pada branch `main`: bila environment Hostless tidak mengisi `NEWS_FEEDS` (atau nilainya kosong), `loadConfig()` menghasilkan daftar feed kosong; `refresh()` kemudian menandai sumber `news` gagal dengan error `NEWS_FEEDS kosong`. File `.env.example` sudah mencantumkan dua feed default, tetapi backend sebelumnya tidak memakai default tersebut.
+- Temuan UI: parser RSS mengirim field `summary`, sedangkan `public/app.js` hanya membaca `description`, sehingga ringkasan artikel tidak tampil.
+- Perbaikan pada branch `fix/news-feed-defaults-and-rendering`: fallback dua feed saat `NEWS_FEEDS` tidak diset/kosong; UI membaca `summary` dengan fallback kompatibilitas ke `description`; menambahkan `test/news.test.js` untuk fallback feed, override konfigurasi, RSS, dan Atom.
+- Commit branch: `e7cdc001694130452284493a0f3350de96ca1f7d` (backend), `936bc24f911e234b101a513a6d87e096741ace2c` (UI), `d1bfd391d5f2e29eeeaca1e13998331dc267b236` (tes awal), `da6401c528727fccca889148d070bdeb34c7223f` (koreksi hari pada fixture tes). HEAD branch saat pembaruan ini: `da6401c528727fccca889148d070bdeb34c7223f`.
+- Status tes PR: GitHub Actions run #410 (45019799881) pada HEAD 8ad10d71b794c50c892aeee92ca52e9e443d13fd completed/success. Setelah merge, main run #411 (45020499626) pada merge commit 66eff5667715fd3138336bc3f2e6a5172ba1b5cf completed/success; log mengonfirmasi 67 tests, 67 pass, 0 fail, 0 skipped. Actions menggunakan checkout@v7 dan setup-node@v7. Ini bukti CI GitHub, bukan tes lokal.
+- Integrasi: PR #22 telah di-squash merge ke main pada 22 November 2026, merge commit 66eff5667715fd3138336bc3f2e6a5172ba1b5cf. HEAD PR yang diuji 8ad10d71b794c50c892aeee92ca52e9e443d13fd.
+- Risiko tersisa: feed eksternal dapat mengubah format, membatasi request, atau tidak dapat dijangkau dari region/runtime Hostless. Fallback menghilangkan kegagalan konfigurasi kosong, tetapi tidak menjamin ketersediaan upstream. Periksa `health.news` dan log setelah deploy.
+- QA: review source dan hasil CI diperiksa oleh Executive Office. GitHub menolak event APPROVE karena pemanggil adalah author PR sendiri; merge dilakukan setelah status CI sukses dan mergeability clean. Tidak ada klaim browser/production QA.
+- NEXT TASK: verifikasi Hostless deployment dan endpoint /api/snapshot serta health.news.ok=true; kemudian Divisi 02 mengambil perbaikan Screener sebagai task integrasi berikutnya. Jangan menyatakan News pulih di LIVE sebelum pemeriksaan runtime.
+
+
+## 41. NEWS FEED FIX MERGED — 22 NOVEMBER 2026
+
+- BOS menyetujui integrasi PR #22; PR telah di-squash-merge ke `main`.
+- PR: https://github.com/rohman35819/radar-ai-v2/pull/22
+- Merge commit: `66eff5667715fd3138336bc3f2e6a5172ba1b5cf`.
+- Perubahan terintegrasi: fallback RSS default ketika `NEWS_FEEDS` kosong/tidak diset; UI menampilkan `summary` dengan fallback `description`; tes konfigurasi dan parser RSS/Atom.
+- Bukti CI: workflow `RADAR AI tests` run #409 / run ID `45019762920`, job `test`, langkah `npm test` sukses pada source PR sebelum merge. Tidak ada workflow PR-triggered run yang terlapor untuk merge commit saat audit pasca-merge.
+- Verifikasi repository: `lib/ingest.js` pada `main` telah dikonfirmasi memuat fallback feed. PR terkonfirmasi merged.
+- Verifikasi live: belum dapat dilakukan dari sesi ini; akses langsung ke `https://radar-ai-v2.hostless.app/api/snapshot` dan halaman root gagal melalui pemeriksa eksternal. Jangan klaim Hostless telah selesai deploy atau News live pulih. GitHub merge tidak sama dengan bukti deployment.
+- Risiko tersisa: dua feed upstream dapat rate-limit/berubah format atau tidak dapat dijangkau dari Hostless; feed default belum diverifikasi dengan request runtime live.
+- NEXT TASK: periksa Hostless deployment terbaru untuk merge commit, lalu jalankan `npm run live-check` atau validasi `/api/snapshot`; pastikan `health.news.ok=true` dan item berita berisi title/link/summary. Jika Hostless tidak auto-deploy, lakukan deployment melalui dashboard sesuai prosedur project dan verifikasi build/log. Jangan mengubah konfigurasi berbayar; kebijakan biaya tetap Rp0.
+
+
+## 41. STANDAR EKSEKUSI SATU PRIORITAS — SATU DELIVERY (22 NOVEMBER 2026)
+
+### 41.1 Berlaku untuk seluruh divisi
+- Setiap siklus hanya memiliki satu task implementasi utama dengan satu lead division; supporting divisions diberi scope review yang spesifik. Tidak ada dua task yang mengedit file sama secara paralel.
+- Prioritas pertama adalah bug/regresi yang menghambat penggunaan. Fitur baru, ekspansi agent, dan refactor ditahan bila ada bug P1/P2 yang belum selesai.
+- Setiap task wajib memiliki gejala/temuan, root cause yang dibuktikan, file scope, acceptance criteria, tes yang dijalankan, diff/commit, status CI, status Hostless Build, status LIVE, blocker, dan NEXT TASK.
+- Task tidak dianggap selesai karena review, komentar, atau rencana. Selesai ketika patch teruji, CI diverifikasi, dokumentasi disinkronkan, dan deployment/live diverifikasi bila akses tersedia. Jika akses eksternal tidak tersedia, tandai repository-complete / deployment-unverified.
+- PR lama tidak boleh digabung hanya karena pernah lulus CI: periksa HEAD, base SHA, konflik, status Actions terkini, dan diff terhadap main terbaru. Update/rebase branch sebelum merge; jangan force-push atau menimpa pekerjaan pemilik.
+- PR duplikat/superseded ditutup dengan alasan dan tautan pengganti; draft tetap draft sampai acceptance criteria terpenuhi.
+- Setiap divisi melaporkan blocker yang dapat ditindaklanjuti dan satu NEXT TASK, bukan daftar status tanpa pemilik.
+
+### 41.2 Hasil delivery pertama — News Feed
+- Divisi lead: 04 AI Intelligence & Research (News) dengan QA Gate 05.
+- PR #22 fix(news): restore default RSS feed and article summaries merged; merge commit 66eff5667715fd3138336bc3f2e6a5172ba1b5cf.
+- Root cause: NEWS_FEEDS kosong tidak memakai default backend; renderer tidak membaca field summary.
+- File: lib/ingest.js, public/app.js, test/news.test.js, RADAR_AI_MASTER_CONTEXT.md.
+- CI PR #410 success; main #411 success; npm test 67/67.
+- Hostless Build dan LIVE belum diverifikasi. News fix tersedia di main, belum boleh disebut pulih di production.
+
+### 41.3 Backlog terurut lintas divisi setelah News
+1. Divisi 02 — UI/UX: selesai melalui PR #23, merge commit 97d28214d883e1f5fc6ce8964ffcb0acf7ff02d9; CI main run #417 success, 70/70 tests. PR #14 lama ditutup sebagai superseded. Browser/Hostless QA tetap diperlukan.
+2. Divisi 01 — Security & Reliability: selesai melalui PR #24, merge commit d300076dd1d3ec15bd8315f925bc7cd2334ed959; CI PR #418 success, 71/71 tests. PR #12 lama ditutup sebagai superseded. DATA_DIR/volume Hostless masih butuh log dan konfigurasi aktual.
+3. Divisi 03 — Exchange: selesai melalui PR #25, merge commit 7416ed96ddf2047ef825688dce5fbb4675145f89; CI PR #421 success, 83/83 tests. PR #17 lama ditutup sebagai superseded. Hostless dan koneksi akun nyata belum diverifikasi.
+4. Divisi 04 — AI Intelligence: selesai melalui PR #26, merge commit 546b3afd1499c031825e56e22ed934809cf6005c; CI PR #424 success, 86/86 tests. PR #16 lama ditutup sebagai superseded. Fallback moderator menggunakan OpenRouter Free dan fail-safe WAIT.
+5. Divisi 08 — Procurement/Security support: selesai melalui PR #27; Gitleaks dan Trivy secret scan sukses pada exact head, Dependabot weekly aktif setelah merge. PR #21 lama ditutup sebagai superseded. Trivy vulnerability scanner tidak menemukan manifest/lockfile yang didukung, jadi dependency vulnerability coverage belum ada sampai lockfile ditambahkan.
+6. Divisi 06 — Agent Platform (proposal/pilot): PR #18 registry/task queue/audit schema. Latest head 18c37f63cb9b5176a724d2c43b1eb1b8ee33b5d5; CI run #392 success. Tetap draft; audit persistence, schema, permission boundaries, retention, dan larangan klaim worker background sebelum pilot.
+7. Divisi 05 — QA/DevOps: PR #6 live deployment/visual verification remains draft; update workflow to current Actions versions, pin browser test dependencies, and make smoke test validate deployed SHA. Hostless access is a separate blocker.
+8. Exchange legacy: PR #7 Trading Terminal foundation ditutup sebagai superseded; diff menambahkan duplicate Trading Terminal navigation/page yang tumpang tindih dengan Exchange Hub /trading.html.
+
+### 41.4 Operasional dan status saat catatan ini dibuat
+- Main HEAD setelah News merge: 66eff5667715fd3138336bc3f2e6a5172ba1b5cf; GitHub Actions main run #411 completed/success; 67/67 tests.
+- Tidak ada Hostless connector/log/deployment SHA yang tersedia; Build/LIVE = NOT VERIFIED.
+- Tidak ada worker runtime teruji yang berjalan di background. Divisi 06/07 tetap tahap desain/draft.
+- NEXT TASK tunggal: Divisi 03 memindahkan PR #17 Bybit identity/permission ke branch berbasis main terbaru, meninjau scope read-only dan permission, lalu menjalankan CI. Setelah selesai, lanjutkan PR #16; jangan mengerjakan implementasi domain paralel.
+
+## 42. PERBAIKAN SCREENER DAN MEMBERSHIP — 22 NOVEMBER 2026
+
+- Divisi lead: 02 UI/UX & Frontend; QA pendukung: 05.
+- PR lama #14 berbasis main lama dan README-nya menimpa inventaris News terbaru. Untuk menghindari konflik dan menjaga perbaikan News, patch kode diisolasi ulang pada branch fix/ui-screener-delivery-v2 dari main HEAD 12e101f846a76171d771eeaf4c9d3c648d61ea48.
+- Root cause Screener: filter trend/sort di-query sebelum kontrol dipasang ke DOM; query menghasilkan null. Perbaikan memindahkan assignment sesudah v.append().
+- Root cause Membership: aturan label display:grid menimpa atribut hidden pada field nama registrasi saat login; ditambahkan selector #name-field[hidden]{display:none}.
+- PWA shell cache dinaikkan v10 ke v11 agar klien terpasang mengambil app.js terbaru; fixture service worker diselaraskan.
+- File: public/app.js, public/membership.css, public/sw.js, test/frontend-ui.test.js (baru), test/service-worker.test.js, README.md, RADAR_AI_MASTER_CONTEXT.md.
+- Commit implementasi: 20e335a628ed2fc1a71758770ae230c1e27670b0 (Screener), 0f236565f045a23c673c3241e9a3c9bf495c7242 (Membership), c8f5ac8fa19118e42ebdedd3e0683c2026148171 (PWA), eca5f635e348ea118848ef75646042293db98d8c (service-worker test), 7643fb17ca8a25c9006255b497dcaca5f73a9a87 (frontend tests), 1ec59670fb3dd4baa6719fa018b2ec9ed78ee91b (README).
+- Static inspection confirms News renderer summary fallback remains present, Screener controls are restored after mount, and shell cache is v11.
+- Test status: awaiting GitHub Actions on PR head; no local npm test claim. Browser desktop/mobile and Hostless Build/LIVE remain unverified.
+- NEXT TASK: complete CI and independent QA on this isolated branch; after merge, verify Hostless deployment and run Screener interaction checks (search/trend/sort/reset/refresh/CSV) plus Membership login/register visibility on desktop/mobile.
+
+## 43. STORAGE READINESS DAN OBSERVABILITY — 22 NOVEMBER 2026
+
+- Lead: Divisi 01 Security & Reliability; QA Gate: Divisi 05.
+- PR lama #12 berbasis main lama dan tidak boleh di-merge langsung. Patch storage dipindahkan secara terisolasi ke branch fix/storage-readiness-delivery-v2 berbasis main setelah News dan UI delivery.
+- Root cause: /api/health selalu mengembalikan status ok walaupun refresh gagal menyimpan state; platform tidak bisa membedakan proses hidup dari storage yang siap. Perbaikan mempertahankan /api/health sebagai liveness HTTP 200, menambahkan /api/ready sebagai readiness (503/degraded ketika write gagal), dan hanya mengekspos kode error filesystem yang disanitasi.
+- Semua jalur save AI memakai helper persistState agar health/readiness merefleksikan kegagalan persistensi. Error tanpa kode filesystem dipetakan ke STORAGE_WRITE_FAILED; tidak ada path/isi state/credential yang dikirim di response.
+- Tes mensimulasikan EROFS saat atomic rename, memastikan /api/health tetap 200, /api/ready 503/degraded, lalu pulih ke 200/ready setelah save sukses.
+- File: server.js, test/radar.test.js, README.md, RADAR_AI_MASTER_CONTEXT.md.
+- Test status dan commit: menunggu GitHub Actions untuk PR baru. Local npm test tidak dijalankan.
+- Hostless Build/LIVE dan konfigurasi volume DATA_DIR masih NOT VERIFIED; tes filesystem lokal tidak membuktikan volume Hostless writable/persistent.
+- NEXT TASK: jalankan CI PR, lakukan QA independen atas sanitasi dan transisi status; kemudian integrasikan jika exact-head CI lulus. Verifikasi Hostless /api/health dan /api/ready setelah akses deployment tersedia.
+
+## 44. STORAGE READINESS MERGED — 22 NOVEMBER 2026
+
+- PR #24 fix(storage): expose persistence readiness and health telah di-squash merge ke main pada commit d300076dd1d3ec15bd8315f925bc7cd2334ed959.
+- GitHub Actions PR run #418 (45021234603) pada exact head e06740705ee0745350d1f43ee7bc89200d8d844f completed/success; npm test 71/71, 0 fail, 0 skipped.
+- Main HEAD setelah merge: d300076dd1d3ec15bd8315f925bc7cd2334ed959. Main push CI setelah merge masih menunggu pemeriksaan; jangan samakan PR CI dengan main push CI.
+- PR #12 lama ditutup sebagai superseded oleh #24; tidak ada dua patch storage paralel.
+- Perubahan API: /api/health tetap HTTP 200 liveness dan kini menampilkan status storage; /api/ready menjadi readiness 200/ready atau 503/degraded berdasarkan persistensi. Semua jalur AI/refresh save memakai persistState; kode error tidak dikenal disanitasi menjadi STORAGE_WRITE_FAILED.
+- Tidak ada fallback ke filesystem ephemeral dan tidak ada penghapusan/reset state.
+- Hostless Build, LIVE SHA, DATA_DIR mount dan runtime logs tetap NOT VERIFIED; endpoint baru belum diuji pada deployment Hostless.
+- NEXT TASK tunggal: Divisi 03 memindahkan Bybit identity/permission PR ke branch berbasis main terbaru, memeriksa permission read-only dan jalur error, lalu menguji CI. Setelahnya Divisi 04 moderator fallback.
+
+## 45. BYBIT API KEY PERMISSION DAN RATE-LIMIT HARDENING — 22 NOVEMBER 2026
+
+- Lead: Divisi 03 Exchange & Trading Systems; QA Gate: Divisi 05; dukungan Divisi 01 untuk keamanan secret dan status error.
+- PR #17 lama berbasis main sebelum News/UI/Storage delivery. Patch dipindahkan ke branch feat/bybit-permission-delivery-v2 dari main HEAD e3dd647b2327b6dd4240d2fd9f8b19042fe0eeb0 agar tidak menimpa readiness changes.
+- Endpoint resmi Bybit GET /v5/user/query-api mengembalikan readOnly, permissions, userID; dokumentasi resmi menyatakan endpoint dapat diakses dengan permission apa pun dan key yang dipakai adalah key yang diperiksa. Referensi: https://bybit-exchange.github.io/docs/v5/user/apikey-info.
+- Patch backend: signed GET query-api; hanya UID, readOnly, kategori permission terpilih yang disanitasi dikirim ke browser; apiKey/secret/IP whitelist dan metadata lain tidak diteruskan. Jika endpoint permission gagal atau kategori inti tidak lengkap, status izin wajib belum terverifikasi.
+- Patch UI: tampilkan UID dan kategori permission; bedakan read-only/trading/withdrawal/transfer; Binance juga memperingatkan withdrawal/transfer aktif. Nilai withdrawable yang tidak tersedia tetap null/tanda strip, tidak diganti dengan availableToBorrow.
+- Rate limit: HTTP 429/418, Binance -1003, Bybit 10006/10429 dan HTTP 403 access-too-frequent dipetakan ke EXCHANGE_RATE_LIMITED; Retry-After / X-Bapi-Limit-Reset-Timestamp diteruskan secara aman; cooldown 600 detik hanya fallback konservatif untuk Bybit IP rate limit. Tidak ada retry otomatis.
+- Semua exchange request tetap GET. Tidak ada endpoint order, update key, transfer, atau withdrawal. Tidak ada izin exchange yang diubah dan tidak ada secret diminta.
+- File: lib/exchanges.js, public/trading.js, server.js, test/exchanges.test.js, test/exchange-ui.test.js, README.md, RADAR_AI_MASTER_CONTEXT.md.
+- GitHub Actions PR #25 run #421 (45021606752) pada exact head 29bd6f9453370f1828b10a4db1b375a325100502 completed/success; npm test 83/83, 0 fail, 0 skipped. Main push CI setelah merge masih menunggu pemeriksaan.
+- PR #25 merged ke main pada 7416ed96ddf2047ef825688dce5fbb4675145f89; PR #17 lama ditutup sebagai superseded.
+- NEXT TASK: jalankan CI exact-head, review keamanan redaksi permission, error/rate-limit dan header Retry-After; merge hanya jika seluruh test lulus. Setelahnya Divisi 04 AI moderator fallback.
+
+## 46. BYBIT PERMISSION HARDENING MERGED — 22 NOVEMBER 2026
+
+- PR #25 feat(exchange): verify Bybit API key permissions and rate limits di-squash merge ke main pada commit 7416ed96ddf2047ef825688dce5fbb4675145f89.
+- GitHub Actions PR run #421 (45021606752) pada exact head 29bd6f9453370f1828b10a4db1b375a325100502 completed/success; npm test 83/83, 0 failed, 0 skipped.
+- Patch memverifikasi Bybit API key melalui signed GET /v5/user/query-api, menyaring metadata permission yang dikirim ke UI, menandai permission tidak lengkap sebagai unverified, memisahkan SubMemberTransferList dari kemampuan transfer, dan tidak mengarang withdrawable balance.
+- Exchange rate limit HTTP 429/418, Binance -1003, Bybit 10006/10429, dan Bybit IP access-too-frequent dinormalisasi; Retry-After diteruskan secara aman; tidak ada retry otomatis.
+- Semua request exchange tetap GET. Tidak ada order, key update, transfer, withdrawal, atau perubahan izin kredensial. PR #17 lama ditutup sebagai superseded.
+- Main push CI setelah merge: menunggu pemeriksaan. Hostless Build/LIVE, verifikasi environment, dan koneksi akun nyata belum dilakukan.
+- NEXT TASK tunggal: Divisi 04 port moderator fallback ke branch main terbaru; pastikan semua provider failure berujung WAIT dan CI exact-head lulus. Setelah itu Divisi 08 memperbaiki security scanner workflow PR #21.
+
+## 47. AI MODERATOR FALLBACK — ZERO-COST GUARDRAIL — 22 NOVEMBER 2026
+
+- Lead: Divisi 04 AI Intelligence & Research; QA Gate: Divisi 05.
+- PR #16 lama berbasis main lama. Patch dipindahkan ke branch feat/ai-moderator-fallback-delivery-v2 dari main HEAD f30972e7b973c81d5af6956016b910ec3126123f.
+- Moderator utama Groq; fallback OpenRouter Free Models Router. Review fallback dipaksa memakai model openrouter/free meskipun OPENROUTER_MODEL berisi model berbayar. Tidak ada fallback berbayar otomatis.
+- OpenRouter menyatakan router openrouter/free memilih model gratis dengan harga $0; kuota dan kapasitas model gratis dapat dibatasi. Jika Groq dan OpenRouter gagal, keputusan wajib WAIT. Referensi: https://openrouter.ai/openrouter/free.
+- Error moderator disanitasi menjadi nama provider + unavailable; tidak mengembalikan pesan upstream mentah ke hasil rapat.
+- Fallback hanya dipakai jika ada minimal dua analisis valid, snapshot tidak stale, dan token pasar tersedia. Status moderator_unavailable menandai keputusan WAIT ketika seluruh moderator gagal.
+- File: lib/ai/group.js, lib/ai/openrouter.js, test/ai-group.test.js, README.md, RADAR_AI_MASTER_CONTEXT.md.
+- GitHub Actions PR #26 run #424 (45021774139) pada exact head 1bc0d5a1760f0cc086b388a4ea253f698bda8891 completed/success; npm test 86/86, 0 fail, 0 skipped. PR #26 merged ke main pada 546b3afd1499c031825e56e22ed934809cf6005c; PR #16 lama ditutup sebagai superseded.
+- NEXT TASK: CI exact-head harus lulus; review fail-safe, sanitasi error, dan zero-cost override. Setelah merge, lanjutkan Divisi 08 untuk memperbaiki workflow security scanner.
+
+## 48. AI MODERATOR FALLBACK MERGED — 22 NOVEMBER 2026
+
+- PR #26 feat(ai): add safe moderator fallback with zero-cost guardrail telah di-squash merge ke main pada commit 546b3afd1499c031825e56e22ed934809cf6005c.
+- GitHub Actions PR run #424 (45021774139) pada exact head 1bc0d5a1760f0cc086b388a4ea253f698bda8891 completed/success; npm test 86/86, 0 fail, 0 skipped.
+- Groq tetap moderator utama. Jika gagal, fallback memakai OpenRouter Free Models Router yang dipaksa menjadi openrouter/free meski OPENROUTER_MODEL berisi model berbayar. Tidak ada fallback berbayar otomatis.
+- Semua moderator gagal atau data pasar kurang/basi/kosong menghasilkan WAIT; kegagalan moderator disanitasi tanpa pesan upstream mentah.
+- Free router berbiaya model $0 menurut OpenRouter, tetapi kapasitas/kuota gratis dapat terbatas. Kegagalan/limit menghasilkan WAIT. Hostless provider credentials dan runtime AI belum diverifikasi.
+- PR #16 lama ditutup sebagai superseded. Main push CI setelah merge menunggu pemeriksaan terpisah.
+- NEXT TASK tunggal: Divisi 08 audit dan perbaiki security scanner workflow PR #21; penyebab awal yang terverifikasi adalah aquasecurity/trivy-action@0.36.0 tidak ditemukan. Setelahnya Divisi 06 audit persistence/permission boundaries pada Agent Platform PR #18.
+
+## 49. SECURITY SCANNER WORKFLOW — CORRECTED ACTION REFS AND LEAST PRIVILEGE — 22 NOVEMBER 2026
+
+- Lead: Divisi 08 Procurement/Security support; owner review: Divisi 01; QA: Divisi 05.
+- Root cause terverifikasi: scanner job gagal pada setup karena workflow memakai `aquasecurity/trivy-action@0.36.0`; release resmi action menggunakan tag `v0.36.0`. Official release page lists v0.36.0 as an immutable release. Referensi: https://github.com/aquasecurity/trivy-action/releases.
+- Gitleaks action v3.0.0 adalah release resmi Node 24; untuk repository personal tidak memerlukan GITLEAKS_LICENSE. Komentar PR dan upload artifact dimatikan untuk menghindari permission write dan paparan artefak; full history tetap dipindai. Referensi: https://github.com/gitleaks/gitleaks-action/releases.
+- Dependabot tetap weekly untuk GitHub Actions dan npm. Tidak ada runtime npm dependency baru.
+- Patch dibuat ulang dari main HEAD 9ccdb25c9234596a599ec34bcb09b2eb912dbc99 pada branch ci/security-scans-delivery-v2. Tidak mengubah source aplikasi, secret, dependency runtime, atau konfigurasi Hostless.
+- Workflow permissions least-privilege: contents:read saja; Gitleaks comments/upload disabled. Trivy hanya filesystem scan HIGH/CRITICAL dan gagal jika ada finding; jangan suppress temuan secara luas.
+- File: .github/workflows/security.yml, .github/dependabot.yml, RADAR_AI_MASTER_CONTEXT.md.
+- Workflow berjalan pada pull_request dan push main; concurrency group memisahkan event type agar push/PR tidak saling membatalkan. Trivy CLI dipin eksplisit ke v0.76.2 (bukan versi bawaan action). Run awal: Gitleaks success; Trivy berjalan tetapi tidak menemukan file yang didukung untuk scanner vuln/misconfig, lalu job dibatalkan saat cleanup akibat concurrency. Ini bukan bukti clean scan. Konfigurasi diubah ke vuln+secret; run sebelumnya masih tertahan saat cleanup dan exact-head run berikutnya dipisah per SHA agar tidak tertahan oleh concurrency dari commit lama.
+- NEXT TASK: merge workflow security setelah review statis; setelah itu Divisi 06 audit persistence/permission boundaries, task queue durability, and no-background-worker claims pada Agent Platform PR #18.
+
+## 50. SECURITY SCANNING WORKFLOW VERIFIED — 22 NOVEMBER 2026
+
+- PR #27 ci(security): enable Gitleaks, Trivy and Dependabot with verified tags is validated on exact head 1ad9779ae9eeb81536c80d8398161e4f7d614d64.
+- Security workflow run #11 (45022162513) completed/success: Gitleaks job success; Trivy v0.76.2 secret scanner reports no issues. No secret values were exposed in logs/comments/artifacts.
+- Trivy vulnerability scanner explicitly reports no supported files for vuln scanning; repository currently has no supported dependency lockfile/manifest. This is not evidence that dependencies are vulnerability-free. Keep dependency coverage flagged NOT AVAILABLE until a lockfile or supported manifest exists.
+- Trivy action ref corrected to aquasecurity/trivy-action@v0.36.0; Gitleaks v3.0.0 (Node 24), comments/artifact upload disabled, contents:read only. Dependabot weekly for Actions and npm.
+- GitHub Actions test workflow #433 (45022162471) completed/success on same exact head; no runtime code changed.
+- No Hostless configuration, runtime dependency, secret, exchange permission, or paid service added.
+- PR #21 old branch is superseded by #27 and will be closed after integration. PR #27 remains draft until Divisi 01/05 review and then can merge.
+- NEXT TASK tunggal: Divisi 06 audit Agent Platform PR #18 for actual persistence semantics, retry/claim locking, worker execution boundaries, audit integrity, and explicit human approval; do not claim background autonomy.
+
+---
+
+## 51. AUDIT DIVISI 06 — AGENT PLATFORM PR #18 — 22 NOVEMBER 2026
+
+- Pemeriksaan dilakukan terhadap PR #18 exact head `18c37f63cb9b5176a724d2c43b1eb1b8ee33b5d5`, migration PostgreSQL 001, smoke SQL, architecture/free-first policy, dan workflow CI.
+- GitHub Actions run #392 / ID `44998661385` completed/success: `npm test`, migration apply pada PostgreSQL 16 disposable, dan smoke SQL berhasil. Bukti ini hanya memvalidasi migration/schema dan role smoke; bukan transactional queue, concurrency, worker, scheduler, atau Hostless runtime.
+- Temuan P1 dicatat sebagai review komentar PR #18 dan issue #30: (1) runtime role diberi SELECT seluruh tabel serta INSERT/UPDATE seluruh task_queue sehingga belum ada task/agent ownership isolation; (2) smoke test audit UPDATE/DELETE hanya membuktikan privilege denial, belum membuktikan trigger append-only bekerja; (3) previous_hash/event_hash nullable dan tidak dihitung/divalidasi, sehingga belum ada tamper-evident chain; (4) daily_budget_usd menerima nilai positif walaupun policy BOS Rp0.
+- Temuan P2: belum ada enforcement attempt_count <= max_attempts, legal status transitions, deadline, dependency completion/cycle prevention; belum ada bukti double-claim, stale lease fencing, idempotency race, retry/dead-letter, transaction rollback atomicity, atau restart recovery.
+- PR #18 tetap open/draft/unmerged. GitHub tidak mengizinkan Request Changes pada PR milik pemilik repository; audit disimpan sebagai review COMMENT dan issue #30. Tidak ada approval independen Divisi 01/05 yang tercatat.
+- Tidak ada perubahan source aplikasi, DB production, Hostless resource, secret, atau permission exchange. Tidak ada worker aktif dan tidak ada biaya yang dikeluarkan.
+- Guardrails: Stage 0/1, default paused, hard budget Rp0, tidak ada code-write/merge/deploy/production mutation/trading. Jangan provisioning Hostless sebelum kuota dan overage guard diverifikasi dan disetujui BOS.
+- Dokumentasi audit/handoff branch: `docs/agent-platform-pr18-audit-handoff`; issue tracking: https://github.com/rohman35819/radar-ai-v2/issues/30; PR yang diaudit: https://github.com/rohman35819/radar-ai-v2/pull/18.
+- NEXT TASK tunggal: Direktur mengoordinasikan Divisi 06 menutup P1 runtime privilege scoping, audit trigger/hash semantics, dan strict Rp0; Divisi 01 melakukan security review; Divisi 05 menambahkan integration tests concurrency/lease/idempotency/retry/dependency/rollback/restart. Divisi 07 menyusun decision/task memory provenance dan retention tanpa vector DB. PR #18 tidak boleh merge sampai P1 ditutup dan review Divisi 01/05 tercatat.
+
+
+---
+
+## 52. STATUS TERKINI AGENT PLATFORM — PR #29 — 22 NOVEMBER 2026
+
+### Perubahan status sejak audit PR #18
+- PR #18 ditutup oleh pemilik sebagai **superseded**, tidak di-merge. PR #29 menjadi jalur schema foundation yang aktif: https://github.com/rohman35819/radar-ai-v2/pull/29.
+- Issue #30 diubah menjadi backlog runtime queue/security/recovery: https://github.com/rohman35819/radar-ai-v2/issues/30.
+- PR #29 exact head saat audit: `e96b8664532634dce7b6638605dfdfec69ec4283`, base main saat dibuat `979935ce2b876a6c461b29dc636246a8fb2b4a19`.
+
+### Bukti CI exact-head
+- Test workflow #453 / ID `45022798012`: completed/success. Steps npm test, PostgreSQL 16 disposable migration, dan least-privilege smoke semuanya sukses.
+- Security workflow #20 / ID `45022798002`: completed/success. Gitleaks dan Trivy jobs completed/success.
+- Ini bukti schema/migration/smoke dan repository security scans pada exact head. Tidak membuktikan DB adapter, queue semantics, scheduler, worker runtime, Hostless deployment, atau Live.
+
+### Temuan re-audit
+- Perbaikan P1 sebelumnya tampak di PR #29: division 01–08; daily_budget_usd = 0; max_concurrency = 1; max_attempts <= 3 dan attempt_count <= max_attempts; batas payload; role CI hanya SELECT registry + INSERT audit tanpa akses task_queue/dependencies; placeholder hash chain dihapus; smoke SQL menguji privilege denial dan trigger UPDATE/DELETE secara terpisah.
+- Sisa risiko sebelum worker (bukan klaim bahwa runtime sudah ada): dependency cycle prevention, legal status transitions, deadline handling, transactional claim/lease fencing/reclaim, idempotency race, atomic task+audit, retry/dead-letter, restart recovery, trusted audit actor attribution, serta TRUNCATE/table-owner threat boundary.
+- Divisi 01 dan Divisi 05 independent review untuk PR #29 belum tercatat. PR #29 tetap draft.
+- Compare branch terhadap main setelah commit dokumentasi `dd6c2db2cdc0c3a9c6479341209e017fb14a151d`: PR branch diverged, ahead 15 / behind 1; PR API melaporkan mergeable=false. Sinkronkan branch dengan main dan periksa konflik pada master/handoff sebelum merge. Jangan memaksa merge.
+- Dokumen pada branch PR #29 masih menyebut head/run sebelumnya `b260f36` / #447; PR body telah diperbarui ke exact head `e96b866` dan run #453/#20. Sinkronisasi dokumentasi branch masih diperlukan.
+
+### Status kemampuan aktual
+- Agent Platform tetap schema-only. Tidak ada DB adapter, queue API, scheduler, orchestrator, worker process, approval queue, kill switch, atau persistent memory aktif.
+- Budget Rp0; tidak ada Hostless/Neon/Redis resource diprovision; quota dan overage Hostless belum diverifikasi.
+- Stage 0/1, agent paused, tidak ada code-write/merge/deploy/production mutation/trading oleh worker.
+
+### NEXT TASK tunggal
+Direktur mengoordinasikan Divisi 01 dan 05 untuk review independen PR #29 dan sinkronisasi branch terhadap main; Divisi 06 memperbaiki backlog P2 runtime queue pada issue #30 di PR terpisah setelah schema foundation diterima. Divisi 07 menyusun record keputusan/task memory berbasis provenance, supersedes, artifact references, retention dan full-text search; jangan menambah vector DB. Tidak ada worker provisioning sebelum quota Rp0/no-overage dan persetujuan BOS terbukti.
+
+
+---
+
+## 57. DIVISI 07 — PROVENANCE-FIRST MEMORY DESIGN — 22 NOVEMBER 2026
+- Added design proposal `docs/division-07-memory-knowledge-architecture.md`; this is documentation only, not an implementation or claim of persistent shared memory.
+- Canonical record domains: approved decisions/policies, project facts, task handoffs, execution evidence and sourced knowledge. Avoid raw chat dumps.
+- Every durable record requires source reference/revision, scope, sensitivity, approval state, validity and supersedes relation where applicable. Unmerged PRs are proposals, not facts about production.
+- Agent writes are proposals. Director/Divisi 01/05 review according to domain; BOS approval remains mandatory for owner policy, budget, provisioning, permission/secret changes and production boundaries.
+- Retrieval must apply identity/scope/sensitivity before ranking; approved/current items first; PostgreSQL full-text search and metadata indexes first. Vector DB/embeddings, Redis and paid SaaS are deferred.
+- Never store secrets, auth material, raw exchange payloads or unrelated sensitive personal data. Retention classes in the document are proposals pending Divisi 01/BOS approval.
+- PR #34 remains current schema-only candidate; independent Divisi 01/05 reviews pending. No memory tables, DB adapter, worker, scheduler or persistent memory runtime exists.
+- Budget Rp0; no external infrastructure provisioned. NEXT TASK: Divisi 07 review taxonomy and sample records with Divisi 01 privacy/access review and Divisi 05 QA; implementation waits for accepted schema and no-cost capacity.
+
+
+## 55. NEWS FEED RESILIENCE AND LIVE SOURCE DIAGNOSTICS — PR #39 — 22 NOVEMBER 2026
+
+- PR #22's earlier fix (default RSS feed + article summaries) is already merged, but BOS continued to report News errors. PR #39 adds source-level diagnostics and resilience rather than repeating that earlier patch.
+- Changes: NEWS_FEEDS whitespace fallback and comma/semicolon/newline parsing (max 8); explicit RSS/Atom Accept and User-Agent; 15s timeout and 2 MiB body limit; RSS/Atom parsing for numeric entities, CDATA, Atom alternate links, relative links and content:encoded; deduplication.
+- One failed source no longer blocks a healthy feed. All-failed/empty responses produce sanitized diagnostic codes. /api/snapshot now carries health.news_sources and News Intelligence shows per-source status and error code.
+- PR #39 merged to main with merge commit 6664030a102c8c46d387c139b7cfeede66f588b0. Main CI run #503 (45024834548) on exact merge SHA passed 90/90 tests; main security scan #45 (45024834510) passed. PR CI #502 (45024762955) also ran the live RSS smoke: 50 articles total (TechCrunch 20, Cointelegraph 30), both sources healthy.
+- Live feed access from GitHub Actions is verified; this does NOT prove Hostless outbound network or current LIVE deployment. Hostless internal_error / DNS issue remains NOT VERIFIED until Hostless logs/Build/LIVE are accessible.
+- No new dependency, API key, paid service, DB migration or production data mutation. Rollback: revert PR #38 merge commit.
+- NEXT TASK: verify Hostless Build, deployed SHA and News page's per-source status. If Hostless still fails while GitHub Actions feeds pass, investigate Hostless outbound DNS/egress, NEWS_FEEDS environment value and deployed SHA; do not claim live resolution.
+
+## 56. HOSTLESS LIVE READINESS PROBE — ZERO-CREDENTIAL DIAGNOSTIC — 22 NOVEMBER 2026
+
+- News PR #39 merged as 6664030a102c8c46d387c139b7cfeede66f588b0; main CI #503 passed 90/90 and security #45 passed. Main docs-only follow-up CI #505 and security #47 also passed.
+- GitHub Actions reached the default public RSS feeds (50 articles: TechCrunch 20, Cointelegraph 30), but this does not verify Hostless network egress or deployment.
+- Added `npm run hostless-check` in diagnostic branch `ops/hostless-live-check`. It probes public `/api/ready` and `/api/snapshot`, reports HTTP/readiness/storage/News source health, and never prints raw response bodies or environment values.
+- The diagnostic runs only on its dedicated PR and is non-blocking; it does not change production or require credentials. Exact probe result: app domain reachable; `/api/ready` 503 degraded with `storage.status=error`, `code=EROFS`; `/api/snapshot` 200 success, `stale=false`, 50 News articles, `health.news.ok=true`, `news_sources=[]` (deployed app lacks the new source diagnostics). This is a storage/deployment issue, not RSS outage.
+- NEXT TASK: use this probe to verify Hostless LIVE. If DNS/HTTP fails, collect Hostless platform request ID/logs and escalate to Hostless; if HTTP succeeds but News sources fail, inspect deployed NEWS_FEEDS and outbound DNS/egress.
+
+## 57. HOSTLESS EROFS ROOT CAUSE AND OWNER DECISION — 22 NOVEMBER 2026
+
+- Exact Hostless probe (GitHub Actions run #506 on PR #40): `radar-ai-v2.hostless.app` resolves and responds. `/api/ready` = HTTP 503 `degraded`, storage `error/EROFS`. `/api/snapshot` = HTTP 200 `success`, `stale=false`, last refresh/last_ok `2026-11-22T12:52:02.952Z`, 50 news items, News health `ok=true`, but `news_sources=[]`.
+- Root cause: the running Hostless process attempts to write `state.json` under a read-only filesystem path. Code defaults `DATA_DIR` to `./data` if not overridden; the effective runtime path is not directly visible, but EROFS proves it is not writable. Snapshot remains available in memory, but `save()` fails and state/history cannot be persisted.
+- Hostless filesystem docs: root filesystem is read-only; `/tmp` (500 MiB), `/root` and `/app/.cache` are writable but cleared at process start. Persistent data requires an attached volume mounted at a path such as `/data` and `DATA_DIR=/data`. Reference: https://docs.hostless.cloud/app/filesystem.
+- Zero-cost temporary workaround: set Hostless app environment variable `DATA_DIR=/tmp/radar-ai-v2`. This should allow state writes during the current process, but all state/history is lost on restart. Do not use this for future agent memory, task queue or durable audit.
+- Durable option: attach an existing Hostless volume at `/data` (if available) and set `DATA_DIR=/data`. Hostless documents a shared 512 MiB persistent-storage free pool and a 1 GiB minimum disk; a new disk may exceed free entitlement and incur cost. Check current project usage and cost estimate first. No volume was created and no paid resource was provisioned.
+- Probe utility merged in PR #40 as `a21f3e86211ec5bcb5d3fc0a0e4c96f1f19fcfbd`; main CI #507 passed 90/90, security #49 passed. `npm run hostless-check` is available.
+- No production configuration was changed. Owner decision required between temporary ephemeral `/tmp` mode (data loss on restart) and persistent volume (possible cost).
+- NEXT TASK: wait for BOS choice before changing Hostless `DATA_DIR` or provisioning storage. After configuration, rerun `npm run hostless-check`; require `/api/ready` 200 and inspect `/api/snapshot` News health.
+## 58. PHANTOM & ON-CHAIN INTELLIGENCE — ARCHITECTURE APPROVED FOR STAGED IMPLEMENTATION — 22 NOVEMBER 2026
+
+- BOS meminta integrasi Phantom ke RADAR AI, dengan ruang khusus di aplikasi dan ringkasan dashboard untuk tracking wallet, aktivitas whale, token/DEX dan sumber blockchain lain sebagai bahan trading intelligence.
+- Dibuat issue implementasi: https://github.com/rohman35819/radar-ai-v2/issues/47. Lead: Divisi 03 (domain wallet/on-chain) bersama Divisi 02 (dashboard); dukungan Divisi 01 security, Divisi 04 research/signals, Divisi 08 source procurement, Divisi 05 independent QA. Direktur mengoordinasikan; Advisor menjaga arsitektur dan stage gate.
+- Dokumen arsitektur: docs/phantom-onchain-intelligence-architecture.md; commit dokumentasi 7e4f444d4b2a3fc40a86333fcf3f4fc7a015bc6a.
+- Keputusan penting: Phantom dipakai sebagai wallet connection/identity untuk Solana, bukan dianggap sumber universal seluruh data blockchain. Data intelligence datang dari adapter Solana JSON-RPC, transaction indexer/enhanced API, DEX market data, dan adapter chain lain secara bertahap.
+- Tahap awal wajib read-only: connect/disconnect Phantom untuk alamat publik, saldo SOL, SPL token accounts, signature/transaction history. Tidak meminta seed phrase/private key, tidak ada signing, swap, approval, transfer, staking atau order trading.
+- Tahap berikutnya: public-wallet watchlists, normalized event history, whale/activity alerts, DEX price/liquidity/volume context, lalu multi-chain. Semua data harus memiliki chain/network/source/timestamp/freshness/provenance; heuristic label harus ditandai sebagai perkiraan/provider-derived.
+- Hostless EROFS/storage decision masih blocker untuk histori/watchlist/alert yang durable. /tmp tidak boleh dipakai sebagai persistent tracking store. Belum ada provider berbayar atau infrastructure provisioning yang disetujui.
+- Status implementasi: architecture + issue/backlog dibuat; belum ada UI, wallet connection, RPC adapter, dashboard widget, persistence atau live deployment. Jangan mengklaim Phantom sudah terhubung.
+- Tes: tidak dijalankan (perubahan dokumentasi saja). CI/deploy Hostless untuk commit dokumentasi ini belum diverifikasi pada catatan ini. Hostless LIVE tetap belum terverifikasi.
+- NEXT TASK: Direktur menugaskan Divisi 02/03 memulai Stage 1 (page shell + Phantom connect/disconnect, read-only address identity) pada branch/PR terisolasi; Divisi 08 membandingkan sumber RPC/indexer/DEX berdasarkan free quota, ToS dan limit; Divisi 01/05 menyiapkan security/QA acceptance. Jangan mengaktifkan durable history sebelum storage blocker selesai.
+- Riset sumber resmi pada sesi ini: Phantom injected provider mendukung connect/disconnect dan membagikan public address; signing merupakan kemampuan terpisah yang tidak dipakai MVP. Phantom mobile hanya mendukung koneksi melalui Phantom in-app browser; Chrome/Safari Android biasa tidak dapat menghubungkan wallet melalui flow tersebut. UI harus mendeteksi kondisi ini dan memberi instruksi membuka URL RADAR dari Phantom browser. Solana public RPC shared/rate-limited dan bukan untuk produksi. GeckoTerminal API beta; dokumentasi API menyebut sekitar 10 request/menit yang dapat berubah, sedangkan artikel support menyebut 30/menit; gunakan batas konservatif 10/menit sampai diverifikasi. Referensi resmi ditambahkan di dokumen arsitektur.
+- Commit riset/constraint: 1d8622b8bcddaf82eef4b60d79bd7599a71f7bf1. Belum ada kode koneksi Phantom atau UI yang dibangun.
+
+---
+
+## 59. MARKET INTELLIGENCE & EXPLAINABLE TRADE SETUPS — 22 NOVEMBER 2026
+
+- BOS menetapkan prioritas produk: kumpulkan data pasar dan analisis yang luas, akurat, tervalidasi sebelum ditampilkan di dashboard. Kandidat Top Scanner harus dapat dibuka menjadi halaman detail aset dengan candle/OHLCV, volume, open interest, funding, likuiditas, fundamentals, unlock, berita/katalis, on-chain dan provenance jika tersedia.
+- Detail aset harus memiliki canonical identity (chain/contract, exchange, spot/perpetual, base/quote); jangan join berdasarkan symbol saja.
+- Rencana trade setup harus mencakup bias, timeframe, entry zone, invalidation/stop, TP1/TP2/TP3, R:R, confidence terkalibrasi, alasan pro/kontra, expiry dan kondisi pembatalan. Level harga harus reproducible dari market snapshot dan aturan deterministik; LLM hanya menjelaskan, tidak mengarang level.
+- Setiap field wajib menyertakan source, observed_at, timeframe/interval, freshness, quality dan units. Volume rolling 24h, volume candle, OI dan funding adalah metrik berbeda. Missing/stale/conflicting data tidak boleh ditampilkan sebagai nol atau dianggap valid.
+- Issue implementasi utama: https://github.com/rohman35819/radar-ai-v2/issues/49. Spesifikasi: docs/market-intelligence-trade-setup-spec.md.
+- Tahapan: (0) audit sumber & data contract oleh Divisi 08/03/04/01/05; (1) canonical data foundation; (2) clickable asset drill-down; (3) explainable setup generator; (4) walk-forward/out-of-sample backtest + forward paper trading; (5) dashboard daily scanner dan signal journal.
+- Evaluasi mencakup fee, spread, slippage, funding, latency, look-ahead/survivorship bias dan overfit. Catat semua sinyal termasuk loss, invalidation, expiry, MAE/MFE, expectancy, profit factor, max drawdown, sample size dan calibration.
+- Guardrails: ini decision support, bukan jaminan profit. Tidak ada sistem yang memastikan koin akan profit. Tidak ada order execution; live trading tetap OFF. Tidak ada paid provider/quota/infrastructure tanpa persetujuan BOS. Historical persistence menunggu penyelesaian EROFS/storage Hostless; jangan memakai filesystem ephemeral sebagai database.
+- Kondisi kode yang diperiksa pada 22 Nov 2026: `lib/sources.js` sudah mengambil CoinGecko AI category markets (maksimum konfigurasi 4 halaman x 250), DeFiLlama protocols/fees/revenue dan RSS; `lib/ingest.js` menyimpan snapshot `tokens/fundamentals/news/unlocks/alerts/history/vol10m` ke state JSON. `vol10m` yang ada adalah estimasi berbasis selisih rolling 24h antar refresh, bukan native 10m candle volume. Detail data candle multi-timeframe/OI/funding per asset dan setup engine belum terbukti ada di kode yang diperiksa.
+- Latest main saat audit perencanaan: `518caf76a37f00dd51f4bef081ce02f20f7de453`; GitHub Actions run #569 pada SHA tersebut completed/success. Ini bukan bukti Hostless deployment atau LIVE.
+- NEXT TASK: Divisi 08 menyusun source/provider matrix resmi (endpoint, field, history, quota, ToS, latency, attribution, free-tier/cost); Divisi 03 memvalidasi exchange OHLCV/derivatives definitions; Divisi 04 merancang feature/score dan anti-look-ahead; Divisi 01 security review; Divisi 05 data contract/fixtures. Setelah audit, mulai Stage 1 secara terisolasi. Jangan lompat ke rekomendasi entry/TP sampai data provenance dan validasi out-of-sample siap.
+
+
+## 60. SOLSCAN PRO API — ON-CHAIN DASHBOARD IMPLEMENTATION (22 NOVEMBER 2026)
+
+- BOS meminta data Solscan ditampilkan pada dashboard RADAR AI dengan cakupan seluas mungkin dan akurasi/provenance yang jelas.
+- Sumber resmi: Solscan Pro API v2.0, base URL `https://pro-api.solscan.io/v2.0`, autentikasi server-side melalui header `token`. API key disimpan pada Hostless Environment Variable `SOLSCAN_API_KEY`; jangan pernah disimpan di browser, log, repository, atau dokumentasi.
+- Dokumentasi resmi menyebut 70 endpoint dalam beberapa kategori: Account, Token, NFT, Transaction, Block, Market, Program, dan Monitoring. Akses endpoint bergantung pada paket/izin; setiap request Pro saat ini mengonsumsi CU. Data hanya Solana Mainnet. Harga/market cap dapat memiliki keterlambatan indeksasi.
+- Implementasi awal pada branch `feat/solscan-onchain-dashboard`: adapter backend `lib/solscan.js`; endpoint `GET /api/solscan/overview` dan `GET /api/solscan/wallet`; halaman `/solscan.html`; kartu ringkasan di dashboard utama. Overview mengambil token trending, transaksi terbaru, dan block terbaru. Wallet lookup on-demand mengambil account detail, portfolio, token accounts, transactions, transfers, DeFi activities, dan staking sesuai akses paket.
+- Keamanan: key hanya dibaca oleh server; request GET read-only; validasi alamat base58; timeout; cache 5 menit per endpoint; rate limit lokal 10 permintaan endpoint RADAR per menit per IP; error disanitasi; data wallet tidak disimpan permanen.
+- Keterbatasan yang disengaja: belum mengaktifkan semua 70 endpoint secara otomatis. NFT, market OHLCV, holder distribution, token history, account metadata, leaderboard, usage monitoring dan export akan diaktifkan bertahap setelah kebutuhan, biaya CU, parameter dan izin paket diverifikasi. Jangan membebani kuota atau menganggap semua endpoint tersedia hanya karena key ada.
+- Acceptance berikutnya: uji autentikasi key di Hostless, validasi response real, verifikasi paket/CU, tambahkan fixture tests dan QA mobile/desktop. Jangan menyatakan integrasi LIVE sampai Hostless deploy dan endpoint berhasil diverifikasi.
+- Commit awal file adapter/UI pada branch: fd2a34f, b5d5d6a, 412701d, 3d9919f; backend route commit: e3db41d. Update dashboard UI dan dokumentasi menyusul pada branch yang sama.
+- NEXT TASK: selesaikan pengujian backend/service, review response schema endpoint aktual, buka PR dan tunggu CI; setelah merge, verifikasi Hostless build dan LIVE secara terpisah.
+
+
+### 60.1 DELIVERY UPDATE — 22 NOVEMBER 2026
+
+- Implementasi Solscan digabung ke `main` melalui PR #52: https://github.com/rohman35819/radar-ai-v2/pull/52.
+- Merge commit / main HEAD saat pencatatan: `6879ccd29a5a5169005e05caeb97dbc81a17be21`.
+- File implementasi: `lib/solscan.js`, `server.js`, `public/solscan.html`, `public/solscan.js`, `public/solscan.css`, `public/index.html`, `public/app.js`, `public/style.css`, `.env.example`, `package.json`, `test/solscan.test.js`, `README.md`, dan master context ini.
+- CI PR run #607 pada head `6406b67157bf61f20bc9de8e1742050498738b2d`: completed / success. `npm test` berhasil; skrip test juga memeriksa sintaks `public/solscan.js` dan `lib/solscan.js`.
+- Security run #149 pada head yang sama: Gitleaks success dan Trivy success. Tidak ada secret yang terdeteksi.
+- Hostless Build dan LIVE: belum terverifikasi. Pemeriksaan endpoint publik `/api/solscan/overview` tidak dapat diakses melalui jalur verifikasi yang tersedia pada sesi ini. Jangan menganggap merge GitHub otomatis berarti deployment LIVE.
+- Integrasi saat ini menampilkan 9 endpoint ringkasan (chain info, analytics transaksi/stake/fee/DeFi/compute, token trending, latest transactions, latest blocks) dan 7 endpoint wallet lookup on-demand. Semua request read-only; API key hanya di backend. Cache 5 menit; wallet lookup dibatasi 10 permintaan RADAR/menit/IP; error endpoint parsial ditampilkan terpisah.
+- Batasan: belum semua endpoint Solscan diaktifkan. Token deep-dive, holders, NFT, market pools/OHLCV, program analytics, account labels/funded-by, dan CU usage perlu tahap lanjutan setelah API key benar-benar terautentikasi di Hostless dan paket/CU BOS diverifikasi. Jangan mengklaim semua 70 endpoint telah tampil.
+- NEXT TASK: verifikasi Hostless deployment dan autentikasi `SOLSCAN_API_KEY` melalui dashboard LIVE. Setelah data overview berhasil, lanjutkan tahap berikutnya: token intelligence + holder distribution + NFT/market/program panels secara on-demand, dengan pengendalian CU dan provenance.
+
+---
+
+## 61. COINGECKO MARKET INTELLIGENCE DASHBOARD — 22 NOVEMBER 2026
+
+### 61.1 Routing and scope
+- Lead: **Divisi 02 — UI/UX & Frontend** untuk dashboard dan navigasi.
+- Supporting: Divisi 08 untuk verifikasi paket/kuota CoinGecko; Divisi 04 untuk konteks market intelligence; Divisi 01 untuk keamanan API key/cache; Divisi 05 untuk pengujian independen.
+- Owner meminta seluruh rekomendasi CoinGecko sebelumnya ditampilkan di dashboard RADAR AI V2.
+- Main baseline saat branch dibuat: `518caf76a37f00dd51f4bef081ce02f20f7de453`.
+- Isolasi implementasi: branch `feat/coingecko-market-intelligence-dashboard`; tidak ada perubahan langsung ke main atau deployment produksi.
+
+### 61.2 Implementasi pada branch
+- Halaman baru `/market.html` dengan navigasi dari dashboard utama.
+- Modul Global Market: total market cap, volume 24 jam, BTC/ETH dominance, active crypto, dan jumlah markets.
+- Global Coin Scanner Top 100: harga USD dan IDR, perubahan 1h/24h/7d, market cap, volume, pencarian, gainers, losers.
+- Trending coins dari CoinGecko Search Trending.
+- Momentum Detector lintas 1h/24h/7d, High Turnover Watch (volume 24 jam / market cap), dan Risk Monitor berbasis ambang heuristik.
+- Sector Rotation berdasarkan perubahan market cap kategori.
+- Exchange Intelligence: ranking exchange, volume BTC, trust score, dan tabel trading pairs on-demand berisi harga, volume, serta bid/ask spread.
+- Historical charts untuk harga, market cap, dan volume pada rentang 1/7/30/90 hari.
+- Market Regime berbasis heuristik statistik RADAR; panel AI Council menampilkan laporan terakhir yang tersimpan secara terpisah. Heuristik tidak boleh disebut sebagai output model AI.
+- Backend baru `lib/market-intelligence.js`; endpoint:
+  - `GET /api/market-intelligence`
+  - `GET /api/market-intelligence/chart?coin=bitcoin&days=7`
+  - `GET /api/market-intelligence/exchange-tickers?exchange=binance`
+- API key `COINGECKO_DEMO_KEY` hanya dipakai backend melalui header `x-cg-demo-api-key`; tidak dikirim ke browser, URL, atau response.
+- Cache server 60 menit untuk dashboard feed, historical chart, dan exchange tickers. Kegagalan upstream tanpa cache mendapat cooldown 5 menit; UI polling 5 menit tidak terus mengulang request ke sumber yang gagal. Data stale ditandai.
+- Service Worker dinaikkan ke `radar-shell-v12` dan menambahkan halaman/aset Market Intelligence ke precache.
+- Tidak ada dependency runtime baru, pembelian, perubahan secret Hostless, atau fitur transaksi.
+
+### 61.3 Files
+- Added: `lib/market-intelligence.js`, `public/market.html`, `public/market.js`, `public/market.css`, `test/market-intelligence.test.js`, `test/market-ui.test.js`.
+- Updated: `server.js`, `public/index.html`, `public/sw.js`, `test/service-worker.test.js`, `package.json`, `README.md`, dan dokumen master ini.
+- Existing Market Screener kategori AI, Exchange Hub, Command Center, dan menu dashboard lain dipertahankan.
+
+### 61.4 Procurement and quota guardrails
+- Menggunakan `COINGECKO_DEMO_KEY` yang sudah menjadi variabel konfigurasi proyek; nilai aktual tidak dibaca atau ditampilkan.
+- Dashboard utama meminta enam dataset: global, Top 100 USD, Top 100 IDR, trending, categories, exchanges. Cache 60 menit; chart dan ticker hanya dipanggil saat dibutuhkan dan juga cache 60 menit.
+- Kuota CoinGecko Demo adalah shared quota untuk seluruh pemakaian CoinGecko RADAR. Pantau Developer Dashboard; jangan menganggap polling UI 5 menit sama dengan lima menit request upstream.
+- CoinGecko Demo menyediakan 100 calls/min dan 10.000 monthly calls menurut halaman resmi; endpoint/history availability dapat berbeda menurut paket. Tidak ada layanan berbayar diaktifkan.
+- Attributions: UI dan README menampilkan “Powered by CoinGecko”.
+- Exchange spread/trust score bukan audit likuiditas, solvabilitas, atau keamanan exchange.
+- Top gainers/losers hanya dari Top 100; bukan keseluruhan pasar.
+- Historical chart menggunakan data market_chart; bukan OHLC/candlestick.
+- Market Regime merupakan rule-based heuristic, bukan model AI atau rekomendasi finansial. AI Council Summary adalah laporan terakhir yang telah tersimpan, bukan jaminan analisis realtime dari seluruh dataset global.
+
+### 61.5 Tests and release status
+- Unit tests baru meliputi enam dataset dan server-side header, cache hit, stale fallback/partial failure, validasi coin/rentang chart, validasi exchange ID/cache ticker, UI navigation/assets, dan rendering aman sebagai teks.
+- Service Worker test diperbarui untuk memastikan Market Intelligence di-precache pada v12.
+- `package.json` menambahkan syntax checks untuk `public/market.js` dan `lib/market-intelligence.js`.
+- Local `npm test`: belum dijalankan pada saat catatan dibuat.
+- GitHub Actions exact-head: menunggu workflow PR.
+- Hostless Build: UNKNOWN / belum diverifikasi.
+- Hostless LIVE/SHA: UNKNOWN / belum diverifikasi.
+- Browser visual QA desktop/mobile, response nyata CoinGecko melalui secret Hostless, dan penggunaan kuota produksi: belum diverifikasi.
+
+### 61.6 Risks and NEXT TASK
+1. Periksa exact branch diff dan jalankan GitHub Actions `npm test`; perbaiki setiap kegagalan sebelum menyatakan siap.
+2. Minta review independen Divisi 01 (API key/cache/security) dan Divisi 05 (test, API failure, PWA, mobile).
+3. Setelah PR diterima dan BOS menyetujui integrasi, verifikasi Hostless build dan SHA Live secara terpisah; jangan mengklaim live dari CI.
+4. QA browser desktop/Android: semua modul, loading/error/stale, filter/search, chart selector, exchange pair selector, PWA cache, Console/Network, serta tidak ada request API key dari browser.
+5. Verifikasi API response nyata dan kuota melalui deployment yang sah; jangan meminta key dikirim melalui chat.
+6. Jika CoinGecko Demo membatasi endpoint tertentu, pertahankan partial UI dan cari fallback gratis sebelum mengusulkan paket berbayar.
+7. NEXT TASK setelah QA: review independent; lalu integrasi ke main hanya setelah semua checks sukses dan approval sesuai kebijakan BOS.
+
+### 61.7 Exact-head CI and final handoff update
+- Final branch head at this verification: `3b78b60176af70d000bc252e32f602d9b5426058`.
+- Draft PR: #48 — https://github.com/rohman35819/radar-ai-v2/pull/48. Base main `518caf76a37f00dd51f4bef081ce02f20f7de453`; compare reports ahead 31 / behind 0 at the time checked.
+- GitHub Actions RADAR AI tests run #572 / ID `45043182075` on exact head `3b78b60`: **completed / success; 98 tests pass, 0 fail**. Job steps confirm `npm test` completed successfully, including syntax checks and Node test suite.
+- GitHub Actions security scans run #114 / ID `45043182076` on exact head: **completed / success**.
+  - Gitleaks: **no leaks found**.
+  - Trivy secret scanner: **no issues detected**.
+  - Trivy vulnerability scanner: **coverage unavailable** because no supported manifest files were found; do not describe this as a clean dependency vulnerability scan.
+- Local `npm test`: not run; the passing evidence is GitHub Actions exact-head CI.
+- Hostless Build and LIVE remain **UNKNOWN / NOT VERIFIED**. No production deployment or Hostless environment change was performed.
+- Browser visual QA and actual CoinGecko API response against the Hostless Demo key remain pending. CI validates mocks/static structure, not upstream credentials, live endpoint entitlements, provider rate limits, or mobile visual rendering.
+- Responsive mobile drawer controls were added to `/market.html` and covered by UI static tests. Device/browser QA is still required.
+- PR remains **Draft** pending independent Divisi 01/05 review and BOS release decision. Do not merge or claim dashboard is live yet.
+
+### 61.8 Final exact-head CI after documentation update
+- Current branch / PR #48 head: `09fbc531252fa860e90fdc9dd0e516d05de593f9`.
+- GitHub Actions test run #573 / ID `45043255278` on this exact head: **completed / success; 98 tests pass, 0 fail**. The job completed `npm test`, including all syntax checks and Node tests.
+- GitHub Actions security run #115 / ID `45043255340` on this exact head: **completed / success**.
+  - Gitleaks: **no leaks found**.
+  - Trivy secret scan: **no issues detected**.
+  - Trivy vulnerability scanner: **no supported manifest files found**; dependency vulnerability coverage is unavailable, not a clean vulnerability result.
+- The test log includes `refresh error read-only filesystem` from the existing intentional storage-health EROFS test; suite still passed 98/98. This is test fixture output, not evidence of a new live Hostless failure.
+- Previous 60.7 test/security evidence for code head `3b78b60` is superseded by the exact-current-head evidence above.
+- PR #48 remains Draft; merge not performed. Hostless Build/LIVE, actual CoinGecko credential entitlement, and browser/device visual QA remain unverified.
+
+### 61.9 Extended market signals and scope boundary
+- Dashboard ditambah Momentum Detector yang hanya menampilkan aset dengan return positif terkonfirmasi pada 1h, 24h, dan 7d; High Turnover Watch memakai rasio volume 24 jam / market cap; Risk Monitor menandai penurunan 24 jam besar atau return negatif dengan turnover rendah.
+- Ketiganya merupakan heuristic/proxy dari data agregat Top 100. Tidak boleh disebut sebagai deteksi volume anomaly intraday, honeypot/security scanner, audit likuiditas, atau risk model terkalibrasi.
+- Follow-on P2 yang belum termasuk PR #48: strategy backtesting yang dapat dikonfigurasi, portfolio tracking manual, dan integrasi On-chain DEX/Early Gem ke halaman Market Intelligence.
+- Early Gem Scanner/GeckoTerminal sudah memiliki pekerjaan terpisah di Draft PR #46; jangan menganggap telah terintegrasi/merged atau memindahkan kodenya tanpa QA independen. Setelah PR #46 lolos review, rancang entry point ke dashboard Market Intelligence.
+
+### 61.10 Final signal-module validation
+- Code head before this documentation-only handoff: `a164776f908bd212c60c20a09c3eaf80021006d4`.
+- Added Momentum Detector (all 1h/24h/7d changes positive), High Turnover Watch (24h volume / market cap proxy), and Risk Monitor (large daily decline or negative return plus low turnover). README and master context now explicitly document heuristic limitations.
+- GitHub Actions test run #580 / ID `45043477962` on exact code head `a164776`: **completed / success; 98 tests pass, 0 fail**.
+- GitHub Actions security run #122 / ID `45043477978` on exact code head: **completed / success**. Gitleaks: no leaks found. Trivy secret scan: no issues. Trivy vulnerability scanner: no supported manifest files; dependency vulnerability coverage unavailable.
+- Current delivery remains Draft PR #48. Hostless Build/LIVE and real CoinGecko provider responses remain unverified; browser/device visual QA and independent Divisi 01/05 review are still required.
+- Follow-on P2 items are not included: manual portfolio tracking, strategy backtesting, and On-chain DEX/Early Gem dashboard integration. Early Gem remains separate Draft PR #46.
+
+### 61.11 Current PR head validation
+- Current branch / PR #48 head at this verification: `28366eb9719e3fb9e6fb81f74e37d9f4e6b90d10`.
+- GitHub Actions test run #582 / ID `45043611722` on this exact head: **completed / success; 98 pass, 0 fail**.
+- GitHub Actions security run #124 / ID `45043611743` on this exact head: **completed / success**. Gitleaks: no leaks found. Trivy secret scan: no issues. Trivy vulnerability scanner: no supported manifest files, so dependency vulnerability coverage unavailable.
+- PR #48 is open, Draft, and GitHub reports mergeable; it is not merged. No Hostless configuration or deployment was changed.
+- Hostless Build/LIVE, real CoinGecko provider responses using the deployed Demo key, and browser/device visual QA remain unverified. Independent Divisi 01/05 review is still required.
+- Follow-on P2 items remain outside this PR: manual portfolio tracking, strategy backtesting, and On-chain DEX/Early Gem dashboard integration. Early Gem remains separate Draft PR #46.
+### 61.12 Quota protection refinement
+- Feed yang gagal tanpa data cache kini mendapat negative-cache cooldown 5 menit. Tujuan: polling UI tidak mengulang request upstream setiap 5 menit ketika CoinGecko sedang rate-limit/down atau key ditolak.
+- Added test for failed-feed cooldown/retry-after-window; test suite expected to increase by one.
+- Changed files: `lib/market-intelligence.js`, `test/market-intelligence.test.js`, README, master context.
+- New source change is isolated in PR #48; wait for exact-head Actions before review/merge.
+
+### 61.13 Stale-cache correctness fix
+- Code review found that stale fallback data was cached for 60 seconds but a subsequent request in that window could incorrectly report it as fresh. Corrected cache metadata to preserve `stale=true` and the upstream error until the fallback TTL expires.
+- Regression test verifies stale flag/error remain visible and no repeat upstream request occurs inside the fallback window.
+- Negative-cache cooldown remains 5 minutes for failures without any prior data.
+- Files: `lib/market-intelligence.js`, `test/market-intelligence.test.js`; source changes are part of PR #48.
+- Re-run Actions on the latest branch head before considering review-ready.
+
+### 61.14 Final cache-safety validation
+- Current code head before this documentation update: `4b7b4b493771e8de4128e3d0c1c6844335ec58eb`.
+- GitHub Actions test run #588 / ID `45043777552`: **completed / success; 99 tests pass, 0 fail**. Includes negative-cache cooldown and stale-label persistence regression tests.
+- GitHub Actions security run #130 / ID `45043777565`: **completed / success**. Gitleaks: no leaks found. Trivy secret scan: no issues. Trivy vulnerability scanner: no supported manifest files, so dependency CVE coverage unavailable.
+- The cache review fixed stale data being accidentally relabeled fresh within the 60-second fallback cache window. Failed feeds without cache receive a 5-minute cooldown.
+- PR #48 remains Draft and unmerged. No Hostless environment, production deployment, paid service, or CoinGecko key value was changed/read.
+- Hostless Build/LIVE, actual upstream Demo-key response, and desktop/mobile browser QA remain pending. Portfolio tracker, strategy backtesting, and On-chain DEX/Early Gem dashboard integration remain follow-on scope; Early Gem work is separately tracked in Draft PR #46.
+
+---
+
+## 62. MARKET INTELLIGENCE & EXPLAINABLE TRADE SETUPS — MAIN SPEC SYNC — 22 NOVEMBER 2026
+
+- Main advanced after PR #48 was opened with two documentation commits. Latest main baseline at sync: `5850594a9b60f9da709ca965aad876cc144e6308`; the new approved-direction spec is `docs/market-intelligence-trade-setup-spec.md`.
+- The spec is product/engineering direction and staged backlog, not a claim that all features are implemented.
+- Product target: global scanner candidates open canonical asset detail with identity including chain/contract, exchange, spot/perpetual, base/quote; never join assets by symbol alone.
+- Future detail panels: overview/tokenomics, OHLCV candles and interval volume, spot quality/spread/depth, derivatives OI/funding/basis where reliable, DEX liquidity, fundamentals, unlocks, on-chain activity, catalysts/news, signal history.
+- Every metric must carry provider/source, observed/received timestamps, interval/units, raw vs normalized values, freshness, quality, coverage and transformation method. Missing/stale/conflicting values must remain unavailable/partial, never silently zero.
+- Conditional trade setups are future scope only: directional bias, timeframe, entry zone, invalidation/stop, TP1/TP2/TP3, R:R, calibrated confidence only after out-of-sample validation, rationale/counter-evidence, expiry/cancel conditions, immutable snapshot and model version. Deterministic rules must derive levels; LLM may explain but may not invent levels.
+- Required validation: walk-forward/out-of-sample, realistic fees/spread/slippage/funding/latency/fills, signal journal including losses/expired setups, expectancy/profit factor/max drawdown/MAE/MFE/sample size/calibration, then forward paper trading.
+- Current PR #48 implements the initial CoinGecko market dashboard only. It does NOT yet implement canonical asset drill-down, per-field provenance contract, OHLCV candle intervals, OI/funding, reproducible entry/stop/TP setup, immutable signal journal, or backtesting.
+- No order execution, live trading, paid data, paid quota, or production mutation is authorized. Historical persistence waits for verified durable storage; EROFS means ephemeral filesystem is not a database.
+- Stage routing: Divisi 08 provider matrix; Divisi 03 exchange/derivatives semantics; Divisi 04 features/anti-look-ahead; Divisi 01 security; Divisi 05 fixtures and QA; Divisi 02 asset detail UI.
+- NEXT TASK after PR #48 QA: start Stage 0 provider/source matrix and data contract, then implement canonical identities and freshness/quality metadata before adding trade setups. Do not add entry/TP/SL until data quality and out-of-sample methodology are ready.
+
+---
+
+## 63. MARKET INTELLIGENCE DASHBOARD — CLEAN-BASE HANDOFF — 22 NOVEMBER 2026
+
+- Main advanced to `5850594a9b60f9da709ca965aad876cc144e6308` and introduced the approved-direction trade setup specification. PR #48 was found behind main and had conflicting master-context history; it was closed unmerged.
+- Current clean-base branch: `feat/coingecko-market-intelligence-dashboard-v2`, created from latest main. The approved `docs/market-intelligence-trade-setup-spec.md` is inherited directly from main.
+- Current PR: **#50**, Draft, base `main`. It contains the same tested Market Intelligence code, updated documentation/history, and the explicit scope boundary from the new trade setup spec.
+- PR #48 is superseded/closed, unmerged. Historical references to PR #48 in sections 60/61 describe the original implementation and are superseded by PR #50.
+- New branch files were copied from the prior implementation branch after reviewing the two main-only commits; main's new spec and section 59 were preserved. Compare main vs clean branch: ahead 13, behind 0 at branch creation.
+- CI and security scans must run again on PR #50 exact head; earlier passing evidence on PR #48 is not evidence for the new branch SHA.
+- No Hostless settings, production deployment, paid provider, or API secret was changed/read.
+- NEXT TASK: inspect PR #50 exact diff, run tests/security on exact head, then Divisi 01/05 review and browser/Hostless QA. Do not merge/deploy until all gates pass.
+
+### 63.1 Clean-base PR validation
+- PR #50 was marked Ready for Review (not merged); current branch head at validation: `08000afe924710f4804053bd447cae2f4a5bc933`.
+- Branch is cleanly based on latest main `5850594a9b60f9da709ca965aad876cc144e6308`; compare shows ahead 15, behind 0. GitHub metadata reports mergeable=true.
+- GitHub Actions test run #593 / ID `45044319199`: **success; 99 pass, 0 fail**.
+- GitHub Actions security run #135 / ID `45044319234`: **success**. Gitleaks: no leaks. Trivy secret scanner: no issues. Trivy vulnerability scanner found no supported manifest files, so dependency CVE coverage is unavailable.
+- PR #48 is closed unmerged and superseded. PR #50 is the only active implementation PR.
+- No Hostless deployment or environment mutation occurred; actual CoinGecko API credential and browser visual QA remain unverified.
+
+### 63.2 INTEGRATION WITH SOLSCAN MAIN — 23 NOVEMBER 2026
+
+- CoinGecko Market Intelligence is being integrated on top of the latest `main` that already contains Solscan. Preserve the Solscan backend, frontend, routes, tests, and server-only `SOLSCAN_API_KEY` handling.
+- The combined branch adds CoinGecko backend routes and `/market.html` while retaining `/solscan.html`; no provider key or Hostless environment value is changed by this integration.
+- Exact-head CI, security checks, and production deployment verification are separate release gates. Do not claim LIVE until the Hostless deployment SHA and page are verified.
+
+
+---
+
+## 64. HOSTLESS DEPLOYMENT MONITOR VIA GITHUB ACTIONS — 23 NOVEMBER 2026
+
+### 64.1 Goal and verified Hostless capabilities
+- Owner requested deployment completion/failure visibility in GitHub so routine verification does not require opening the Hostless dashboard.
+- Official Hostless documentation confirms a read-only REST API for deployment lists/details: `GET /v1/apps/{appName}/deployments`, requiring `deployments:read`; API base `https://api.hostless.cloud`; send the full API key in the `Authorization` header without a `Bearer` prefix.
+- Hostless Alerts supports Email, Slack, and signed generic HTTPS Webhook destinations. It does not document a native GitHub Actions/repository-dispatch destination. A direct Hostless-to-GitHub API push would need an authenticated bridge. Therefore the first implementation uses GitHub Actions polling rather than pretending a native push webhook exists.
+- Hostless automatic deployments start on configured Git branch pushes; Hostless may group pushes and queue builds, so a GitHub commit is not itself proof of a completed deployment.
+
+### 64.2 Implementation branch
+- Branch: `ops/hostless-deployment-watch`, based on main `c46e652ad4a1c284442464532f169fa82192da0e`.
+- Added `.github/workflows/hostless-deployment-monitor.yml`.
+- Workflow runs every 5 minutes and supports manual `workflow_dispatch`.
+- It queries the latest Hostless deployment, reports deployment ID/status/commit and compares the deployed commit with the workflow's main SHA.
+- It separately checks public `/api/ready` and requires HTTP 200 plus application status `ready`. Deployment API success and public LIVE readiness are reported as separate signals.
+- It uses only read-only deployment access; it cannot start, rerun, roll back, or modify a Hostless deployment.
+- Secret and configuration requirements:
+  - GitHub Actions secret `HOSTLESS_API_KEY`: Hostless API key with **only** `deployments:read`.
+  - Optional repository variable `HOSTLESS_APP_NAME`: Hostless app resource name; workflow default is `radar-ai-v2`.
+  - Optional repository variable `RADAR_LIVE_URL`: defaults to `https://radar-ai-v2.hostless.app`.
+- Never commit the Hostless key, paste it into chat, or place it in workflow source. Store it only in GitHub Actions Secrets. A short expiry and dedicated read-only key are preferred.
+
+### 64.3 Validation and release status
+- Workflow source commits on the isolated branch: `67cc5e7`, `1fe3395`, `42ec1b3` (latest implementation commit before this documentation update).
+- GitHub Actions execution against the Hostless API has **not** yet been possible because the owner has not added `HOSTLESS_API_KEY` to GitHub Actions Secrets. The workflow has not yet been validated against the live Hostless API response schema.
+- Hostless Build and LIVE status are unchanged and remain independently unverified by this change.
+- No Hostless setting, deployment, app secret, billing option, or live trading setting was changed. No SSH private key is required.
+- NEXT TASK:
+  1. Open repository Settings → Secrets and variables → Actions → New repository secret; add `HOSTLESS_API_KEY` using a Hostless API key with only `deployments:read`.
+  2. If the Hostless app resource name differs from `radar-ai-v2`, add repository variable `HOSTLESS_APP_NAME` with the exact app name.
+  3. Merge the monitoring workflow after CI/review, then run it manually once. Verify API parsing, latest deployment commit/status, and public `/api/ready`.
+  4. If Hostless API returns a different response envelope/status enum, adjust the parser from actual evidence. Do not claim the monitor is operational until a successful real run appears in GitHub Actions.
+  5. Consider a signed Hostless alert webhook bridge only if event-driven notification is later needed; do not expose a GitHub PAT or Hostless API key in a public URL.
+
+
+### 64.4 Review refinement
+- The LIVE readiness probe uses `if: always()` so it still runs and reports its independent result when the Hostless deployment API reports a failed deployment.
+- Latest branch code commit after this refinement: `64ad1e24ed63ebf822bfd3ca29abc12c40095ddd`.
+
+
+### 64.5 PR integration and current handoff
+- PR #54 was merged into `main` using squash merge.
+- Merge commit: `7d611a229f81a6e5646f594d1248e679ddb5825a`.
+- Final PR head validated: `43784cc0735cd2b70f085870787af72796c66d92`.
+- GitHub Actions on the exact PR head:
+  - RADAR AI tests: **success**.
+  - Gitleaks: **success**.
+  - Trivy filesystem scan: **success**.
+- The monitor workflow is now on `main`, so scheduled runs can start. It is **not operationally verified yet** until the owner adds `HOSTLESS_API_KEY` and one real run successfully reads the Hostless deployment API.
+- Owner action still required: add the read-only `deployments:read` API key in GitHub repository Actions Secrets. Do not send the token through chat. Check/set repository variable `HOSTLESS_APP_NAME` only if the Hostless app resource name is not `radar-ai-v2`.
+- Hostless Build and LIVE commit remain separate from GitHub merge/CI and are not yet verified by the new monitor.
+
+
+---
+
+## 65. FREE BINANCE FUTURES FLOW INTELLIGENCE — 23 NOVEMBER 2026
+
+- Lead: Divisi 03 (market derivatives semantics) with Divisi 02 (Market Intelligence UI), Divisi 01 (backend/API safety), Divisi 05 (QA), and Divisi 08 (free-source procurement).
+- Branch: `feat/free-binance-derivatives-scanner`, based on current main at branch creation. Code/docs commits through initial delivery: `40fc454382be4fc9b9d2fc306411fc2e93d7a2da`.
+- Added `lib/derivatives.js` with read-only public Binance USDⓈ-M endpoints: premium index (funding/mark price), current open interest, 5m open-interest history, and 5m taker buy/sell ratio. No API key is required.
+- Added `GET /api/market-intelligence/derivatives?symbol=BTCUSDT`, strict USDT symbol validation, 10s timeout, 5-minute per-symbol cache, in-flight request deduplication, per-source health, partial results and no fabricated zero values.
+- Added a manual pair input/table to `public/market.html` + `public/market.js`; no auto-polling or broad symbol fan-out. Updated package syntax check, unit tests, and README.
+- Exact initial code head before PR/CI: `40fc454382be4fc9b9d2fc306411fc2e93d7a2da`. Tests added: 4 (data, cache/in-flight, partial failure, invalid symbol). GitHub Actions have not yet been checked on this head; do not claim tests passed until exact-head workflow completes.
+- No Hostless environment variable, production deployment, paid service, exchange account permission, order, or financial action was changed.
+- Semantics: OI is not net-long positioning; all open contracts have both sides. Taker ratio measures aggressor-side volume, not whale identity or wallet accumulation. Funding is derivative market context, not a buy/sell recommendation.
+- Official docs checked: Binance USDⓈ-M Futures market data endpoints; GeckoTerminal public API remains approximately 10 calls/minute. This implementation deliberately does not increase GeckoTerminal polling.
+- Remaining gaps, not solved by this PR: wallet/whale identity and labeled wallet tracking; GoPlus/RugCheck contract security; reliable holder concentration; token unlock automation; macroeconomic feeds; GNews/NewsData key integration (the environment variables exist but current `lib/sources.js` RSS parser does not consume them); cross-exchange OI aggregation. These require separate provider adapters, verified free/no-card limits, provenance, and tests.
+- Hostless Build/LIVE and real Binance response from Hostless are unverified. PR/CI status is pending.
+- NEXT TASK: exact-head CI + security scan; Divisi 03 review of derivatives semantics and Divisi 05 QA; then implement GoPlus token-security adapter and GNews/NewsData news adapter as separate, isolated changes. Never infer API activation from environment variable names.
+
+
+
+### 65.1 Exact-head CI evidence and review gate
+- PR #59: https://github.com/rohman35819/radar-ai-v2/pull/59. PR head at validation: `a3020a4e378e23004a7a956ad99055263b381dd8`; base main `0843e2f0080f7933fd13500723da26f8a0f43462`.
+- GitHub Actions test run #647 / ID `45165886402`: completed / success; **110 tests pass, 0 fail**. Includes the four new derivatives tests.
+- GitHub Actions security run #190 / ID `45165886246`: completed / success. Trivy filesystem scan: success; Gitleaks secret detection: success.
+- PR #59 remains Draft/open/unmerged. GitHub initially reported mergeable=false; inspect current mergeability and review status before integration.
+- Independent Divisi 03 (derivatives interpretation) and Divisi 05 (QA) reviews remain pending. No Hostless build/deploy or LIVE API verification has been performed.
+- No test evidence here validates the Hostless environment or upstream Binance response from production; CI uses controlled mocks.
+
+
+
+### 65.2 Final exact-head validation
+- Latest code head: `e90db36ebe90c09811c44e51765e5a56fc873250` (adds explicit `node --check lib/derivatives.js` to the npm test command).
+- GitHub Actions test run #649 / ID `45166095636`: completed / success; **110 passed, 0 failed** on the exact head.
+- Security run #192 / ID `45166095704`: Gitleaks success and Trivy filesystem scan completed successfully.
+- PR #59 remains Draft and unmerged. Independent Divisi 03/05 review and Hostless build/LIVE checks remain pending.
+
+
+---
+
+## 66. MARKET DISCOVERY — BINANCE FUTURES + GECKOTERMINAL — 23 NOVEMBER 2026
+- PR #59 Binance USDⓈ-M Futures read-only scanner is included in this branch ancestry. The service has a bounded 100-symbol LRU cache, validates upstream payload shapes, does not cache fully failed snapshots, and exposes funding, mark price, open interest, OI history and taker buy/sell flow. No order endpoints are used.
+- PR #46 GeckoTerminal Early Gem Scanner is rebased/merged with the Binance branch. It uses the existing CoinGecko Demo key server-side, with 3 pages new pools + 1 trending page on a separate 60-minute cadence by default.
+- The GeckoTerminal feed is an indexed pool discovery feed, not all tokens/contracts and not a token launch feed. Trending is provider ranking, not security certification.
+- CI evidence before combined merge: PR #59 prior exact head tests 110/110 and Gitleaks/Trivy secret scans success; after Binance cache hardening a new exact-head CI run is required. PR #46 historical head tests 98/98 and security workflow success, but that old head is not evidence for the combined branch.
+- Hostless Build and LIVE SHA are not verified. No production env values or deployment settings changed.
+- NEXT TASK: add on-demand DEX Screener pair validation and GoPlus optional token security checks with free-tier quota safeguards; validate the combined branch on its exact head; independent QA and Hostless visual verification before merge/deploy.
+
+
+---
+
+## 67. DEX SCREENER + GOPLUS VALIDATION — 23 NOVEMBER 2026
+- Binance Futures PR #59 was merged into `main` as merge commit `3a3380d60d4d14db860ca503dca63d3d61d45a53`. It remains read-only: funding, mark price, current/history open interest, and taker buy/sell volume only; no order endpoints.
+- GeckoTerminal PR #46 is rebased onto the merged Binance main line. It discovers indexed new pools and provider-trending pools from CoinGecko Onchain using the existing server-side Demo key. Default cadence is 60 minutes, 3 new-pool pages plus one trending request; this is pool discovery, not token creation detection.
+- DEX Screener validation is on-demand per pool/token. It queries `/token-pairs/v1/{chainId}/{tokenAddress}`, matches chain + exact token address, displays up to five liquid pairs, and indicates whether the exact pool address matches GeckoTerminal. Pair-level volume/liquidity are not misrepresented as token-only volume; quote-side base metrics remain unknown. Cache identity includes pool address (case-sensitive for Solana), TTL 2 minutes, concurrency cap 50, global 240/min and per-IP 30/min.
+- DEX Screener API public pair endpoint requires no API key and documents 300 requests/minute. Its API terms restrict building a product whose primary purpose competes directly with DEX Screener; RADAR AI is broader multi-source AI intelligence, but legal/commercial review is required before any commercial launch using this feed.
+- GoPlus Token Security integration is optional/on-demand. Free access exists but API requires Bearer token; code can mint it server-side from Console `GOPLUS_APP_KEY` + `GOPLUS_APP_SECRET` using documented SHA-1 signature, or accept a pre-generated `GOPLUS_ACCESS_TOKEN`. EVM and Solana Beta routes are supported. App global limit 20 requests/minute and 5-minute per-token cache. No GoPlus credentials are committed; Hostless credential presence/runtime access remains unverified and the UI stays disabled until configured.
+- Missing GoPlus fields are unknown, not safe. Risk flags are not an audit guarantee. DEX no-pair result is not a scam finding.
+- Etherscan and FRED remain deferred per BOS direction.
+- Current code/test head and exact CI results are recorded in the PR after the final test run. Hostless Build, deployed SHA, and LIVE visual QA remain separate unverified statuses.
+- NEXT TASK: complete exact-head CI for this branch; perform desktop/mobile and endpoint QA on Hostless after deployment; configure GoPlus free Console credentials only if BOS obtains them; validate GoPlus API runtime before enabling.
+
+
+### 67.1 GoPlus free-tier quota guard — 23 November 2026
+- Official GoPlus pricing lists Free Version 150,000 CU/month, 30,000 CU/day, and 150 CU/minute. The token-security API price endpoint documents an example price of 25 CU/call. The separate support page states 30 calls/minute; the application uses the stricter CU-based budget.
+- Local GoPlus limits: 5 calls/minute, 1,000/day, 5,000/month; 5-minute token cache; only on-demand requests. This keeps the configured use below the 150 CU/minute and daily/monthly free-tier budget, leaving headroom for other GoPlus use.
+- Daily/monthly counters are stored in `st.goplusUsage` in `DATA_DIR/state.json` and persisted before the upstream call. If persistence fails, the request fails closed. Cache hits do not consume the internal API call budget.
+- GoPlus token-security access still requires Console credentials to mint Bearer token; credentials are not present in Git. No live credential-backed API request has been verified.
+
+
+### 67.2 Exact-head QA record — 23 November 2026
+- Binance Futures PR #59 merged into `main`: `3a3380d60d4d14db860ca503dca63d3d61d45a53`.
+- GeckoTerminal + DEX Screener + optional GoPlus code/test head: `d28cc54febd32d3d2bea027dc245d9430ba6251a`.
+- GitHub Actions test run `45173666312`: **132 passed, 0 failed, 0 skipped**.
+- Same exact code/test head security run `45173666289`: **Gitleaks success + Trivy success**.
+- GoPlus free-tier budget is now enforced in code: 5 calls/minute, 1,000/day, 5,000/month; counters persist in `state.json` before upstream calls. This is intentionally below the documented CU-based allowance and does not assume GoPlus is configured on Hostless.
+- DEX Screener is on-demand and uses public pair endpoint; API terms need review before any commercial product positioning that could compete directly.
+- PR #46 latest code/test head passed. Documentation-only update follows; exact latest HEAD checks must complete before merge.
+- Hostless Build, GoPlus live credential test, deployed SHA and LIVE desktop/mobile visual QA remain unverified.
+- NEXT TASK: confirm documentation-head CI, merge PR #46, then verify Hostless Build and deployed LIVE SHA separately.
+
+
+### 67.3 Final exact-head validation — 23 November 2026
+- Latest PR #46 code/test head: `38e048d99c269a18673b658ca8f12c15fb832e16`.
+- GitHub Actions test run `45173872276`: **132 passed, 0 failed, 0 skipped**.
+- Same exact head security run `45173872164`: **Gitleaks success + Trivy success**.
+- Final UI clarification: DEX liquidity and 24-hour volume are labeled as **pair-level** metrics, not token-only metrics.
+- GoPlus free plan guard: 5 calls/minute, 1,000/day, 5,000/month (based on the provider's published free CU allowance and 25-CU token-security price reference); persistent state counter, on-demand only, 5-minute token cache.
+- PR #59 is merged. PR #46 is ready for merge on top of merge commit `3a3380d60d4d14db860ca503dca63d3d61d45a53`.
+- Hostless Build, deployed SHA, GoPlus credential-backed runtime call, and LIVE desktop/mobile visual QA are still not verified.
+- NEXT TASK: merge PR #46, then verify Hostless build/deployed SHA and confirm GoPlus configuration status from the live dashboard.
+
+
+---
+
+## 68. HOSTLESS EROFS / DATA_DIR BLOCKER — 23 NOVEMBER 2026
+- After PR #59 and PR #46 were merged, GitHub main is `76a36d5f2ad1dbe29d2c2eb546ab39f9f4a6faa3`; main CI passed **132/132 tests**, Gitleaks success, Trivy success.
+- Hostless LIVE monitor run `45174689168` returned `HTTP 503`, body status `degraded`, `storage.status=error`, `storage.code=EROFS`.
+- Root cause is configuration, not the scanner code: `lib/ingest.js` defaults `DATA_DIR=./data`; Hostless root filesystem is read-only. Hostless documentation confirms only `/tmp`, `/root`, `/app/.cache`, and attached disk mount paths are writable; temporary directories are cleared on restart.
+- Correct durable fix: attach an existing persistent Hostless disk at `/data` and set server environment `DATA_DIR=/data`, then redeploy. Do not silently fallback to `/tmp`, because state and GoPlus quota counters would disappear on restart. New disk creation can incur cost; check Hostless's displayed cost/free entitlement before creating one.
+- Hostless monitor workflow now runs on pushes to main, skips only deployment metadata lookup when `HOSTLESS_API_KEY` is missing, and still checks readiness plus snapshot/news. It reports storage status/code. `HOSTLESS_API_KEY` is still absent, so deployed commit SHA cannot be checked through Hostless API.
+- NEXT TASK: BOS attaches/chooses persistent disk and sets `DATA_DIR=/data`; add read-only `HOSTLESS_API_KEY` as GitHub Actions repository secret to verify deployment SHA. Then rerun monitor and verify readiness.
+
+
+---
+
+## 69. BINANCE / GECKOTERMINAL / DEX / GOPLUS DELIVERY AUDIT — 23 NOVEMBER 2026
+
+### Verified repository state
+- Current main before this audit improvement: 22e90d301ff8508b9144dc4187f79a601b84d2b7.
+- Binance Futures PR #59 is closed/merged at 3a3380d60d4d14db860ca503dca63d3d61d45a53. It uses public USDⓈ-M endpoints only (funding/mark, current OI, OI history, taker flow); no signed account, order, or withdrawal routes.
+- GeckoTerminal PR #46 is closed/merged at 76a36d5f2ad1dbe29d2c2eb546ab39f9f4a6faa3. Early Gem Scanner fetches up to 3 new-pool pages and one 24h trending page by default, on a 60-minute cadence using the existing server-side CoinGecko Demo key if configured. Pool discovery is limited to provider-indexed pools, not all token deployments.
+- DEX Screener cross-validation is integrated by PR #46 using public /token-pairs/v1/{chainId}/{tokenAddress} lookups on demand. Matching uses chain + token address and exact pool address where supplied. Liquidity/volume are labeled as pair-level. No pair is not a scam finding. The separate broader scanner PR #60 remains Draft/unmerged and is not needed to satisfy the requested validation integration.
+- GoPlus Token Security adapter is integrated by PR #46, optional and on-demand. It supports EVM networks and Solana Beta. It requires a Bearer token; the backend can mint one with server-side GOPLUS_APP_KEY + GOPLUS_APP_SECRET (SHA-1 of app_key + timestamp + app_secret) or accept GOPLUS_ACCESS_TOKEN. No credential value is committed or exposed to the browser.
+- Etherscan and FRED remain deferred.
+
+### GoPlus free-access audit
+- Official GoPlus pricing currently lists a Free Version with 150,000 CU/month, 30,000 CU/day, and 150 CU/minute; official support separately describes the free Security API as 30 calls/minute. Token Security docs mark the endpoint Authorization header as Bearer-required; token minting docs describe the app_key/time/sign method. Sources: https://gopluslabs.io/en/security-api, https://docs.gopluslabs.io/reference/support, https://docs.gopluslabs.io/reference/tokensecurityusingget_1, https://docs.gopluslabs.io/reference/getaccesstokenusingpost.
+- Token Security pricing example in the official API pricing reference is 25 CU/call. Local safeguards remain intentionally stricter: 5 calls/minute (125 CU/minute), 1,000/day (25,000 CU/day), and 5,000/month (125,000 CU/month), below the published free CU limits. Counters persist in state.json before calls; cache TTL is 5 minutes.
+- Conclusion: API usage is free within published limits, but not anonymous: RADAR needs GoPlus Console credentials or a valid access token. Public docs establish a Free Version; they do not establish whether Console signup requires a payment card. Do not claim card-free signup without direct signup verification.
+- Runtime credential presence is not yet verified. The public snapshot exposes only a boolean config flag and usage counters; no secret is exposed.
+
+### Current CI and production status
+- GitHub main at audit start: 22e90d301ff8508b9144dc4187f79a601b84d2b7.
+- Main test run 45175050527: 132 passed, 0 failed, 0 skipped.
+- Main security run 45175050395: Gitleaks success; Trivy filesystem scan success.
+- Hostless monitor run 45175050305: failed readiness check. /api/ready returned HTTP 503, status degraded, storage error EROFS; /api/snapshot returned HTTP 200. Hostless deployment metadata lookup was skipped because HOSTLESS_API_KEY is not configured in GitHub Actions. This is not a verified deployment SHA.
+- Root cause and required production fix remain as section 68: attach an existing persistent disk at /data and set DATA_DIR=/data, then redeploy. Do not silently switch to ephemeral /tmp; state and quota counters would reset on restart. Any new paid storage requires Owner approval.
+
+### Audit tooling improvement
+- Updated scripts/hostless-live-check.js to report safe on-chain feed status, pool count/freshness, CoinGecko key configured boolean, GoPlus configured boolean, and quota counters—never secret values.
+- Added test/hostless-live-check.test.js to verify safe diagnostic output and distinguish missing configuration.
+- Validation on the new exact main head is pending GitHub Actions.
+- NEXT TASK: confirm latest main test/security runs; use the next Hostless monitor result to inspect early_gems and GoPlus configuration flags; BOS must resolve persistent storage before declaring production healthy. If GoPlus is not configured, obtain GoPlus Console app key/secret and set them as Hostless server secrets; then run one controlled on-demand token-security check.
+
+
+### 69.1 Live provider probe diagnostics — 23 November 2026
+- Extended scripts/hostless-live-check.js to make one read-only BTCUSDT Binance Futures request and, when an indexed GeckoTerminal pool exists, one on-demand DEX Screener cross-validation request during the monitor run.
+- GoPlus is deliberately not called by scheduled diagnostics so no GoPlus CU is consumed; monitor reports only whether credentials are configured and the persistent usage counters.
+- Probe output is sanitized to status, available metric flags, pair count, same-pool boolean and normalized error codes; token addresses, provider response bodies, and secrets are not logged.
+- Added tests for both provider summaries. CI result pending on the exact current main head.
+
+
+### 69.2 Exact-head CI and Hostless runtime probe — 23 November 2026
+- Exact code head: f03be48023c88cfa1eb92df151ad86d0aaacb30e. GitHub Actions test run 45180201302: 135 passed, 0 failed, 0 skipped. Security run 45180201385: Gitleaks success and Trivy success.
+- Hostless monitor run 45180201448 (the monitor's overall result is failure because readiness is degraded): provider probes from the actual LIVE host returned Binance Futures BTCUSDT HTTP 200, status success, all four data groups present (funding, current OI, OI history, taker flow), partial=false; DEX Screener HTTP 200, one pair found, exact same_pool_found=true.
+- The same LIVE snapshot reports GeckoTerminal/CoinGecko Onchain enabled, Demo key configured, 80 pools, onchain health ok, trending health ok, last pool feed fetched at 2026-11-23T12:36:11.163Z. This is observed runtime data, not a claim of complete chain coverage.
+- GoPlus credentials_configured=false; usage day_count=0, month_count=0. Scheduled monitor intentionally does not call GoPlus to avoid consuming free quota. The adapter is deployed in the code path but cannot perform security lookups until Hostless receives a valid GoPlus Console app key/secret or access token.
+- LIVE readiness remains HTTP 503 / degraded / storage EROFS. The latest public snapshot still returns HTTP 200 and News is healthy (50 items, two source hosts). Hostless deployment metadata remains unverified because HOSTLESS_API_KEY is absent; API probes verify the endpoints, not the exact deployed Git SHA.
+- NEXT TASK: BOS attaches an existing persistent disk at /data and sets DATA_DIR=/data in Hostless, then redeploys; provide GoPlus Console credentials as server-side Hostless secrets if the free GoPlus check is to be enabled. After storage is fixed, rerun monitor and verify ready=200, deployment SHA, and one controlled GoPlus token-security request. Etherscan/FRED stay deferred.
+
+
+### 69.3 Final validation on implementation head — 23 November 2026
+- Implementation head f03be48023c88cfa1eb92df151ad86d0aaacb30e passed GitHub Actions tests: 135/135, 0 failed, 0 skipped (run 45180201302); Gitleaks and Trivy passed (run 45180201385).
+- The subsequent docs-only main head 80f5cbaa237bd0f1de44526c61541f0be31e2db5 also passed tests 135/135 (run 45180358551) and security scans (run 45180358544).
+- Latest Hostless monitor run 45180358589 re-confirmed live Binance Futures BTCUSDT success (funding, current OI, OI history, taker flow all available) and DEX Screener success (one pair, exact pool match). GeckoTerminal feed remained healthy with 80 indexed pools. GoPlus remains unconfigured and was not called.
+- The only failed monitor gate is readiness: HTTP 503 / degraded / EROFS. Deployment SHA cannot be verified until the read-only HOSTLESS_API_KEY secret is configured. Do not claim a healthy production deployment.
+- Next owner-side steps: attach an existing persistent Hostless disk at /data and set DATA_DIR=/data; if a new disk is needed, review its price and approve before provisioning. Configure GoPlus credentials only if desired, in Hostless server secrets, then perform one manual security lookup. Etherscan and FRED remain deferred.
+
+
+---
+
+## 70. FRED API COMPLIANCE HOLD — 23 NOVEMBER 2026
+
+### Keputusan
+- BOS meminta FRED diintegrasikan ke RADAR AI V2. Setelah membaca FRED® Services Terms of Use dan Additional Terms of Use for the FRED® API secara lengkap, integrasi **tidak boleh dipromosikan ke main/production** tanpa izin tertulis/pengecualian dari Federal Reserve Bank of St. Louis.
+- FRED Services Terms §II(84) melarang penggunaan FRED Content dalam hubungan dengan pengembangan/pelatihan software, sistem, machine learning, dan AI. FRED API Terms §Prohibitions(k) menyatakan larangan serupa untuk penggunaan API.
+- FRED API Terms §Prohibitions(l) juga melarang penyimpanan, caching, pengarsipan, dan memasukkan FRED Content ke database/cache. Kandidat RADAR menggunakan cache 30 menit sehingga tidak sesuai dengan ketentuan yang ditemukan.
+- Data series pihak ketiga memiliki label hak cipta dan persyaratan berbeda. Beberapa seri hanya dapat dipakai dengan atribusi; seri tertentu memerlukan pre-approval/izin tertulis. Penggunaan komersial juga dibatasi.
+- Karena RADAR AI adalah platform intelijen berbasis AI, tidak cukup hanya menambahkan atribusi dan link Terms. Perlu izin tertulis yang secara eksplisit mencakup penggunaan AI/software, penyimpanan/cache, redistribusi/penggunaan pengguna lain, dan skenario komersial yang relevan.
+
+### Sumber resmi yang diverifikasi
+- FRED Legal / full Services Terms: https://fred.stlouisfed.org/legal/
+- FRED API Terms of Use: https://fred.stlouisfed.org/docs/api/terms_of_use.html
+- FRED API docs: https://fred.stlouisfed.org/docs/api/fred/
+- Halaman Legal FRED menyebutkan kategori Copyrighted: Pre-approval required, Copyrighted: Citation required, dan Public Domain: Citation requested; label per-series harus diperiksa sebelum penggunaan.
+
+### Riwayat engineering kandidat
+- PR #64 dibuat pada branch terisolasi `feat/fred-macro-intelligence`, berisi adapter, route, panel UI, dokumentasi, dan tes.
+- CI pada exact candidate head `3661a2c485c5493a813c97f9556e4d747db73c18`: 141 passed, 0 failed, 0 skipped (run `45188659728`).
+- Security run `45188660054`: Gitleaks success. Trivy workflow success, tetapi log menyatakan tidak ada supported language-specific files untuk vulnerability scanner; dependency vulnerability coverage NOT AVAILABLE.
+- Setelah temuan terms, PR #64 ditutup tanpa merge. Branch kandidat di-reset ke main. Tidak ada adapter FRED, route FRED, atau panel FRED di main/Live. Tidak ada panggilan live FRED dari RADAR.
+- BOS sebelumnya melaporkan telah mengisi `FRED_API_KEY` di Hostless. Main saat ini tidak membaca variabel tersebut; hapus/nonaktifkan variabel itu sampai penggunaan FRED mendapat izin tertulis atau diganti sumber yang sesuai. Jangan pernah membagikan key melalui chat.
+
+### NEXT TASK
+- Divisi 08: riset alternatif makro gratis dari sumber primer (BLS, U.S. Treasury, NY Fed, BEA, OECD/BIS) dan verifikasi terms, izin AI/software, cache, redistribusi, commercial use, key/card requirement, kuota, dan endpoint.
+- Divisi 04: pilih seri makro yang dibutuhkan RADAR dan validasi makna/frekuensi/freshness tiap sumber.
+- Divisi 01: review keamanan adapter kandidat alternatif sebelum implementasi.
+- Divisi 05: QA independen.
+- Jangan mengaktifkan FRED sampai izin tertulis/pengecualian diterima. Prioritas operasional Hostless EROFS/DATA_DIR tetap berlaku sesuai section 68/69.
+
+
+---
+
+## 71. DIVISI 08 — AUDIT SUMBER DATA GRATIS & LEGAL — 23 NOVEMBER 2026
+
+- Lead: Divisi 08 Procurement & Tools. Supporting: Divisi 03 (exchange/market semantics), Divisi 04 (news/macro), Divisi 01 (security/compliance), Divisi 05 (independent QA), Executive Office (prioritas/koordinasi).
+- Main HEAD diaudit: 4a08855cf22c94c18c97ed550de3ba0706095d44 (docs(compliance): block FRED integration pending written permission). Branch main; repository publik. Tidak ada login, pendaftaran akun, kartu, pembayaran, secret, atau perubahan Hostless env.
+- Dokumen hasil audit: docs/free-data-source-audit-2026-11-23.md pada branch docs/div08-free-data-source-audit-2026-11-23 (PR menyusul). Dokumen memisahkan endpoint no-auth dari hak komersial/redistribusi/AI/cache; akses publik bukan izin otomatis.
+- Kandidat paling kuat tanpa login: GDELT Project (news/event metadata; unlimited commercial use dengan attribution; DOC API throttle), U.S. Treasury Fiscal Data (open API dan penggunaan komersial/redistribusi diperbolehkan), World Bank Indicators API (no key; default CC BY 4.0 dengan pemeriksaan metadata per dataset), ECB SDMX dan OECD Data API (gratis/no mandatory login, dengan atribusi dan pengecualian data pihak ketiga), serta BLS dan New York Fed pada PR #65.
+- SEC EDGAR no API key; SEC FAQ menyatakan konten government-created dan public EDGAR filing bebas diakses/digunakan ulang (pengecualian sangat terbatas seperti stock art). Implementasi wajib mengikuti fair-access 10 req/s dan User-Agent teridentifikasi dengan kontak email yang valid; email kontak proyek belum ditetapkan, jadi integrasi otomatis ditahan.
+- Binance public market data sudah digunakan untuk futures/entry candidate; Bybit, Hyperliquid dan Kraken belum dipromosikan karena hak komersial/redistribusi belum diselesaikan. OKX melarang penggunaan data untuk competing aggregator/AI commercial use; CoinPaprika keyless non-commercial; DEX Screener direct-competition restriction; CoinGecko Demo tidak memberi commercial rights; DeFiLlama membatasi commercial/republishing; FRED tetap compliance hold sesuai section 70.
+- Risiko existing untuk review Divisi 01/04: CoinGecko Demo, DeFiLlama free API, GeckoTerminal API dan PR #60 DEX Screener. Jangan perluas public display/redistribusi sebelum hak penggunaan dipastikan.
+- Data contract: canonical identity chain+contract atau exchange+market type+symbol; provenance/timestamps wajib; spot/perp/mark/index/OI/funding/rolling volume tidak boleh dicampur; missing values tetap null; konflik sumber terlihat; macro publication time mencegah look-ahead bias. Tidak ada live order.
+- Tes lokal: tidak dijalankan karena working copy Node.js tidak tersedia. Combined status GitHub untuk main HEAD kosong (bukan pass/fail). Hostless build/LIVE tidak diperiksa; EROFS/DATA_DIR tetap blocker. Tidak ada klaim deployment.
+- NEXT TASK: Divisi 04 menyiapkan adapter GDELT metadata/event dan World Bank/Treasury macro secara terisolasi; Divisi 03 memvalidasi field market; Divisi 01 melakukan security + license boundary review; Divisi 05 QA exact-head. Divisi 08 melanjutkan review terms Bybit/Hyperliquid/indexers. Executive Office mengoordinasikan prioritas dan gate review. Jangan merge/deploy sebelum review independen dan approval yang diwajibkan.
+
+
+### 71.1 CI evidence — 23 November 2026
+- GitHub Actions test run #743 / ID 45192843609 on exact code/documentation head c810426d9449c43a5eb8d60927f6c1bf4d499474: completed/success. npm test: 135 passed, 0 failed, 0 skipped.
+- Security run #286 / ID 45192843607 on the same exact head: Gitleaks completed/success, no leaks found. Trivy job completed/success and secret scanner reported no issues. Trivy vulnerability scan did NOT run because the repository contained zero supported language-specific dependency files; dependency vulnerability coverage remains NOT AVAILABLE (not a clean vulnerability scan).
+- These checks validate the documentation branch snapshot only; no runtime data source was integrated and no Hostless Build/LIVE verification was performed.
+- After recording this evidence, a documentation-only follow-up commit will be created; CI for that resulting exact head must be checked separately.
+
+
+### 71.2 Additional free trading-data research — 23 November 2026
+- Additional candidate: Marketlight public derivatives API documents no-key/no-signup read-only JSON and CC BY 4.0 attribution for funding, open interest and liquidation summaries across several CEX venues. It remains **probe-only** until uptime, timestamps, source provenance, normalized-data rights and endpoint behavior are tested; no live API response has been verified. Docs: https://marketlight.ai/developers
+- Additional Solana candidate: Jupiter Tokens API v2 documents metadata, verification/organic score, mint/freeze authority, holder count, liquidity and buy/sell windows; docs state keyless test access at 0.5 req/s and free key at 1 req/s. Technical free access is not enough: production rights/terms still need review. No live API response has been verified. Docs: https://developers.jup.ag/ and https://developers.jup.ag/docs/tokens
+- Existing Binance USDⓈ-M Futures adapter currently uses latest funding/mark, current OI, OI history and taker flow. Official docs expose additional funding history, global and top-trader long/short ratios, order-book depth and mark/index klines. Prioritize these incremental metrics over adding unverified vendors; preserve exchange/instrument/timeframe provenance and never label account ratios as wallet/whale flows. Docs: https://developers.binance.com/docs/derivatives/usds-margined-futures/market-data
+- Divisi 08 addendum and implementation priority recorded in PR #67; Advisor handoff comments recorded on Issues #20 and #49 and PR #65/#67.
+- NEXT TASK: Executive Office prioritizes Divisi 04 + Divisi 03 implementation; Divisi 01 reviews provider rights/security; Divisi 05 performs independent exact-head QA. PR #65 BLS/NY Fed has exact-head tests 141/141 and security workflow success but still lacks independent Divisi 01/02/05 reviews. Do not merge or declare LIVE until gates and Hostless storage readiness are satisfied.
+
+
+### 71.3 Legal clarification — Jupiter Token API and Coin Metrics Community API — 23 November 2026
+- Jupiter Token API technical docs permit keyless prototyping at 0.5 req/s and free API-key access at 1 req/s. However, the published SDK/API License Agreement is fee-bearing, restricts sublicensing/transferring API content to third parties, and requires written consent for uses outside the prescribed scope. Its formal API definition focuses on routing; whether every Token API data field is covered is not explicit. **Production/customer-facing use is on hold** until Jupiter confirms Token API-specific commercial, cache, display/redistribution and fee terms in writing. No account/key registration was performed.
+- Coin Metrics Community API requires no key and publishes 10 requests/6 seconds/IP, but official docs say Community data are for non-commercial use under a Creative Commons license. Exclude from commercial RADAR unless a separate written commercial license is obtained.
+- References: https://developers.jup.ag/docs/tokens ; https://developers.jup.ag/docs/legal/sdk-api-license-agreement ; https://docs.coinmetrics.io/api/v4 ; https://github.com/coinmetrics/product-docs/blob/master/docs/packages/coin-metrics-community-data.md.
+
+
+### 71.4 Audit repository open-source untuk RADAR AI — 23 November 2026
+- Divisi 08 meninjau repository open-source untuk komponen trading, indikator, Solana RPC/indexing, dan charting. Main package saat audit adalah Node.js >=20, zero runtime dependencies, dan UNLICENSED/private; karena itu dependency besar/copy-left tidak otomatis layak dimasukkan.
+- Shortlist: CCXT (MIT, unified CEX REST; kandidat evaluasi Divisi 03 untuk Bybit/multi-venue, tetapi CCXT Pro streaming berbayar dan terms tiap exchange tetap berlaku); Freqtrade (GPL-3.0, referensi backtesting/risk saja, jangan embed/copy tanpa review legal); Hummingbot (Apache-2.0, standalone execution framework, ditunda); NautilusTrader (LGPL-3.0, event-driven Rust/Python engine, fase riset terisolasi); Solana web3.js (MIT, hanya bila kebutuhan parsing Solana belum ditangani Solscan); Agave (Apache-2.0, self-hosted Solana node terlalu berat untuk Hostless saat ini); Yellowstone gRPC (AGPL-3.0, memerlukan Geyser/provider dan review legal); TradingView Lightweight Charts (Apache-2.0, opsional UI bukan sumber alpha); TA-Lib (BSD-3-Clause, native C build kompleks); Blockscout (lisensi metadata NOASSERTION, tidak diadopsi).
+- bennycode/trading-signals ditahan karena metadata lisensi tidak teridentifikasi pada audit; verifikasi exact LICENSE wajib sebelum dipakai. Technical-indicators package lama tidak diprioritaskan karena jejak pemeliharaan yang tertinggal. Tidak ada repository yang di-clone, kode yang disalin, dependency baru, perubahan runtime, secret, permission, Hostless env, atau live trading pada task procurement ini.
+- Keputusan: CCXT adalah kandidat paling praktis untuk evaluasi adapter Bybit read-only pada branch terisolasi setelah Divisi 03 memeriksa exchange terms; jangan mengganti Binance native adapter yang sudah lulus probe. Freqtrade/Hummingbot/NautilusTrader menjadi referensi terpisah untuk riset backtest/risk; Divisi 04/05 perlu mengembangkan validasi backtest internal tanpa look-ahead bias, fee, funding, slippage, partial fills, delisting/survivorship dan walk-forward.
+- Dokumen detail dan link repository ditambahkan ke `docs/free-data-source-audit-2026-11-23.md` pada PR #67. Tidak ada runtime integration atau klaim deploy.
+- NEXT TASK: Divisi 03 melakukan fit-gap + terms review CCXT untuk satu venue read-only; Divisi 04/05 merancang acceptance criteria backtest internal; Divisi 01 memeriksa dependency/license/security gate; Divisi 02 hanya mengevaluasi Lightweight Charts bila ada gap UI yang terbukti. Executive Office mengoordinasikan prioritas. Hostless EROFS/DATA_DIR tetap blocker produksi.
+
+
+### 71.5 Procurement handoff and active integration review — 23 November 2026
+- Re-audited main HEAD `4a08855cf22c94c18c97ed550de3ba0706095d44`, AGENTS.md, Division 08 charter, current PRs and Issue #68/#49 against BOS's free/no-card trading-intelligence requirements.
+- Determined not to add new runtime dependencies (CCXT/Freqtrade/Hummingbot/NautilusTrader/TA-Lib/Solana web3.js/etc.) because RADAR already has native Binance public market data, exchange support, Solscan, existing charting, and zero runtime dependencies. No measured gap justified installing an external framework.
+- Existing implementation PRs are the faster/safer path: #65 BLS/NY Fed/Treasury/World Bank (143/143 tests + Gitleaks/Trivy on exact head e00cfd8); #70 GDELT metadata (140/140 + security on aa629c1); #71 Solscan large transfer watch (139/139 + security on 78e91c7); #72 GoPlus holder sample/lock events (137/137 + security on 1b99b6d).
+- Division 08 submitted procurement COMMENT reviews on PRs #65, #70, #71 and #72. Review IDs: 6025158361, 6025158977, 6025159558, 6025160083. These are not Divisi 01 security reviews, Divisi 05 QA approvals, or merge approvals. GitHub review list currently has no independent reviews.
+- Provider caveats: GDELT is metadata/event discovery only; do not copy publisher article bodies/images. Treasury adapter series are monthly average rates, not live yield curve. World Bank indicators are annual and observation year is not publication date; avoid look-ahead. Solscan export endpoint entitlement `/account/transfer/export` is not confirmed by the existing plan; no paid upgrade. GoPlus public free quota requires Bearer credentials; latest Hostless monitor says credentials_configured=false, so holder/lock data are not LIVE.
+- Main runtime, secrets, Hostless environment, dependency manifest and permissions were not changed. No deployment or live trading action was performed.
+- NEXT TASK: Executive Office sequences #65/#70 for Divisi 04 + Divisi 01 + Divisi 05 reviews, #71/#72 for Divisi 03 + Divisi 01 + Divisi 05 reviews. Divisi 03 then owns incremental Binance Futures funding history, global/top-trader long/short account and position ratios, and order-book depth; never label account ratios as wallet/whale flows. Verify only existing Solscan entitlement and GoPlus configuration; no paid upgrade. Hostless `/data` + `DATA_DIR=/data` readiness blocker remains.
+
+
+---
+
+## 72. AI PROVIDER RELIABILITY — RAPAT PERBAIKAN & GRUP ANALISIS — 24 NOVEMBER 2026 (ASIA/JAKARTA)
+
+### Permintaan BOS dan diagnosis
+- BOS melaporkan Rapat Perbaikan RADAR pada 23 November 2026 pukul 23:25 menunjukkan 0/4 AI aktif dengan error: Gemini high demand, Groq failed_generation JSON, OpenRouter "User not found", dan OpenAI menolak parameter max_tokens.
+- Lead: Divisi 05 QA/DevOps untuk reliability dan regression tests; Divisi 04 AI Intelligence untuk adapter/prompt/schema; Divisi 01 Security untuk memastikan secret tetap server-side. Tidak ada perubahan API key/secret atau konfigurasi Hostless.
+- Audit main menemukan dua jalur adapter terpisah: `lib/ai/workspace.js` untuk Rapat Perbaikan dan `lib/ai/chat-completions.js` + `lib/ai/gemini.js` untuk Grup AI pasar. Perbaikan hanya pada satu jalur tidak akan memperbaiki semua penggunaan provider.
+
+### Akar masalah dan perubahan implementasi
+- Workspace dan market adapters memakai `max_tokens`; diganti ke `max_completion_tokens` pada endpoint Chat Completions. OpenAI request tidak lagi mengirim `temperature` secara default pada jalur reasoning-compatible. Ini mengatasi parameter yang ditolak pada error OpenAI dan menyelaraskan Groq dengan parameter API terbarunya.
+- Groq model `openai/gpt-oss-20b` kini memakai strict JSON Schema untuk output rapat dan analisis pasar. Jika Groq mengembalikan error generation/schema, adapter melakukan satu fallback ke JSON Object mode.
+- Gemini dan kompatibel chat-completions kini memiliki maksimal satu retry untuk timeout/network error serta HTTP 429/5xx. OpenRouter juga mendapat satu retry terbatas khusus respons 401 "User not found" karena provider pernah mendokumentasikan error tersebut sebagai gangguan internal lookup, bukan selalu API key invalid.
+- Output Rapat Perbaikan kini divalidasi berdasarkan bentuk JSON yang dibutuhkan. Respons object kosong/tidak sesuai tidak lagi dihitung sebagai AI aktif. Jalur Gemini sekretaris rapat diperbaiki agar menggunakan prompt notulen, bukan prompt usulan.
+- Retry dibatasi satu kali per request; tidak ada infinite retry. Error non-transient tetap dikembalikan ke UI. Tidak ada perubahan ke model pilihan BOS, provider berbayar, permission, trading, atau API credentials.
+
+### File yang diubah
+- `lib/ai/workspace.js`
+- `lib/ai/chat-completions.js`
+- `lib/ai/gemini.js`
+- `test/ai-workspace.test.js`
+- `test/ai-group.test.js`
+
+### Commit dan pengujian
+- `10c54d3e858e8b8f747ca11f7f8609ac5f9eecaa`: workspace token compatibility + retry.
+- `5a6454f810faba7ac04898ac42cb377aeb046ecf`: Gemini workspace retry.
+- `67a720db1b776c2f0da0104e6ce10ed3562cd09a`: workspace provider tests.
+- `d6d127d11b5f8d9ffcad8090c3a8342dc14c3949`: market Chat Completions token/schema/retry compatibility.
+- `69a3fc1131ea82c9f72f2037a47fcd70d2548496`: Gemini market retry.
+- `7ee5def64ce70b7c0b6a37aee491d5021f7b9dcc`: market provider regression tests; Actions test run #801 passed.
+- `23fbfe486ebb0139afcbedc52bbf155f2af96892`: validate meeting JSON and correct Gemini secretary prompt. Exact-head GitHub Actions test run #803 completed/success; security run #346 completed/success. Hostless monitor #28 failed on LIVE readiness/snapshot checks.
+- Documentation handoff commit `179567ce70c071589bd0bec940d9cc4543d61433` recorded this work. Exact-head test run #804 completed/success; security run #347 completed/success. Hostless monitor #29 failed on LIVE readiness/snapshot checks; Hostless deployment metadata lookup was skipped because `HOSTLESS_API_KEY` is still not configured.
+- Final documentation-head commit `e63851334103e63a970e60e26707e81ffce81388`: exact-head test run #805 completed/success and security run #348 completed/success. Hostless monitor #30 again returned readiness HTTP 503, status degraded, storage error `EROFS`; snapshot HTTP 200 and News 50 items remained available. Public Binance Futures BTCUSDT probe returned HTTP 200 with funding/current OI/OI history/taker-flow groups present; DEX Screener probe returned HTTP 200 with one matching pair. These public data probes do not test AI-provider credentials. Hostless monitor logs show `HOSTLESS_API_KEY` empty; deployment SHA lookup was skipped. No provider-specific live AI test was performed because the four server-side API secrets are not available to this session.
+- No local npm test was run in this connector-only session. CI is the authoritative executed test evidence: tests #803 and #804 passed; security scans #346 and #347 passed. These verify repository tests/scans only, not provider credentials or live AI responses. No live provider call was made because Hostless secrets are not exposed to this session.
+
+### Status dan risiko tersisa
+- GitHub main contains the adapter fixes; provider credentials remain configured only in Hostless server environment and were not inspected or changed.
+- Code-level retries improve resilience but cannot fix an invalid/disabled key, exhausted provider quota, unavailable model, account restrictions, or persistent upstream outage. OpenRouter "User not found" may be transient infrastructure; if it persists after one retry, inspect key status and provider status page from the Hostless runtime without printing the key.
+- Gemini high-demand response gets one retry only; if still unavailable, the meeting must show provider failure and continue with remaining valid agents.
+- Hostless production readiness remains separately blocked by the previously recorded `EROFS` / `DATA_DIR` configuration. Monitor #29 again failed the LIVE readiness and snapshot checks; deployment SHA lookup remains skipped because `HOSTLESS_API_KEY` is absent. Do not equate GitHub CI success with successful provider connections or healthy LIVE app.
+- No AI provider is counted active unless a valid schema response is received. Meeting completion still requires enough valid agents; no auto-approval or code writes were introduced.
+
+### NEXT TASK
+1. Verify exact-head Actions test #803 and security #346 for commit `23fbfe486ebb0139afcbedc52bbf155f2af96892`; fix any regression before proceeding.
+2. Inspect Hostless monitor #28 separately. Resolve persistent storage `DATA_DIR=/data` before treating production readiness as healthy.
+3. After deployment is confirmed, run one controlled server-side connection test per configured provider using existing Hostless secrets. Report only provider name, HTTP/status, model slug, latency, and sanitized error code; never reveal key/token.
+4. Re-run Rapat Perbaikan and confirm valid response count 4/4, round progression, and minutes generation. If OpenRouter still returns "User not found", check its API key status/credits and current provider incident status; do not ask BOS to paste secrets into chat.
+5. Resume market data expansion backlog from section 71.5 after AI reliability is stable.
+
+
+---
+
+## 73. AI OUTPUT TOKEN BUDGET — RESPONSE LEBIH LENGKAP — 24 NOVEMBER 2026
+
+### Permintaan BOS
+- BOS meminta agar limit token keluaran pada AI RADAR dinaikkan dan tidak terlalu cepat memotong jawaban setelah seluruh API Key provider dikonfigurasi.
+- Klarifikasi teknis wajib: tidak ada "token gratis tanpa batas" di API. `max_completion_tokens` / `maxOutputTokens` adalah batas output per request, bukan jatah gratis. Batas keras model, kuota/rate limit akun, billing provider, dan harga token tetap berlaku.
+
+### Implementasi
+- Rapat Perbaikan / Workspace: seluruh provider Chat Completions menggunakan `max_completion_tokens: 4096`, menggantikan 1500/1800.
+- Workspace Gemini: `maxOutputTokens: 4096`, menggantikan 2200.
+- Gemini market analysis: `maxOutputTokens: 4096`, menggantikan 1200.
+- Structured market analysis (OpenAI/Groq/OpenRouter via `lib/ai/chat-completions.js`): default `max_completion_tokens: 4096`, menggantikan 220.
+- Regression assertions diperbarui untuk memastikan parameter token baru dikirim dan parameter lama `max_tokens` tidak digunakan.
+- Tidak ada API Key yang dibaca/diubah, tidak ada provider berbayar yang ditambahkan, dan tidak ada perubahan trading/order execution.
+
+### File berubah
+- `lib/ai/workspace.js`
+- `lib/ai/chat-completions.js`
+- `lib/ai/gemini.js`
+- `test/ai-workspace.test.js`
+- `test/ai-group.test.js`
+
+### Commit
+- `0dfd17bb7c4e47c49907b0339aa94b1b5615da92` workspace output budget.
+- `9d9a416f1afb0852d4e7aebb907b0f40ca9ca4f6` structured analysis output budget.
+- `976315ed68ba1350f70506510862242aee6089f7` Gemini market output budget.
+- `08d72c08b71c1927c670b979c82721b6b6dbac15` workspace test assertions.
+- `8fd3852215b78ef6abae1a5afa67250cdccf6d24` market test assertions.
+
+### Validasi dan batasan
+- Final code-head validation: GitHub Actions test run #817 passed and security scan #360 passed for commit `8fd3852215b78ef6abae1a5afa67250cdccf6d24`. Hostless deployment monitor #36 failed; production readiness remains unverified and the existing EROFS/DATA_DIR issue remains separate from provider-token code. Intermediate test run #816 failed while only the workspace assertion update had landed; the next commit updated the market assertion and exact final code-head run #817 passed.
+- Documentation-head commit `0f8a3038f88496b8cb21d4b960c001d694d92e31`: test run #818 passed and security scan #361 passed. Hostless monitor #37 failed again: LIVE readiness HTTP 503, status degraded, storage `EROFS`; snapshot still HTTP 200 and news feed had 50 items. The monitor's `HOSTLESS_API_KEY` is empty, so deployment metadata/SHA verification is skipped. No live AI provider credentials were exposed or probed.
+- Perubahan kode sudah masuk branch `main`; exact-head CI harus diverifikasi setelah dokumentasi commit.
+- 4096 bukan unlimited. Jika model/provider memiliki hard cap lebih rendah atau akun kehabisan quota, request tetap dapat ditolak atau dipotong. Token output lebih banyak dapat meningkatkan biaya API pada provider berbayar.
+- Koneksi live per-provider belum diverifikasi dari Hostless karena API secrets tidak tersedia di sesi ini. Hostless masih memiliki blocker readiness `EROFS` / `DATA_DIR` dan deployment SHA belum dapat diverifikasi tanpa `HOSTLESS_API_KEY`.
+
+### NEXT TASK
+1. Verifikasi exact-head GitHub tests dan security scans untuk perubahan token budget.
+2. Setelah Hostless deployment tersedia, jalankan test provider satu per satu tanpa menampilkan secret: HTTP status, model, latency, valid JSON, token usage, dan sanitized error.
+3. Pastikan Gemini/Groq/OpenRouter/OpenAI benar-benar menyelesaikan rapat 3 putaran serta notulen dengan output lebih lengkap.
+4. Jika provider menolak 4096 karena model cap, gunakan cap per-model yang didokumentasikan; jangan retry berulang tanpa batas.
+
+## 74. PR SYNC & REVIEW BLOCKER REMEDIATION — 24 NOVEMBER 2026
+
+### Repository baseline and method
+- Current main verified at start of remediation: `80624b47d54c498524e41f42f2790b66cf879f32`.
+- Open PR inventory at start: 21 PRs. Main problem was mixed: stale base branches, append-only master-context conflicts, real source-file overlaps, stale tests, and incomplete independent reviews.
+- For branches where three-way compare proved no source overlap (only append-only context, or no overlap), the branch was synchronized using a two-parent merge commit with current main as first parent and the PR head as second parent. The current main tree was preserved; changed feature paths were overlaid; unique handoff sections were retained and renumbered. Branch refs were updated with expected-head checks, not force-pushed.
+- No PR was merged to main and no Hostless configuration, secret, DB, provider entitlement, paid service, wallet permission or trading setting was changed.
+
+### Synchronized branches — exact commits and CI
+- PR #77 Dashboard visual refresh: fixed stale Service Worker test assertion. Old test expected `radar-shell-v12` not to be deleted even though branch uses v13; corrected expected deletion. Commit `3f11e180b74711b79d3b8d4b05accddf57ba592c`. Exact-head test, Gitleaks and Trivy checks all passed.
+- PR #70 GDELT: synchronized at `391982942460dc55e7ddcfa61207af71e411d643`; tests, Gitleaks and Trivy passed. Divisi 08 source review conditional; Divisi 01 SSRF/terms and Divisi 05 QA pending.
+- PR #74 Marketlight: synchronized at `da62f75cc9d16e3c51bbbef78c0d0302457ba61e`; tests, Gitleaks and Trivy passed. Re-audit confirmed current code already implements streamed 1 MiB response cap/cancellation, long+short global liquidation display, provider timestamps and funding interval display; previous review comments were from older head. Still draft pending independent Divisi 01/03/05 and Hostless readiness.
+- PR #71 Solscan transfer watch: synchronized at `0a275c0deba9cfc2119b35cd0e81cc0bdcd30d0e`; tests, Gitleaks and Trivy passed. Solscan Pro transfer-export entitlement remains unverified; no paid upgrade approved. Keep disabled if provider denies access.
+- PR #72 GoPlus holder concentration: synchronized at `f4820a472edfab1a9778daac48f2ca0e07e24f1b`; tests, Gitleaks and Trivy passed. Hostless GoPlus credentials remain unconfigured; do not claim holder/lock data LIVE or spend quota in scheduled probes.
+- PR #65 Macro intelligence: synchronized at `6e96f6f02140483031dd6cbac25f6ce6d738e013`; tests, Gitleaks and Trivy passed. Divisi 04 must verify observation/publication dates, cadence and look-ahead safety; Divisi 01/05 review pending.
+- PR #63 GoPlus Signature Decode: synchronized at `0218520cd7ffb1a478af6091d10ce1f155e39ecd`; tests, Gitleaks and Trivy passed. Independent Divisi 01/03/05 review pending.
+- PR #62 GoPlus chain coverage: synchronized at `21c91500ca586d9ccf1830e2e17ca03312e8c0af`; tests, Gitleaks and Trivy passed. Independent Divisi 01/03/05 review pending.
+- PR #66 trade setup: synchronized at `56d8577c73724a8693c594a97213135b55dd3072`; tests, Gitleaks and Trivy passed. Contract/mint identity validation and Divisi 01/04/05 review remain required.
+- PR #34 Agent Platform schema: synchronized at `516afbb89281bbc95a9135288ea2f27e14958ca5`; exact-head npm test + PostgreSQL 16 migration/observer-role smoke passed; Gitleaks and Trivy passed. Schema only; no worker/runtime/production migration. Independent Divisi 01/05 review remains required.
+- PR #51 Agent Platform Phase 0 docs: synchronized at `2a6f77fdb5c9104c4d2d92549359ea7cb8d1b724`; tests/security passed. Documentation only.
+- PR #56 Early Whale Detector specification: synchronized at `d28441ac12b6b3345268c33d9ca8714544e47b1d`; tests/security passed. Specification only; no detector active.
+- PR #44 Director handoff docs: synchronized at `1472f53a04a701bc339ddb6b6df29ae4e3995da8`; tests/security passed. Docs only.
+- PR #75 change-based testing policy: synchronized at `c12d6ef471e5c6a6313faecd09b4adcdd37ab359`; tests/security passed. Policy explicitly retains security/release gates and full-suite exceptions for high-risk changes.
+- Trivy filesystem/secret job success does not establish dependency CVE coverage where no supported dependency manifest/lockfile is available. Keep this caveat explicit.
+
+### PRs closed as superseded or not approved
+- PR #28 closed: superseded by newer secure provider-registry candidate PR #43 and subsequent mainline AI Workspace changes. Security/cost/SSRF findings remain on PR #43.
+- PR #6 closed: old visual workflow is 428 commits behind, duplicates the newer Hostless monitor, polls LIVE for up to eight minutes on every main push and uses the old `/api/health` contract. If needed, rebuild as bounded manual diagnostic using `/api/ready`.
+- PR #60 closed: broad DEX Screener scanner is stale and overlaps current adapter/routes/tests. Main already contains bounded read-only DEX pair validation; broad scanner remains blocked pending source/terms approval. Do not restore the broader feed without fresh review.
+
+### Remaining true code-conflict ports — not mechanically synchronized
+- PR #55 Executive Trading Intelligence: real overlap in `public/app.js`, `public/index.html`, `public/style.css` and master context; 31 commits ahead / 168 behind at audit. Must port unique panels to current dashboard rather than overwrite main.
+- PR #57 Bubblemaps: real overlap in `.env.example`, README, `lib/ingest.js`, `public/app.js`, `public/index.html`, `public/style.css`, `server.js` and master context; 18 ahead / 168 behind. Port isolated embed to current architecture. Production partner ID/domain whitelist remains a separate prerequisite.
+- PR #45 GitHub App backend gateway: real overlap in `.env.example`, README and `server.js`; unique adapters/tests need controlled integration and permission/secret-boundary QA. No Hostless connection or App secret was verified.
+- PR #43 secure AI provider registry: real overlap in `.env.example`, handoff/master docs, README, `lib/ai/workspace.js`, `server.js`, and tests. Port to latest workspace while preserving 4096 token budget and recent reliability fixes. PR #28 is superseded.
+- These four branches were not force-pushed or tree-overlaid because doing so could erase current main behavior. Detailed file lists and required port/review steps are recorded in PR comments. PR #43 was returned to Draft.
+
+### Shared GoPlus sequencing risk
+- PR #62 and PR #63 both change `lib/goplus.js`, `public/app.js`, `server.js`, and GoPlus tests. Each is individually synchronized to current main and CI-green, but their feature diffs overlap each other. Merge at most one after review, then re-sync/retest the other against the merged head; do not merge both independently without reconciliation.
+
+### Release and review disposition
+- PRs #34, #43, #44, #51, #55, #56, #57, #62, #63, #65, #66, #70, #71, #72, #74 and #77 remain unmerged; drafts are retained where independent review or provider/production gates are missing. PR #75 remains ready for review. PRs #6, #28 and #60 are closed.
+- No independent Divisi 01/05 sign-off was fabricated. Green GitHub CI is not a substitute for source entitlement, independent review, Hostless Build, deployed SHA or LIVE verification.
+- Hostless readiness remains separately blocked by EROFS/DATA_DIR. No deployment claim is made.
+
+### NEXT TASK
+1. Divisi 01/05 review PR #34 schema and PR #74 Marketlight current head; Divisi 03 validates PR #71/72/63/62 data semantics and credentials/entitlements; Divisi 04/05 review PR #65/66/70 signal semantics and QA.
+2. Merge one GoPlus PR (#62 or #63) only after review, then re-sync the other and rerun exact-head CI.
+3. Port PR #43 and #45 manually onto current main; port PR #55 and #57 only as isolated UI/data modules after current API contract review.
+4. Keep PR #55/#57/#43/#45 in Draft until their current-main port and exact-head tests/security/reviews pass.
+5. Resolve Hostless EROFS with BOS-approved persistent storage decision before claiming durable tracking or LIVE readiness.
+
+## 75. AUTONOMOUS DEVELOPMENT PILOT — 23 NOVEMBER 2026
+
+### Division and objective
+- Lead: Divisi 06 — Agent Platform & Automation (pilot implementation); supporting Divisi 04 for model/provider execution, Divisi 01 for security boundaries, and Divisi 05 for independent QA.
+- Objective: introduce a scheduled, bounded code-maintenance worker that can operate while BOS is offline and submit reviewable Draft PRs. This is not a persistent ChatGPT conversation; execution belongs to GitHub Actions.
+
+### Pilot implementation (PR #81)
+- Branch: `feat/autonomous-agent-pilot`.
+- PR: https://github.com/rohman35819/radar-ai-v2/pull/81 (Draft; not merged).
+- Files: `.github/workflows/autonomous-development.yml`, `lib/ai/autonomous-agent.js`, `test/autonomous-agent.test.js`.
+- Schedule: every six hours plus manual dispatch.
+- Providers: Groq first; OpenRouter `openrouter/free` fallback. No OpenAI paid API path. Provider secrets must be configured separately in GitHub Actions; Hostless secrets are not copied or read by this worker.
+- Worker reads the AI workspace/group modules and their tests; a model may propose at most one patch of 3 existing files / 40 KiB. Only existing `lib/ai/*.js` and `test/*.test.js` targets are allowed.
+- Patch validation rejects binary/new/deleted/renamed files, mode changes, path traversal, path substitution, and untracked targets. It runs `git apply --check`, `git diff --check`, and the full `npm test` before pushing a task branch and opening a Draft PR.
+- A single outstanding autonomous Draft PR blocks subsequent worker runs. No auto-merge, deploy, secret/config/permission changes, database migrations, exchange operations, or trading actions.
+- Workflow default is disabled (`AUTONOMOUS_AGENT_ENABLED=0`) until Security (Divisi 01) and QA (Divisi 05) approve the exact implementation and BOS configures the required GitHub Actions variable/secrets. This avoids silently enabling a code-writing worker before review.
+- The worker is a narrow pilot: it does not yet perform broad external web research, modify dashboard/backend outside the AI module, or coordinate multiple concurrent agents.
+
+### Verification status
+- Initial exact-head CI on commit `993da1721e513b1df3559c254972df2962747415` failed two new assertions (new-file rejection message and prompt wording); this was a real failure and was corrected in subsequent commits.
+- Security scans on commit `993da1721e513b1df3559c254972df2962747415` completed successfully. This does not certify the later exact head.
+- Latest implementation commit at time of this note: `9f6ca8bce3fd7bc817ac72ad87292da92db44768`. Exact-head tests/security are pending; do not claim green.
+- No merge, Hostless deployment, or LIVE verification. No worker has run on schedule yet. The feature is not active until PR review/merge and repository configuration are completed.
+
+### Next task
+1. Run exact-head `npm test`, Gitleaks, and Trivy for PR #81; repair any failures.
+2. Divisi 01 independently review patch validation, token handling, workflow permissions, and untrusted model output.
+3. Divisi 05 verify schedule/manual triggers, concurrency, exact-head CI, and PR creation behavior.
+4. BOS configures GitHub Actions secrets `GROQ_API_KEY` and optionally `OPENROUTER_API_KEY`, and repository variable `AUTONOMOUS_AGENT_ENABLED=1`, only after the reviews pass. If free-tier keys are not available, the worker safely skips.
+5. After activation, monitor at least three scheduled cycles before expanding file allowlists or additional agents.
+
+
+### Verification update — 23 November 2026, 19:07 UTC
+- CI on `993da1721e513b1df3559c254972df2962747415` and `4ec3ef42e31c946357b708a7e5d6be5e4e4bedc8` failed only in newly added test assertions (new-file/path-mismatch error expectation and prompt capitalization); failures were inspected from workflow logs, not hidden.
+- Corrected the assertions and added explicit checks for file-mode changes and source/destination path mismatch.
+- Corrected worker repository root resolution (`lib/ai/autonomous-agent.js` now resolves repository root two levels above the module).
+- Latest branch head: `b0e129d848084b15e238d122ddcdb042e33c5c68`. Exact-head test run #884 is queued; final test/security outcome remains pending.
+- Security scan #423 succeeded on previous head `4ec3ef42e31c946357b708a7e5d6be5e4e4bedc8`; it must be repeated/verified on latest head.
+
+
+### Final pilot CI evidence — exact documented head
+- Commit `194de8f8c3fddd0818e10621d2a0c86872040631`: GitHub Actions test workflow #885 completed/success.
+- Security workflow #425 completed/success: Gitleaks and Trivy filesystem/secret scan both passed.
+- This establishes source/test/security workflow status only. It does not establish provider quota, scheduled worker activation, Hostless build, deployment, or LIVE behavior.
+- Trivy's filesystem scan is not proof of full dependency CVE coverage when no supported lockfile/manifest is available; retain this limitation.
+- PR #81 remains Draft and unmerged. Security and QA independent review, plus BOS's GitHub Actions variable/secret configuration, remain required before enabling.
+
+
+## 76. AUTONOMOUS WORKER SECRET-ISOLATION HARDENING — 24 NOVEMBER 2026
+
+### Routing
+- Lead: Divisi 06 — Agent Platform & Automation.
+- Required independent supporting gates: Divisi 01 — Security & Reliability; Divisi 05 — QA, Testing & DevOps.
+- Scope is limited to PR #81 pilot. No production settings, credentials, merge, deployment, or trading actions were changed.
+
+### Finding and remediation
+- Source review found that the autonomous worker launched `npm test` and Git child processes with the worker's inherited `process.env`. That environment contains `GITHUB_TOKEN` and provider API keys. Although model output cannot invoke tools directly, a model-proposed test file is executed by `npm test`; inheriting credentials into that subprocess would create an avoidable secret-exposure path.
+- Added `safeChildEnv()` in `lib/ai/autonomous-agent.js`. All child processes launched through the worker now receive an explicit environment allowlist (PATH/HOME/CI/temp/locale/platform basics), not GitHub or provider secrets. This includes test execution and Git operations. The worker process itself retains credentials only for its narrowly scoped provider and GitHub API operations.
+- Added a regression test in `test/autonomous-agent.test.js` proving GitHub, Groq, OpenRouter, and worker-control variables are stripped from child environments.
+- No secrets were printed, copied, or changed. No provider request was made.
+
+### Files and commits
+- `lib/ai/autonomous-agent.js`
+- `test/autonomous-agent.test.js`
+- Code commits: `b478399f56e4d1e5b78077a5d82c4b082be75f16` and `b4b2410af0ab53cd7dfb33970b6bc969312b81c7`.
+- Latest observed PR head: `b4b2410af0ab53cd7dfb33970b6bc969312b81c7`; PR #81 remains Draft, open, unmerged, and 15 commits ahead / 0 behind main at the time of verification.
+
+### Validation and remaining gates
+- GitHub Actions exact-head test and security runs for `b4b2410af0ab53cd7dfb33970b6bc969312b81c7` were queued at 23:32:12 UTC on 24 November 2026. Results are pending; no local test was run in this connector-only session.
+- Earlier exact-head green checks on `e14ef4eb2fa64e2916a12ca6e05d8406c5bc5b90` do not certify this newer change.
+- PR #81 still has no independent PR review. Divisi 01 must review the child-process environment isolation and broader credential boundary; Divisi 05 must review the regression test, schedule/manual trigger, concurrency and runtime behavior.
+- Worker remains disabled by default. The workflow's repository variable `AUTONOMOUS_AGENT_ENABLED` defaults to `0`. Do not enable until both independent gates are documented and exact-head checks pass.
+- The worker remains a proposal-only code maintenance pilot. It does not implement durable multi-division queue, shared memory, market-data scheduling, Director runtime, Hostless worker, or automatic merge/deploy.
+
+### Deployment and NEXT TASK
+- GitHub PR code: updated; exact-head CI/security pending.
+- Hostless Build: not applicable to this GitHub Actions worker change and not checked.
+- Hostless LIVE: not checked; no deployment claim.
+- Next: verify exact-head Actions; request and obtain independent Divisi 01/05 reviews; close any findings; then obtain BOS authorization/configuration for the GitHub Actions variable and free-provider secrets. After activation, collect at least three successful scheduled run records before expanding scope.
+
+## 77. AUTONOMOUS WORKER EXECUTION GATES & FREE-ONLY PROVIDER — 24 NOVEMBER 2026
+
+### Divisi dan ruang lingkup
+- Lead: Divisi 06 — Agent Platform & Automation.
+- Supporting gates: Divisi 01 — Security & Reliability; Divisi 05 — QA, Testing & DevOps.
+- Scope tetap worker proposal maintenance yang berjalan di GitHub Actions; tidak mencakup Director runtime, durable queue, memory service, Hostless worker, market-data scheduler, merge/deploy otomatis, atau tindakan trading.
+
+### Temuan lanjutan dan perbaikan
+1. Audit secret-isolation sebelumnya menemukan bahwa environment allowlist juga menghapus GIT_CONFIG_* yang dibutuhkan oleh proses git push. Worker dapat lulus tes tetapi gagal mengirim branch. Perbaikan sekarang hanya mengizinkan tiga variabel Git extra-header dengan nama konfigurasi dan format header yang divalidasi, dan hanya jika pemanggil secara eksplisit menandai subprocess sebagai trusted Git push. Raw GITHUB_TOKEN dan provider key tetap tidak diteruskan ke child process.
+2. Kebijakan biaya diperketat: worker hanya menggunakan OPENROUTER_API_KEY dengan model router eksplisit openrouter/free. Jalur Groq dan variabel Groq dihapus dari workflow worker. Tidak ada fallback berbayar. Jika free router tidak tersedia, worker berhenti dengan error/skip; tidak mencoba model berbayar.
+3. main() kini menerima dependency injection untuk fetch, command runner, pembacaan source, provider call, dan clock agar jalur kontrol dapat diuji tanpa memanggil jaringan, GitHub, atau provider sungguhan.
+4. Ditambahkan tes untuk environment child process dan Git auth config yang sangat terbatas; worker disabled tanpa akses jaringan/filesystem/Git; outstanding autonomous Draft PR menghentikan worker sebelum source/provider dipanggil; dan ketiadaan OpenRouter key gratis menghentikan provider call.
+5. Perbaikan wiring: main() memakai injected source reader dan command runner untuk membaca file kandidat dan daftar tracked files; jalur git push mengaktifkan allowlist Git auth config secara eksplisit.
+
+### Commit perubahan
+- bbf54ce921a32818527917c4b6849f000da889ec: scoped Git auth dan free-only provider.
+- e3932577b6b9538c9672568a0e1965ebd742c8db: dependency injection wiring.
+- cd8d242d387b328eac83f809eb80545a13fa49fa: regression tests.
+- ea7536d1210036a44991bc0d5dfd47c42ce94132: workflow removes Groq secrets/model.
+- Latest observed branch head at documentation time: ea7536d1210036a44991bc0d5dfd47c42ce94132.
+
+### Verifikasi
+- Tests/security for the new exact head are pending GitHub Actions at time of this entry; do not reuse earlier green results from 70729bc....
+- No provider call, GitHub push from the worker, scheduled run, Hostless Build, or Hostless LIVE was executed in this session.
+- OpenRouter's explicit free router is the only configured route. This prevents deliberate paid-model fallback in code; it does not prove provider availability or guarantee external account-level quotas/terms remain unchanged. Verify usage and zero-charge behavior before enabling the schedule.
+- PR #81 remains Draft and unmerged. Independent Divisi 01/05 reviews are still absent. No repository settings or secrets were changed.
+
+### NEXT TASK
+1. Verify exact-head tests and security scans for the latest branch commit.
+2. Review the complete worker control flow for failure cleanup, provider error behavior, patch rejection, Git push failure and PR creation failure; add regression coverage.
+3. Divisi 01 independently reviews token scope, child-process isolation and free-only routing; Divisi 05 independently reviews schedule/concurrency and test evidence.
+4. Only after both gates and a verified zero-cost provider path, obtain BOS approval for repository variable/secret configuration and activate. Observe at least three scheduled runs before expanding scope.
+5. Keep PR Draft/disabled until the above acceptance criteria are met.
+
+## 78. AUTONOMOUS WORKER FAILURE-PATH TESTING & ORPHAN CLEANUP — 24 NOVEMBER 2026
+
+### Perbaikan tambahan
+- Worker sekarang menghapus branch remote yang telanjur ter-push jika pembuatan Draft PR gagal. Penghapusan memakai jalur Git extra-header yang sama, dibatasi dan divalidasi; kegagalan cleanup tidak menutupi error PR asli.
+- Temporary patch file memakai nama unik per proses dan selalu dibersihkan melalui finally. Writer/remover dapat diinjeksi agar failure path bisa diuji tanpa filesystem produksi.
+- Penambahan tes main() untuk malformed JSON/model-hostile path, provider failure (tidak boleh mutasi repository), patch apply failure (temporary patch selalu dihapus), dan PR creation failure (remote orphan branch dihapus).
+- Total deklarasi tes autonomous-agent.test.js setelah penambahan: 13.
+
+### Commit
+- fb8b918c816f07eb1d7f2f1c5fe58177f51e26cd: cleanup orphaned remote branch when PR creation fails.
+- 2abc76cccc70235ea28bf9e4a87822948be5fae7: regression tests for provider, patch cleanup and PR failure paths.
+- Branch head at this documentation point: 2abc76cccc70235ea28bf9e4a87822948be5fae7.
+
+### Validasi
+- Exact-head GitHub Actions test and security scans for 2abc76cccc70235ea28bf9e4a87822948be5fae7 were running when this entry was prepared. Results must be checked before reporting completion.
+- Earlier commit fb8b918c816f07eb1d7f2f1c5fe58177f51e26cd had test and security workflows both report success; this does not certify the later test-only commit.
+- No worker schedule, provider request, GitHub remote push by the worker, Hostless Build, or Hostless LIVE was exercised.
+- PR #81 remains Draft/unmerged and disabled. Independent Divisi 01/05 review is still outstanding.
+
+### NEXT TASK
+1. Check exact-head tests/security for latest docs+code commit and correct any failures.
+2. Inspect workflow permissions and one-outstanding-PR concurrency semantics; confirm no provider path other than OpenRouter free router remains.
+3. Obtain genuine independent Divisi 01 and Divisi 05 reviews; do not self-approve or fabricate review submissions.
+4. Keep disabled until review gates, zero-cost provider verification, and BOS authorization for repository configuration are complete.
+
+## 79. AUTONOMOUS WORKER TEST FIXTURE CORRECTION — 24 NOVEMBER 2026
+
+- Exact-head CI for commit 2abc76cccc70235ea28bf9e4a87822948be5fae7 exposed three failing tests. Root cause was test fixture strings containing literal backslash+n instead of newline characters; tracked-file lists and unified diffs were therefore malformed before the intended failure-path assertions ran.
+- Corrected the fixture escaping in test/autonomous-agent.test.js; the file now contains 13 autonomous-worker test declarations.
+- Fix commit: 8e3e23f5216f4dcaf801c20dc16112633ba37704.
+- Exact-head tests and security scans for this fix were queued at documentation time. Do not claim pass until both finish.
+- Prior CI failure is retained in history; it was not hidden or treated as success.
+- NEXT: inspect exact-head Actions logs; if green, verify current PR metadata/reviews and continue Divisi 01/05 review request. Keep Draft/disabled.
+
+## 80. EXACT-HEAD AUTONOMOUS WORKER CI EVIDENCE — 24 NOVEMBER 2026
+
+- Verified latest PR #81 documentation head at start of this entry: e92a77296e621465e05d00f0b73c145991770c4b.
+- GitHub Actions test run #45290352780: SUCCESS. Inspected job log: 154 tests, 154 passed, 0 failed, 0 skipped.
+- GitHub Actions security run #45290352808: SUCCESS. Gitleaks and Trivy filesystem/secret jobs both completed successfully.
+- The preceding code/test head 8e3e23f5216f4dcaf801c20dc16112633ba37704 also passed tests and security; the earlier 2abc76... test failure is documented in section 79 and fixed by the subsequent fixture commit.
+- These results certify repository tests/security only. They do not certify a scheduled execution, OpenRouter zero-charge behavior, Hostless Build, or Hostless LIVE.
+- PR #81 remains Draft/open/unmerged; no independent Divisi 01 or Divisi 05 review has been submitted. Worker variable defaults to disabled.
+- NEXT: obtain actual independent Divisi 01/05 review, verify free-route usage/zero charges in provider account without exposing the key, then obtain BOS authorization before setting AUTONOMOUS_AGENT_ENABLED=1. After activation, capture three scheduled run IDs and results.
+
+
+## 81. MASTER DEVELOPMENT DIRECTIVE & TWO-HOURLY AUTONOMOUS CADENCE — 24 NOVEMBER 2026
+
+### Mandate saved
+- BOS menetapkan RADAR AI-V2 Master Development Directive sebagai mandat pengembangan berkelanjutan: system reliability/security; crypto data & intelligence; AI analysis/evaluation/memory; trading dashboard; background automation; conversation/decision/analysis memory; QA; documentation and handoff.
+- Berlaku lintas Divisi 01–08, dengan Direktur Utama sebagai koordinator. Setiap siklus wajib membaca status repository/kanban dan catatan siklus sebelumnya, memilih pekerjaan paling berdampak, menghindari duplikasi, menetapkan acceptance criteria, menguji perubahan, dan mencatat hasil.
+- Prinsip biaya: Rp0/no-overage; tidak ada fallback model berbayar. API/secret tetap server-side. Tidak ada auto-merge/deploy, perubahan secret/permission, migrasi produksi, tindakan exchange, transaksi, withdrawal, atau live trading.
+
+### Cadence decision
+- Target siklus pengembangan: setiap 2 jam, menit ke-17 pada jam genap, timezone UTC (cron GitHub Actions): `17 */2 * * *`.
+- Monitoring teknis terpisah: workflow Hostless monitor yang sudah ada berjalan setiap 5 menit; test/security berjalan sesuai trigger masing-masing. Jadwal ini bukan instruksi agar setiap divisi memanggil provider AI pada setiap interval.
+- PR #81 workflow pada branch `feat/autonomous-agent-pilot` diperbarui dari setiap 6 jam menjadi setiap 2 jam. Perubahan ini masih Draft PR dan belum aktif pada main.
+
+### Actual scope and limitations — do not overstate
+- Worker PR #81 saat ini hanya pilot proposal untuk peningkatan kecil pada modul AI workspace/group dan test terkait; maksimal 3 file / 40 KiB; hasilnya Draft PR setelah patch checks dan `npm test`.
+- Worker hanya memakai OpenRouter `openrouter/free`; jika key/provider gratis tidak tersedia, worker skip/fail safely. Label free router bukan jaminan availability, quota, atau zero-charge; BOS harus memeriksa usage/billing.
+- Worker tidak menyimpan task queue atau memory di PostgreSQL, tidak menjalankan semua divisi, tidak melakukan riset market/data secara luas, dan tidak merge/deploy. Satu Draft PR autonomous yang belum direview akan menahan siklus berikutnya.
+- `AUTONOMOUS_AGENT_ENABLED` default `0`; PR #81 belum merge, belum ada bukti scheduled run sukses, dan belum ada independent Divisi 01 Security / Divisi 05 QA sign-off.
+
+### Activation gates
+1. Divisi 01 review token scope, patch validation, child-process environment isolation, untrusted input handling, and workflow permissions.
+2. Divisi 05 independently verify workflow cadence, concurrency, exact-head test/security, and PR lifecycle.
+3. Verify OpenRouter free-route usage/charges and BOS confirms acceptable Rp0/no-overage behavior.
+4. Only after reviews and verification, BOS may configure GitHub Actions secret `OPENROUTER_API_KEY` and repository variable `AUTONOMOUS_AGENT_ENABLED=1`. Do not copy Hostless secrets.
+5. Capture at least three successful scheduled run IDs and results before widening worker scope.
+
+### Next architecture increments — Divisions 06/07
+- Stage A: persistent task/memory schema and audit contracts; PostgreSQL only if a verified existing free/no-overage database is available. No paid provisioning or production migration without BOS approval.
+- Stage B: scheduler + durable queue + lease/idempotency/retry/dead-letter + task history; do not treat workflow cron alone as a durable queue.
+- Stage C: division-specific workers with allowlisted tools, isolated branches, scoped memory, budgets, QA/Security gates, human approval queue, kill switch and recovery.
+- Stage D: expand from proposal-only to controlled integration only after independent gates and operational evidence. Production deployment and financial actions remain BOS-approved.
+
+### Session record
+- Repository main HEAD verified: `bb4c002c9f3cccae266504131a54583a406dbb5b`.
+- PR #81 current head at audit: `75d1d275d22193a2803badd0ed5865b72e431a67`; open, Draft, unmerged. Combined commit status API returned pending with no status records; no fresh exact-head CI result was established in this session. Earlier documented test/security success on prior head does not certify this head.
+- Changed file on PR branch: `.github/workflows/autonomous-development.yml` (cron only); this master-context entry is also on the PR branch.
+- Tests: not run locally; GitHub Actions after these changes must validate exact new head.
+- Hostless Build/Live: not applicable to this PR branch update and not checked.
+- NEXT TASK: obtain exact-head CI/security result, independent Divisi 01/05 review, and BOS provider-cost confirmation; only then merge/activate under the documented gates. In parallel, design/implement Stage A task + memory persistence without provisioning paid infrastructure.
+
+
+## 82. BOS DIRECTIVE — DAILY DASHBOARD EVOLUTION & TWO-HOURLY OPEN-SOURCE DISCOVERY — 24 NOVEMBER 2026
+
+### Additional mandate
+BOS memperluas Master Development Directive dengan dua kewajiban lintas divisi:
+1. Dashboard RADAR AI V2 harus dievaluasi setiap hari dan ditingkatkan berdasarkan kegunaan trading, bukan kosmetik. Perubahan penting meliputi freshness/latency data, sumber dan timestamp, status koneksi, kualitas/kelengkapan data, market breadth, liquidity/volume, funding/open interest, whale/on-chain, token discovery, news/sentiment, alerts, dan AI intelligence hanya ketika sumber mendukung serta metrik tervalidasi. Pertahankan semua menu/fitur yang ada.
+2. Setiap siklus pengembangan dua jam, Divisi 08 Procurement & Tools menjalankan discovery sumber informasi, API, dataset, open-source project, library, dan alat gratis yang relevan untuk crypto intelligence/trading, backend, frontend, observability, QA, security, dan Agent Platform.
+
+### Dashboard operating requirements
+- Daily dashboard review: audit UX dan alur keputusan trading, cari gap informasi terbaru, periksa freshness/source attribution/last-updated/connection state, data empty/error/loading states, mobile/desktop responsiveness, dan performa.
+- Prioritaskan insight actionable dan data yang benar-benar tersedia; jangan membuat angka real-time palsu, sinyal tanpa provenance, chart statis yang menyamar sebagai live, atau metrik yang tidak punya timestamp.
+- Perubahan dashboard harus dibuat melalui branch/PR terisolasi, menjaga routes/menu/data contracts yang sudah ada, dengan screenshot/visual review jika tersedia, regression tests, dan QA independen sebelum integrasi.
+- Daily update bukan kewajiban merilis UI setiap hari. Jika tidak ada peningkatan yang tervalidasi, buat audit singkat dan backlog prioritas; jangan mengubah UI sekadar agar terlihat berbeda.
+
+### Two-hourly discovery protocol — Division 08 lead
+Pada setiap siklus dua jam, discovery mencakup:
+- Temukan kandidat sumber data/tool open-source atau free tier yang relevan dan belum terpasang.
+- Cek repository/license, dokumentasi resmi, status pemeliharaan/aktivitas, API access/registration, rate limits, attribution, data coverage/latency, security/privacy, hosting/dependency requirements, dan total biaya/risiko overage.
+- Bandingkan dengan integrasi yang sudah ada agar tidak duplikatif; catat kandidat yang ditolak beserta alasannya.
+- Kelompokkan hasil: (A) gratis dan layak diuji; (B) gratis dengan batasan/akses belum terbukti; (C) berbayar/risiko biaya; (D) tidak layak/duplikat.
+- Hanya kandidat A yang boleh masuk backlog eksperimen. Domain division wajib menilai kecocokan teknis, Divisi 01 Security menilai risiko, Divisi 05 QA menguji, dan Executive Office mengurutkan prioritas.
+- Tidak boleh otomatis memasang dependency, menjalankan kode pihak ketiga, memberikan token/secret, membuat akun, menambah kartu pembayaran, mengaktifkan layanan, atau mengubah production provider tanpa review dan approval yang sesuai. Free trial bukan layanan gratis permanen.
+- Gunakan sumber resmi untuk klaim harga/limit/license. Simpan URL, tanggal pemeriksaan, versi/license, bukti akses, limit, hasil uji, dan rekomendasi.
+
+### Division ownership
+- Divisi 04 Frontend: daily dashboard audit dan implementasi UX/visualisasi.
+- Divisi 02 Data Intelligence + Divisi 03 Trading Intelligence: validasi freshness, kualitas, coverage, dan relevansi informasi.
+- Divisi 08 Procurement & Tools: discovery alat/sumber setiap dua jam dan registry procurement agar tidak mengulang integrasi.
+- Divisi 01 Security dan Divisi 05 QA: mandatory cross-functional gates.
+- Divisi 06 Agent Platform: scheduler/queue/orchestration untuk memastikan pekerjaan benar-benar berjalan dan tercatat.
+- Divisi 07 Knowledge & Memory: simpan hasil discovery, pertanyaan BOS, keputusan, dashboard audit, eksperimen, serta evaluasi.
+- Direktur Utama mengoordinasikan siklus, menghindari duplikasi, dan memilih pekerjaan yang dapat diselesaikan dengan aman.
+
+### Current implementation boundary
+- Cron dua jam pada PR #81 hanya menjadwalkan autonomous worker pilot; worker yang ada saat ini hanya membaca tiga file AI workspace/group, hanya boleh mengubah file existing `lib/ai/*.js` dan `test/*.test.js`, dan tidak memiliki kemampuan web research/tool procurement atau dashboard frontend editing.
+- Karena itu, dashboard daily evolution dan two-hourly procurement discovery adalah mandat/backlog yang tercatat, BELUM menjadi pekerjaan otomatis yang dieksekusi worker sekarang.
+- Jangan mengklaim discovery dua jam, dashboard update harian, atau seluruh divisi otomatis aktif sebelum workflow khusus, durable task state, worker scope, evidence log, dan scheduled runs benar-benar dibangun serta diuji.
+
+### Next implementation tasks
+1. Divisi 08: buat registry tools/data sources dengan deduplication, license/cost/access evidence, dan status A–D; mulai dari integrasi yang sudah ada di main.
+2. Divisi 04: audit dashboard current main, petakan gap fungsional/data dan susun dashboard release backlog harian tanpa merusak menu/route.
+3. Divisi 02/03: buat freshness/quality contracts untuk data yang sudah terintegrasi; utamakan indikator source/time/status.
+4. Divisi 06/07: persist per-cycle tasks, discovery results, dashboard audit, decisions, and execution outcomes; baru kemudian jadwalkan worker per divisi.
+5. Perluas allowlist worker untuk frontend dan procurement hanya melalui desain terpisah, security review, QA, serta test khusus; jangan memperluas pilot workspace saat ini secara diam-diam.
+
+### Session delivery record
+- Request tambahan BOS disimpan pada branch `feat/autonomous-agent-pilot`, bukan main, sebagai bagian dari PR #81.
+- Dashboard code dan procurement research executor tidak diubah pada sesi ini; tidak ada deployment Hostless.
+- Next: selesaikan PR #81 gates, kemudian buat registry procurement + audit dashboard dari current main sebagai PR terpisah.
+
+- Tracking issue dibuat: [#82 — Daily dashboard evolution & two-hour open-source intelligence discovery](https://github.com/rohman35819/radar-ai-v2/issues/82). Issue ini memecah implementasi Divisi 04/08; belum ada perubahan dashboard runtime atau discovery worker aktif.
+
+---
+
+## 83. Aktivasi pilot worker otonom — 24 November 2026 (Asia/Jakarta)
+
+- BOS meminta worker pilot mulai bekerja saat BOS offline.
+- Workflow `.github/workflows/autonomous-development.yml` diubah agar `AUTONOMOUS_AGENT_ENABLED` default ke `1`; repository variable eksplisit `AUTONOMOUS_AGENT_ENABLED=0` tetap menjadi kill switch konfigurasi.
+- Commit aktivasi: `65d7650ddb9d98e52c24f7f7c8a89e333c7d1979`.
+- Jadwal tetap setiap dua jam pada menit ke-17 UTC; `workflow_dispatch` tetap tersedia.
+- Batas worker tidak berubah: hanya `lib/ai/*.js` dan `test/*.test.js`, maksimal tiga file/40 KiB, wajib `npm test`, hanya membuat Draft PR; tidak merge/deploy/trading.
+- Model/provider tetap hanya `openrouter/free`; tidak ada fallback berbayar. Jika `OPENROUTER_API_KEY` tidak tersedia, worker akan berhenti aman dengan `SKIP: no free provider key`.
+- Akses connector saat perubahan ini tidak menyediakan pembacaan/penulisan GitHub Actions repository variables/secrets atau dispatch workflow. Karena itu keberadaan secret dan nilai override `AUTONOMOUS_AGENT_ENABLED` belum dapat diverifikasi; jangan menganggap worker sudah berhasil memanggil model.
+- Aktivasi workflow pada `main` terkonfigurasi, tetapi eksekusi pertama dan pembuatan PR belum terbukti. Verifikasi workflow run setelah jadwal berikutnya atau dispatch manual melalui GitHub Actions UI.
+- Hard cost gate: pertahankan hanya model router eksplisit free; hentikan jika provider meminta pembayaran/credit atau menampilkan biaya. Tidak ada auto-merge/deploy.
+- NEXT TASK: verifikasi Actions run pertama, secret availability tanpa menampilkan nilainya, output/log worker, dan hasil draft PR; lalu Divisi 01/05 audit independen sebelum perluasan scope.
+
+
+## 84. Penguatan health gate Hostless — 24 November 2026 (Asia/Jakarta)
+
+- Pemeriksaan Hostless ulang pukul 13:14 UTC membuktikan `/api/ready` HTTP 200, `status=ready`, `storage.status=ok`, dan `code=null`; masalah EROFS tidak muncul.
+- `/api/snapshot` HTTP 200 dan `stale=false`; refresh terakhir tercatat 2026-11-24T13:06:25.487Z. News berisi 50 item; TechCrunch (20) dan Cointelegraph (30) sehat. Early Gems berisi 80 pool dan health on-chain/trending sehat.
+- Probe Binance Futures BTCUSDT HTTP 200, non-partial; funding, open interest, OI history, dan taker flow seluruhnya sehat. Probe DEX Screener HTTP 200 dan memvalidasi pool yang sama.
+- Ditemukan celah pada `scripts/hostless-live-check.js`: proses monitor hanya menggagalkan job untuk readiness, snapshot HTTP, dan news; kegagalan storage atau provider probes belum otomatis menggagalkan job.
+- Perubahan: menambahkan `evaluateHealth()` agar job memeriksa storage OK, snapshot tidak stale, news sehat, seluruh metrik Binance Futures non-partial, dan validasi pool DEX Screener. Menambahkan unit test untuk kondisi sehat dan skenario gagal.
+- Commit: `3b6bba01f7048026a4bd54546932cf6d5dfe0ee8` (monitor gate); `694c49776e2a32f24822ecc66b7f531b9fee266d` (unit tests).
+- Tes: CI untuk commit baru belum selesai saat catatan ini ditulis. Hasil live check sebelumnya sukses pada versi monitor lama; monitor yang diperketat perlu dijalankan ulang setelah CI.
+- Security: ditemukan Gitleaks false positive di PR #84 pada fixture `test/memory-store.test.js:31` yang berisi string contoh `OPENAI_API_KEY=`; file tersebut berada di branch PR, bukan main. Belum ada bukti credential nyata bocor. Divisi 07 perlu mengganti fixture menjadi placeholder sintetis yang tidak menyerupai secret, lalu rerun scan.
+- Batasan: uji live membuktikan endpoint dan provider dapat diakses pada saat pemeriksaan, tetapi belum membuktikan persistensi melewati restart proses. Uji restart yang aman masih diperlukan; jangan menambahkan endpoint publik untuk memaksa restart.
+- NEXT TASK: tunggu CI pada dua commit monitor; rerun Hostless live monitor dengan gate baru; buat uji adapter Supabase mocked untuk read/upsert/hydration; rancang uji persistence-after-restart tanpa mengganggu layanan Live.
+
+
+## 85. Uji adapter Supabase dan gate live — 24 November 2026 (Asia/Jakarta)
+
+- Perluasan monitor pada `scripts/hostless-live-check.js` dan test gate di `test/hostless-live-check.test.js` telah melewati GitHub Actions pada commit `1a931a889a17d2b8684327a86ab18e42e3cd0342`: RADAR AI tests SUCCESS, security scans SUCCESS, Hostless deployment monitor SUCCESS.
+- Monitor terbaru menampilkan semua lima gate bernilai true: storage, snapshot, news, Binance Futures, dan DEX Screener. LIVE readiness HTTP 200, status ready, storage ok.
+- Menambahkan uji adapter Supabase di `test/radar.test.js`: simulasi REST upsert lalu load untuk membuktikan payload dan timestamp dapat dipulihkan; uji HTTP 503 harus dipropagasi sebagai error dan tidak diam-diam mengosongkan state.
+- Commit pengujian Supabase: `aefd5a0a4ed63e8d3956856c5266ed86dfb0c204`; perbaikan assertion metode GET: `271298355701603054de9803bb07e401d36d82b5`.
+- Status CI untuk commit `27129835` masih berjalan saat catatan ini ditulis. Jangan menganggap tes adapter sudah lulus sampai run selesai.
+- Pengujian ini memakai mock fetch; ini bukan bukti bahwa restart proses Hostless sudah diuji. Persistensi lintas restart live masih belum dibuktikan secara langsung.
+- NEXT TASK: pastikan CI commit `27129835` lulus; jika lulus, rancang verifikasi restart yang tidak mengganggu production (mis. deployment/restart terkontrol oleh pemilik atau uji cold-start di environment staging). Setelah itu lanjut audit dashboard data freshness dan Exchange Hub read-only.
+
+
+## 86. Registry pengadaan dan shortlist makro — 24 November 2026 (Asia/Jakarta)
+
+- Membuat docs/procurement-tool-registry-2026-11-24.md untuk registry deduplication dan shortlist provider yang sudah dicek dari dokumentasi/terms resmi.
+- Kandidat paling layak: U.S. Treasury Fiscal Data (tanpa key/akun, gratis, terms memperbolehkan penggunaan komersial), World Bank Indicators API v2 (tanpa key, CC BY 4.0 default tetapi wajib cek lisensi tiap dataset), ECB SDMX (gratis dengan atribusi dan larangan modifikasi statistik/metadata), OECD Data Explorer (gratis; limit 60 downloads/hour; metadata pihak ketiga wajib diperiksa), dan GDELT Project (dataset gratis untuk penggunaan komersial; citation/link wajib; throttle konservatif).
+- Klarifikasi compliance: GDELT Project dan GDELT Cloud adalah layanan berbeda. GDELT Cloud Free hanya untuk personal evaluation dan tidak layak untuk produksi RADAR; jangan tertukar dengan dataset/API GDELT Project.
+- Existing integrations dicatat agar tidak diduplikasi: Binance Futures, CoinGecko/GeckoTerminal, DeFiLlama, DEX Screener, GoPlus, Solscan, RSS.
+- Tidak ada provider baru yang dipasang atau dipanggil ke production. Registry ini merupakan procurement/research handoff untuk Divisi 04/03/01/05.
+- Sumber utama: Treasury API docs + terms; World Bank API v2 + public license; OECD API + 60/hour best practices + terms; ECB SDMX + reuse policy; GDELT Project terms/data docs; GDELT Cloud acceptable-use terms. URL lengkap disimpan di dokumen registry.
+- Commit registry: 4b98d39e28b12d26395c0b906d9bf1d73b5610fb.
+- NEXT TASK: setelah CI terbaru selesai, Divisi 04 memilih seri Treasury/World Bank/ECB/OECD dan membuat adapter terisolasi; Divisi 05 QA; Divisi 01 compliance review. Divisi 08 lanjutkan riset ToS/kuota sumber on-chain dan exchange sebelum perluasan.
+
+
+## 87. Review hak penggunaan API Solana/exchange — 24 November 2026
+
+- Registry Divisi 08 diperbarui dengan review Jupiter Tokens API v2, Bybit public API, dan Hyperliquid.
+- Jupiter Tokens API secara teknis sangat bernilai: token verification, Organic Score, holder/liquidity, mint/freeze authority, top-holder concentration, serta statistik transaksi multi-timeframe. Dokumentasi teknis menyatakan keyless 0.5 RPS dan free key 1 RPS. Namun SDK & API License Agreement menyebut fee-bearing license dan biaya dapat diberitahukan melalui portal; scope perjanjian terhadap Tokens API belum jelas. Keputusan: HOLD; jangan pakai API/key untuk production sampai ada konfirmasi tertulis tentang $0 dan hak display/internal/commercial.
+- Bybit API Terms melarang repackaging/resale, commercial exploitation, dan penggunaan untuk mereplikasi/bersaing dengan layanan Bybit. Keputusan: REJECT untuk analytics production RADAR tanpa izin tertulis.
+- Hyperliquid API docs tersedia, tetapi hak komersial/redistribusi dan batas rate belum dikonfirmasi secara memadai. Keputusan: HOLD.
+- Tidak ada panggilan live, pendaftaran, atau key creation yang dilakukan untuk kandidat ini.
+- Sumber dan detail tercatat di docs/procurement-tool-registry-2026-11-24.md.
+- Commit update registry: f8f60c2b24bd5fe41d49b9312bd7a8088a462510.
+- NEXT TASK: lanjutkan evaluasi rights/quota untuk Solscan (actual plan/CU), CoinGecko Demo, GeckoTerminal, DeFiLlama, GoPlus, Binance public market data, dan GDELT Project; Divisi 04/03 memilih kandidat makro dari section 86.
+
+
+## PR intake, WIP limit, and emergency exception policy (effective 24 November 2026)
+
+- Normal work-in-progress limit: at most **3 active, non-emergency PRs** across the repository. This is a planning/operating limit, not a GitHub-enforced technical limit unless a separate repository rule is implemented and verified.
+- A new PR is allowed when it is materially important; the limit is not a blanket ban. Before opening it, record why the work matters now, user/business impact, urgency, why it cannot wait for an existing slot, owning division, dependencies, acceptance criteria, and expected QA/security gates.
+- Emergency/security/reliability hotfixes may exceed the normal limit. Every exception must be explicitly labeled and documented in the PR body and master context with: incident/severity, evidence, affected systems/users, reason it cannot wait, narrow scope, owner, risk controls, test plan, rollback plan, reviewers, and follow-up actions. Never use “emergency” merely to bypass review or increase throughput.
+- Emergency means a credible active or imminent P0/P1 issue: security exposure, credential leak, data loss/corruption, production outage or material degradation, unsafe financial/trading behavior, or a critical defect blocking recovery. Routine features, cosmetic changes, stale PR cleanup, and ordinary deadlines are not emergencies.
+- The exception accelerates coordination and prioritization; it does **not** waive essential safeguards. Run focused tests and secret/security scans, require an independent reviewer appropriate to the risk, and verify rollback. If a full test suite is impractical during containment, document the exact untested scope and run it before merge when safe. No automatic merge/deploy, no secret exposure, no live trading, and no paid spend.
+- PR disposition: (1) merge only when relevant, based on latest main, exact-head checks pass, required independent reviews pass, and rollback/impact are understood; (2) close stale, duplicate, superseded, abandoned, irreparably conflicting, or low-value PRs after preserving any unique useful work; (3) keep blocked PRs only when a named dependency, owner, and next review condition are recorded. Closing a PR removes it from the active queue; it does not delete its GitHub history or automatically delete its branch.
+- Before opening a new PR, inspect the existing queue and reuse/update an appropriate active PR when scope and ownership match. Prefer one PR per coherent feature/owner; avoid stacking unrelated changes and multiple PRs editing the same files.
+- Every new RADAR conversation must read this policy from the latest main AGENTS.md and RADAR_AI_MASTER_CONTEXT.md, inspect current open PRs, and continue the existing queue. Do not rely on chat memory or old PR counts. Report the current active count, any exception and its reason, and the next actionable PR.
+
+## 88. AI provider usage transparency — 24 November 2026 (Asia/Jakarta)
+
+- Audit Divisi 06 menemukan bahwa main sudah memiliki empat provider adapter (Gemini, Groq, OpenRouter, OpenAI), AI Council/Workspace, serta counter GoPlus; tetapi belum ada telemetry pemakaian/kuota terpadu untuk provider AI. AI orchestration tidak sama dengan quota management.
+- Implementasi awal pada branch `feat/ai-provider-usage-observability` menambahkan `lib/ai/usage.js` untuk pencatatan request per provider per hari Asia/Jakarta, token input/output/total hanya jika usage metadata disediakan, status request terakhir, dan header rate-limit yang di-allowlist.
+- Instrumentasi mencakup AI Council, AI Workspace (termasuk putaran diskusi dan sekretaris), scheduled AI runs, dan direct Gemini test. HTTP errors, malformed responses, serta network/timeout failures ikut dicatat sebagai percobaan gagal; retry berikutnya dicatat terpisah. Counter disimpan di RADAR state melalui adapter persistence yang sudah ada.
+- Endpoint `GET /api/ai/usage` mengembalikan status sanitasi tanpa key, raw error, prompt, atau isi respons. Panel status ditambahkan pada halaman AI Council.
+- Definisi status: ACTIVE = panggilan teramati terakhir sukses dalam 24 jam; LIMITED = respons terakhir HTTP 429; ERROR = panggilan terakhir gagal; UNKNOWN = belum ada panggilan teramati dalam 24 jam atau metadata tidak tersedia; NOT_CONFIGURED = env key tidak ditemukan. Status adalah hasil panggilan terakhir, bukan health probe kontinu.
+- Batas transparansi: token count hanya tersedia jika provider menyertakan usage metadata; rate-limit hanya jika response menyertakan header yang dikenal. Account-level daily quota Gemini/Groq/OpenAI dan sisa request harian OpenRouter belum dibaca oleh implementasi ini; field quota tetap null/N/A, tidak dibuat perkiraan. Counter RADAR tidak mencakup pemakaian key yang sama dari aplikasi lain.
+- Perubahan README mendokumentasikan endpoint dan batas interpretasi. Tidak ada secret, provider key, permission, model, dependency, atau konfigurasi produksi yang diubah.
+- File branch: `lib/ai/usage.js`, `lib/ai/chat-completions.js`, `lib/ai/gemini.js`, `lib/ai/groq.js`, `lib/ai/openrouter.js`, `lib/ai/openai.js`, `lib/ai/workspace.js`, `server.js`, `public/app.js`, `test/ai-usage.test.js`, `README.md`, dan master context ini.
+- Code/test head `e326684467ae7d29c6ae5fbeecf7c1824794ec95` telah lulus GitHub Actions: RADAR AI tests SUCCESS, 168 passed / 0 failed (run `45405418894`); Gitleaks SUCCESS dan Trivy SUCCESS (run `45405418920`). PR #87 Draft: https://github.com/rohman35819/radar-ai-v2/pull/87. Commit dokumentasi lanjutan dapat mengubah PR head; verifikasi ulang exact-head CI sebelum integrasi. Branch belum merge ke main. Tes lokal tidak dijalankan karena tidak tersedia working copy/runtime repository dalam sesi ini; GitHub Actions exact code/test head lulus; independent Divisi 01/05 review masih pending. Test baru memverifikasi forwarding callback dari Groq, OpenRouter, dan OpenAI adapters. Satu security run pada intermediate commit sempat gagal karena Gitleaks melaporkan invalid revision range (bukan temuan secret); exact-head scan berikutnya lulus. Hostless Build/Live tidak diperiksa dan tidak ada klaim deployment.
+- NEXT TASK: jalankan CI pada exact PR head; perbaiki setiap test/syntax failure; Divisi 01 review endpoint exposure, secret handling, persistence and rate-limit metadata; Divisi 05 QA status transitions, Jakarta daily reset, AI Council/Workspace UI and no-regression. Setelah gates lulus, minta integrasi sesuai kebijakan Owner; berikutnya evaluasi endpoint usage resmi per provider untuk account-level quotas tanpa mengubah key/permission dan tanpa menambah biaya.
+
+
+## 89. Batas antrean permintaan AI provider — 24 November 2026 (Asia/Jakarta)
+
+- Divisi 06 (Agent Platform & Automation) menindaklanjuti risiko request provider AI yang menumpuk ketika AI Council, AI Workspace, dan pemanggilan manual berjalan bersamaan.
+- Menambahkan satu antrean FIFO global process-wide di `lib/ai/request-queue.js`, dipakai oleh adapter chat-completions (Groq/OpenRouter/OpenAI), Gemini, dan jalur provider AI Workspace.
+- Hard cap awal: **2 request provider aktif bersamaan + maksimal 12 request menunggu = 14 request total**. Angka ini sengaja konservatif untuk menahan burst; bukan klaim kuota/rate limit provider.
+- Ketika 14 slot penuh, request baru ditolak secara eksplisit dengan kode `AI_QUEUE_FULL` / status 503. Tidak ada antrean tersembunyi atau unbounded backlog. Request yang sudah diterima diproses FIFO sampai slot tersedia. Caller harus mencoba kembali setelah antrean turun; request yang ditolak tidak dianggap telah diterima.
+- Timeout provider dimulai saat request memperoleh slot, bukan saat masih menunggu, sehingga waktu antre tidak menghabiskan timeout upstream. Retry memperoleh slot baru dan tidak menahan slot selama jeda retry.
+- Penolakan karena antrean penuh tidak dicatat sebagai pemakaian API provider karena tidak ada HTTP call ke provider.
+- Menambahkan `GET /api/ai/queue` dengan counter active/pending/total/capacity/oldest wait/completed/rejected serta panel antrean pada AI Council.
+- Counter dan antrean saat ini in-memory per proses; counter kembali nol dan request pending tidak diputar ulang setelah restart. Ini sengaja menghindari replay request AI lama/stale. Ini **bukan** durable job queue untuk seluruh otomasi divisi; pembatasan ini khusus outbound request AI provider.
+- README menjelaskan batas, status, dan semantik. File perubahan pada PR #87 mencakup `lib/ai/request-queue.js`, adapter AI `lib/ai/chat-completions.js`, `lib/ai/gemini.js`, `lib/ai/workspace.js`, `server.js`, `public/app.js`, `test/ai-request-queue.test.js`, README, dan master context.
+- PR #87 tetap Draft dan belum merge ke main. Exact PR head `83db17bf505333fa7d20a8e54610108e46977f2e` lulus GitHub Actions: `npm test` 172 passed / 0 failed (run `45410577116`); Gitleaks dan Trivy SUCCESS (run `45410577023`). Test khusus membuktikan 2 concurrent, FIFO, 12 waiting, penolakan request ke-13 saat penuh, dan tidak mencatat queue rejection sebagai provider usage. Local npm test tidak dijalankan karena sesi tidak memiliki working copy repository. Tidak ada perubahan Hostless/production, secret, provider key, model, atau permission.
+- NEXT TASK: minta review independen Divisi 01 untuk endpoint/status leakage dan error handling, serta Divisi 05 untuk concurrency, FIFO, overflow, timeout, retry, dan AI Council UI. Setelah review selesai, evaluasi apakah limit per provider perlu dibedakan berdasarkan rate-limit headers yang benar-benar teramati; jangan menaikkan hard cap tanpa data. Hostless build/live belum diverifikasi dan belum ada deployment.
+
+## 90. Audit keamanan dan perbaikan lifecycle antrean PR #87 — 24 November 2026 (Asia/Jakarta)
+
+### Divisi dan akar masalah
+- Lead: Divisi 04 — AI Intelligence & Research. Supporting: Divisi 01 — Security & Reliability; Divisi 05 — QA, Testing & DevOps.
+- Audit terhadap PR #87 menemukan bahwa slot queue sebelumnya hanya membungkus pemanggilan `fetch()`. Slot dilepas saat response headers diterima, sementara `response.json()` masih membaca body di luar queue. Karena itu batas dua request aktif belum mencakup seluruh lifecycle HTTP.
+- Endpoint telemetry/queue memang publik karena dipakai panel AI Council. Kontrak yang dipertahankan adalah data operasional tersanitasi saja; API key, authorization header, prompt, isi response, dan raw error tidak boleh dikembalikan. Header rate-limit dan label model diperlakukan sebagai input tidak tepercaya.
+
+### Perbaikan pada branch PR #87
+- `lib/ai/chat-completions.js`, `lib/ai/gemini.js`, dan kedua jalur provider di `lib/ai/workspace.js`: slot queue sekarang menahan fetch serta pembacaan response body JSON sampai selesai. Timeout tetap melekat pada fetch/body; retry dan jeda retry tidak menahan slot.
+- `lib/ai/usage.js`: hanya nilai header rate-limit ringkas yang diawali digit dan berisi karakter allowlist yang disimpan; nilai kosong dan teks arbitrer ditolak. Label model dibatasi pola karakter aman.
+- `test/ai-request-queue.test.js`: tes regresi menahan dua response body, memastikan request ketiga belum dikirim sampai salah satu body selesai dibaca.
+- `test/ai-usage.test.js`: tes nilai header kosong/berbahaya dan label model yang tidak valid.
+- `README.md`: menjelaskan bahwa slot mencakup pembacaan body dan batas queue berlaku per proses, bukan lintas semua instance.
+
+### Validasi dan koreksi CI
+- Commit implementasi + tes: `dddf1d1b003a209e8dcb8d6f70fe6e8f1712cf6b`. CI pertama: security scan SUCCESS, tetapi test gagal 2/174 karena sanitizer mengembalikan header kosong dan nilai teks non-numerik. Kegagalan ini dipertahankan sebagai temuan dan diperbaiki; tidak dianggap lulus.
+- Commit koreksi sanitizer: `06e00d12539c5c29756a7ff40cbc7967c1a2bf2d`.
+- GitHub Actions test run `45417261072` pada exact code head tersebut: SUCCESS, **174 passed / 0 failed**. Log membuktikan tes lifecycle body-response queue dan dua tes sanitasi header/model lulus.
+- Security run `45417261088` pada exact code head: SUCCESS. Gitleaks: no leaks found. Trivy secret scanner: no issues detected. Ini tidak boleh ditafsirkan sebagai bukti audit dependency vulnerability jika workflow tidak menemukan manifest yang didukung.
+- Commit dokumentasi README setelah hasil code-head CI: `db3e5c03eb1a4834c6547a8410021a4b9b592318`. Exact-head CI untuk perubahan dokumentasi berikutnya tetap wajib diperiksa setelah master context diperbarui.
+- Tes lokal tidak dijalankan karena sesi tidak memiliki working copy Node.js; hasil yang diklaim berasal dari GitHub Actions saja.
+
+### Status integrasi dan batas risiko
+- PR #87: Draft/open/unmerged. Branch telah diselaraskan dengan main terbaru `cdf276fed8c313f3b9f0f272d15ead838053fb11`; compare terakhir sebelum pembaruan dokumentasi menunjukkan ahead 48 / behind 0 dan mergeable=true. Commit merge mempertahankan PR head lama sebagai parent kedua.
+- Review independen Divisi 01 dan Divisi 05 belum ada. Audit oleh implementer ini bukan pengganti independent review dan bukan approval untuk merge.
+- Endpoint `/api/ai/usage` dan `/api/ai/queue` tetap publik dan menampilkan counter/status operasional yang memang dipakai panel; tidak ada auth baru ditambahkan. Independent Security harus menilai apakah tingkat detail publik tersebut dapat diterima untuk deployment RADAR.
+- Queue tetap in-memory per proses, tidak durable, dan tidak lintas-instance. Restart menghapus pending requests/counters. Ini bukan durable autonomous job queue.
+- Tidak ada perubahan Hostless, secret, provider key, provider permission, billing, atau trading. Hostless Build/LIVE tidak diperiksa dan tidak ada deployment claim.
+
+### NEXT TASK
+1. Periksa exact-head CI setelah dokumentasi PR diperbarui; jika ada kegagalan, perbaiki sebelum melanjutkan.
+2. Dapatkan independent Divisi 01 review khusus endpoint publik, metadata rate-limit, model label, persistence, dan error handling.
+3. Dapatkan independent Divisi 05 review concurrency seluruh adapter, FIFO/overflow, timeout/retry, regression coverage, serta AI Council UI.
+4. Jangan merge PR #87 sampai kedua review independen menyatakan lolos dan exact-head checks hijau. Tetap Draft selama gate belum dipenuhi.
+5. Setelah PR #87 ditutup dengan aman, klasifikasikan backlog PR terbuka sesuai WIP policy (maksimal 3 active non-emergency PR) sebelum memulai PR implementasi berikutnya.
+
+## 91. PR #87 — verifikasi regresi AI Workspace dan exact-head CI — 24 November 2026
+
+- Perluasan audit menambahkan tes khusus AI Workspace, bukan hanya adapter chat-completions. Untuk coverage tersebut, `requestCompatible` diekspor dari `lib/ai/workspace.js` sebagai helper internal yang dapat diuji.
+- Commit `f22141926f8d1f83f880b78c6343565579eb0a4b`: slot queue menahan response-body read pada jalur AI Workspace compatible.
+- Commit `f1526bae345216bb2c9679566e69e7bc61c9271d` dan `b0fcd0086e3ccc7db3dae61e3ac9639d089bb704`: menambahkan test akses helper dan membuktikan request ketiga menunggu selama dua response body Workspace belum selesai.
+- Commit `ae08f24aee1f72fc9e49a372a44075113bc24124`: mempertahankan response metadata saat parsing JSON Workspace gagal.
+- Audit tes kemudian menemukan catch handler belum menyalin `error.response` ke variabel response luar. Run `45418385404` pada SHA `761e46a58d8d46920adb83cfd76629eebaf9f7e7` gagal **1 dari 177 test**: status HTTP 200 hilang menjadi null. Kegagalan ini tidak disembunyikan.
+- Commit `5448767610539057f4f3c7cdb0adbe9d03e161e8` memperbaiki propagation response metadata. Commit `f518b06494035e0a8b9ee4a2e1c415cbb49f52ef`, `db7b2707844836fbe9ef7d6587476172b04cb6f9`, dan `761e46a58d8d46920adb83cfd76629eebaf9f7e7` menambahkan klasifikasi dan regression tests untuk malformed HTTP 200 serta metadata Workspace.
+- Exact implementation head `5448767610539057f4f3c7cdb0adbe9d03e161e8`: GitHub Actions test run `45418689793` SUCCESS, **177 passed / 0 failed**. Log secara eksplisit menunjukkan tiga tes queue/body Workspace dan malformed-response classification lulus.
+- Exact-head security run `45418689798` SUCCESS: Gitleaks no leaks; Trivy secret scan no findings. Dependency vulnerability coverage tetap tidak boleh diklaim dari hasil secret scanner.
+- Tes lokal tidak dijalankan; bukti hanya dari GitHub Actions. Perubahan belum dideploy ke Hostless dan tidak ada live claim.
+
+### Status PR dan NEXT TASK
+- PR #87 masih Draft/open/unmerged. Semua perubahan kode, test, README, dan master context tetap pada branch PR; main tidak diubah oleh task ini.
+- Independent Divisi 01 Security dan Divisi 05 QA masih belum mengirim review. Tes hijau dan audit implementer tidak menggantikan dua review independen tersebut.
+- Public endpoint `/api/ai/usage` dan `/api/ai/queue` tetap menjadi item review Security: tentukan apakah counter/status operasional dan rate-limit metadata layak tetap publik atau harus dibatasi.
+- NEXT TASK: verifikasi CI pada exact head setelah pembaruan dokumentasi ini; dapatkan independent Divisi 01/05 review; tutup semua temuan; baru pertimbangkan merge. Tetap Draft sampai seluruh gate terpenuhi. Setelah #87 selesai, klasifikasikan backlog PR terbuka terhadap WIP limit maksimal 3 active non-emergency PR sebelum mengambil PR berikutnya.
+
+## 92. Status independent review PR #87 — 24 November 2026
+
+- Menggunakan workflow read-only yang sudah tersedia di `.github/workflows/gemini-assistant.yml` melalui komentar `@gemini /review` pada PR #87. Run: `45419290196`.
+- Workflow gagal sebelum menghasilkan review. Log menunjukkan Gemini CLI memilih `gemini-3.1-pro`, lalu menerima HTTP 429 dan 503; Free Tier request/input-token quota untuk model tersebut tercatat limit 0. Log meminta retry sekitar 17 jam kemudian.
+- Tidak ada hasil review Gemini yang boleh dianggap sebagai approval atau temuan review. Tidak ada layanan berbayar, model berbayar, atau konfigurasi produksi yang dipakai untuk memaksa review.
+- Daftar requested reviewers PR #87 masih kosong; tidak ada review independen Divisi 01 atau Divisi 05. Implementer audit dan CI hijau tidak menggantikan review independen.
+- NEXT TASK: tunggu reviewer independen Divisi 01 dan 05; workflow Gemini boleh dicoba lagi setelah kuota free tier pulih tanpa mengubah model ke layanan berbayar. Jangan merge/mark ready sebelum review yang diwajibkan diterima.
+
+## 93. ATURAN KERJA MANDIRI, INTEGRASI, DAN MERGEABILITY — 24 NOVEMBER 2026
+
+BOS menetapkan bahwa pekerjaan rutin tidak boleh tertahan hanya karena menunggu Divisi 01/05/07 atau divisi internal lain. Lead mengambil tanggung jawab menyelesaikan implementasi dan pemeriksaan yang tersedia sendiri. Aturan ini memperjelas dan menggantikan ketergantungan waktu tunggu divisional pada aturan review sebelumnya; bukan penghapusan kontrol keselamatan.
+
+- **Tidak menunggu divisi:** lead melakukan analisis, implementasi, self-review, testing, security scan, integration check, penyelesaian konflik, dokumentasi, dan laporan. Review divisi menjadi konsultatif untuk perubahan risiko rendah/menengah dan tidak boleh menjadi alasan idle.
+- **Self-review wajib:** baca seluruh diff dan file berubah; telusuri caller, route, kontrak data, storage, konfigurasi, dan UI; cari regresi, penghapusan tidak sengaja, secret, race condition, unbounded workload, unsafe defaults, dan risiko migrasi.
+- **Integrasi terhadap main terbaru wajib:** bandingkan base/head terhadap HEAD main; branch yang behind/diverged harus disinkronkan dan konflik diselesaikan sebelum merge. Setelah sinkronisasi, periksa ulang diff dan jalankan seluruh validasi pada SHA terbaru.
+- **Mergeability gate wajib:** GitHub harus menyatakan mergeable=true, bukan false atau null; tidak boleh ada konflik/resolution tertunda; branch protection harus terpenuhi; gunakan expected head SHA agar merge ditolak jika head berubah.
+- **Exact-head CI wajib:** test, build/syntax, integration/database smoke yang relevan, dan secret/security scan harus sukses pada SHA PR saat ini. Hasil hijau dari SHA lama tidak berlaku. Setiap perubahan kode, workflow, migration, atau test mengharuskan validasi ulang.
+- **Integrasi end-to-end:** uji alur route → service → provider/storage → response/UI di lingkungan terisolasi bila tersedia. Periksa auth, timeout/retry, rate limit, kegagalan upstream, persistence/restart, kompatibilitas schema, dan rollback. Jangan menjalankan tes destruktif terhadap production.
+- **Kontrol risiko:** untuk perubahan low/medium-risk, self-review terdokumentasi ditambah exact-head automated checks cukup; review divisi bersifat advisory. Untuk security/identity/permission, credential, production migration, financial execution, atau data-loss berisiko tinggi, wajib ada kontrol independen yang objektif (tes keamanan otomatis, reviewer/tool terpisah, atau keputusan eksplisit BOS). Bila kontrol tersebut tidak tersedia, tahan hanya perubahan berisiko itu dan jelaskan blocker spesifik; jangan menunggu tanpa progres.
+- **Perbaiki hambatan langsung:** konflik, branch tertinggal, test gagal, coverage integrasi yang kurang, dan unsafe default harus ditangani lead bila dapat dilakukan aman. Hambatan yang membutuhkan akses production, credential, pembayaran, tindakan irreversible, atau approval BOS tidak boleh ditebak/dilewati.
+- **Tidak boleh klaim berlebihan:** merge GitHub, CI, Hostless Build, dan Hostless LIVE adalah status terpisah. Kode merge bukan bukti deployment atau integrasi aktif. Klaim otomasi offline memerlukan scheduler, worker, durable state, audit, permission, budget, dan kill switch yang benar-benar teruji.
+- **Disiplin backlog:** maksimum 3 PR aktif non-emergency. Tutup duplikat/stale/superseded setelah menyelamatkan perubahan unik. Setiap laporan mencantumkan root cause, file, SHA, hasil test dan integration, mergeability, risiko tersisa, status Hostless, serta satu NEXT TASK.
+
+**Penerapan langsung pada antrean:** PR #88 dan #89 tidak boleh di-merge hanya berdasarkan CI lama. Keduanya harus disinkronkan terhadap main terkini, diff ditinjau, mergeability diperiksa ulang, dan exact-head npm + database integration smoke + security checks dijalankan. Untuk PR #89, fokus tambahan pada SQL SECURITY DEFINER/search_path/actor trust, lease/retry/approval/dependency race. Untuk PR #88, fokus pada RLS, service-role key handling, privilege boundaries, migration rollback, dan tidak mengaktifkan production memory. Worker dan memory production tetap nonaktif tanpa gate serta persetujuan yang sesuai.
+
+**Status perubahan aturan:** ditambahkan ke AGENTS.md dan master context pada main. Perubahan dokumentasi ini tidak mengubah kode runtime, environment, database, permission, Hostless, atau trading. CI/Hostless tidak diklaim selesai hanya dari commit dokumentasi.
+
+**NEXT TASK:** terapkan gate ini satu per satu pada PR #89 dan #88: perbarui branch terhadap main, selesaikan conflict/mergeability, jalankan exact-head integration + security checks, lalu merge hanya yang seluruh gate risikonya lulus.
+
+## 94. ATURAN SEMENTARA QA INDEPENDEN & REVIEW DIVISI — AKTIF (24 NOVEMBER 2026)
+
+**Perintah BOS: aktifkan pengecualian sementara** selama otomatisasi RADAR AI belum berjalan penuh dan proses QA/review manual justru membuat PR tertahan.
+
+- Aturan ini mengesampingkan ketentuan lama yang mewajibkan menunggu QA independen atau review Divisi 01/05 untuk pekerjaan rutin. Jika implementasi/kode sudah siap, lead telah memeriksa seluruh diff, branch kompatibel dengan main terbaru, konflik selesai, GitHub menyatakan mergeable=true, serta exact-head test/build/security/integration yang relevan lulus, pekerjaan boleh dilanjutkan sampai merge tanpa menunggu jawaban divisi.
+- Divisi 01/05 boleh melakukan review secara asynchronous, tetapi tidak menjadi dependency untuk pekerjaan low/medium-risk. Jangan membiarkan PR tetap Draft/idle hanya karena review manual belum datang.
+- Ini bukan penghapusan QA. Self-review, test aktual pada SHA terkini, security/secret scan, integration/database smoke test, pemeriksaan migrasi dan rollback, branch protection, serta laporan transparan tetap wajib. Tes gagal/hilang/stale tidak boleh dianggap lulus.
+- Untuk perubahan high-risk (auth/authorization, privilege, secret, production migration, data-loss/destructive operation, financial execution/trading, atau tindakan irreversible), kontrol objektif tetap wajib: security/integration test terfokus di lingkungan aman dan persetujuan BOS bila tindakan produksi memerlukannya. Jangan bypass safeguard produksi.
+- Bila QA independen tidak tersedia, catat eksplisit `not performed (temporary override)` dan sebutkan bukti self-review/otomatis yang benar-benar tersedia. Jangan mengklaim review divisi sudah dilakukan.
+- **Kapan aturan dibuka kembali:** hanya setelah otomasi QA/review/integration terbukti stabil pada beberapa siklus PR berturut-turut: berjalan otomatis pada SHA terbaru, hasilnya dapat ditindaklanjuti, tidak tergantung kuota free-tier yang tidak tersedia atau pemicu manual, dan tidak menimbulkan antrean yang dapat dihindari maupun regresi yang lolos. Pembukaan kembali wajib keputusan eksplisit BOS/Executive Office dengan bukti; tidak otomatis dan tidak boleh dilakukan hanya karena satu PR sukses.
+
+**Catatan rekonsiliasi aturan lama:** catatan PR #87 yang menyebut harus menunggu Divisi 01/05 adalah catatan kondisi/ketentuan saat itu dan telah dikesampingkan oleh keputusan BOS serta aturan sementara ini. Review manual PR #87 tidak dilakukan; bukti yang tersedia adalah 177/177 test dan secret/security scan pada head sebelum merge. Keputusan merge #87 tetap dicatat terpisah dan tidak menjadi bukti bahwa review independen telah terjadi.
+
+**Status:** aturan sementara ditambahkan ke AGENTS.md dan master context pada main. Perubahan ini hanya dokumentasi kebijakan; tidak mengubah kode runtime, environment, database, permission, atau deployment.
+
+
+## 95. DIVISI 06 — QUEUE OPERATIONS V1 PORTED TO LATEST MAIN (24 NOVEMBER 2026)
+
+- PR #89 source was 10 commits behind and diverged from latest main. Its unique implementation was ported onto main HEAD `1447002a5746967bc21cbac0efd5618416ed0b6e`; no unrelated main changes were dropped.
+- Includes Agent Platform schema, transactional queue operations, disposable PostgreSQL 16 migration/lifecycle smoke tests, and CI workflow steps.
+- Self-review confirms all SECURITY DEFINER functions use fixed `search_path`; EXECUTE revoked from PUBLIC, anon, authenticated, service_role and runtime role. Queue/control/approval tables are not granted to application roles. Global `paused=true` and `kill_switch=true` defaults are preserved.
+- Queue semantics cover idempotency, SKIP LOCKED claim, per-agent serialization, fencing leases, heartbeat, bounded retries/dead-letter, expired-lease recovery, dependency gating/cycle checks, approval flow and append-only audit. CI must exercise both migrations on disposable PostgreSQL.
+- Actor IDs in SQL functions are caller parameters; this is acceptable only while functions remain owner-only. Do not grant EXECUTE to worker/service roles until a trusted identity-bound gateway replaces caller-supplied actor assertions.
+- No production DB migration, role grants, worker, scheduler, Hostless config, deployment, or trading action was performed. Manual Division 01/05 review not performed (temporary override); objective CI/security checks are required before merge.
+- NEXT: verify exact-head CI/security, mergeability and PR merge; then proceed to PR #88. Production activation remains a separate BOS-approved task.
+
+
+## 97. DIVISI 07 — MEMORY FOUNDATION DIREBASE KE MAIN TERBARU (24 NOVEMBER 2026)
+
+- PR #89 telah merged ke main pada commit `e228b97ee5ca0d43602047d11c4f3e21858f6ce4`; Agent Platform schema, transactional queue dan PostgreSQL smoke sudah menjadi bagian main. PR #34 (schema lama) dan #51 (Phase 0 docs lama) dievaluasi sebagai superseded; riwayat/branch tetap tersimpan.
+- PR #88 memory source diverged dari main. Hanya empat file unik yang dipindahkan ke branch baru `feat/knowledge-memory-main-20261124`: `lib/knowledge/memory.js`, `supabase/migrations/20261124_radar_memory.sql`, `supabase/tests/20261124_radar_memory_smoke.sql`, `test/memory-store.test.js`.
+- Workflow PostgreSQL 16 terbaru dari main dipertahankan dan ditambah migration/smoke memory setelah Agent Platform queue tests; env example menambah nama variabel Supabase server-side saja.
+- Memory tetap proposal-only: RLS aktif, anon/authenticated tanpa privilege, service_role SELECT/INSERT saja, tidak ada approval API. Tidak ada Supabase production migration, secret, API route, frontend integration atau activation.
+- Exact-head CI/security untuk branch baru masih harus diverifikasi. Manual Divisi 01/05 review: not performed (temporary override); fokus self-review pada service-key handling, scope filters, SQL privilege dan proposal-only trigger.
+- NEXT: exact-head npm + PostgreSQL queue + memory smoke + Gitleaks/Trivy, pastikan mergeable=true, lalu merge hanya jika seluruh bukti lulus. Tutup PR #88 sebagai superseded oleh branch terbaru setelah PR pengganti siap.
+
+
+## 98. ATURAN PEMBAGIAN DIVISI & DELEGASI MANDIRI — BOS DIRECTIVE (24 NOVEMBER 2026)
+
+**Status: AKTIF.** BOS menegaskan bahwa perkembangan RADAR AI V2 tidak boleh tertahan hanya karena assistant belum mendapat username GitHub, nama reviewer, atau balasan divisi internal. Lead wajib mengatur pembagian pekerjaan sendiri dan menyelesaikan pekerjaan rutin sampai tuntas sesuai gate risiko.
+
+1. **Lead menentukan divisi otomatis.** Petakan tugas ke charter/matriks routing Divisi 01–08 pada section 35. Pilih satu lead division dan supporting divisions yang relevan. Jangan meminta BOS memilih divisi atau mengulang konteks terdokumentasi.
+2. **Delegasi berbasis peran, bukan username.** Gunakan nama/peran Divisi 01–08, bukan akun GitHub personal. Tetapkan checklist Security/QA dan kerjakan pemeriksaan yang tersedia mandiri. Username GitHub tidak diperlukan untuk menetapkan tanggung jawab internal.
+3. **Jangan mengarang identitas atau review.** Jangan menebak/membuat username, meminta review ke akun yang tidak diverifikasi, atau menyatakan review independen tanpa bukti dari pihak/agent/tool terpisah. Jika reviewer manusia wajib untuk high-risk gate dan identitasnya tidak dapat diverifikasi, lanjutkan semua pekerjaan aman dan minta BOS hanya untuk identitas/keputusan yang benar-benar diperlukan.
+4. **Jangan menunggu divisi rutin.** Untuk low/medium-risk, lead melakukan self-review, exact-head CI, security/secret scan, integration checks, mergeability dan rollback assessment. Ketiadaan jawaban Divisi 01/05 bukan alasan membiarkan PR idle selama temporary QA override aktif.
+5. **High-risk tetap memiliki kontrol objektif.** Auth/authorization, privilege, secret handling, production migration, destructive/data-loss, financial/trading, dan irreversible production actions memerlukan focused objective controls serta approval BOS jika disyaratkan. Delegasi tidak menghapus kontrol tersebut.
+6. **Koordinasi lintas divisi.** Satu lead bertanggung jawab; handoff memuat tujuan, file/interface, acceptance criteria, risiko, tes dan keputusan. Hindari concurrent edits pada file yang sama.
+7. **Catatan delivery wajib.** Sebutkan lead/supporting divisions, review yang benar-benar dilakukan, exact SHA/checks, merge/deploy status, risiko tersisa dan satu NEXT TASK. Self-review bukan independent review.
+8. **Kapan meminta BOS.** Hanya untuk keputusan Owner (produksi, credential/permission, biaya berbayar, data destruktif, live trading/financial action), atau identitas reviewer manusia yang benar-benar wajib dan tidak dapat diverifikasi.
+
+**Rekonsiliasi:** aturan ini memperjelas kebijakan otonomi dan temporary QA override. Tidak menghapus quality gate, branch protection, WIP limit, atau larangan produksi. Tidak memberi wewenang membuat identitas palsu, mengubah izin, mengeluarkan biaya, atau menjalankan aksi finansial.
+**NEXT TASK:** terapkan pembagian peran secara mandiri pada antrean PR dan lakukan triase sesuai batas WIP; lanjutkan hanya PR berbasis main terbaru yang lolos exact-head checks.
+
+
+## 99. DIVISI 07 — MEMORY SECURITY HARDENING & EXACT-HEAD PORT (24 NOVEMBER 2026)
+
+- PR #96 membawa hardening incremental setelah fondasi Memory #92 merged. Branch sumber tertinggal dari main karena kebijakan delegasi #94; perubahan dipindahkan selektif ke branch baru `fix/knowledge-memory-hardening-latest-main`.
+- Secret detection kini mencakup Supabase `sb_secret_`, JWT-shaped credentials, provider tokens, dan secret-like strings pada `artifactRefs`. Supabase base URL wajib HTTPS tanpa userinfo/query/hash/path.
+- Retrieval proposal/approved memfilter retention expiry serta valid_from/valid_until di PostgREST sebelum data dikembalikan.
+- Migration memberi USAGE pada schema public kepada server-side service_role; table privilege tetap SELECT/INSERT saja. CI memodelkan BYPASSRLS pada disposable service_role dan menguji insert/read serta penolakan UPDATE.
+- Self-review menemukan delimiter DO block pada smoke SQL source PR #96 tidak valid; diperbaiki menjadi dollar-quoted block `DO $$ ... $$;` dan exact-head PostgreSQL smoke berikutnya lulus.
+- No production Supabase migration, credentials, public route, frontend, Hostless config, memory activation, worker/scheduler, or trading action.
+- Manual Divisi 01/05 review not performed (temporary override); final exact-head npm + PostgreSQL tests run #45429862413 and Gitleaks/Trivy run #45429862409 passed on SHA `807f005ffcaebd8b77cd485bff68cc72976e8298`; PR #97 merged as `1fb1e69811a95d75104680a94b3402121ddab8d9`.
+- NEXT: no remaining action for this hardening PR; production Supabase activation remains separately gated by BOS approval.
+
+
+## 100. PR BACKLOG TRIAGE & QUEUE CLEANUP — 24 NOVEMBER 2026
+
+- PR #89 Agent Platform transactional queue merged: `e228b97ee5ca0d43602047d11c4f3e21858f6ce4`. PR #92 Memory foundation merged: `3479e227026cffdaff74a28bbfd20e9ac1bf6e44`. PR #94 autonomous role-based division routing merged: `0f9dd772f2a600fd7fd9f0b93bdfbd3148dcee97`. PR #97 Memory security hardening merged: `1fb1e69811a95d75104680a94b3402121ddab8d9`.
+- PR #97 final exact-head test run #45429862413 passed: npm test, PostgreSQL 16 Agent Platform migration/smoke, queue lifecycle, Memory migration, RLS/privilege/provenance/proposal-only smoke. Final exact-head security run #45429862409 passed: Gitleaks and Trivy.
+- PR #97 source initially failed PostgreSQL smoke because the added DO block used malformed dollar quoting. Fixed to valid `DO $$ ... END $$;`; subsequent exact-head PostgreSQL run passed. Self-review also restored the current main delegation-policy section after detecting an accidental documentation overwrite in the initial port. Final PR diff preserves all main policies.
+- Stale/diverged/superseded PRs were closed with disposition comments after their unique work was recorded. No branches or commit histories were deleted. Open PR count is now 0; WIP limit respected.
+- Deferred feature ports remain tracked in issue #95 (and cross-PR integration issue #79): provider registry/GitHub App gateway, trade setup, Marketlight, dashboard refresh/Bubblemaps, GDELT, Solscan, macro, GoPlus and whale-detector specification. PR closure does not mean these features are implemented, merged or LIVE.
+- Hostless Build/LIVE status was not checked as part of PR cleanup. Existing Hostless EROFS/readiness blocker remains separate; no production Supabase migration, worker/scheduler activation, secrets, paid service or trading action was performed.
+- NEXT: continue issue #95 in priority order, starting with AI provider registry (#43) and read-only GitHub App gateway (#45) as clean-main ports, while separately prioritizing Hostless DATA_DIR/EROFS recovery and LIVE verification.
+
+
+## 101. HOSTLESS LIVE READINESS RECHECK — 24 NOVEMBER 2026
+
+- Pada main SHA `c70b9cd418780f35ff3ca21249880d0570016993`, GitHub Actions tests run #45430162124 PASS (npm test + PostgreSQL Agent Platform/Memory migrations and smoke) dan security run #45430162271 PASS (Gitleaks + Trivy).
+- Hostless monitor run #45430162000 overall FAILURE, tetapi pemeriksaan LIVE independen lulus: `/api/ready` HTTP 200, status `ready`, storage `ok`; snapshot HTTP 200, status `success`, `news_count=50`. EROFS tidak muncul pada probe ini.
+- Deployment metadata tetap UNKNOWN karena GitHub Actions tidak memiliki `HOSTLESS_API_KEY` dan `HOSTLESS_APP_NAME` tidak valid/terkonfigurasi. Karena itu deployed SHA dan kesesuaian deployment dengan main belum dapat diverifikasi; jangan klaim deployment metadata atau Build sukses.
+- Pemulihan storage/readiness LIVE terindikasi berhasil pada probe ini, tetapi status deployment/build dan kestabilan jangka panjang masih harus dipastikan setelah konfigurasi metadata Hostless diperbaiki.
+- NEXT: BOS/maintainer menambahkan read-only Hostless deployments API key dan mengoreksi HOSTLESS_APP_NAME melalui GitHub Actions secrets/variables; jalankan ulang monitor untuk verifikasi deployment ID/status/SHA. Jangan mengirim key melalui chat.
+
+
+## 102. DIVISI 07 — BOUND MEMORY INPUT VALIDATION (24 NOVEMBER 2026)
+
+- Follow-up review found remaining secret-handling gaps in the merged memory adapter: secret-like values in memory_key/scope_id/source_revision were not scanned, and artifactRefs shape/length validation occurred after secret scanning.
+- Validate memory_key once, validate artifactRefs type/count/element bounds before scanning, then scan memory_key, scope_id, title, summary, content, source_ref, source_revision and every artifact reference before persistence.
+- Added tests for secrets in identifiers/source revisions, malformed/oversized artifact references, and Supabase URL path/query/fragment rejection.
+- A token-shaped fixture is assembled at runtime in the memoryKey test so Gitleaks can scan source without a synthetic credential literal.
+- No schema/API/production behavior changes beyond stricter rejection of invalid proposals. No production memory activation, credentials, Hostless config, worker, scheduler or trading action.
+- NEXT: exact-head Node tests, PostgreSQL 16 migration/privilege smoke, Gitleaks and Trivy; merge only if all pass.
+
+
+## 103. KEBIJAKAN REGENERASI BRANCH LAMA & KEMAJUAN TEKNOLOGI — ARAHAN BOS (24 NOVEMBER 2026)
+
+**Status: AKTIF.** Setiap branch lama yang tertinggal dari main, konflik, atau sulit di-merge boleh dibuatkan branch baru dari SHA `main` terbaru. Regenerasi bertujuan menyelesaikan pekerjaan lama lebih cepat dan aman, bukan membuang ide, sumber, data, atau fungsi yang sudah direncanakan.
+
+1. **Basis bersih:** branch regenerasi wajib dibuat dari `main` terbaru, bukan dari branch lama. Gunakan nama yang dapat dilacak, misalnya `regen/pr-<nomor>-<tujuan>` atau `feat/<tujuan>-latest-main`.
+2. **Branch lama menjadi spesifikasi:** audit deskripsi PR, seluruh diff/patch, commit, komentar/review, tes, dokumentasi, issue terkait, serta dokumentasi resmi provider/sumber data. Buat peta migrasi setiap kebutuhan lama menuju file/modul/tes baru atau alasan pengecualiannya.
+3. **Kesetaraan fungsi wajib:** pertahankan seluruh ide, tujuan, sumber data, provider/API, endpoint, skema, field, parameter, konfigurasi, aturan bisnis, alur pemrosesan, output, kebutuhan dashboard/UI, penanganan error, rate limit, atribusi, dan tes yang masih relevan. Pertahankan identitas dan provenance sumber data. Jangan diam-diam menghapus fitur, mengganti sumber, melemahkan validasi, atau mengubah makna fungsi.
+4. **Adaptasi, bukan salin buta:** kode harus disesuaikan dengan arsitektur dan interface `main` terbaru. Perubahan perilaku hanya boleh dilakukan dengan alasan teknis yang jelas, dokumentasi, dan tes.
+5. **Boleh lebih maju dari branch lama:** tambahkan teknologi, provider, library, sumber data, enrichment, caching, reliability, observability, keamanan, performa, otomasi, dan UX yang lebih baik jika kompatibel serta memberi manfaat nyata. Prioritaskan gratis/open-source, lisensi aman, standar terbuka, dan menghindari vendor lock-in. Pengembangan tambahan tidak boleh menghilangkan kemampuan lama yang wajib.
+6. **Pengadaan dan keamanan:** periksa status layanan, kuota gratis, syarat pendaftaran/API key, lisensi, privasi, kualitas data, atribusi, reliability, dan fallback. Tidak boleh mengaktifkan layanan berbayar atau mengeluarkan biaya tanpa persetujuan BOS. Secret tidak boleh masuk frontend, log, fixture, commit, atau chat.
+7. **Uji kesetaraan:** sebelum PR regenerasi dianggap selesai, cocokkan implementasi dengan peta migrasi. Semua fungsi lama wajib terpasang atau dinyatakan terblokir dengan bukti. Tambahkan tes untuk fungsi lama dan teknologi baru; jalankan pemeriksaan exact-head yang relevan: unit, integration, build, security, dan data-source validation. Tes hijau saja tidak membuktikan seluruh fungsi lama telah terbawa.
+8. **Integritas sumber/data:** validasi schema, satuan, timestamp/zona waktu, chain/network, identitas token/pool, pagination, freshness, duplikasi, nilai kosong/kedaluwarsa, error API, dan rate limit. Jangan mengarang data pasar atau intelijen yang tidak tersedia.
+9. **Jejak pekerjaan:** PR baru wajib menautkan PR/issue sumber dan menjelaskan fitur yang dipertahankan, perubahan perilaku, teknologi tambahan, status sumber/API, hasil tes, risiko, dan rollback. PR/branch lama menjadi referensi historis sampai pengganti diverifikasi. Penutupan/supersede harus disertai komentar alasan dan tautan pengganti; jangan hapus sejarah atau branch lama saat regenerasi.
+10. **Batas antrean:** maksimal 3 PR aktif dalam pengerjaan intensif. Regenerasi mengikuti prioritas; selesaikan atau putuskan pekerjaan aktif sebelum membuka antrean baru. Beberapa PR lama boleh digabung dalam satu PR baru jika fungsi dan acceptance criteria kompatibel, tetapi jejak setiap PR sumber harus tetap jelas.
+11. **Gate risiko tetap berlaku:** keamanan autentikasi/otorisasi, privilege, secret, migrasi database produksi, tindakan destruktif, eksekusi trading/finansial, dan tindakan produksi irreversible tetap mengikuti kontrol serta persetujuan BOS yang berlaku. Kebijakan ini bukan izin aktivasi produksi/deployment.
+12. **Pelaporan transparan:** laporkan terpisah status audit/pemetaan, porting, tes, merge, deployment, dan verifikasi LIVE. Menyalin ide ke branch baru tidak berarti fitur telah terimplementasi.
+
+**Penerapan awal:** gunakan kebijakan ini untuk pekerjaan backlog/issue #95 dan PR lama yang masih relevan. Lakukan inventarisasi ulang terhadap kondisi GitHub terkini sebelum memilih sumber migrasi; jangan mengandalkan jumlah atau status PR dari audit sebelumnya tanpa refresh.
+
+
+
+## 104. GOVERNANCE BRANCH, MULTI-AI, CI/CD & RULE EVOLUTION — BOS DIRECTIVE (24 NOVEMBER 2026)
+
+**Status: KEBIJAKAN AKTIF; IMPLEMENTASI TEKNIS BERTAHAP.**
+
+### Struktur branch resmi
+- `main`: permanen untuk produksi/stabil; tidak boleh direct push. Hanya menerima PR dari `develop` atau `hotfix/*) setelah exact-head checks, release gate dan rollback review lulus.
+- `develop`: permanen untuk integrasi; target normal PR fitur, bug fix dan eksperimen yang sudah tervalidasi.
+- `feat/<nama>`: branch sementara dari `develop` untuk fitur baru/peningkatan fitur; kembali ke develop lewat PR.
+- `fix/<nama>`: branch sementara dari `develop` untuk perbaikan bug; kembali ke develop lewat PR.
+- `exp/<nama>`: laboratorium eksperimen AI terisolasi. Boleh gagal/dirombak tanpa memengaruhi develop/main. PR hanya boleh dibuat setelah hasil dapat direproduksi dan tes lulus.
+- `hotfix/<nama>`: perbaikan darurat produksi yang sempit; PR langsung ke main dengan pemeriksaan risiko, CI/security, rollback dan persetujuan BOS bila high-risk. Setelah rilis, forward-port ke develop.
+
+### Isolasi multi-AI dan antrean
+1. Satu tugas/satu agen penulis/satu branch. Tidak boleh dua agen menulis branch atau working tree yang sama bersamaan. Reviewer harus terpisah dari penulis; CI bukan bukti review independen manusia.
+2. Maksimal 3 PR aktif terbuka yang menargetkan develop. Ini batas WIP integrasi, bukan batas jumlah branch eksperimen. Pengecualian darurat mengikuti kebijakan emergency yang sudah ada.
+3. Branch exp boleh banyak, tetapi penggunaan komputasi/waktu/API harus dibatasi; tidak boleh memakai production credentials atau membuat efek samping produksi.
+4. Gunakan Git worktrees jika beberapa agen berada pada mesin yang sama. Jika mesin berbeda, gunakan branch/workspace terisolasi. Jangan berbagi satu working directory yang mutable.
+5. Regenerasi branch lama dimulai dari develop terbaru, menjaga semua ide, sumber, kontrak data, fungsi, dan acceptance criteria sesuai kebijakan regenerasi. PR pengganti harus menautkan PR/issue asal.
+
+### Gate PR
+- PR ke develop hanya dari `feat/*`, `fix/*`, atau `exp/*) yang sudah tervalidasi. Test, syntax, integration/database dan security check yang relevan wajib lulus.
+- PR ke main hanya dari develop atau hotfix/*. Full release checks, version/tag plan, kompatibilitas migrasi dan rollback wajib lulus.
+- Failed, missing, stale checks bukan kelulusan. Ulangi setelah perubahan dan validasi exact head SHA.
+- Maksimal 3 PR aktif menuju develop; branch tanpa PR tidak dihitung sebagai PR aktif.
+
+### CI/CD, commit, release dan rollback
+- Setiap PR menjalankan tes dan security scan yang tersedia. Lint/build hanya diwajibkan jika ada perintah proyek yang benar-benar tersedia dan terpelihara; jangan membuat gate palsu. Tambahkan perintah lint/build nyata bila sudah diuji dan layak.
+- Gunakan prefix Conventional Commits: `feat:`, `fix:`, `exp:`, `docs:`, `test:`, `ci:`, `security:`, `refactor:`, `chore:`.
+- PR template wajib mencatat tujuan, perubahan, kesetaraan fitur lama, status sumber/provider/data, tes, risiko, migrasi dan rollback.
+- Rilis develop ke main wajib membuat immutable SemVer tag (misalnya `v2.3.1`) pada commit rilis yang tepat. Jangan membuat tag versi sebelum rilis diverifikasi.
+- Rollback harus berupa revert/redeploy yang tercatat ke rilis stabil. Jangan force-reset branch bersama atau membalik perubahan database/data secara otomatis. Auto rollback berbasis health hanya boleh diaktifkan setelah threshold, deployment adapter, kompatibilitas migrasi, audit dan kill switch terbukti.
+- Pertahankan rilis stabil; setelah rollback lakukan forward-fix. Rollback kode hanya jika kompatibilitas database terkonfirmasi.
+
+### Kewenangan AI untuk mengembangkan aturan
+BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tambahan aturan engineering, testing, observability, reliability, security, dokumentasi dan otomasi yang terbukti mendukung visi RADAR AI V2 menuju otomatisasi aman.
+- Aturan baru harus ditulis di `AGENTS.md` dan/atau `RADAR_AI_MASTER_CONTEXT.md`, memiliki tanggal, cakupan, alasan dan konsistensi dengan aturan lama.
+- Aturan bersifat memperkuat/menjelaskan. Konflik harus dicatat dan diselesaikan secara eksplisit; tidak boleh diam-diam melemahkan safety gate.
+- Kewenangan ini TIDAK mencakup perubahan izin admin/repository, menonaktifkan branch protection/required checks, melemahkan keamanan, membuka secret, aktivasi layanan produksi, pengeluaran biaya, tindakan destruktif, atau eksekusi trading/finansial. Itu tetap keputusan BOS/owner berwenang.
+- Perubahan kebijakan arsitektur/security/release yang material wajib mencatat alasan, risiko, bukti/tes, rollback dan kondisi evaluasi berikutnya. Aturan lama yang diganti diberi label superseded, bukan dihapus.
+- Aturan yang belum ditegakkan secara teknis harus disebut policy-only; jangan mengklaim sudah otomatis.
+
+### Status implementasi pada 24 November 2026
+- Branch permanen `develop` dibuat dari main SHA `859818456228152643b350002a3366910d445a1e`.
+- Pemeriksaan GitHub branch list menunjukkan `main` saat itu `protected=false`; rulesets kosong. Endpoint admin branch protection mengembalikan 403 pada koneksi yang tersedia. Dengan demikian, aturan main locked sudah ditetapkan tetapi belum dipaksakan oleh GitHub. Perlu konfigurasi manual oleh repository administrator.
+- Workflow test dan security telah diperbarui di branch develop untuk memicu PR ke main/develop dan push ke branch kerja; pemeriksaan sumber PR juga ditambahkan pada workflow test. Perubahan ini sedang diajukan melalui PR #102.
+- `package.json` belum memiliki script lint/build terpisah. `npm test` menjalankan syntax checks Node dan test suite. Jangan mengklaim lint/build check mandiri tersedia.
+- Git worktrees, multi-agent runtime, independent AI reviewer, automated SemVer tagging, deployment rollback dan auto rollback belum dibuktikan aktif. Kebijakan sudah mendefinisikan desain; implementasi harus bertahap dan diuji.
+
+**NEXT TASK:** selesaikan workflow branch-aware, PR template dan pemeriksaan exact-head pada develop; kemudian repository administrator aktifkan branch protection/rulesets untuk main/develop dan required status checks. Setelah itu baru migrasikan alur kerja fitur secara bertahap ke develop.
+
+
+
+## 105. GOVERNANCE BOOTSTRAP DELIVERY — 24 NOVEMBER 2026
+
+- Created permanent `develop` branch from main SHA `859818456228152643b350002a3366910d445a1e`.
+- Governance and AI rule-evolution charter recorded in `AGENTS.md` and this master context on develop.
+- Updated `.github/workflows/test.yml`: pull_request targets main/develop; push targets main, develop, feat/*, fix/*, exp/*, hotfix/*; added source-branch policy job (main accepts develop/hotfix/*; develop accepts feat/fix/exp).
+- Updated `.github/workflows/security.yml` to scan PRs to main/develop and pushes to main/develop.
+- Added `.github/pull_request_template.md` with purpose, legacy parity, data/provider, exact-head test, risk, migration, rollback and review provenance sections.
+- Opened bootstrap PR #102 from develop to main: https://github.com/rohman35819/radar-ai-v2/pull/102. PR head at opening: `0df1f03098505a4dc5495ce883250a87f7003090`; base main: `859818456228152643b350002a3366910d445a1e`; 6 commits / 5 changed files reported by GitHub.
+- Exact-head workflow lookup at the time of this note returned no PR workflow runs yet. Tests/security are therefore PENDING, not passed. Do not merge until current head has successful checks and mergeability is true.
+- GitHub branch listing showed `main` unprotected; rulesets endpoint returned empty. Branch-protection admin endpoint returned 403 for the current integration. The `main`/ `develop` lock and required status checks are NOT technically enforced yet; repository administrator must configure them in GitHub Settings and verify.
+- `package.json` has `npm test` (Node syntax checks + Node test suite), but no standalone lint/build scripts. Do not claim separate lint/build gates.
+- No runtime application code, production database, credentials, Hostless configuration, deployment, paid service or trading behavior changed.
+
+**NEXT TASK:** monitor PR #102 exact-head test/security checks; fix any workflow failures. Before merging, have repository administrator configure branch protection/rulesets for main (and develop) with direct push/force-push/deletion disabled, PR-only updates, required exact-head test/security checks, and main source restriction to develop/hotfix. Then verify protection state and merge bootstrap PR only after all gates pass.
+
+
+## 106. GOVERNANCE BOOTSTRAP — MERGE & POST-MERGE VERIFICATION (24 NOVEMBER 2026)
+
+- Bootstrap PR #102 from `develop` to `main` merged successfully by squash: `b63f35ead3b25cd898f69469d3edbac59608c45e`. Main now contains the branch governance charter, AI rule-evolution authority, branch-aware workflows and PR template.
+- Exact PR-head SHA `b2fb25b1de2baa857f6e6e482c2c380538fc3f87`: test workflow run #45437200079 PASS, security workflow run #45437199757 PASS. The test run completed npm test, disposable PostgreSQL Agent Platform schema/smoke, queue migration/smoke, and memory migration/RLS/privilege/provenance smoke. Security run completed Gitleaks and Trivy successfully. Push-triggered test/security runs #45437183297 and #45437183382 also passed.
+- Post-merge main SHA `b63f35ead3b25cd898f69469d3edbac59608c45e`: npm/PostgreSQL test run #45437385056 PASS; Gitleaks/Trivy run #45437385112 PASS.
+- Hostless monitor run #45437384965 overall FAILURE at latest-deployment metadata/status verification. The same run's independent LIVE readiness, storage, snapshot/news and provider probes completed successfully (Binance Futures and DEX Screener HTTP 200; readiness/storage/snapshot/news checks true). Hostless deployment metadata/status must not be claimed as verified; inspect Hostless deployment logs/status separately. This governance PR did not change application runtime.
+- After merge, `develop` was synchronized with `main` using a two-parent merge commit `b9906fb7a478e75a41b42069b1ab07e0e7bb889a`; both branches had identical tree `1b90ae15e39bb7c04223f2c4e10aceeff0a7cd7b` before this status update. This avoids leaving the integration branch behind the production baseline.
+- GitHub still reports `main protected=false` and `develop protected=false`; rulesets collection remains empty. Admin branch-protection endpoint returns 403 to this integration. Therefore the new source-branch CI policy runs, but direct-push prohibition, force-push/deletion protection and required-check merge blocking are NOT YET enforced by GitHub. Repository administrator must enable and verify these in Settings.
+- `main` and `develop` both contain the governance policy. The bootstrap is merged; it does not mean multi-agent workers, worktrees, independent AI reviewer, SemVer release automation, deployment rollback or autonomous health rollback are active. Those remain staged implementation tasks.
+
+**NEXT TASK:** configure and verify GitHub branch protection/rulesets for `main` and `develop`; then implement the AI task orchestrator and independent review gate on top of the now-established branch/CI foundation. Separately investigate Hostless deployment metadata/status failure while preserving the successful LIVE probes.
+
+
+---
+
+## ADDENDUM — TOP MOVERS CHART NAVIGATION — 25 NOVEMBER 2026
+
+### Implementasi
+- `public/market.js`: setiap aset pada Top Gainers dan Top Losers menampilkan tombol **Grafik RADAR** dan **Grafik eksternal**.
 - Tombol internal memilih aset berdasarkan CoinGecko `coin.id` (bukan simbol ticker), mengatur chart 7 hari / harga, lalu menggulir ke Historical Market Chart.
 - Tautan eksternal menuju halaman aset CoinGecko berdasarkan ID aset yang tervalidasi; halaman tersebut menyediakan grafik dan data pasar eksternal. Link dibuka di tab baru dengan `noopener noreferrer`.
 - Ringkasan mover menampilkan harga, market cap, volume 24 jam, dan perubahan 24 jam.
 - `public/market.html` memberi anchor `#historical-chart`; `public/market.css` menambahkan styling tombol dan layout mover.
 
-### 29.2 Batasan dan keamanan
+### Batasan dan keamanan
 - Feed Top 100 saat ini tidak menyediakan chain + contract address yang dapat diverifikasi untuk seluruh mover. Karena itu link eksternal menggunakan CoinGecko ID, bukan menebak pair/URL DEX Screener dari ticker.
 - Tidak ada API key, secret, dependency, atau layanan berbayar baru.
 - Perubahan dibuat pada branch `feat/top-movers-dual-chart-links` dan PR #113 ke `main`: https://github.com/rohman35819/radar-ai-v2/pull/113.
-- Commit terakhir sebelum catatan dokumentasi ini: `10429b7d9046cac0412e575deecb97fe568b2786`.
+- Commit kode terakhir: `10429b7d9046cac0412e575deecb97fe568b2786`.
 
-### 29.3 Verifikasi dan NEXT TASK
-- GitHub PR #113 terbuka dan mergeable pada saat pemeriksaan; belum merged.
+### Verifikasi dan NEXT TASK
+- PR #113 terbuka dan mergeable pada saat pemeriksaan; belum merged.
 - Workflow run dan combined commit status belum tersedia pada pemeriksaan awal. `npm test` belum dapat dinyatakan lulus.
 - Hostless Build dan LIVE belum diverifikasi; perubahan belum boleh disebut deployed.
-- NEXT: tunggu/periksa CI PR #113, lakukan review diff dan tes interaksi internal/eksternal, lalu verifikasi Hostless setelah merge. Jangan menggabungkan sebelum validasi yang relevan selesai.
+- NEXT: periksa CI PR #113, review diff dan tes interaksi internal/eksternal, lalu verifikasi Hostless setelah merge. Jangan menggabungkan sebelum validasi relevan selesai.
