@@ -3520,3 +3520,30 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Batasan: benchmark lokal dengan data sintetis, bukan produksi/Hostless; manfaat penuh bergantung pada klien/CDN yang mengirim `If-None-Match`. Tidak ada database migration, dependency, secret, service berbayar, atau perubahan produksi. Belum ada pengukuran CPU/RAM terpisah.
 - Pengujian: `node --check server.js` lulus; `node --test test/radar.test.js` 26/26 pass; `npm test` **226 pass, 0 fail, 0 skipped** (30 file); `git diff --check` bersih.
 - NEXT TASK: PR ke `develop`, verifikasi gate exact-head, lalu evaluasi apakah CDN/Hostless meneruskan conditional request; setelah itu pertimbangkan kompresi gzip/br dan pagination untuk endpoint dengan payload terbesar.
+
+
+---
+
+## 144. ISOLATED INGESTION WORKER + PARALLEL PYTHON RESEARCH — 26 NOVEMBER 2026
+
+### Implementasi
+- Branch `exp/isolated-research-ingestion-worker` dibuat dari develop SHA `80c460133ddf16dfbbcf8bf5bd82e906401b4257`; tidak mengubah `main` atau runtime V2.
+- `src/ingestion-worker.mts` menambahkan orchestrator one-shot yang terpisah: explicit opt-in `enabled: true`, maksimum 3 task paralel, 50 task per run, dan 250 baris per jenis data per batch.
+- Worker memvalidasi task/provider payload dengan kontrak TypeScript, mencatat ingestion run, menyimpan checkpoint status running, melakukan upsert asset / append observation / upsert candle, lalu hanya memajukan cursor setelah semua write berhasil.
+- Kegagalan provider/store disanitasi. Jika sebagian write sudah terjadi, run ditandai partial; checkpoint mempertahankan cursor sebelumnya agar batch dapat diputar ulang dengan conflict keys idempotent. Tidak ada retry otomatis, scheduler, queue polling, atau pemanggil production.
+- `test/ingestion-worker.test.js` mencakup disabled default/no I/O, write order dan cursor commit, write/provider failure, source isolation, concurrency cap, stable result ordering, duplicate stream, payload invalid dan batch cap.
+- `research/python/backtest.py` menghitung rolling SMA dalam O(n), menggantikan penjumlahan ulang setiap window. Ditambahkan `run_parameter_sweep` berbasis ProcessPoolExecutor; default serial, worker maksimum 4, hasil mengikuti urutan input.
+- `research/python/test_backtest.py` menambah pembandingan hasil serial/parallel, validasi batas worker/parameter, dan backtest historis 10.000 candle.
+- Tidak ada dependency baru; Python memakai standard library. Tidak ada provider live, PostgREST production write, secret, database production, scheduler, Hostless config atau deploy.
+
+### QA / status
+- CI exact-head untuk branch ini belum diverifikasi saat catatan dibuat; jalankan npm tests, strict TypeScript, Python 3.13 tests, PostgreSQL 16 smoke, Gitleaks dan Trivy pada head final.
+- Test lokal tidak dijalankan karena sesi ini hanya memiliki akses GitHub connector, bukan working clone/runtime repository.
+- Baseline develop sebelum perubahan: test run `45702176052` dan security run `45702176391` sukses pada SHA `2f44965ea005cc4751d54bf9464acfc8cc351ed9`. Develop kemudian maju ke `80c460133ddf16dfbbcf8bf5bd82e906401b4257`; exact-head CI baru masih berjalan.
+- `main` tetap `f38d25a6203ab486d7170369e86874f838af627a`; TypeScript/Python/worker pilot berada di jalur develop/eksperimen, belum menjadi runtime atau release production.
+- Hostless deployment monitor pada main run `45690836381` gagal membaca metadata deployment; LIVE readiness, snapshot dan news probes sukses. Build SHA Hostless tidak terverifikasi; LIVE commit tidak dibuktikan oleh monitor ini.
+
+### NEXT TASK
+- Selesaikan exact-head CI/security untuk branch ini; perbaiki seluruh kegagalan sebelum membuka/menandai PR ready.
+- Setelah lulus, lakukan review khusus atas checkpoint recovery, partial-write replay, process-pool memory cost dan backtest no-look-ahead. Tetap OFF dan tidak terhubung ke runtime produksi.
+- Tahap berikutnya setelah pilot: durable queue lease/claim + retry/dead-letter + provider-specific quotas, lalu versioned dataset/experiment manifests dan walk-forward tests. Tidak ada production activation tanpa approval serta readiness/rollback gate.
