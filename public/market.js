@@ -103,13 +103,54 @@ function renderTrending() {
     return row;
   }, 'Data trending belum tersedia.');
 }
+function openInternalCoinChart(coin) {
+  const select = $('#chart-coin');
+  if (!coin?.id || !select) return;
+  const optionExists = [...select.options].some((option) => option.value === coin.id);
+  if (!optionExists) {
+    $('#chart-meta').textContent = 'Aset ' + safeText(coin.name) + ' belum tersedia di pilihan grafik internal.';
+    return;
+  }
+  select.value = coin.id;
+  $('#chart-days').value = '7';
+  $('#chart-metric').value = 'prices';
+  $('#historical-chart').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  loadChart();
+}
+function createMoverActions(coin) {
+  const actions = node('div', 'mover-actions');
+  const internal = node('button', 'mover-chart-btn', 'Grafik RADAR');
+  internal.type = 'button';
+  internal.setAttribute('aria-label', 'Buka grafik RADAR untuk ' + safeText(coin.name));
+  internal.addEventListener('click', () => openInternalCoinChart(coin));
+  actions.append(internal);
+  const id = String(coin?.id || '');
+  if (/^[a-z0-9-]{1,100}$/i.test(id)) {
+    const external = node('a', 'mover-external-link', 'Grafik eksternal ↗');
+    external.href = 'https://www.coingecko.com/en/coins/' + encodeURIComponent(id);
+    external.target = '_blank';
+    external.rel = 'noopener noreferrer';
+    external.setAttribute('aria-label', 'Buka halaman grafik eksternal CoinGecko untuk ' + safeText(coin.name));
+    actions.append(external);
+  }
+  return actions;
+}
 function renderMovers() {
   const rows = market?.data?.markets || [];
-  const gainers = [...rows].filter((coin) => Number.isFinite(Number(coin.price_change_percentage_24h))).sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0, 6);
-  const losers = [...rows].filter((coin) => Number.isFinite(Number(coin.price_change_percentage_24h))).sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0, 6);
+  const valid = rows.filter((coin) => Number.isFinite(Number(coin.price_change_percentage_24h)));
+  const gainers = [...valid].sort((a, b) => Number(b.price_change_percentage_24h) - Number(a.price_change_percentage_24h)).slice(0, 6);
+  const losers = [...valid].sort((a, b) => Number(a.price_change_percentage_24h) - Number(b.price_change_percentage_24h)).slice(0, 6);
   const draw = (coin) => {
-    const row = node('div', 'compact-row');
-    row.append(node('b', '', safeText(coin.symbol).toUpperCase()), node('span', 'compact-name', safeText(coin.name)), changeNode(coin.price_change_percentage_24h));
+    const row = node('div', 'mover-row');
+    const summary = node('div', 'mover-summary');
+    summary.append(
+      node('b', 'mover-symbol', safeText(coin.symbol).toUpperCase()),
+      node('span', 'mover-name', safeText(coin.name)),
+      changeNode(coin.price_change_percentage_24h)
+    );
+    const metrics = node('small', 'mover-metrics',
+      'Harga ' + fmtMoney(coin.current_price) + ' · MCap ' + fmtMoney(coin.market_cap) + ' · Volume ' + fmtMoney(coin.total_volume));
+    row.append(summary, metrics, createMoverActions(coin));
     return row;
   };
   renderCompact($('#gainers'), gainers, draw, 'Data gainers belum tersedia.');
