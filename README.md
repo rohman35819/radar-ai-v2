@@ -200,3 +200,8 @@ Do not use `/tmp` for RADAR AI state: Hostless clears it when the process starts
 - New application/domain contracts are introduced in TypeScript and checked with strict `tsc --noEmit`; the current production Node.js JavaScript runtime remains unchanged during migration.
 - Offline quantitative research/backtesting lives in `research/python/` and uses Python standard library only. It does not fetch private data or execute exchange orders.
 - See docs/architecture/scale-roadmap.md for the staged TypeScript, Python, PostgreSQL, ingestion-worker and scaling architecture. No paid infrastructure or production migration is activated by this roadmap.
+
+
+### Market data persistence foundation
+
+The additive PostgreSQL schema in `db/migrations/003_market_data.sql` defines canonical assets, source observations with provenance/idempotency, partitioned OHLCV candles, ingestion runs and durable source checkpoints. GitHub Actions applies it only to an ephemeral PostgreSQL 16 database and runs `db/tests/003_market_data_smoke.sql`. No production database is migrated or populated by this repository change. Monthly candle partitions must be provisioned ahead of ingestion; production rollout requires a separately reviewed backup, migration, backfill and rollback plan.
