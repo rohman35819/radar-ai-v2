@@ -134,12 +134,19 @@ const isStringRecord = (value: unknown): value is Record<string, unknown> =>
 const isNonEmptyString = (value: unknown, max = 160): value is string =>
   typeof value === 'string' && value.length > 0 && value.length <= max;
 
+const isOptionalIsoTimestamp = (value: unknown): boolean =>
+  value === undefined || value === null || isIsoTimestamp(value);
+
+const isUuid = (value: unknown): value is string =>
+  typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
 export function isRadarAsset(value: unknown): value is RadarAsset {
   if (!isRecord(value)) return false;
   const kinds = ['token', 'coin', 'contract', 'pool', 'pair', 'index', 'other'];
   if (!isNonEmptyString(value.asset_id, 128) || !kinds.includes(String(value.asset_kind))) return false;
   if (!isNonEmptyString(value.symbol, 32) || !isNonEmptyString(value.name)) return false;
-  if (!isOptionalString(value.chain) || !isOptionalString(value.contract_address)) return false;
+  if (!(value.chain === undefined || value.chain === null || isNonEmptyString(value.chain, 64))) return false;
+  if (!(value.contract_address === undefined || value.contract_address === null || isNonEmptyString(value.contract_address, 160))) return false;
   if ((value.chain == null) !== (value.contract_address == null)) return false;
   if (value.decimals !== undefined && value.decimals !== null &&
       (!Number.isInteger(value.decimals) || Number(value.decimals) < 0 || Number(value.decimals) > 36)) return false;
@@ -161,29 +168,33 @@ export function isRadarCandle(value: unknown): value is RadarCandle {
   if (Number(value.low) > Math.min(Number(value.open), Number(value.close), Number(value.high))) return false;
   if (value.volume !== undefined && (typeof value.volume !== 'number' || !Number.isFinite(value.volume) || value.volume < 0)) return false;
   if (value.trades !== undefined && value.trades !== null && (!Number.isInteger(value.trades) || Number(value.trades) < 0)) return false;
-  if (!isOptionalString(value.source_updated_at) || !isOptionalString(value.ingestion_run_id)) return false;
+  if (!isOptionalIsoTimestamp(value.source_updated_at) ||
+      !(value.ingestion_run_id === undefined || value.ingestion_run_id === null || isUuid(value.ingestion_run_id))) return false;
   return true;
 }
 
 export function isMarketObservation(value: unknown): value is MarketObservation {
   return isRecord(value) && isNonEmptyString(value.source, 80) &&
     isNonEmptyString(value.entity_type, 48) && isNonEmptyString(value.entity_id) &&
-    isIsoTimestamp(value.observed_at) && isOptionalString(value.source_updated_at) &&
+    isIsoTimestamp(value.observed_at) && isOptionalIsoTimestamp(value.source_updated_at) &&
     (value.schema_version === undefined || (Number.isInteger(value.schema_version) && Number(value.schema_version) >= 1 && Number(value.schema_version) <= 100)) &&
     isRecord(value.payload) && typeof value.payload_hash === 'string' && /^[a-f0-9]{64}$/.test(value.payload_hash) &&
-    isOptionalString(value.ingestion_run_id);
+    (value.ingestion_run_id === undefined || value.ingestion_run_id === null || isUuid(value.ingestion_run_id));
 }
 
 export function isIngestionRun(value: unknown): value is IngestionRun {
   if (!isRecord(value)) return false;
   const statuses = ['running', 'succeeded', 'partial', 'failed', 'cancelled'];
-  return isNonEmptyString(value.run_id, 64) && isNonEmptyString(value.source, 80) &&
-    isNonEmptyString(value.stream, 80) && statuses.includes(String(value.status)) &&
-    isIsoTimestamp(value.started_at) && isOptionalString(value.completed_at) &&
-    ['records_received', 'records_inserted', 'records_updated', 'records_rejected'].every(key =>
-      value[key] === undefined || (Number.isInteger(value[key]) && Number(value[key]) >= 0)) &&
-    isOptionalString(value.error_code) &&
-    (value.metadata === undefined || isRecord(value.metadata));
+  if (!isUuid(value.run_id) || !isNonEmptyString(value.source, 80) ||
+      !isNonEmptyString(value.stream, 80) || !statuses.includes(String(value.status)) ||
+      !isIsoTimestamp(value.started_at) || !isOptionalIsoTimestamp(value.completed_at) ||
+      !isOptionalString(value.error_code) ||
+      (value.metadata !== undefined && !isRecord(value.metadata))) return false;
+  const counters = ['records_received', 'records_inserted', 'records_updated', 'records_rejected'];
+  if (!counters.every(key => value[key] === undefined || (Number.isInteger(value[key]) && Number(value[key]) >= 0))) return false;
+  const received = Number(value.records_received ?? 0);
+  const handled = Number(value.records_inserted ?? 0) + Number(value.records_updated ?? 0) + Number(value.records_rejected ?? 0);
+  return handled <= received && (value.completed_at == null || Date.parse(value.completed_at) >= Date.parse(value.started_at));
 }
 
 export function isIngestionCheckpoint(value: unknown): value is IngestionCheckpoint {
@@ -192,8 +203,8 @@ export function isIngestionCheckpoint(value: unknown): value is IngestionCheckpo
   return isNonEmptyString(value.source, 80) && isNonEmptyString(value.stream, 80) &&
     statuses.includes(String(value.status)) &&
     (value.cursor === undefined || isRecord(value.cursor)) &&
-    isOptionalString(value.last_attempt_at) && isOptionalString(value.last_success_at) &&
-    isOptionalString(value.next_run_at) &&
+    isOptionalIsoTimestamp(value.last_attempt_at) && isOptionalIsoTimestamp(value.last_success_at) &&
+    isOptionalIsoTimestamp(value.next_run_at) &&
     (value.consecutive_failures === undefined || (Number.isInteger(value.consecutive_failures) && Number(value.consecutive_failures) >= 0)) &&
     isOptionalString(value.last_error_code);
 }
