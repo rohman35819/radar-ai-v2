@@ -3326,3 +3326,15 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Smoke HTTP lokal (port 38714, DATA_DIR sementara): `/`, `/app.js`, `/top5.js`, `/style.css`, `/api/health` → 200; marker fitur ditemukan pada `/app.js` yang disajikan.
 - Batasan: rencana trading adalah perhitungan mekanis dari volatilitas teramati, bukan prediksi; tidak ada order/transfer/withdrawal; profit tidak dijamin. QA browser desktop/mobile dan Hostless Build/LIVE belum diverifikasi.
 - NEXT TASK: buat PR ke `develop`, verifikasi exact-head test/security/branch-source, QA modal pada browser nyata, lalu promosi `develop`→`main` terpisah.
+
+---
+
+## 134. RILIS v2.3.0 KE MAIN — 26 NOVEMBER 2026
+
+- PR #116 (`feat/top5-action-center` → `develop`) dibuat dan **di-merge** setelah gate hijau: `merge_commit_sha` `96181f901a242b7912c1a6d45d08d42b75694324`. CI head `7e37968a01350a50edba9e9cae0b5924da829b25`: run `45672541371` (`test`, `Branch source policy` success) dan `45672541742` (`Gitleaks`, `Trivy` success); `mergeable=true`, `mergeable_state=clean`.
+- PR #117 (`develop` → `main`) dibuat dan **di-merge** setelah gate hijau: `merge_commit_sha` `1ed78c50006197709b1ace20170641dc29ad46de`. CI head `96181f901a242b7912c1a6d45d08d42b75694324`: run `45672767788` (`test`, `Branch source policy` success) dan `45672767821` (`Gitleaks`, `Trivy` success); `mergeable=true`, `mergeable_state=clean`.
+- Tag immutable `v2.3.0` dibuat dan di-push pada commit rilis `1ed78c5...` (SemVer; tidak ada tag sebelumnya di repository).
+- Verifikasi lokal pada checkout `origin/main`: `public/top5.js` ada, menu `action` dan `intel` ada di `index.html`, `npm test` **207 pass, 0 fail, 0 skipped**.
+- Perubahan yang ikut rilis: Top 5 Action Center + Radar Intelligence (§133), Top Movers dual chart (PR #114), cloud worker hardening, sidebar drawer fix, dan perbaikan dokumentasi terkait. Tidak ada migrasi database baru pada rilis ini; rollback = revert merge PR #117 pada `main` + redeploy commit sebelumnya.
+- Hostless Build/LIVE **tidak diverifikasi**; tidak ada klaim website sudah menampilkan versi ini. Perlu pengecekan terpisah terhadap deployment SHA.
+- NEXT TASK: verifikasi Hostless build/deploy SHA dan QA browser desktop/mobile pada menu Top 5 Action Center, Radar Intelligence, dan modal Trading Analysis.
