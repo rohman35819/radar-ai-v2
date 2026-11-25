@@ -3576,7 +3576,8 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Tidak ada dependency baru; Python memakai standard library. Tidak ada provider live, PostgREST production write, secret, database production, scheduler, Hostless config atau deploy.
 
 ### QA / status
-- Exact-head GitHub Actions test run `45703472886` lulus pada code/test head `a2470e1b053afce02833f3913449493fc5239342`: npm, strict TypeScript, Python 3.13, dan seluruh disposable PostgreSQL migration/smoke tests sukses. Kode dan tes identik dibawa ke branch baru; exact-head CI/security tetap wajib di branch baru.
+- Exact-head GitHub Actions test run `45703472886` lulus pada code/test head `a2470e1b053afce02833f3913449493fc5239342`: npm, strict TypeScript, Python 3.13, dan seluruh disposable PostgreSQL migration/smoke tests sukses. Kode dan tes identik dibawa ke branch baru.
+- Branch kemudian disinkronkan dengan latest develop `fd27e99c1109c50d2b21f6c355a80b54de24b223` melalui merge commit `e5f503909f07a4ee48cb7025a68014a623b20eb9`; PR #146 mergeable/clean secara ancestry (`ahead 7`, `behind 0`). Exact-head test/security pada merge commit tetap pending.
 - Test lokal tidak dijalankan karena sesi ini hanya memiliki akses GitHub connector, bukan working clone/runtime repository.
 - Baseline develop test run `45702176052` dan security run `45702176391` sukses pada SHA `2f44965ea005cc4751d54bf9464acfc8cc351ed9`; branch baru dibuat dari develop SHA `51a61db326df1eb3c44b6fd3730453213fcb3f70`.
 - `main` tetap `f38d25a6203ab486d7170369e86874f838af627a`; TypeScript/Python/worker pilot berada di jalur develop/eksperimen, belum menjadi runtime atau release production.
