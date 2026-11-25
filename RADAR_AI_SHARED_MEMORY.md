@@ -42,7 +42,7 @@
 
 ## Next actions
 1. PR #126 (`exp/scalable-platform-foundation` → `develop`) code head `a3187e8...` passed 217 Node tests, strict TypeScript typecheck, Python 5/5, PostgreSQL smoke tests, branch policy, Gitleaks and Trivy. Latest docs-only head `469006a...` has rerun checks queued.
-2. Triage the four open documentation PRs (#121, #115, #112, #105) before/alongside the architecture PR; develop is three commits behind main.
+2. PR #121 and #112 closed as superseded; #115 (Grok contributor charter) and #105 (Termux/Groq handoff) remain open and need triage/rebase.
 3. Keep production JavaScript, market state, secrets, Hostless settings, and paid infrastructure unchanged until additive data migrations and worker integration pass isolated gates.
 4. Next technical phase: design PostgreSQL market observations/OHLCV/checkpoint schema and disposable migration/idempotency/partition tests.
 
