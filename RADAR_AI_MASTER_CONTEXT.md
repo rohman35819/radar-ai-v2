@@ -3505,7 +3505,6 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ### NEXT TASK
 - Selesaikan exact-head rerun setelah update dokumentasi, lalu merge PR #135 ke develop jika seluruh checks lulus.
 - Fase berikutnya: buat ingestion worker terpisah yang memakai durable queue/checkpoint dan adapter market-data OFF-by-default; lakukan failure/restart/rate-limit tests sebelum integrasi apa pun ke runtime production.
-
 ## 143. SNAPSHOT CONDITIONAL GET / ETag — 26 NOVEMBER 2026
 
 - Peran: Independent Principal Engineer & Performance Architect. Branch `perf/snapshot-etag` dari `develop` `0a2619f70fff306118bfb4922edd591c8829f5f4`. Tidak menyentuh `lib/ingest.js` atau test konkurensi yang dikerjakan PR #135 (hindari duplikasi).
@@ -3520,3 +3519,9 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Batasan: benchmark lokal dengan data sintetis, bukan produksi/Hostless; manfaat penuh bergantung pada klien/CDN yang mengirim `If-None-Match`. Tidak ada database migration, dependency, secret, service berbayar, atau perubahan produksi. Belum ada pengukuran CPU/RAM terpisah.
 - Pengujian: `node --check server.js` lulus; `node --test test/radar.test.js` 26/26 pass; `npm test` **226 pass, 0 fail, 0 skipped** (30 file); `git diff --check` bersih.
 - NEXT TASK: PR ke `develop`, verifikasi gate exact-head, lalu evaluasi apakah CDN/Hostless meneruskan conditional request; setelah itu pertimbangkan kompresi gzip/br dan pagination untuk endpoint dengan payload terbesar.
+
+### Penutup PR #140 — 26 November 2026
+- PR awal #137 gagal pada `Branch source policy` bukan karena kode: prefix `perf/*` tidak termasuk allowlist workflow (hanya `feat/*`, `fix/*`, `exp/*`, `docs/*`, `chore/*`, `ci/*`, `security/*`, `test/*`, `refactor/*`). Job `test` pada PR #137 sukses. PR #137 ditutup, branch diganti menjadi `feat/snapshot-etag`, dan PR #140 dibuat ulang.
+- PR #140 di-merge ke `develop` dengan `merge_commit_sha` `80c460133ddf16dfbbcf8bf5bd82e906401b4257`. Head terverifikasi `80bd31be2b37d285c5df5d6d508401af9f5b114f`; `mergeable=true`, `mergeable_state=clean`.
+- Gate exact-head: run `45702419852` (`test` **success**, `Branch source policy` **success**) dan `45702420025` (`Gitleaks` **success**, `Trivy` **success**). Lokal: `npm test` 226/226 pass sebelum merge.
+- Tidak ada rilis ke `main` yang saya lakukan pada siklus ini; Hostless Build/LIVE tidak diverifikasi untuk perubahan ini.
