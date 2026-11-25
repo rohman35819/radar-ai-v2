@@ -3434,11 +3434,11 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - QA menemukan dua kesalahan pada smoke test awal (assertion partisi ikut menghitung index inheritance; fixture invalid candle tidak menyertakan asset_id setelah canonical-key refactor). Keduanya diperbaiki; exact-head CI terbaru lulus.
 
 ### Status QA dan batasan
-- Branch eksperimen: `exp/market-data-schema-v1`, dibuat dari develop `f3e7b8c2fb193afa2ef09bf48fe2ca97c7467ff6` setelah PR #126 dan PR #127 terintegrasi.
-- Exact-head code SHA `3baac6845214b89f5b5e91b4d927d402c579ec59`: push run `45697488552` lulus; npm **217/217**, strict TypeScript typecheck, Python **5/5**, existing PostgreSQL Agent Platform/queue/memory smoke tests dan market-data migration/smoke test lulus. PR run `45697498217` lulus termasuk Branch source policy; security run `45697498319` lulus (Gitleaks + Trivy). Belum ada hasil test lokal karena working clone tidak tersedia.
+- Branch eksperimen: `exp/market-data-schema-v1`, dibuat dari develop `f3e7b8c2fb193afa2ef09bf48fe2ca97c7467ff6` setelah PR #126 dan PR #127 terintegrasi; PR #128 telah di-squash merge ke develop sebagai `4266dba74f13585e9fcfc35f235eb763bdd325f5`.
+- Exact-head PR SHA `2c86a3042bdd4fd861395497aadca9b0e3f8c912`: run `45697708206` lulus (npm **217/217**, strict TypeScript, Python **5/5**, semua Agent Platform/queue/memory/market-data PostgreSQL smoke tests, Branch source policy); run `45697708170` lulus (Gitleaks + Trivy). Merge commit `4266dba74f13585e9fcfc35f235eb763bdd325f5` juga lulus: test run `45697866567` (217/217, TS, Python 5/5, semua PostgreSQL smoke tests) dan security run `45697866613` (Gitleaks + Trivy). Belum ada hasil test lokal karena working clone tidak tersedia.
 - Tidak ada worker ingestion yang menggunakan schema ini, tidak ada backfill, tidak ada market-data production writes, dan tidak ada API route baru.
 - Hostless Build belum dijalankan; LIVE tidak berubah/tidak diklaim. Tidak ada secret, layanan berbayar, storage, exchange, trading, atau konfigurasi produksi yang diubah.
 
 ### NEXT TASK
-- Exact-head tests, Branch source policy, Gitleaks, dan Trivy lulus pada SHA `3baac684...`; lakukan final mergeability check lalu integrasikan ke develop.
-- Setelah schema pilot lulus, rancang migrasi/backfill bertahap dan worker adapter hanya di lingkungan disposable/staging; production rollout tetap memerlukan backup, partition provisioning, idempotency, retention, rollback dan persetujuan operasional.
+- PR #128 telah merged; `develop` HEAD `4266dba...`, `main` tetap `f38d25a...`. Exact-head PR dan merge-commit CI/security semuanya lulus.
+- NEXT: implementasikan adapter/worker ingestion terisolasi dengan feature flag OFF dan mock PostgREST tests; jangan aktifkan koneksi production sebelum schema exposure, backup, partition provisioning, idempotency, retention, rollback dan operasional diverifikasi.

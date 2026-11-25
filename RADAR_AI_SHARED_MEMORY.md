@@ -44,7 +44,7 @@
 1. PR #126 (`exp/scalable-platform-foundation` → `develop`) code head `a3187e8...` passed 217 Node tests, strict TypeScript typecheck, Python 5/5, PostgreSQL smoke tests, branch policy, Gitleaks and Trivy. Latest docs-only head `469006a...` has rerun checks queued.
 2. PR #121 and #112 closed as superseded; #115 (Grok contributor charter) and #105 (Termux/Groq handoff) remain open and need triage/rebase.
 3. Keep production JavaScript, market state, secrets, Hostless settings, and paid infrastructure unchanged until additive data migrations and worker integration pass isolated gates.
-4. Next technical phase: design PostgreSQL market observations/OHLCV/checkpoint schema and disposable migration/idempotency/partition tests.
+4. Next technical phase: build a disabled-by-default typed ingestion adapter/worker for the market-data schema with mocked PostgREST tests; no production activation.
 
 - Top 5 Action Center + Radar Intelligence added on branch `feat/top5-action-center`: transparent scoring from real snapshot fields, mechanical trade plan from observed price history with NOT_ENOUGH_DATA guard, honest capability matrix (whale/smart money/portfolio marked unavailable). 207/207 tests pass; no trading/withdrawal enabled. Browser QA and Hostless verification pending.
 
