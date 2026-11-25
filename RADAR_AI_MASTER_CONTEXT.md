@@ -3431,14 +3431,14 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - RLS diaktifkan pada seluruh tabel; tidak ada client policy. Hanya `service_role` mendapat schema/table privileges yang diperlukan. Observations append-only; assets/runs/checkpoints dapat di-update; candles dapat di-upsert untuk koreksi provider; tidak ada DELETE/TRUNCATE.
 - `db/tests/003_market_data_smoke.sql` menguji RLS/privilege, append-only observations, idempotency, OHLCV checks, canonical asset key, upsert candle, checkpoint persistence, dan monthly partitions.
 - `.github/workflows/test.yml` menjalankan migration + smoke test ini hanya pada PostgreSQL 16 ephemeral CI. Tidak ada koneksi atau migrasi ke database produksi.
+- QA menemukan dua kesalahan pada smoke test awal (assertion partisi ikut menghitung index inheritance; fixture invalid candle tidak menyertakan asset_id setelah canonical-key refactor). Keduanya diperbaiki; exact-head CI terbaru lulus.
 
 ### Status QA dan batasan
 - Branch eksperimen: `exp/market-data-schema-v1`, dibuat dari develop `f3e7b8c2fb193afa2ef09bf48fe2ca97c7467ff6` setelah PR #126 dan PR #127 terintegrasi.
-- Migration dan smoke test baru belum diverifikasi sampai workflow exact-head selesai. Belum ada hasil test lokal karena working clone tidak tersedia.
+- Exact-head code SHA `3baac6845214b89f5b5e91b4d927d402c579ec59`: push run `45697488552` lulus; npm **217/217**, strict TypeScript typecheck, Python **5/5**, existing PostgreSQL Agent Platform/queue/memory smoke tests dan market-data migration/smoke test lulus. PR run `45697498217` lulus termasuk Branch source policy; security run `45697498319` lulus (Gitleaks + Trivy). Belum ada hasil test lokal karena working clone tidak tersedia.
 - Tidak ada worker ingestion yang menggunakan schema ini, tidak ada backfill, tidak ada market-data production writes, dan tidak ada API route baru.
 - Hostless Build belum dijalankan; LIVE tidak berubah/tidak diklaim. Tidak ada secret, layanan berbayar, storage, exchange, trading, atau konfigurasi produksi yang diubah.
 
 ### NEXT TASK
-- Jalankan exact-head GitHub Actions; perbaiki kegagalan SQL/privilege/partition jika ada.
-- Tambahkan Gitleaks/Trivy melalui PR, lakukan review seluruh diff dan mergeability.
+- Exact-head tests, Branch source policy, Gitleaks, dan Trivy lulus pada SHA `3baac684...`; lakukan final mergeability check lalu integrasikan ke develop.
 - Setelah schema pilot lulus, rancang migrasi/backfill bertahap dan worker adapter hanya di lingkungan disposable/staging; production rollout tetap memerlukan backup, partition provisioning, idempotency, retention, rollback dan persetujuan operasional.
