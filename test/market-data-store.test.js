@@ -72,6 +72,7 @@ test('adapter validates payloads and caps batches before making requests', async
     enabled: true, supabaseUrl: 'https://db.example.test', serviceRoleKey: 'secret',
     fetchImpl: async () => { calls++; return new Response(null, { status: 204 }); },
   });
+  assert.equal((await store.upsertAssets(null)).code, 'INVALID_PAYLOAD');
   assert.equal((await store.upsertCandles([{ ...candle, high: 0.5 }])).code, 'INVALID_PAYLOAD');
   assert.equal((await store.upsertAssets(Array.from({ length: 251 }, () => asset))).code, 'BATCH_TOO_LARGE');
   assert.equal((await store.upsertAssets([asset])).ok, true);
