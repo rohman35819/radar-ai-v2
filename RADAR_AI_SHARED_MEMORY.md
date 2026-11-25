@@ -49,3 +49,5 @@
 - Top 5 Action Center + Radar Intelligence added on branch `feat/top5-action-center`: transparent scoring from real snapshot fields, mechanical trade plan from observed price history with NOT_ENOUGH_DATA guard, honest capability matrix (whale/smart money/portfolio marked unavailable). 207/207 tests pass; no trading/withdrawal enabled. Browser QA and Hostless verification pending.
 
 - Hostless LIVE verified at v2.3.0 commit `1ed78c5` (build `2fab35ee` per BOS). Public probe: homepage 200, `/top5.js` 200, action/intel menus present. Browser interaction QA still pending.
+
+- Second proven bug (26 Nov): `renderAction()` threw `ReferenceError: priceLabel is not defined`, leaving Top 5 page empty even after CDN fix. Added the helper in `public/app.js` and a runtime regression test (`test/top5-runtime.test.js`, 3 tests) that actually executes action/intel renderers. 213/213 tests pass. Needs release + LIVE re-verification.

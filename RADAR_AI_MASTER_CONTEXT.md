@@ -3346,3 +3346,15 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Ini adalah bukti LIVE yang terpisah dari CI/GitHub merge: commit di GitHub → Hostless build → LIVE sudah dikonfirmasi untuk SHA yang sama.
 - Batasan: QA klik/visual pada browser desktop dan ponsel belum dilakukan; verifikasi ini hanya HTTP/HTML/asset, bukan render interaktif.
 - NEXT TASK: QA browser nyata untuk Top 5 Action Center, Radar Intelligence, dan modal Trading Analysis; pastikan `NOT ENOUGH DATA` tampil ketika histori harga tidak cukup.
+
+---
+
+## 137. PERBAIKAN RENDER TOP 5 — `priceLabel` TIDAK TERDEFINISI — 26 NOVEMBER 2026
+
+- Setelah perbaikan CDN (§136), BOS melaporkan halaman **Top 5 Action Center tetap kosong**. Saya reproduksi dengan menjalankan `top5.js` + `app.js` LIVE di VM bersama snapshot nyata: `render()` untuk `tab='action'` melempar **`ReferenceError: priceLabel is not defined`**.
+- Akar masalah: `top5Card()` dan `openTradeAnalysis()` memakai helper `priceLabel()`, tetapi helper tersebut tidak pernah didefinisikan pada branch `feat/top5-action-center` (helper serupa ada di branch lain yang belum terintegrasi). Karena exception terjadi di dalam event handler, `#view` tidak diganti sehingga tampilan tampak kosong.
+- Perbaikan: menambahkan `const priceLabel=(v)=>Number.isFinite(Number(v))?'$'+Number(v).toPrecision(6):'—';` di `public/app.js` berdampingan dengan `money()`/`pct()`/`ratio()`. Tidak ada perubahan API, data, atau perilaku fitur lain.
+- Regression test baru `test/top5-runtime.test.js` (3 test) menjalankan `render()` untuk `action` dan `intel` dengan DOM shim dan fixture deterministik, lalu memastikan masing-masing merender 5 kartu / matriks kemampuan, tidak jatuh ke `System Health`, dan `openTradeAnalysis()` tidak melempar `ReferenceError`. Test statis saja tidak akan menangkap bug ini.
+- Pengujian: `node --check public/app.js` lulus; `node --test test/top5-runtime.test.js` 3/3 pass; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
+- Status: perbaikan pada branch `fix/top5-price-label` dari `develop` `8ac4642`; perlu PR ke `develop` lalu rilis ke `main`. Hostless LIVE untuk perbaikan ini belum diverifikasi.
+- NEXT TASK: setelah deploy, ulangi reproduksi terhadap aset LIVE dan pastikan `renderAction()` menghasilkan kartu; lanjutkan QA klik browser nyata.
