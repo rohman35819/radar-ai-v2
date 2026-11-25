@@ -90,6 +90,18 @@ test('provider failure does not advance checkpoint and does not stop another sou
   assert.equal(JSON.stringify(result).includes('private provider detail'), false);
 });
 
+test('provider mutation cannot change the committed cursor on failure', async () => {
+  const { store, calls } = makeStore();
+  const worker = await createWorker({ enabled: true, store });
+  const result = await worker.runOnce([task('mutating', async cursor => {
+    cursor.page = 999;
+    throw new Error('provider failed after mutating its input');
+  })]);
+  assert.equal(result.tasks[0].code, 'PROVIDER_FETCH_FAILED');
+  const failedCheckpoint = calls.filter(call => call.name === 'checkpoint').at(-1).rows[0];
+  assert.deepEqual(failedCheckpoint.cursor, { page: 1 });
+});
+
 test('worker bounds parallel tasks and preserves input result order', async () => {
   const { store } = makeStore();
   let active = 0;
