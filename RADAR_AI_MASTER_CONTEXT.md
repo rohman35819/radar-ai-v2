@@ -3586,6 +3586,6 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### NEXT TASK
 - PR #147 documentation follow-up lulus exact-head test run `45705877937` (npm **233/233**, strict TypeScript, Python **8/8**, PostgreSQL smoke) dan security run `45705877821` (Gitleaks no leaks; Trivy secret no issues; vulnerability scan unavailable without dependency manifests) pada head `abab179a90ad960b822d3cb8aa9f694e847c5d9a`.
-- PR #146 dan PR #147 sudah lulus gate masing-masing; PR #147 menunggu merge ke `develop`.
+- PR #147 documentation follow-up lulus exact-head test run `45706096803` dan security run `45706096285` pada head `0b4e778f4983e54efb1539e47c00980e13e13bbe`; perubahan hanya dokumentasi dan tidak mengubah runtime.
 - `main` tetap `f38d25a6203ab486d7170369e86874f838af627a`. Hostless Build tidak dipicu; LIVE tidak berubah dan tidak diverifikasi. Main monitor run `45690836381` gagal membaca metadata deployment, sedangkan readiness/snapshot/news probes sukses.
 - NEXT setelah dokumentasi terintegrasi: implementasikan durable queue lease/claim + retry/dead-letter + provider-specific quotas, lalu versioned dataset/experiment manifests dan walk-forward tests. Tetap OFF sampai approval dan readiness/rollback gate.
