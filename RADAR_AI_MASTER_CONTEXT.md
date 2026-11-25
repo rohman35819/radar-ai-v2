@@ -3497,8 +3497,8 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - `test/ingest-concurrency.test.js` memverifikasi max concurrency, stable result ordering, overlap aktual pada refresh, health provider dan clamp konfigurasi.
 
 ### QA dan status
-- Exact-head `b1ec37c302f4579312193e4bd3f05f352712f5ec`: push run `45700925243` sukses; PR test run `45700979865` sukses (npm **226/226**, strict TypeScript, Python **5/5**, seluruh disposable PostgreSQL migrations/smoke tests); PR security run `45700979903` sukses (Gitleaks + Trivy).
-- PR #135 masih draft dan perlu final mergeability check setelah dokumentasi diperbarui; belum di-merge.
+- Exact-head PR SHA `99e4cce51e8db645c4bbd82266b4d2ace9af7ee5`: push run `45701172896` sukses; PR test run `45701179151` sukses (npm **226/226**, strict TypeScript, Python **5/5**, seluruh disposable PostgreSQL migrations/smoke tests); PR security run `45701179003` sukses (Gitleaks + Trivy). Merge commit `1fe5b5b165ace8c4321c7343fc56f629f2508eed` juga lulus test run `45701378046` (226/226, TS, Python 5/5, PostgreSQL) dan security run `45701378059` (Gitleaks + Trivy).
+- PR #135 di-squash merge ke develop sebagai `1fe5b5b165ace8c4321c7343fc56f629f2508eed` setelah exact-head checks lulus.
 - Tidak ada provider fetch nyata dalam test; semua sumber dimock. Tidak ada retry baru, kuota berbayar, perubahan database, secrets, Hostless config atau LIVE deployment.
 - Belum ada benchmark end-to-end terhadap provider LIVE; concurrency overlap teruji, tetapi persentase pengurangan waktu refresh belum diukur.
 
