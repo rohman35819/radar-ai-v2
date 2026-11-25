@@ -65,9 +65,10 @@ Do not introduce Java, C++, Rust or Go merely to increase the language count. Mo
 - Gate: duplicate/idempotency tests, partition/pruning query tests, data provenance, migration rollback/forward compatibility.
 
 ### Phase 3 — durable ingestion workers
+- Typed PostgREST adapter pilot exists in src/market-data-store.mts. It is disabled by default and has no production caller; it requires an explicitly configured HTTPS Supabase endpoint/service-role key and radar_market schema exposure.
 - Connect worker processes to the existing PostgreSQL queue only after adapter, leases, retry/dead-letter, idempotency, permission and kill-switch tests pass.
 - Separate dashboard API lifecycle from ingestion lifecycle.
-- Gate: restart recovery, concurrency/rate-limit tests, failure injection and queue-age SLO.
+- Gate: restart recovery, bounded concurrency/rate-limit tests, failure injection and queue-age SLO.
 
 ### Phase 4 — research and experimentation platform
 - Add versioned datasets, experiment manifests, reproducible runs and walk-forward evaluation.
