@@ -130,10 +130,12 @@ export function createIngestionWorker(options: IngestionWorkerOptions) {
       return { source: task.source, stream: task.stream, ok: false, code: 'RUN_START_FAILED', recordsReceived: 0 };
     }
 
+    // Preserve an immutable checkpoint snapshot; provider code receives a separate copy.
+    const committedCursor = structuredClone(task.cursor);
     const runningCheckpoint: IngestionCheckpoint = {
       source: task.source,
       stream: task.stream,
-      cursor: task.cursor,
+      cursor: committedCursor,
       status: 'running',
       last_attempt_at: startedAt,
     };
@@ -165,7 +167,7 @@ export function createIngestionWorker(options: IngestionWorkerOptions) {
 
     let batch: IngestionBatch;
     try {
-      batch = await task.fetchBatch(task.cursor);
+      batch = await task.fetchBatch(structuredClone(committedCursor));
     } catch {
       return finishFailure('PROVIDER_FETCH_FAILED');
     }
