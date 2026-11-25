@@ -52,18 +52,18 @@ ON CONFLICT (source, entity_type, entity_id, observed_at, payload_hash) DO NOTHI
 INSERT INTO radar_market.market_observations (source, entity_type, entity_id, observed_at, payload, payload_hash, ingestion_run_id)
 VALUES ('fixture', 'asset', 'ethereum:0x0000000000000000000000000000000000000001', '2026-01-15T00:00:00Z', '{"price":1.25}'::jsonb, repeat('a',64), '20000000-0000-4000-8000-000000000001')
 ON CONFLICT (source, entity_type, entity_id, observed_at, payload_hash) DO NOTHING;
-INSERT INTO radar_market.market_candles (symbol, interval_code, bucket_at, source, open, high, low, close, volume, ingestion_run_id)
-VALUES ('TSTUSDT', '1m', '2026-01-15T00:00:00Z', 'fixture', 1, 1.5, 0.9, 1.2, 100, '20000000-0000-4000-8000-000000000001');
-INSERT INTO radar_market.market_candles (symbol, interval_code, bucket_at, source, open, high, low, close, volume, ingestion_run_id)
-VALUES ('TSTUSDT', '1m', '2026-01-15T00:00:00Z', 'fixture', 1, 1.6, 0.95, 1.3, 120, '20000000-0000-4000-8000-000000000001')
-ON CONFLICT (symbol, interval_code, bucket_at, source) DO UPDATE SET high=EXCLUDED.high, low=EXCLUDED.low, close=EXCLUDED.close, volume=EXCLUDED.volume;
+INSERT INTO radar_market.market_candles (asset_id, symbol, interval_code, bucket_at, source, open, high, low, close, volume, ingestion_run_id)
+VALUES ('ethereum:0x0000000000000000000000000000000000000001', 'TSTUSDT', '1m', '2026-01-15T00:00:00Z', 'fixture', 1, 1.5, 0.9, 1.2, 100, '20000000-0000-4000-8000-000000000001');
+INSERT INTO radar_market.market_candles (asset_id, symbol, interval_code, bucket_at, source, open, high, low, close, volume, ingestion_run_id)
+VALUES ('ethereum:0x0000000000000000000000000000000000000001', 'TSTUSDT', '1m', '2026-01-15T00:00:00Z', 'fixture', 1, 1.6, 0.95, 1.3, 120, '20000000-0000-4000-8000-000000000001')
+ON CONFLICT (asset_id, interval_code, bucket_at, source) DO UPDATE SET high=EXCLUDED.high, low=EXCLUDED.low, close=EXCLUDED.close, volume=EXCLUDED.volume;
 INSERT INTO radar_market.ingestion_checkpoints (source, stream, cursor, status, last_attempt_at, last_success_at, next_run_at)
 VALUES ('fixture', 'market', '{"page":2}'::jsonb, 'succeeded', now(), now(), now() + interval '5 minutes')
 ON CONFLICT (source, stream) DO UPDATE SET cursor=EXCLUDED.cursor, status=EXCLUDED.status, updated_at=now();
 DO $$
 BEGIN
   IF (SELECT count(*) FROM radar_market.market_observations WHERE source='fixture') <> 1 THEN RAISE EXCEPTION 'Observation idempotency failed'; END IF;
-  IF (SELECT count(*) FROM radar_market.market_candles WHERE symbol='TSTUSDT') <> 1 THEN RAISE EXCEPTION 'Candle upsert/idempotency failed'; END IF;
+  IF (SELECT count(*) FROM radar_market.market_candles WHERE asset_id='ethereum:0x0000000000000000000000000000000000000001') <> 1 THEN RAISE EXCEPTION 'Candle upsert/idempotency failed'; END IF;
   IF (SELECT close FROM radar_market.market_candles WHERE symbol='TSTUSDT') <> 1.3 THEN RAISE EXCEPTION 'Candle correction did not update latest bar'; END IF;
   IF (SELECT cursor->>'page' FROM radar_market.ingestion_checkpoints WHERE source='fixture' AND stream='market') <> '2' THEN RAISE EXCEPTION 'Checkpoint persistence failed'; END IF;
 END $$;
@@ -73,7 +73,7 @@ DO $$
 BEGIN
   BEGIN
     INSERT INTO radar_market.market_candles (symbol, interval_code, bucket_at, source, open, high, low, close)
-    VALUES ('BAD', '1m', '2026-01-15T00:00:00Z', 'fixture', 1, 0.5, 0.9, 1.1);
+    VALUES ('ethereum:0x0000000000000000000000000000000000000001', 'BAD', '1m', '2026-01-15T00:00:00Z', 'fixture', 1, 0.5, 0.9, 1.1);
     RAISE EXCEPTION 'Invalid OHLC candle unexpectedly accepted';
   EXCEPTION WHEN check_violation THEN NULL;
   END;
