@@ -6,7 +6,7 @@ import argparse
 import csv
 import json
 import math
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
@@ -61,8 +61,17 @@ def run_backtest(
         raise ValueError("Histori harus lebih panjang daripada slow_period")
     if any(not math.isfinite(c.close) or c.close <= 0 for c in rows):
         raise ValueError("Semua close harus finite dan lebih besar dari nol")
-    if any(b.timestamp <= a.timestamp for a, b in zip(rows, rows[1:])):
-        raise ValueError("Timestamp harus naik secara ketat")
+    parsed_times = []
+    for candle in rows:
+        try:
+            parsed = datetime.fromisoformat(candle.timestamp.replace("Z", "+00:00"))
+        except (AttributeError, TypeError, ValueError):
+            raise ValueError("Timestamp harus ISO-8601 berzona waktu") from None
+        if parsed.tzinfo is None:
+            raise ValueError("Timestamp harus ISO-8601 berzona waktu")
+        parsed_times.append(parsed)
+    if any(current <= previous for previous, current in zip(parsed_times, parsed_times[1:])):
+        raise ValueError("Timestamp harus naik secara ketat berdasarkan waktu UTC")
     if not all(math.isfinite(x) and 0 <= x <= 10000 for x in (fee_bps, slippage_bps)):
         raise ValueError("Fee/slippage harus antara 0 dan 10000 bps")
 
