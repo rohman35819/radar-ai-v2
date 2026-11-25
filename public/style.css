@@ -205,7 +205,7 @@ body{
 
 /* Tombol buka web eksternal untuk setiap token */
 .token-actions .web-btn{color:var(--accent);text-decoration:none;display:grid;place-items:center}
-.mover-row a.web-btn,.unlock-asset a.web-btn{width:24px;height:24px;flex:none;margin-left:6px;text-decoration:none}
+.mover-row a.web-btn,.unlock-asset a.web-btn{width:28px;height:28px;flex:none;margin-left:6px;text-decoration:none}
 @media(max-width:760px){.mover-row a.web-btn,.unlock-asset a.web-btn{width:28px;height:28px;min-height:28px}}
 
 /* Grafik internal token (modal on-demand) */
@@ -221,7 +221,7 @@ body{
 .chart-body svg{width:100%;height:auto;display:block}
 .chart-body .muted{color:var(--muted);font-size:10px}
 .token-actions .chart-btn{color:var(--accent2)}
-.mover-row .chart-btn{width:24px;height:24px;flex:none;margin-left:6px}
+.mover-row .chart-btn{width:28px;height:28px;flex:none;margin-left:6px}
 @media(max-width:760px){.chart-panel{padding:13px;max-height:92vh}.mover-row .chart-btn{width:28px;height:28px;min-height:28px}}
 
 /* AI Workspace — token admin hanya di memori halaman */
