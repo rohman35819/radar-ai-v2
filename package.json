@@ -11,7 +11,9 @@
     "test": "node --check server.js && node --check lib/exchanges.js && node --check public/trading.js && node --check public/app.js && node --check public/top5.js && node --check public/solscan.js && node --check lib/solscan.js && node --check public/sw.js && node --check public/command.js && node --check lib/ai/openai.js && node --check public/market.js && node --check lib/market-intelligence.js && node --check lib/derivatives.js && node --check lib/onchain.js && node --check lib/dexscreener.js && node --check lib/goplus.js && node --test test/*.test.js",
     "live-check": "node scripts/live-check.js",
     "news-check": "node scripts/news-live-check.js",
-    "hostless-check": "node scripts/hostless-live-check.js"
+    "hostless-check": "node scripts/hostless-live-check.js",
+    "typecheck": "npx --yes --package typescript@5.9.3 tsc --noEmit -p tsconfig.json",
+    "test:python": "python3 -m unittest discover -s research/python -p 'test_*.py' -v"
   },
   "license": "UNLICENSED",
   "private": true

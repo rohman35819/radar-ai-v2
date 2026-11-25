@@ -56,6 +56,14 @@ jobs:
         with:
           node-version: 24
       - run: npm test
+      - name: Set up Python for offline research tests
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Strict TypeScript type check
+        run: npm run typecheck
+      - name: Python offline research unit tests
+        run: npm run test:python
       - name: Prepare disposable PostgreSQL roles
         run: docker exec ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test -c "CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN BYPASSRLS;"
       - name: Apply Agent Platform schema migration

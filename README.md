@@ -193,3 +193,10 @@ Do not use `/tmp` for RADAR AI state: Hostless clears it when the process starts
 - `GET /api/ai/queue` reports active, waiting, total, capacity, oldest wait, and process-lifetime completed/rejected counters. The AI Council displays the same status.
 - Counters reset when the server process restarts. The queue itself is in-memory and intentionally does not replay stale provider requests after a restart.
 - The cap applies across Gemini, Groq, OpenRouter, and OpenAI calls, including AI Council and AI Workspace. It limits simultaneous calls and waiting work; it does not change provider account quotas or daily usage caps.
+
+
+## Scalable engineering foundation (incremental)
+
+- New application/domain contracts are introduced in TypeScript and checked with strict `tsc --noEmit`; the current production Node.js JavaScript runtime remains unchanged during migration.
+- Offline quantitative research/backtesting lives in `research/python/` and uses Python standard library only. It does not fetch private data or execute exchange orders.
+- See docs/architecture/scale-roadmap.md for the staged TypeScript, Python, PostgreSQL, ingestion-worker and scaling architecture. No paid infrastructure or production migration is activated by this roadmap.

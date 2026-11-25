@@ -3386,3 +3386,37 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Pengujian: `node --check public/app.js` lulus; `node --test test/top5-runtime.test.js` 3/3 pass; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
 - Status: perbaikan pada branch `fix/top5-price-label` dari `develop` `8ac4642`; perlu PR ke `develop` lalu rilis ke `main`. Hostless LIVE untuk perbaikan ini belum diverifikasi.
 - NEXT TASK: setelah deploy, ulangi reproduksi terhadap aset LIVE dan pastikan `renderAction()` menghasilkan kartu; lanjutkan QA klik browser nyata.
+
+---
+
+## 138. FONDASI ARSITEKTUR SKALA BESAR — 26 NOVEMBER 2026
+
+### Keputusan arsitektur
+- BOS mengarahkan RADAR disiapkan untuk pertumbuhan data, eksperimen paralel, dan pengembangan berkelanjutan. Diputuskan migrasi bertahap (strangler pattern), bukan big-bang rewrite.
+- TypeScript menjadi default strategis untuk modul aplikasi/domain baru; JavaScript produksi tetap dipertahankan sampai setiap modul pengganti memiliki parity tests dan kontrak kompatibel.
+- Python dipakai untuk riset kuantitatif/backtest offline dan nantinya worker eksperimen yang terisolasi. Tidak memiliki kapabilitas order exchange.
+- PostgreSQL ditetapkan sebagai target system-of-record untuk observasi pasar, OHLCV, dan job state. JSON state tetap kompatibel selama masa transisi; belum ada migrasi produksi.
+- Throughput ditingkatkan dengan bounded concurrency, provider quotas, durable queue, idempotency, backpressure, observability, dan scale-out berbasis metrik. Tidak menggunakan concurrency tanpa batas.
+- Rust/Go hanya dipertimbangkan setelah profiling membuktikan hot path atau bottleneck yang terukur. Tidak menambah bahasa sekadar menambah jumlah bahasa.
+- Tidak ada layanan berbayar, VPS, Redis, object storage, perubahan secret, deployment setting, atau konfigurasi produksi yang diaktifkan.
+
+### Implementasi fondasi pada branch eksperimen
+- Branch `exp/scalable-platform-foundation`, dibuat dari `main` SHA `f38d25a6203ab486d7170369e86874f838af627a` (rilis v2.3.2).
+- `src/contracts.mts`: kontrak TypeScript untuk snapshot/token, candle OHLCV, dan provenance observation serta runtime guards.
+- `tsconfig.json`: strict type-checking (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, no emit).
+- `package.json`: `npm run typecheck` memakai TypeScript 5.9.3 yang dipatok; `npm run test:python` menjalankan unit tests Python.
+- `.github/workflows/test.yml`: CI menambah Python 3.13 unit tests dan strict TypeScript type-check; existing Node tests dan disposable PostgreSQL smoke tests dipertahankan.
+- `research/python/`: deterministic SMA crossover offline backtester, biaya fee/slippage, no-look-ahead, drawdown, dan validasi timestamp/harga.
+- `docs/architecture/scale-roadmap.md` dan README menjelaskan target modular API/ingestion/storage/research/AI workers, urutan migrasi, throughput, dan safety gates.
+
+### QA dan status
+- Eksperimen sebelumnya pada branch `exp/python-backtest-typescript-contracts` telah lulus exact-code CI run `45691537934` pada SHA `6620346...`: npm 216/216, Python 4/4, dan disposable PostgreSQL Agent Platform/queue/memory smoke tests lulus. Ini adalah bukti pilot sebelumnya, bukan bukti branch baru.
+- Code/test head `a3187e898a6600ad704a142cda9b0571452a8447` lulus pada run `45695516637` (npm **217/217**, strict TypeScript typecheck, Python **5/5**, disposable PostgreSQL smoke tests, branch policy) dan `45695516748` (Gitleaks + Trivy). Setelah itu hanya dokumentasi master/shared memory dan deskripsi PR yang berubah; latest head `469006a5100495f356b109de13250e0e442a3b21` sedang menjalani ulang PR checks `45695742240` dan `45695742355`. Belum ada hasil lokal karena tidak tersedia working clone pada sesi ini.
+- Branch `develop` tertinggal 3 commit dari `main`; branch eksperimen dibuat dari main agar tidak kehilangan rilis v2.3.2. PR #126 menuju develop membawa tiga commit main tersebut ke integration lane bersama fondasi baru.
+- Open PR saat audit awal: #121, #115, #112, #105 (empat PR dokumentasi). PR #126 kini dibuka sebagai draft karena penting membangun fondasi sebelum volume data dan biaya migrasi membesar; ini pengecualian WIP yang dijelaskan di body PR. Exact-head test + security scans sedang berjalan.
+- GitHub branch tersimpan; CI branch baru pending; Hostless Build belum dijalankan; LIVE belum berubah dan tidak diklaim.
+- Tidak ada production route, data, schema, secret, service, atau deploy yang diubah.
+
+### NEXT TASK
+- PR #126 code head tests, Branch source policy, Gitleaks, dan Trivy lulus pada SHA `a3187e8...`; documentation-only head `469006a...` checks queued. Setelah latest head lulus, review mergeability lalu tandai ready dan integrasikan ke develop.
+- Fase berikutnya: rancang additive PostgreSQL market-data schema + smoke tests di disposable PostgreSQL; jangan terapkan ke production sebelum backup, backfill, compatibility dan rollback plan tervalidasi.
