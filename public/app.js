@@ -20,7 +20,7 @@ const ratio = (v) => v == null || !Number.isFinite(Number(v)) ? '—' : Number(v
 const dateTime = (v) => v ? new Date(v).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}) : 'Belum tersedia';
 const esc = (v) => String(v ?? '—');
 const FLAG = {fdv_unknown:'FDV tidak diketahui',fdv_gt_5x_mcap:'FDV > 5x MCap',volume_gt_mcap:'Volume > MCap',stale:'Data basi'};
-const TITLES = {'early-gems':'Early Gem Scanner',solscan:'Solana Intelligence',overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health'};
+const TITLES = {'early-gems':'Early Gem Scanner',solscan:'Solana Intelligence',overview:'Ringkasan Pasar',screener:'Market Screener',watch:'Watchlist',analytics:'Analitik Pasar',news:'News Feed',unlock:'Token Unlock',alerts:'Alert Center',ai:'AI Council',workspace:'AI Workspace',system:'System Health',action:'Top 5 Action Center',intel:'Radar Intelligence'};
 let data=null, aiGroup=null, aiWorkspace=null, solscanOverview=null, tab='overview', watch=[], expanded=null, refreshBusy=false, toastTimer, snapshotReachable=false;
 let screenerFilters={q:'',trend:'all',sort:'market_cap'},screenerVisible=[],earlyGemFilters={q:'',minLiquidity:0};
 try {
@@ -79,6 +79,8 @@ function renderOverview(){
   statCard('VOLUME 24 JAM',money(s.vol),'Volume dari aset terpantau','⇅'),
   statCard('MARKET BREADTH',s.count?Math.round(s.positive/s.count*100)+'%':'—',s.positive+' naik · '+s.negative+' turun','⌁',s.positive>=s.negative?'positive':'negative')
  ));
+ const top5=window.RadarTop5?RadarTop5.rankTop5(getTokens(),{now:Date.now()}):[];
+ if(top5.length)v.append(card(sectionHead('Top 5 Action Center','Peringkat transparan dari data aktual.',el('button',{class:'text-btn',onclick:()=>navigate('action')},'Buka pusat aksi →')),el('div',{class:'act-grid compact'},...top5.slice(0,3).map(top5Card))));
  const movers=card(sectionHead('Top Movers','Pergerakan terbesar berdasarkan data 24 jam',el('button',{class:'text-btn',onclick:()=>navigate('screener')},'Buka screener →')),el('div',{class:'mover-grid'},
   el('div',{class:'mover-column'},el('div',{class:'column-label positive'},'▲ GAINERS'),...topTokens('change_24h',-1,5).map(t=>el('div',{class:'mover-row'},el('b',{},esc(t.symbol)),pctPill(t.change_24h)))),
   el('div',{class:'mover-column'},el('div',{class:'column-label negative'},'▼ LOSERS'),...topTokens('change_24h',1,5).map(t=>el('div',{class:'mover-row'},el('b',{},esc(t.symbol)),pctPill(t.change_24h))))
@@ -370,10 +372,100 @@ function renderSystem(){
  v.append(card(sectionHead('Data Source Monitor','Status setiap sumber yang dipakai server.'),...rows.map(([name,s])=>el('div',{class:'source-row'},el('div',{},el('b',{},name.toUpperCase()),el('small',{},dateTime(s.at)),s.error?el('small',{class:'negative'},s.error):null),el('span',{class:s.ok?'source-ok':'source-error'},s.ok?'HEALTHY':'ERROR')))));
  v.append(card(sectionHead('Konfigurasi & batas sistem','Informasi yang dapat dibaca dari API snapshot.'),el('div',{class:'detail-grid'},el('div',{},el('small',{},'Status data'),el('b',{},(data?.stale||!snapshotReachable)?'Stale / koneksi perlu dicek':'Aktif')),el('div',{},el('small',{},'Telegram'),el('b',{},data?.config_needed?.telegram?'Belum dikonfigurasi':'Terkonfigurasi')),el('div',{},el('small',{},'CoinGecko key'),el('b',{},data?.config_needed?.coingecko_key?'Tidak tersedia':'Terkonfigurasi')),el('div',{},el('small',{},'Unlock source'),el('b',{},data?.config_needed?.unlock_source?'Belum tersedia':'Terkonfigurasi'))),el('p',{class:'muted'},'API key dan token tidak pernah ditampilkan di dashboard.')));
 }
+function top5Card(item){
+ const signal=String(item.signal||'WAIT');
+ const cls=signal==='BUY SETUP'?'positive':signal==='AVOID'?'negative':'warning';
+ return el('article',{class:'act-card','data-coin-id':item.id||'','data-rank':item.rank},
+  el('div',{class:'act-head'},el('span',{class:'act-rank'},'#'+item.rank),el('div',{},el('b',{},esc(item.symbol)),el('small',{},esc(item.name))),el('span',{class:'signal-pill '+cls},signal)),
+  el('div',{class:'act-metrics'},
+   el('div',{},el('small',{},'SKOR'),el('b',{},Number(item.score||0).toFixed(1))),
+   el('div',{},el('small',{},'HARGA'),el('b',{},priceLabel(item.price))),
+   el('div',{},el('small',{},'24J'),el('b',{class:Number(item.change_24h)>=0?'positive':'negative'},pct(item.change_24h))),
+   el('div',{},el('small',{},'KONFIDENSI DATA'),el('b',{},item.confidence+'%'))),
+  el('ul',{class:'act-reasons'},...(item.reasons||[]).map(reason=>el('li',{},esc(reason)))),
+  el('div',{class:'act-foot'},el('small',{class:'muted'},'Risiko '+(item.risk_level||'—')+' · '+(item.fresh?'data segar':'data perlu dicek')),el('button',{class:'secondary-btn act-open',type:'button','data-coin-id':item.id||'',onclick:()=>openTradeAnalysis(item)},'VIEW TRADE ANALYSIS'))
+ );
+}
+const intelCapabilities=[
+ ['Live Market Scanner','AKTIF','/api/snapshot','Ringkasan & Market Screener'],
+ ['Top 5 Action Center','AKTIF','skor lokal dari snapshot','Menu Top 5 Action Center'],
+ ['Trading Analysis','AKTIF','/api/market-intelligence/chart','Tombol VIEW TRADE ANALYSIS'],
+ ['Token Discovery','AKTIF','feed on-chain','Early Gem Scanner'],
+ ['Smart Money Tracking','BELUM TERSEDIA','sumber belum terverifikasi','—'],
+ ['Whale Activity','BELUM TERSEDIA','sumber belum terverifikasi','—'],
+ ['Market Trend Analysis','TERBATAS','/api/market-intelligence','Market Intelligence'],
+ ['Token Risk Scanner','TERBATAS','GoPlus opsional','Early Gem Scanner'],
+ ['Portfolio Intelligence','BELUM TERSEDIA','koneksi portofolio belum ada','—'],
+ ['Signal History','TERBATAS','alert log','Alert Center'],
+ ['Performance Analytics','TERBATAS','snapshot & analitik','Analitik Pasar'],
+];
+function renderAction(){
+ const v=$('#view');v.replaceChildren();
+ v.append(sectionHead('Top 5 Action Center','Peringkat transparan berdasarkan data yang benar-benar tersedia. Bukan rekomendasi otomatis.'));
+ const ranked=window.RadarTop5?RadarTop5.rankTop5(getTokens(),{now:Date.now()}):[];
+ if(!ranked.length)return v.append(card(empty('Belum ada data token','Snapshot server belum tersedia atau kosong.')));
+ v.append(el('div',{class:'act-grid'},...ranked.map(top5Card)));
+ v.append(card(el('b',{},'Metode skor (dapat diaudit)'),el('p',{class:'muted'},'Momentum 24 jam maksimal 20 + volume/market cap maksimal 25 + likuiditas maksimal 15 (hanya bila tersedia) + kesegaran data 10 + kelengkapan data 10. Data basi dibatasi maksimal 45 dan tidak boleh menjadi BUY SETUP. Confidence mengukur kualitas data, bukan probabilitas profit.')));
+}
+function renderIntel(){
+ const v=$('#view');v.replaceChildren();
+ v.append(sectionHead('Radar Intelligence','Peta kemampuan intelijen RADAR AI V2. Status mengikuti backend yang benar-benar tersedia.'));
+ v.append(card(sectionHead('Status kemampuan','Hanya fitur AKTIF yang dapat dipakai sekarang; TERBATAS berarti sebagian data saja.'),
+  el('div',{class:'intel-list'},...intelCapabilities.map(([name,status,source,where])=>{
+   const cls=status==='AKTIF'?'positive':status==='TERBATAS'?'warning':'muted';
+   return el('div',{class:'intel-row'},el('b',{},esc(name)),el('span',{class:cls},status),el('small',{class:'muted'},'Sumber: '+esc(source)+' · '+esc(where)));
+  }))));
+ v.append(card(sectionHead('Langkah cepat','Buka pusat aksi untuk analisis token peringkat teratas.'),el('button',{class:'secondary-btn',type:'button',onclick:()=>navigate('action')},'Buka Top 5 Action Center')));
+}
+async function openTradeAnalysis(item){
+ const old=$('#trade-analysis-modal');if(old)old.remove();
+ const symbol=esc(item.symbol||'—');
+ const modal=el('div',{class:'trade-modal',id:'trade-analysis-modal',role:'dialog','aria-modal':'true','aria-label':'Analisis trading '+symbol},
+  el('div',{class:'chart-backdrop',onclick:()=>$('#trade-analysis-modal')?.remove()}),
+  el('div',{class:'trade-panel'},
+   el('div',{class:'chart-head'},el('div',{},el('div',{class:'eyebrow'},'TRADING ANALYSIS / MODE SIMULASI'),el('h2',{},symbol)),el('button',{class:'icon-btn',type:'button','aria-label':'Tutup analisis',onclick:()=>$('#trade-analysis-modal')?.remove()},'×')),
+   el('div',{id:'trade-body'},el('div',{class:'state-panel'},'Mengumpulkan data historis untuk analisis…'))));
+ document.body.append(modal);
+ const body=modal.querySelector('#trade-body');
+ const field=(label,value)=>el('div',{},el('small',{},label),el('b',{},value==null||value===''?'NOT ENOUGH DATA':esc(value)));
+ const identity=el('div',{class:'detail-grid'},
+  field('NAMA',item.name),field('SIMBOL',item.symbol),field('COIN ID',item.id),
+  field('CONTRACT ADDRESS',item.contract_address),field('NETWORK',item.chain),
+  field('HARGA',priceLabel(item.price)),field('MARKET CAP',money(item.market_cap)),field('FDV',money(item.fdv)),
+  field('VOLUME 24J',money(item.volume_24h)),field('LIKUIDITAS',money(item.liquidity_usd)),
+  field('PERUBAHAN 24J',pct(item.change_24h)),field('DIPERBARUI',dateTime(item.timestamp)));
+ const section=(title,...children)=>el('section',{class:'trade-section'},el('h3',{},title),...children);
+ const quality=section('SIGNAL QUALITY',
+  el('div',{class:'detail-grid'},field('SIGNAL',item.signal),field('SKOR',Number(item.score||0).toFixed(1)),field('DATA COMPLETENESS',item.confidence+'%'),field('RISK LEVEL',item.risk_level),field('RANKING','#'+item.rank),field('ANALISIS TERAKHIR',dateTime(item.timestamp))),
+  el('p',{class:'muted'},'Confidence adalah ukuran kelengkapan dan kesegaran data, bukan probabilitas keuntungan. Skor belum dikalibrasi pada data historis.'),
+  el('ul',{class:'act-reasons'},...(item.reasons||[]).map(reason=>el('li',{},esc(reason)))));
+ try{
+  const response=await fetch('/api/market-intelligence/chart?coin='+encodeURIComponent(item.id||'')+'&days=7',{cache:'no-store',signal:AbortSignal.timeout(15000)});
+  const payload=await response.json();
+  if(!response.ok||payload?.status!=='success')throw new Error(payload?.code||'CHART_UNAVAILABLE');
+  const prices=payload?.data?.prices||[];
+  const plan=window.RadarTop5.buildTradePlan({price:item.price,prices});
+  const indicators=window.RadarTop5.indicatorSummary(prices);
+  const planNode=plan.status==='MECHANICAL_PLAN'
+   ?section('TRADING PLAN (SIMULASI)',
+      el('div',{class:'detail-grid'},field('BUY PRICE',plan.buy_price),field('BUY ZONE',plan.buy_zone.join(' – ')),field('TP1',plan.tp1+' ('+plan.tp1_pct+'%)'),field('TP2',plan.tp2+' ('+plan.tp2_pct+'%)'),field('TP3',plan.tp3+' ('+plan.tp3_pct+'%)'),field('STOP LOSS',plan.stop_loss+' ('+plan.stop_loss_pct+'%)'),field('RISK/REWARD',plan.risk_reward),field('SUPPORT / RESISTANCE',plan.support+' / '+plan.resistance)),
+      el('p',{class:'muted'},plan.method),el('p',{class:'muted'},'Invalidasi: '+plan.invalidation),el('p',{class:'muted'},plan.estimation_note),el('p',{class:'warning'},plan.disclaimer))
+   :section('TRADING PLAN',el('div',{class:'state-panel'},'NOT ENOUGH DATA — '+esc(plan.reason)),el('p',{class:'muted'},'Tidak ada angka entry, TP, atau SL dibuat tanpa histori harga yang cukup.'));
+  const intel=section('INTELLIGENCE ANALYSIS',
+   el('div',{class:'detail-grid'},...['sma20','ema12','ema26','rsi14','macd','vwap'].map(key=>field(key.toUpperCase(),indicators[key]))),
+   el('p',{class:'muted'},'Support/resistance, volatilitas, dan zona entry dihitung dari histori harga pada endpoint yang sama. Breakout/retest, whale activity, holder distribution, dan contract risk memerlukan sumber data yang belum tersedia untuk seluruh aset: NOT ENOUGH DATA.'),
+   el('p',{class:'muted'},'Sumber harga: /api/market-intelligence/chart · diperbarui '+dateTime(payload.updated_at)+(payload.stale?' · DATA CACHE LAMA':'')));
+  body.replaceChildren(section('IDENTITAS & KONDISI ASET',identity),planNode,intel,quality,
+   el('p',{class:'warning'},'Mode analisis dan monitoring. Tidak ada order, transfer, withdrawal, atau transaksi nyata yang dikirim. Profit tidak dijamin.'));
+ }catch(error){
+  body.replaceChildren(section('TRADING PLAN',el('div',{class:'state-panel'},'NOT ENOUGH DATA — data historis gagal dimuat.'),el('p',{class:'muted'},esc(error?.message||'Sumber tidak tersedia.'))),quality,
+   el('p',{class:'warning'},'Tidak ada rekomendasi entry dibuat tanpa data harga yang terverifikasi.'));
+ }
+}
 function render(){
  $('#page-title').textContent=TITLES[tab]||'RADAR AI';$('#crumb').textContent=(tab||'overview').toUpperCase();
  document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
- if(tab==='overview')renderOverview();else if(tab==='screener')renderScreener();else if(tab==='early-gems')renderEarlyGems();else if(tab==='watch')renderWatch();else if(tab==='analytics')renderAnalytics();else if(tab==='news')renderNews();else if(tab==='unlock')renderUnlock();else if(tab==='alerts')renderAlerts();else if(tab==='ai')renderAI();else if(tab==='workspace')renderWorkspace();else renderSystem();
+ if(tab==='overview')renderOverview();else if(tab==='screener')renderScreener();else if(tab==='early-gems')renderEarlyGems();else if(tab==='watch')renderWatch();else if(tab==='analytics')renderAnalytics();else if(tab==='news')renderNews();else if(tab==='unlock')renderUnlock();else if(tab==='alerts')renderAlerts();else if(tab==='ai')renderAI();else if(tab==='workspace')renderWorkspace();else if(tab==='action')renderAction();else if(tab==='intel')renderIntel();else renderSystem();
 }
 function setSidebarOpen(open){
  const sidebar=$('#sidebar'),toggle=$('#menu-toggle');
