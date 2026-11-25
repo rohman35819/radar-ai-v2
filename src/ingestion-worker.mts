@@ -95,8 +95,16 @@ function isValidBatch(batch: unknown): batch is IngestionBatch {
   });
 }
 
-function resultOk(result: { ok: boolean }): boolean {
-  return result.ok === true;
+function resultOk(result: { ok: boolean } | null): boolean {
+  return result?.ok === true;
+}
+
+async function safeStoreWrite<T extends { ok: boolean }>(write: () => Promise<T>): Promise<T | null> {
+  try {
+    return await write();
+  } catch {
+    return null;
+  }
 }
 
 export function createIngestionWorker(options: IngestionWorkerOptions) {
@@ -118,7 +126,7 @@ export function createIngestionWorker(options: IngestionWorkerOptions) {
       records_rejected: 0,
     };
 
-    const initialRun = await options.store.recordRun(run);
+    const initialRun = await safeStoreWrite(() => options.store.recordRun(run));
     if (!resultOk(initialRun)) {
       return { source: task.source, stream: task.stream, ok: false, code: 'RUN_START_FAILED', recordsReceived: 0 };
     }
@@ -130,9 +138,9 @@ export function createIngestionWorker(options: IngestionWorkerOptions) {
       status: 'running',
       last_attempt_at: startedAt,
     };
-    const checkpointStarted = await options.store.saveCheckpoint(runningCheckpoint);
+    const checkpointStarted = await safeStoreWrite(() => options.store.saveCheckpoint(runningCheckpoint));
     if (!resultOk(checkpointStarted)) {
-      await options.store.recordRun({ ...run, status: 'failed', completed_at: now().toISOString(), error_code: 'CHECKPOINT_START_FAILED' });
+      await safeStoreWrite(() => options.store.recordRun({ ...run, status: 'failed', completed_at: now().toISOString(), error_code: 'CHECKPOINT_START_FAILED' }));
       return { source: task.source, stream: task.stream, ok: false, code: 'CHECKPOINT_START_FAILED', recordsReceived: 0 };
     }
 
@@ -140,19 +148,19 @@ export function createIngestionWorker(options: IngestionWorkerOptions) {
     let wroteAny = false;
     const finishFailure = async (code: string): Promise<TaskResult> => {
       const completedAt = now().toISOString();
-      await options.store.recordRun({
+      await safeStoreWrite(() => options.store.recordRun({
         ...run,
         status: wroteAny ? 'partial' : 'failed',
         completed_at: completedAt,
         records_received: recordsReceived,
         error_code: code,
-      });
-      await options.store.saveCheckpoint({
+      }));
+      await safeStoreWrite(() => options.store.saveCheckpoint({
         ...runningCheckpoint,
         status: 'failed',
         last_attempt_at: completedAt,
         last_error_code: code,
-      });
+      }));
       return { source: task.source, stream: task.stream, ok: false, code, recordsReceived };
     };
 
@@ -176,7 +184,7 @@ export function createIngestionWorker(options: IngestionWorkerOptions) {
     ]) {
       const rows = write;
       try {
-        const response = await rows();
+        const response = await safeStoreWrite(rows);
         if (!resultOk(response)) return finishFailure('STORE_WRITE_FAILED');
         if (response.records > 0) wroteAny = true;
       } catch {
@@ -196,7 +204,7 @@ export function createIngestionWorker(options: IngestionWorkerOptions) {
       records_updated: 0,
       records_rejected: 0,
     };
-    const runFinished = await options.store.recordRun(completedRun);
+    const runFinished = await safeStoreWrite(() => options.store.recordRun(completedRun));
     if (!resultOk(runFinished)) return finishFailure('RUN_FINISH_FAILED');
 
     const nextCheckpoint: IngestionCheckpoint = {
@@ -208,15 +216,15 @@ export function createIngestionWorker(options: IngestionWorkerOptions) {
       last_success_at: completedAt,
       consecutive_failures: 0,
     };
-    const checkpointFinished = await options.store.saveCheckpoint(nextCheckpoint);
+    const checkpointFinished = await safeStoreWrite(() => options.store.saveCheckpoint(nextCheckpoint));
     if (!resultOk(checkpointFinished)) {
-      await options.store.recordRun({ ...completedRun, status: 'partial', error_code: 'CHECKPOINT_COMMIT_FAILED' });
-      await options.store.saveCheckpoint({
+      await safeStoreWrite(() => options.store.recordRun({ ...completedRun, status: 'partial', error_code: 'CHECKPOINT_COMMIT_FAILED' }));
+      await safeStoreWrite(() => options.store.saveCheckpoint({
         ...runningCheckpoint,
         status: 'failed',
         last_attempt_at: completedAt,
         last_error_code: 'CHECKPOINT_COMMIT_FAILED',
-      });
+      }));
       return { source: task.source, stream: task.stream, ok: false, code: 'CHECKPOINT_COMMIT_FAILED', recordsReceived };
     }
     return { source: task.source, stream: task.stream, ok: true, code: 'SUCCEEDED', recordsReceived };
@@ -235,7 +243,8 @@ export function createIngestionWorker(options: IngestionWorkerOptions) {
       const workers = Array.from({ length: Math.min(concurrency, tasks.length) }, async () => {
         while (cursor < tasks.length) {
           const index = cursor++;
-          results[index] = await processTask(tasks[index]);
+          const task = tasks[index];
+          if (task) results[index] = await processTask(task);
         }
       });
       await Promise.all(workers);
