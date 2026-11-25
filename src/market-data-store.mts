@@ -49,7 +49,7 @@ export function createMarketDataStore(config: MarketDataStoreConfig = {}): Marke
   const timeoutMs = Math.min(30_000, Math.max(1_000, config.timeoutMs ?? 10_000));
   const fetchImpl = config.fetchImpl ?? fetch;
 
-  const write = async <T>(
+  const write = async <T,>(
     table: string,
     rows: T[],
     valid: (row: unknown) => boolean,
