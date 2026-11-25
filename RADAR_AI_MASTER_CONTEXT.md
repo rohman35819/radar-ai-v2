@@ -3386,3 +3386,35 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Pengujian: `node --check public/app.js` lulus; `node --test test/top5-runtime.test.js` 3/3 pass; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
 - Status: perbaikan pada branch `fix/top5-price-label` dari `develop` `8ac4642`; perlu PR ke `develop` lalu rilis ke `main`. Hostless LIVE untuk perbaikan ini belum diverifikasi.
 - NEXT TASK: setelah deploy, ulangi reproduksi terhadap aset LIVE dan pastikan `renderAction()` menghasilkan kartu; lanjutkan QA klik browser nyata.
+
+
+---
+
+## 138. PILOT EKSPANSI PYTHON + TYPESCRIPT — 26 NOVEMBER 2026
+
+### Tujuan dan keputusan arsitektur
+- BOS meminta rekomendasi ekspansi bahasa mulai diterapkan. Dipilih pilot terisolasi, bukan migrasi besar: **TypeScript** untuk kontrak batas API dan **Python** untuk riset/backtesting offline.
+- Runtime produksi tetap Node.js/JavaScript + PostgreSQL. Tidak ada perubahan server routes, dashboard, database, Hostless runtime, provider, API key, atau dependency npm.
+- TypeScript pilot berada di `src/contracts.ts`: tipe `RadarToken`/`RadarSnapshot` dan runtime guards untuk JSON `GET /api/snapshot`. Test memastikan payload valid diterima dan tipe/nilai malformed ditolak. Node 24 menjalankan TS dengan built-in type stripping; ini **belum** merupakan static type-check `tsc` dan belum menjadi migrasi frontend/backend.
+- Python pilot berada di `research/python/`: SMA crossover long/flat offline backtester dengan timestamp ISO-8601 berzona waktu, validasi harga/periode, sinyal diterapkan pada candle berikutnya (menghindari look-ahead), fee + slippage, return strategi vs buy-and-hold, drawdown, entries dan position changes. Standard library saja; tidak mengambil data eksternal dan tidak mengirim order.
+- `test.yml` menjalankan Python 3.13 unit tests pada CI. `npm test` memakai Node built-in type stripping untuk menguji TypeScript runtime contract. Tidak ada dependency runtime baru.
+
+### Branch, file, dan status
+- Branch eksperimen: `exp/python-backtest-typescript-contracts`, dibuat dari develop `63d950e2eeca0a8b059c5681e1df924dac3c6fb2`.
+- File: `src/contracts.ts`, `test/typescript-contracts.test.js`, `research/python/backtest.py`, `research/python/test_backtest.py`, `research/python/README.md`, `package.json`, `.github/workflows/test.yml`.
+- Terakhir diketahui commit branch setelah perubahan CI: `025b89f9f7583aee26e8f64f63564a6ea04a2a74` (perubahan berurutan telah tersimpan pada branch).
+- Local clone/test tidak dapat dijalankan pada sesi ini karena koneksi container ke github.com gagal DNS. Hasil test lokal: **tidak dijalankan**. Menunggu GitHub Actions pada push branch eksperimen; jangan sebut pilot lolos sebelum workflow exact-head selesai.
+- Security workflow hanya terpicu untuk push main/develop atau PR; sebelum PR, security scan exact-head belum tersedia. Branch tidak memiliki secret/provider credentials.
+- Repository state saat audit: main `f37a969f377359a5a4a633ef572d0d418c7ff2e4`; develop `63d950e2eeca0a8b059c5681e1df924dac3c6fb2`; release PR #125 develop→main terbuka. Ada empat PR terbuka lain menuju develop (#121, #115, #112, #105), melebihi WIP target 3; karena itu pilot tetap sebagai branch eksperimen dan belum dibuka sebagai PR.
+- Hostless Build dan LIVE untuk branch eksperimen: **tidak berlaku / belum dirilis**. Tidak ada deployment produksi.
+
+### Risiko dan batasan
+- Backtest hanya baseline riset, bukan strategi tervalidasi atau saran investasi; belum menguji out-of-sample, biaya funding, likuiditas, market impact, missing candles, dan berbagai regime.
+- TypeScript baru menyediakan kontrak runtime; tanpa `tsc`, kesalahan tipe compile-time belum dijaga. Migrasi modul existing harus menunggu pilot, type-check compiler, dan parity tests.
+- Python tidak dijalankan di Hostless dan tidak diintegrasikan ke API produksi. Jangan mengaktifkannya sebagai service tanpa bukti kebutuhan, runtime/operasional, resource limits dan review biaya.
+
+### NEXT TASK
+1. Verifikasi GitHub Actions test run pada exact branch head `025b89f9...` dan perbaiki seluruh kegagalan.
+2. Lakukan self-review diff, secret scan, dan bandingkan metrik backtest pada fixture deterministik; dokumentasikan keterbatasan.
+3. Setelah antrean PR develop ditriase, ajukan pilot ke develop hanya jika CI dan review lulus. Jangan rilis ke main/Hostless sebagai bagian pilot ini.
+4. Tahap berikutnya: evaluasi penambahan `tsc` sebagai dev-only tool yang terkunci versi dan static type-check bertahap; baru kemudian tentukan apakah Python layak menerima data historis terverifikasi.
