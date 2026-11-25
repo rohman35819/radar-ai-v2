@@ -205,3 +205,8 @@ Do not use `/tmp` for RADAR AI state: Hostless clears it when the process starts
 ### Market data persistence foundation
 
 The additive PostgreSQL schema in `db/migrations/003_market_data.sql` defines canonical assets, source observations with provenance/idempotency, partitioned OHLCV candles, ingestion runs and durable source checkpoints. GitHub Actions applies it only to an ephemeral PostgreSQL 16 database and runs `db/tests/003_market_data_smoke.sql`. No production database is migrated or populated by this repository change. Monthly candle partitions must be provisioned ahead of ingestion; production rollout requires a separately reviewed backup, migration, backfill and rollback plan.
+
+
+### Typed market-data adapter pilot
+
+A disabled-by-default typed PostgREST adapter is being developed in `src/market-data-store.mts`. It is tested with mocked fetch only and is not called by production routes or ingestion. Production use requires explicit schema exposure, server-side credentials, quotas, backup and a separately approved rollout.
