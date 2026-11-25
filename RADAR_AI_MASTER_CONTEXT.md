@@ -3291,3 +3291,18 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Branch `fix/sidebar-drawer-scroll` digabung lagi dengan `origin/develop` `b26d8b4bc97de8ce35fc570ae21d7d51ca3f0e52`. Konflik hanya pada dokumen master; bagian sidebar dinomorkan ulang menjadi §114 agar tidak bentrok dengan §113 (Grok charter). Tidak ada perubahan pada `public/style.css` atau `test/frontend-ui.test.js`.
 - Gate CI telah lolos pada HEAD lama `b3161df` (test, Branch source policy, security scans), tetapi **tidak boleh dipakai untuk HEAD baru**. CI exact-head harus dijalankan ulang setelah push ini sebelum merge dipertimbangkan.
 - Hostless Build/LIVE dan QA perangkat masih belum diverifikasi. Tidak ada kredensial, exchange, trading, atau konfigurasi produksi yang diubah.
+
+---
+
+## 132. TOP MOVERS — DUAL CHART ACCESS (25 NOVEMBER 2026)
+
+- Branch fitur: `feat/top-movers-dual-chart` dari `develop` SHA `ee53b04d39e51f5f95f88a2c02ff38a30c4cc638`. Tidak ada perubahan `main`, backend, endpoint berbayar, kredensial, atau dependensi baru.
+- `public/app.js`: `moverCard(token)` menggantikan baris Top Movers lama. Setiap kartu menampilkan simbol + nama, harga, perubahan 24 jam, market cap, volume, tombol **▤ Grafik RADAR**, dan tombol **↗ Grafik Eksternal**, plus keterangan sumber eksternal.
+- Identitas aset: grafik internal memakai `validCoinId()` (ID CoinGecko tervalidasi, maks. 80 karakter sesuai `SAFE_COIN_ID` server) dan membuka `/api/market-intelligence/chart?coin=<id>&days=7|30|90` yang sudah ada. Modal menampilkan ID aset, bukan simbol, sehingga simbol duplikat tidak mencampur aset.
+- URL eksternal: `externalTokenUrl()` hanya membangun DEX Screener bila `chain` masuk allowlist sembilan jaringan dan alamat kontrak cocok EVM/base58; untuk multi-chain memilih entri valid pertama. Tanpa kontrak, memakai `coingecko.com/en/coins/<id>` dari ID tervalidasi. Tidak ada URL dari ticker sembarangan. Anchor memakai `target="_blank"` dan `rel="noopener noreferrer"`.
+- Error/empty state: tanpa ID valid, tombol grafik dinonaktifkan dan tombol eksternal tidak dibuat; harga/mcap/volume null ditampilkan `—`; grafik gagal menampilkan pesan sanitasi + tombol coba lagi; titik harga < 2 menampilkan empty state. Tidak ada data simulasi.
+- CSS: kartu responsif (grid 4 kolom → 2 kolom di ≤760px), tombol minimal 32px desktop / 38px mobile, fokus `focus-visible`, modal grafik `z-index` 60.
+- Pengujian: `test/top-movers-ui.test.js` baru (6 test) mencakup 5 aset, koin dengan dan tanpa contract address, multi-chain, simbol duplikat, URL eksternal, `data-coin-id`, atribut keamanan, empty state, dan CSS responsif. `node --test test/top-movers-ui.test.js` 6/6 pass; `npm test` **202 pass, 0 fail, 0 skipped** (25 file); `node --check public/app.js` lulus; `git diff --check` bersih; pemindaian literal kredensial pada baris baru tidak menemukan secret.
+- Bukti tampilan: render DOM shim untuk 5 kartu fixture menghasilkan markup dengan `data-coin-id` benar dan kedua tombol; artefak disimpan di luar repository (`/data/data/com.termux/files/usr/tmp/opencode/top-movers-proof.txt`). Ini markup proof, bukan screenshot browser.
+- Batasan: QA klik/visual browser desktop dan ponsel belum dilakukan; Hostless Build/LIVE tidak dicek; PR belum dibuat karena token 403 `pull_requests: write`.
+- NEXT TASK: buat PR ke `develop` dengan token berizin, verifikasi exact-head test/security/branch-source, QA browser nyata, lalu rilis `develop`→`main` terpisah.

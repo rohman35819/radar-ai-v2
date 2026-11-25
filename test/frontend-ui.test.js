@@ -65,7 +65,7 @@ test('Drawer controls close the drawer and the main shell stays fixed',()=>{
   assert.match(html,/id="menu-toggle"[^>]*aria-controls="sidebar"[^>]*aria-expanded="false"/);
   assert.match(html,/id="sidebar-backdrop"[^>]*aria-label="Tutup menu"/);
   assert.match(app,/\$\('#sidebar-backdrop'\)\.addEventListener\('click',closeSidebar\)/);
-  assert.match(app,/event\.key==='Escape'[\s\S]*?closeSidebar\(\)/);
+  assert.match(app,/event\.key!=='Escape'\)return;if\(\$\('#token-chart-modal'\)\)closeTokenChart\(\);else if\(\$\('#sidebar'\)[\s\S]*?closeSidebar\(\)/);
   assert.match(app,/window\.addEventListener\('resize',\(\)=>\{if\(window\.innerWidth>760\)closeSidebar\(\);\}\)/);
   assert.match(app,/document\.body\.classList\.toggle\('sidebar-open',open\)/);
   assert.match(app,/toggle\.setAttribute\('aria-expanded',String\(open\)\)/);

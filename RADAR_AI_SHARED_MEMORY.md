@@ -45,3 +45,5 @@
 2. Rebase/revalidate PR #106 against current develop and complete mobile/browser device QA before merging.
 3. Prepare a normal `develop` → `main` release PR for the cloud worker; verify exact-head release checks. Keep Groq disabled.
 4. After release, run a controlled manual worker test; later design a least-privilege non-production adapter to the existing PostgreSQL queue before any production activation.
+
+- Top Movers cards now expose "Grafik RADAR" (internal chart by validated CoinGecko id via existing chart endpoint) and "Grafik Eksternal" (allowlisted DEX Screener when contract+chain valid, otherwise CoinGecko by id). Symbol collisions cannot mix assets. Branch `feat/top-movers-dual-chart`; 202/202 tests pass. PR creation still blocked by PAT scope; browser QA pending.

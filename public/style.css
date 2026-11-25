@@ -199,3 +199,39 @@ body{
 .gem-validation-line{display:grid;gap:2px;padding-top:5px;border-top:1px solid var(--line)}
 .gem-validation-line>b{color:var(--text)}
 .gem-validation-line>small{font-size:9px}
+
+/* Top Movers — kartu aset dengan akses grafik internal dan eksternal */
+.mover-column{display:grid;gap:9px;align-content:start}
+.mover-card{display:grid;gap:9px;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--panel);min-width:0}
+.mover-top{display:flex;align-items:center;gap:9px;min-width:0}
+.mover-id{min-width:0}
+.mover-id b,.mover-id small{display:block}
+.mover-id b{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mover-id small{font-size:9px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mover-numbers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;font-size:9px;align-items:end}
+.mover-numbers span{color:var(--muted);font-size:8px;letter-spacing:.7px}
+.mover-numbers b{display:block;font-size:11px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.mover-numbers .change{display:block;font-size:10px}
+.mover-actions{display:flex;gap:7px;flex-wrap:wrap}
+.mover-action{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:32px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--text);font-size:10px;text-decoration:none;cursor:pointer}
+.mover-action.chart-btn{color:var(--accent2)}
+.mover-action.web-btn{color:var(--accent)}
+.mover-action:hover{border-color:var(--accent);color:var(--accent)}
+.mover-action:disabled,.mover-action.disabled{opacity:.45;cursor:not-allowed}
+.mover-action:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mover-source{color:var(--muted);font-size:8px}
+@media(max-width:760px){.mover-numbers{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.mover-action{flex:1 1 140px;min-height:38px}}
+
+/* Grafik internal RADAR */
+.chart-modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:18px}
+.chart-backdrop{position:absolute;inset:0;background:#040a14cc;border:0}
+.chart-panel{position:relative;width:min(780px,100%);max-height:88vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.chart-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.chart-head h2{margin:3px 0 0;font-size:18px}
+.chart-range{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 8px}
+.chart-range .mini-btn{width:auto;min-width:64px;height:28px;padding:0 10px;font-size:10px}
+.chart-range .mini-btn.on{border-color:var(--accent);color:var(--accent)}
+.chart-body{min-height:220px;margin:10px 0;color:var(--accent)}
+.chart-body svg{width:100%;height:auto;display:block}
+.chart-body .muted{color:var(--muted);font-size:10px}
+@media(max-width:760px){.chart-panel{padding:13px;max-height:92vh}}
