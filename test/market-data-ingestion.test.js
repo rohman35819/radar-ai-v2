@@ -38,6 +38,7 @@ test('market ingestion validates batch bounds and untrusted payloads before netw
   let calls = 0;
   const worker = createMarketDataIngestionWorker(options(async () => { calls += 1; return makeResponse([]); }, { maxBatchSize: 1 }));
   await assert.rejects(worker.ingest({ source: 'fixture', stream: 'spot', observations: [{ ...observation, asset: { ...asset, asset_id: '../bad' } }] }), /asset_id/);
+  await assert.rejects(worker.ingest({ source: 'fixture', stream: 'spot', observations: [{ ...observation, asset: { ...asset, chain: 42 } }] }), /chain or contract_address is invalid/);
   await assert.rejects(worker.ingest({ source: 'fixture', stream: 'spot', observations: [observation, observation] }), /0\.\.1 records/);
   await assert.rejects(worker.ingest({ source: 'fixture', stream: 'spot', observations: [{ ...observation, observed_at: 'not-a-date' }] }), /valid timestamp/);
   await assert.rejects(worker.ingest({ source: 'fixture', stream: 'spot', observations: [{ ...observation, payload: { price: Number.NaN } }] }), /finite/);
