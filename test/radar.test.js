@@ -163,6 +163,12 @@ test('integrasi server (sumber dimock)', async () => {
     const s = await (await fetch(base + '/api/snapshot')).json();
     assert.strictEqual(s.tokens.length, 1); assert.strictEqual(s.tokens[0].fundamental.tvl, 1e6);
     assert.strictEqual(s.stale, false); assert.strictEqual(s.news.length, 1); assert.ok(s.config_needed.telegram);
+    const snapshotResponse = await fetch(base + '/api/snapshot');
+    const etag = snapshotResponse.headers.get('etag');
+    assert.ok(etag && etag.startsWith('"'), 'snapshot menyediakan ETag');
+    const conditional = await fetch(base + '/api/snapshot', { headers: { 'if-none-match': etag } });
+    assert.strictEqual(conditional.status, 304, 'permintaan bersyarat menghasilkan 304');
+    assert.strictEqual(await conditional.text(), '', '304 tidak mengirim payload');
     assert.strictEqual((await fetch(base + '/')).status, 200);
     assert.strictEqual((await fetch(base + '/manifest.webmanifest')).status, 200);
     assert.strictEqual((await fetch(base + '/..%2Fserver.js')).status, 404);
