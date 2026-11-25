@@ -76,6 +76,8 @@ test('adapter validates payloads and caps batches before making requests', async
   assert.equal((await store.upsertCandles([{ ...candle, high: 0.5 }])).code, 'INVALID_PAYLOAD');
   assert.equal((await store.upsertAssets(Array.from({ length: 251 }, () => asset))).code, 'BATCH_TOO_LARGE');
   assert.equal((await store.upsertAssets([asset])).ok, true);
+  assert.equal((await store.upsertAssets([{ ...asset, metadata: { huge: 'x'.repeat(17000) } }])).code, 'INVALID_PAYLOAD');
+  assert.equal((await store.appendObservations([{ ...observation, payload: { huge: 'x'.repeat(66000) } }])).code, 'INVALID_PAYLOAD');
   assert.equal(calls, 1);
 });
 
