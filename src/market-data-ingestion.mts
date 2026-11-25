@@ -58,11 +58,30 @@ const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 function canonicalJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return '[' + value.map(canonicalJson).join(',') + ']';
-  const record = value as JsonRecord;
-  return '{' + Object.keys(record).sort().map((key) =>
-    JSON.stringify(key) + ':' + canonicalJson(record[key])).join(',') + '}';
+  const visit = (item: unknown, ancestors: Set<object>, depth: number): string => {
+    if (depth > 64) throw new RangeError('JSON nesting exceeds 64 levels');
+    if (item === null || typeof item === 'string' || typeof item === 'boolean') return JSON.stringify(item);
+    if (typeof item === 'number') {
+      if (!Number.isFinite(item)) throw new TypeError('JSON numbers must be finite');
+      return JSON.stringify(item);
+    }
+    if (typeof item !== 'object') throw new TypeError('payload contains a non-JSON value');
+    if (ancestors.has(item)) throw new TypeError('payload must not contain circular references');
+    ancestors.add(item);
+    let result: string;
+    if (Array.isArray(item)) {
+      result = '[' + item.map((entry) => visit(entry, ancestors, depth + 1)).join(',') + ']';
+    } else {
+      const prototype = Object.getPrototypeOf(item);
+      if (prototype !== Object.prototype && prototype !== null) throw new TypeError('payload must contain plain JSON objects');
+      const record = item as JsonRecord;
+      result = '{' + Object.keys(record).sort().map((key) =>
+        JSON.stringify(key) + ':' + visit(record[key], ancestors, depth + 1)).join(',') + '}';
+    }
+    ancestors.delete(item);
+    return result;
+  };
+  return visit(value, new Set<object>(), 0);
 }
 
 async function sha256(value: string): Promise<string> {
@@ -86,8 +105,8 @@ function validateAsset(asset: MarketAssetInput): void {
   if ((asset.chain == null) !== (asset.contract_address == null)) throw new TypeError('chain and contract_address must be supplied together');
   if (asset.chain != null && (asset.chain.length > 64 || asset.contract_address!.length > 160)) throw new TypeError('chain or contract_address is too long');
   if (asset.decimals != null && (!Number.isInteger(asset.decimals) || asset.decimals < 0 || asset.decimals > 36)) throw new TypeError('decimals is invalid');
-  if (asset.provider_ids != null && !isRecord(asset.provider_ids)) throw new TypeError('provider_ids must be an object');
-  if (asset.metadata != null && !isRecord(asset.metadata)) throw new TypeError('metadata must be an object');
+  if (asset.provider_ids != null) safeJsonObject(asset.provider_ids, 'provider_ids', 8192);
+  if (asset.metadata != null) safeJsonObject(asset.metadata, 'metadata', 16384);
 }
 
 function safeJsonObject(value: Record<string, unknown>, field: string, maxBytes: number): string {
@@ -125,6 +144,8 @@ export function createPostgrestMarketDataStore(options: {
         Authorization: 'Bearer ' + key,
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        'Content-Profile': 'radar_market',
+        'Accept-Profile': 'radar_market',
         ...(prefer ? { Prefer: prefer } : {}),
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -207,7 +228,7 @@ export function createMarketDataIngestionWorker(options: WorkerOptions) {
         asset_id: item.asset.asset_id, asset_kind: item.asset.asset_kind, symbol: item.asset.symbol,
         name: item.asset.name, chain: item.asset.chain ?? null,
         contract_address: item.asset.contract_address ?? null, decimals: item.asset.decimals ?? null,
-        provider_ids: item.asset.provider_ids ?? {}, metadata: item.asset.metadata ?? {},
+        provider_ids: item.asset.provider_ids ?? {}, metadata: item.asset.metadata ?? {}, updated_at: now().toISOString(),
       }));
       const hashes = await Promise.all(batch.observations.map((item) => sha256(canonicalJson(item.payload))));
       const startedAt = now().toISOString();
