@@ -15,7 +15,7 @@ function loadWorker(options = {}) {
         put: async (request, response) => { calls.cachePuts.push({ request, response }); },
       };
     },
-    keys: async () => ['radar-shell-v14', 'radar-shell-v13', 'radar-shell-v12', 'radar-shell-v7', 'radar-api-v7', 'old-cache', 'other-app-cache'],
+    keys: async () => ['radar-shell-v15', 'radar-shell-v14', 'radar-shell-v13', 'radar-shell-v12', 'radar-shell-v7', 'radar-api-v7', 'old-cache', 'other-app-cache'],
     delete: async (name) => { calls.cacheDeletes.push(name); return true; },
     match: async () => options.cachedResponse || null,
   };
@@ -56,14 +56,14 @@ test('PWA shell menyediakan aset dashboard terbaru dan membersihkan cache lama',
   let installPromise;
   handlers.install({ waitUntil: (promise) => { installPromise = promise; } });
   await installPromise;
-  assert.ok(calls.cacheOpen.includes('radar-shell-v14'));
+  assert.ok(calls.cacheOpen.includes('radar-shell-v15'));
   assert.ok(calls.staticFiles.includes('/'));
-  assert.ok(calls.staticFiles.includes('/index.html'));
+  assert.ok(calls.staticFiles.includes('/index.html?v=v2.3.1'));
   assert.ok(calls.staticFiles.includes('/market.html'));
   assert.ok(calls.staticFiles.includes('/market.js'));
   assert.ok(calls.staticFiles.includes('/market.css'));
-  assert.ok(calls.staticFiles.includes('/app.js'));
-  assert.ok(calls.staticFiles.includes('/top5.js'));
+  assert.ok(calls.staticFiles.includes('/app.js?v=v2.3.1'));
+  assert.ok(calls.staticFiles.includes('/top5.js?v=v2.3.1'));
   assert.ok(calls.staticFiles.includes('/trading.html'));
   assert.ok(calls.staticFiles.includes('/trading.js'));
   assert.ok(calls.staticFiles.includes('/command.html'));
@@ -73,9 +73,9 @@ test('PWA shell menyediakan aset dashboard terbaru dan membersihkan cache lama',
   let activatePromise;
   handlers.activate({ waitUntil: (promise) => { activatePromise = promise; } });
   await activatePromise;
-  assert.ok(calls.cacheDeletes.includes('radar-shell-v13'));
+  assert.ok(calls.cacheDeletes.includes('radar-shell-v14'));
   assert.ok(calls.cacheDeletes.includes('radar-api-v7'));
-  assert.equal(calls.cacheDeletes.includes('radar-shell-v14'), false);
+  assert.equal(calls.cacheDeletes.includes('radar-shell-v15'), false);
   assert.equal(calls.cacheDeletes.includes('other-app-cache'), false);
 });
 

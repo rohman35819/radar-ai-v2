@@ -3349,6 +3349,34 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ---
 
+## 136. INVESTIGASI MIME ROUTING TOP 5 / RADAR INTELLIGENCE — 26 NOVEMBER 2026
+
+### Akar masalah yang terbukti
+- BOS melaporkan menu **Top 5 Action Center** dan **Radar Intelligence** membuka halaman **System Health**, termasuk pada mode samaran.
+- Reproduksi teknis di LIVE:
+  - `GET /app.js` **tanpa cache-buster** → HTTP 200, ukuran **44.322 byte**, `grep renderAction` = **0**. Header: `cf-cache-status: HIT`, `age: 3885`, `cache-control: max-age=14400`, `last-modified: 2026-11-25T18:16:21 GMT`.
+  - `GET /app.js?v=<acak>` → HTTP 200, ukuran **53.400 byte**, `grep renderAction` = **2**.
+  - `GET /index.html?v=<acak>` memuat menu `data-t="action"`, `data-t="intel"`, dan `<script src="/top5.js">`.
+- Artinya: HTML baru (menu baru) dipasangkan dengan `app.js` lama yang tidak memiliki `renderAction()`/`renderIntel()` dan dispatcher-nya jatuh ke `else renderSystem()`. Cache-first Service Worker di `main` (`radar-shell-v13`) memperparah, tetapi **bukan satu-satunya penyebab**: Cloudflare edge cache menyimpan `app.js` lama selama 4 jam, sehingga mode samaran dengan origin yang sama tetap menerima aset lama.
+- Kode `main` sendiri **tidak salah**: `public/app.js` baris 468 memuat `else if(tab==='action')renderAction();else if(tab==='intel')renderIntel();else renderSystem();` dan `index.html` memuat menu yang benar. Masalah ini murni ketidaksinkronan aset yang dikirim, bukan identifier/event listener yang salah.
+
+### Hubungan dengan pekerjaan QA
+- QA (commit `09b191b`, PR #121) sudah mengubah SW menjadi network-first dengan fallback dan menaikkan shell ke v14 — ini **benar dan dipertahankan**, tetapi **tidak cukup** karena jaringan itu sendiri melewati Cloudflare cache HIT. Tidak ada duplikasi perbaikan; perbaikan ini melengkapi QA.
+
+### Perbaikan
+- `public/index.html`: aset dashboard diberi versi eksplisit `/style.css?v=v2.3.1`, `/top5.js?v=v2.3.1`, `/app.js?v=v2.3.1`. URL baru tidak ada di edge cache lama sehingga CDN diharuskan `MISS` dan mengambil aset dari origin.
+- `public/sw.js`: shell dinaikkan v14 → **v15**, konstanta `ASSET_VERSION='v2.3.1'`, dan entri precache dashboard memakai URL berversi yang sama dengan HTML. Strategi network-first QA tetap dipertahankan.
+- Regression test: `test/frontend-ui.test.js` menolak tag skrip tak berversi dan memeriksa `ASSET_VERSION`/v15 pada SW; `test/service-worker.test.js` fixture dan assertion diperbarui ke v15 + aset berversi.
+
+### Pengujian
+- `node --check public/sw.js` lulus; `npm test` **211 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
+- Verifikasi LIVE sebelum perbaikan: `app.js` tanpa cache-buster = 44.322 byte / 0 marker; dengan cache-buster = 53.400 byte / 2 marker (bukti di atas).
+
+### Status dan NEXT TASK
+- Branch: `fix/cdn-cache-busted-assets` dari `develop` `09b191b`; commit dan PR dicatat setelah push.
+- Perlu rilis `develop` → `main` agar perbaikan sampai ke LIVE; setelah deploy, verifikasi ulang `GET /app.js` (tanpa cache-buster) mengandung `renderAction`, lalu klik kedua menu pada browser nyata.
+- Hostless Build/LIVE untuk perbaikan ini **belum diverifikasi** pada saat penulisan.
+
 ## 137. PERBAIKAN RENDER TOP 5 — `priceLabel` TIDAK TERDEFINISI — 26 NOVEMBER 2026
 
 - Setelah perbaikan CDN (§136), BOS melaporkan halaman **Top 5 Action Center tetap kosong**. Saya reproduksi dengan menjalankan `top5.js` + `app.js` LIVE di VM bersama snapshot nyata: `render()` untuk `tab='action'` melempar **`ReferenceError: priceLabel is not defined`**.

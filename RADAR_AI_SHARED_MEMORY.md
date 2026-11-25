@@ -50,4 +50,5 @@
 
 - Hostless LIVE verified at v2.3.0 commit `1ed78c5` (build `2fab35ee` per BOS). Public probe: homepage 200, `/top5.js` 200, action/intel menus present. Browser interaction QA still pending.
 
+- Proven routing bug (26 Nov): Cloudflare edge served stale `/app.js` (cf-cache-status HIT, max-age 14400) alongside new index.html, so new menus fell through to System Health. Fix: version dashboard assets `?v=v2.3.1` in index.html and SW precache, shell v15, keeping QA's network-first SW. 211/211 tests pass. Needs release to main + LIVE recheck.
 - Second proven bug (26 Nov): `renderAction()` threw `ReferenceError: priceLabel is not defined`, leaving Top 5 page empty even after CDN fix. Added the helper in `public/app.js` and a runtime regression test (`test/top5-runtime.test.js`, 3 tests) that actually executes action/intel renderers. 213/213 tests pass. Needs release + LIVE re-verification.
