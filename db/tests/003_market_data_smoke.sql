@@ -72,7 +72,7 @@ RESET ROLE;
 DO $$
 BEGIN
   BEGIN
-    INSERT INTO radar_market.market_candles (symbol, interval_code, bucket_at, source, open, high, low, close)
+    INSERT INTO radar_market.market_candles (asset_id, symbol, interval_code, bucket_at, source, open, high, low, close)
     VALUES ('ethereum:0x0000000000000000000000000000000000000001', 'BAD', '1m', '2026-01-15T00:00:00Z', 'fixture', 1, 0.5, 0.9, 1.1);
     RAISE EXCEPTION 'Invalid OHLC candle unexpectedly accepted';
   EXCEPTION WHEN check_violation THEN NULL;
