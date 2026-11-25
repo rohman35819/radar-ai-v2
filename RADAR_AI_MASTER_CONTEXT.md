@@ -3330,3 +3330,34 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 **GitHub/CI/Hostless:** branch/PR/CI status to be recorded after commit and PR creation. No production code or deployment behavior is changed.
 
 **NEXT TASK:** BOS updates the Grok GitHub token to include Pull requests: Read and write; then Grok creates/updates a PR from its existing isolated branch and continues the highest-priority engineering task. In parallel, integrate this policy documentation through the normal develop PR flow.
+
+
+## 18. GROK MAIN DASHBOARD CREATIVE AUTONOMY — BOS DIRECTIVE (26 NOVEMBER 2026)
+
+BOS authorizes Grok/xAI to act proactively as a creative product designer and frontend innovator for the RADAR AI V2 main dashboard. Grok may independently propose, prototype, choose and implement ambitious dashboard improvements without waiting for BOS to specify every visual detail or approve routine design choices.
+
+**Authorized creative scope**
+- Dashboard information architecture, layout, visual hierarchy, navigation presentation, color/typography, spacing, responsive composition and interaction patterns.
+- New or improved cards, widgets, charts, heatmaps, signal/AI insight panels, alert summaries, watchlist presentations, empty/loading/error states, tooltips, micro-interactions and tasteful animation.
+- UX/accessibility/performance improvements across desktop, tablet and mobile.
+- Isolated design experiments and comparison of multiple concepts; Grok may select the strongest approach using usability, clarity, accessibility and performance evidence.
+- New dashboard capabilities that improve market intelligence and decision support, with source/freshness and data semantics made clear.
+
+**Non-negotiable boundaries**
+- Preserve all existing menus, routes, core features, workflows and data contracts. Reorganize rather than silently remove.
+- Never fabricate market values, rankings, signals, confidence or source attribution. Clearly distinguish live, stale, estimated, simulated and unavailable data.
+- No secrets/private account data in frontend or logs. No live trading, withdrawals, account-permission changes, paid service/assets, or risky production actions without the existing BOS approval.
+- Maintain keyboard/accessibility, contrast, reduced-motion, responsive behavior and bounded frontend performance.
+- Use isolated `exp/*` branches for exploration and scoped `feat/*` branches from latest `develop` for implementation. One writer per branch/worktree.
+- All work still passes existing PR, exact-head CI, QA, security and release gates. No direct write to `main`; no bypass of branch protection or Hostless release process.
+
+This directive grants creative/product decision authority, not a production deployment or a claim of automated enforcement. Visual QA must be based on actual screenshots/browser/device checks; do not claim checks that were not run.
+
+### Session record — 26 November 2026 (Asia/Jakarta)
+- Purpose: broaden Grok's creative autonomy specifically for the main dashboard, complementing the equal engineering contributor charter.
+- Files updated in the existing Grok contributor-rights PR branch: `GROK.md`, `AGENTS.md`, `RADAR_AI_MASTER_CONTEXT.md`, `RADAR_AI_SHARED_MEMORY.md`.
+- Application code: unchanged. No production configuration, credentials, financial behavior or deployment was changed.
+- Tests: application tests not run; documentation-only policy update. GitHub CI for this new exact head is pending/not yet verified.
+- Hostless Build: not checked / unknown. Hostless LIVE: not checked / unknown.
+- Remaining issue: policy is documented but not enforced by a UI-specific automation rule; ordinary CI/QA gates remain in force.
+- NEXT TASK: after this policy PR merges to `develop`, Grok should create an isolated dashboard concept/prototype branch from the latest `develop`, inspect current `public/index.html`, `public/app.js`, `public/style.css`, preserve all existing menu/workflow behavior, and submit a visual-refresh PR with desktop/mobile evidence and regression checks.
