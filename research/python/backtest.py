@@ -6,10 +6,15 @@ import argparse
 import csv
 import json
 import math
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Sequence
+
+
+MAX_SWEEP_WORKERS = 4
+_SWEEP_CONTEXT: tuple[list["Candle"], float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -43,8 +48,17 @@ def load_candles(path: str | Path) -> list[Candle]:
     return candles
 
 
-def _sma(values: list[float], end: int, period: int) -> float:
-    return sum(values[end - period + 1:end + 1]) / period
+def _sma_series(values: list[float], period: int) -> list[float | None]:
+    """Calculate every SMA in O(n) time with O(n) output memory."""
+    averages: list[float | None] = [None] * len(values)
+    rolling_sum = 0.0
+    for index, value in enumerate(values):
+        rolling_sum += value
+        if index >= period:
+            rolling_sum -= values[index - period]
+        if index >= period - 1:
+            averages[index] = rolling_sum / period
+    return averages
 
 
 def run_backtest(
@@ -76,9 +90,14 @@ def run_backtest(
         raise ValueError("Fee/slippage harus antara 0 dan 10000 bps")
 
     closes = [c.close for c in rows]
+    fast_averages = _sma_series(closes, fast_period)
+    slow_averages = _sma_series(closes, slow_period)
     signals = [0] * len(closes)
     for index in range(slow_period - 1, len(closes)):
-        signals[index] = int(_sma(closes, index, fast_period) > _sma(closes, index, slow_period))
+        fast_average = fast_averages[index]
+        slow_average = slow_averages[index]
+        if fast_average is not None and slow_average is not None:
+            signals[index] = int(fast_average > slow_average)
 
     cost_rate = (fee_bps + slippage_bps) / 10000
     equity = 1.0
@@ -115,6 +134,56 @@ def run_backtest(
         "candles": len(rows),
         "disclaimer": "Simulasi historis offline; bukan prediksi, saran investasi, atau eksekusi order.",
     }
+
+
+def _initialize_sweep_worker(candles: list[Candle], fee_bps: float, slippage_bps: float) -> None:
+    global _SWEEP_CONTEXT
+    _SWEEP_CONTEXT = (candles, fee_bps, slippage_bps)
+
+
+def _run_sweep_job(periods: tuple[int, int]) -> dict[str, float | int | str]:
+    if _SWEEP_CONTEXT is None:
+        raise RuntimeError("Sweep worker belum diinisialisasi")
+    candles, fee_bps, slippage_bps = _SWEEP_CONTEXT
+    return run_backtest(candles, periods[0], periods[1], fee_bps, slippage_bps)
+
+
+def run_parameter_sweep(
+    candles: Iterable[Candle],
+    parameter_sets: Sequence[tuple[int, int]],
+    fee_bps: float = 10.0,
+    slippage_bps: float = 5.0,
+    max_workers: int = 1,
+) -> list[dict[str, float | int | str]]:
+    """Run deterministic (fast, slow) parameter sets in a bounded process pool.
+
+    Results always follow input order. The default is serial; parallel execution is
+    explicit and capped to limit memory duplication for large historical datasets.
+    """
+    if not isinstance(max_workers, int) or isinstance(max_workers, bool) or not 1 <= max_workers <= MAX_SWEEP_WORKERS:
+        raise ValueError(f"max_workers harus antara 1 dan {MAX_SWEEP_WORKERS}")
+    rows = list(candles)
+    parameters = list(parameter_sets)
+    if not parameters:
+        return []
+    if not all(
+        isinstance(pair, tuple) and len(pair) == 2 and
+        all(isinstance(value, int) and not isinstance(value, bool) for value in pair) and
+        2 <= pair[0] < pair[1] < len(rows)
+        for pair in parameters
+    ):
+        raise ValueError("Setiap parameter harus tuple integer dengan 2 <= fast < slow < jumlah candle")
+    if not all(math.isfinite(value) and 0 <= value <= 10000 for value in (fee_bps, slippage_bps)):
+        raise ValueError("Fee/slippage harus antara 0 dan 10000 bps")
+    if max_workers == 1 or len(parameters) == 1:
+        return [run_backtest(rows, fast, slow, fee_bps, slippage_bps) for fast, slow in parameters]
+    with ProcessPoolExecutor(
+        max_workers=min(max_workers, len(parameters)),
+        initializer=_initialize_sweep_worker,
+        initargs=(rows, fee_bps, slippage_bps),
+    ) as pool:
+        # executor.map preserves input order despite parallel completion order.
+        return list(pool.map(_run_sweep_job, parameters))
 
 
 def main() -> int:

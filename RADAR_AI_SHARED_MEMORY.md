@@ -64,3 +64,8 @@
 - Covers architecture, agent collaboration, security, data/storage, memory/provenance, API contracts, reliability, cost/quota, QA/CI, observability, UI/accessibility, and version/release governance.
 - TypeScript-first language direction remains recorded in owner-confirmed issue #138. The constitution is policy-only where technical enforcement is not verified; it activates no service, worker, DB, paid plan, or production capability.
 - Constitution delivered: PR #143 merged to `develop` as `51a61db326df1eb3c44b6fd3730453213fcb3f70`; PR head `97ad6977bd770c498e67da8c782ea008d7405661` passed test run #1275 (npm, strict TypeScript, Python, disposable PostgreSQL smoke) and security run #664 (Gitleaks + Trivy). Shared memory measured 8,670 characters (<12 KB). Not released to `main`; Hostless Build/LIVE not checked. Policy-only where enforcement is not verified.
+
+
+## QA pilot in progress
+- PR #146 (exp/isolated-research-ingestion-worker-v3) adds an OFF-by-default TypeScript one-shot ingestion orchestrator with bounded concurrency/checkpoint replay and a standard-library Python O(n) SMA + bounded process-pool parameter sweep.
+- Exact-head CI/security is pending after latest develop sync. No production runtime, provider secrets, scheduler, production DB or Hostless deployment changed.

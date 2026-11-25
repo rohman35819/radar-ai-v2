@@ -3562,3 +3562,29 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - PR mergeability was true before merge. Self-review confirmed only `docs/architecture/engineering-constitution.md`, `AGENTS.md`, `RADAR_AI_MASTER_CONTEXT.md`, and `RADAR_AI_SHARED_MEMORY.md` changed. Shared memory measured 8,670 characters (<12 KB).
 - No production code, database, Hostless, provider, credentials, GitHub permissions, paid service, worker/scheduler activation, trading, withdrawal or transfer changed. Main/LIVE not updated by this PR. CI evidence is for PR head SHA; post-merge push run on merge SHA has not been verified through the available PR-only workflow-run lookup.
 - NEXT TASK: apply the constitution as a checklist to new tasks and keep enforcement status evidence-based; do not create more governance automation until an actual gap is measured.
+
+## 145. ISOLATED INGESTION WORKER + PARALLEL PYTHON RESEARCH — 26 NOVEMBER 2026
+
+### Implementasi
+- Branch `exp/isolated-research-ingestion-worker-v3` dibuat dari develop SHA `51a61db326df1eb3c44b6fd3730453213fcb3f70`; tidak mengubah `main` atau runtime V2.
+- `src/ingestion-worker.mts` menambahkan orchestrator one-shot yang terpisah: explicit opt-in `enabled: true`, maksimum 3 task paralel, 50 task per run, dan 250 baris per jenis data per batch.
+- Worker memvalidasi task/provider payload dengan kontrak TypeScript, mencatat ingestion run, menyimpan checkpoint status running, melakukan upsert asset / append observation / upsert candle, lalu hanya memajukan cursor setelah semua write berhasil.
+- Kegagalan provider/store disanitasi. Jika sebagian write sudah terjadi, run ditandai partial; checkpoint mempertahankan cursor sebelumnya agar batch dapat diputar ulang dengan conflict keys idempotent. Tidak ada retry otomatis, scheduler, queue polling, atau pemanggil production.
+- `test/ingestion-worker.test.js` mencakup disabled default/no I/O, write order dan cursor commit, write/provider failure, source isolation, concurrency cap, stable result ordering, duplicate stream, payload invalid dan batch cap.
+- `research/python/backtest.py` menghitung rolling SMA dalam O(n), menggantikan penjumlahan ulang setiap window. Ditambahkan `run_parameter_sweep` berbasis ProcessPoolExecutor; default serial, worker maksimum 4, hasil mengikuti urutan input.
+- `research/python/test_backtest.py` menambah pembandingan hasil serial/parallel, validasi batas worker/parameter, dan backtest historis 10.000 candle.
+- Tidak ada dependency baru; Python memakai standard library. Tidak ada provider live, PostgREST production write, secret, database production, scheduler, Hostless config atau deploy.
+
+### QA / status
+- Exact-head GitHub Actions test run `45704480706` (npm, strict TypeScript, Python 3.13, PostgreSQL 16 migrations/smoke) dan security run `45704480680` (Gitleaks + Trivy) sukses pada merge commit `e5f503909f07a4ee48cb7025a68014a623b20eb9`.
+- Merge commit tersebut menyinkronkan branch dengan develop `fd27e99c1109c50d2b21f6c355a80b54de24b223`; PR #146 mergeable/clean secara ancestry (`ahead 7`, `behind 0`).
+- QA lanjutan menemukan provider callback dapat memutasi object cursor yang sama dengan checkpoint lama sebelum gagal. Worker kini memberikan clone terpisah dan regression test memastikan checkpoint lama tetap utuh. Final code head `19a8d440e0712f6ae77769e0ccf7ec8c575f1ab3` lulus exact-head PR test run `45705036560` (npm **233/233**, strict TypeScript, Python **8/8** pada Python 3.13, PostgreSQL 16 migration + smoke tests, branch source policy) dan security run `45705036389` (Gitleaks + Trivy). Gitleaks melaporkan no leaks; Trivy secret scan no issues. **Catatan:** log Trivy memperingatkan supported files tidak ditemukan untuk scanner vulnerability (`[vuln]`), sehingga dependency CVE coverage **NOT AVAILABLE** pada repo tanpa lockfile/requirements manifest. Jangan tafsirkan workflow success sebagai vulnerability scan penuh. Tidak ada dependency runtime baru. Tidak ada tes lokal karena working clone tidak tersedia.
+- Test lokal tidak dijalankan karena sesi ini hanya memiliki akses GitHub connector, bukan working clone/runtime repository.
+- Baseline develop test run `45702176052` dan security run `45702176391` sukses pada SHA `2f44965ea005cc4751d54bf9464acfc8cc351ed9`; branch baru dibuat dari develop SHA `51a61db326df1eb3c44b6fd3730453213fcb3f70`.
+- `main` tetap `f38d25a6203ab486d7170369e86874f838af627a`; TypeScript/Python/worker pilot berada di jalur develop/eksperimen, belum menjadi runtime atau release production.
+- Hostless deployment monitor pada main run `45690836381` gagal membaca metadata deployment; LIVE readiness, snapshot dan news probes sukses. Build SHA Hostless tidak terverifikasi; LIVE commit tidak dibuktikan oleh monitor ini.
+
+### NEXT TASK
+- Selesaikan exact-head CI/security untuk branch ini; perbaiki seluruh kegagalan sebelum membuka/menandai PR ready.
+- Setelah lulus, lakukan review khusus atas checkpoint recovery, partial-write replay, process-pool memory cost dan backtest no-look-ahead. Tetap OFF dan tidak terhubung ke runtime produksi.
+- Tahap berikutnya setelah pilot: durable queue lease/claim + retry/dead-letter + provider-specific quotas, lalu versioned dataset/experiment manifests dan walk-forward tests. Tidak ada production activation tanpa approval serta readiness/rollback gate.
