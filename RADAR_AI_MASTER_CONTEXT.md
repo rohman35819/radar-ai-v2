@@ -3463,3 +3463,24 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### NEXT TASK
 - PR #131 telah merged ke develop; next implement bounded ingestion worker/orchestrator with provider-specific quotas, idempotency, backpressure and mocked provider/store integration tests. Feature flag tetap OFF dan production runtime tetap tidak terhubung.
+
+---
+
+## 141. MARKET DATA CONTRACT PAYLOAD BOUNDS — 26 NOVEMBER 2026
+
+### QA finding and correction
+- Independent QA of the merged typed PostgREST adapter (#131, develop merge `852c2009338c8c75ec64df5dbde757145efda292`) found that runtime contract guards checked JSON object shape but did not enforce the byte/depth limits already required by PostgreSQL JSONB columns.
+- Added recursive JSON-safe validation in `src/contracts.mts`: finite numbers only, plain objects/arrays, no cycles or unsupported values, maximum nesting depth 32, and encoded-byte caps aligned with migration `003_market_data.sql`.
+- Bounds: `provider_ids` 8 KiB (string values only), asset metadata 16 KiB, observation payload 64 KiB, ingestion-run metadata 8 KiB, checkpoint cursor 8 KiB.
+- Added regression assertions in `test/market-data-store.test.js` proving oversized asset metadata and observation payloads are rejected before any PostgREST request.
+
+### Status / QA gate
+- Fix branch: `fix/market-data-contract-bounds`; PR #133 targets `develop`.
+- Code commit: `27127c6dfc954e249b3b6ba19cf0680bd05aacc4`; regression test commit/current PR head: `ebc8382111705fd77362a0583157996bbf453f6a`.
+- Initial CI runs are queued/in progress at time of documentation update; do not call this change passed until exact current PR head test, strict TypeScript, PostgreSQL smoke, branch policy, Gitleaks and Trivy checks complete.
+- No production DB writes, schema exposure, provider polling, scheduler, secrets, Hostless Build or LIVE deployment changes. Adapter remains disabled and not connected to runtime.
+- PR #132 documentation handoff was merged into develop as `ff1d90e8c8e7b96993dd2687bba9860ed8008f09`; its test and security runs succeeded.
+
+### NEXT TASK
+- Complete exact-head CI/security for PR #133; review and merge to develop only if all gates pass.
+- Then implement a separately testable bounded one-shot ingestion orchestrator over the typed store with deterministic failure/checkpoint semantics and mock provider/store tests. Keep it disabled and unconnected to production runtime until explicit operational readiness review.
