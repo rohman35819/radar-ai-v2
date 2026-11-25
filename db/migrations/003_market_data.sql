@@ -58,6 +58,7 @@ CREATE INDEX market_observations_source_timeline_idx ON radar_market.market_obse
 CREATE INDEX market_observations_run_idx ON radar_market.market_observations (ingestion_run_id) WHERE ingestion_run_id IS NOT NULL;
 
 CREATE TABLE radar_market.market_candles (
+  asset_id text NOT NULL REFERENCES radar_market.assets(asset_id) ON DELETE RESTRICT,
   symbol text NOT NULL CHECK (char_length(symbol) BETWEEN 1 AND 48),
   interval_code text NOT NULL CHECK (interval_code ~ '^[1-9][0-9]*[smhdw]$'),
   bucket_at timestamptz NOT NULL,
@@ -72,10 +73,10 @@ CREATE TABLE radar_market.market_candles (
   observed_at timestamptz NOT NULL DEFAULT now(),
   ingestion_run_id uuid REFERENCES radar_market.ingestion_runs(run_id) ON DELETE RESTRICT,
   created_at timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (symbol, interval_code, bucket_at, source),
+  PRIMARY KEY (asset_id, interval_code, bucket_at, source),
   CHECK (high >= low AND high >= open AND high >= close AND low <= open AND low <= close)
 ) PARTITION BY RANGE (bucket_at);
-CREATE INDEX market_candles_lookup_idx ON radar_market.market_candles (symbol, interval_code, bucket_at DESC);
+CREATE INDEX market_candles_lookup_idx ON radar_market.market_candles (asset_id, interval_code, bucket_at DESC);
 CREATE INDEX market_candles_source_idx ON radar_market.market_candles (source, bucket_at DESC);
 
 CREATE TABLE radar_market.ingestion_checkpoints (
