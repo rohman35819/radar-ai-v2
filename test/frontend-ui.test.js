@@ -22,7 +22,7 @@ test('Screener mounts its controls before querying or binding them',()=>{
 });
 
 test('Dashboard keeps all existing primary navigation destinations',()=>{
-  const destinations=['overview','screener','early-gems','watch','analytics','news','unlock','alerts','ai','workspace','system'];
+  const destinations=['overview','screener','early-gems','action','intel','watch','analytics','news','unlock','alerts','ai','workspace','system'];
   for(const destination of destinations)assert.match(html,new RegExp('data-t="'+destination+'"'));
   assert.match(html,/href="\/trading\.html"/);
   assert.match(html,/href="\/market\.html"/);
