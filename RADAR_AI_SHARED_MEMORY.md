@@ -41,7 +41,7 @@
 - Grok is xAI's assistant; Groq is a separate inference provider. Groq provider activation remains OFF unless BOS explicitly approves.
 
 ## Next actions
-1. Complete exact-head CI and Gitleaks/Trivy for `exp/scalable-platform-foundation`; it is based on latest main `f38d25a` and contains strict TypeScript contracts/typecheck, Python 3.13 offline research tests, and the scale architecture roadmap.
+1. PR #126 (`exp/scalable-platform-foundation` → `develop`) is open as draft; push exact-head run `45695083402` passed: 217 Node tests, strict TypeScript typecheck, Python 4/4 and PostgreSQL migration/smoke tests. PR tests + Gitleaks/Trivy exact-head runs `45695317400` / `45695317344` were running at last check.
 2. Triage the four open documentation PRs (#121, #115, #112, #105) before/alongside the architecture PR; develop is three commits behind main.
 3. Keep production JavaScript, market state, secrets, Hostless settings, and paid infrastructure unchanged until additive data migrations and worker integration pass isolated gates.
 4. Next technical phase: design PostgreSQL market observations/OHLCV/checkpoint schema and disposable migration/idempotency/partition tests.
