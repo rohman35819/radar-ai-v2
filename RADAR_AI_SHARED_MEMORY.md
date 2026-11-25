@@ -55,4 +55,4 @@
 
 - Scale foundation branch `exp/scalable-platform-foundation` starts from main `f38d25a` (v2.3.2). Adds strict TS contract/typecheck, Python 3.13 offline backtest CI, provenance/OHLCV contract guards and a staged architecture roadmap. Production runtime/data/deployment unchanged; exact-head CI and security scans pending.
 
-- Snapshot ETag/304 benchmarked on branch `perf/snapshot-etag` (synthetic, local): 205 tokens 51.5KB→2B per conditional request, p99 24.4ms→3.8ms; 1000 tokens 249KB→2B, p99 27.5ms→5.7ms. 223/223 tests pass. No production changes; needs PR + CDN conditional-request verification.
+- Snapshot ETag/304 benchmarked on branch `perf/snapshot-etag` (synthetic, local): 205 tokens 51.5KB→2B per conditional request, p99 24.4ms→3.8ms; 1000 tokens 249KB→2B, p99 27.5ms→5.7ms. 226/226 tests pass. No production changes; needs PR + CDN conditional-request verification.
