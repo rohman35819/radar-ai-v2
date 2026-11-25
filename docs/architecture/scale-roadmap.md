@@ -59,8 +59,9 @@ Do not introduce Java, C++, Rust or Go merely to increase the language count. Mo
 - Gate: no route/response regression; exact unit/integration coverage; benchmark baseline.
 
 ### Phase 2 — market data persistence
-- Design additive PostgreSQL migrations for assets, provider observations, OHLCV candles and ingestion checkpoints.
-- Run migrations only in disposable CI first; production migration requires a separate reviewed rollout, backup and rollback plan.
+- Initial additive PostgreSQL schema now exists in db/migrations/003_market_data.sql: canonical assets, source observations, OHLCV partitions, ingestion runs and checkpoints.
+- Disposable PostgreSQL smoke coverage is in db/tests/003_market_data_smoke.sql and the test workflow applies it only to ephemeral CI PostgreSQL 16.
+- Production migration/backfill remains separate and requires backup, partition provisioning, retention policy, compatibility and rollback review.
 - Gate: duplicate/idempotency tests, partition/pruning query tests, data provenance, migration rollback/forward compatibility.
 
 ### Phase 3 — durable ingestion workers
