@@ -3585,8 +3585,7 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Hostless deployment monitor pada main run `45690836381` gagal membaca metadata deployment; LIVE readiness, snapshot dan news probes sukses. Build SHA Hostless tidak terverifikasi; LIVE commit tidak dibuktikan oleh monitor ini.
 
 ### NEXT TASK
-- Selesaikan exact-head CI/security untuk branch ini; perbaiki seluruh kegagalan sebelum membuka/menandai PR ready.
-- Setelah lulus, lakukan review khusus atas checkpoint recovery, partial-write replay, process-pool memory cost dan backtest no-look-ahead. Tetap OFF dan tidak terhubung ke runtime produksi.
-- PR #146 telah squash-merged ke `develop` sebagai `1b13ae17f2c221df50d1aeaf558e892eb98f7df1`; merge-commit test run `45705591216` dan security run `45705591176` harus diverifikasi sebelum status integrasi dianggap lolos.
+- PR #147 documentation follow-up lulus exact-head test run `45705877937` (npm **233/233**, strict TypeScript, Python **8/8**, PostgreSQL smoke) dan security run `45705877821` (Gitleaks no leaks; Trivy secret no issues; vulnerability scan unavailable without dependency manifests) pada head `abab179a90ad960b822d3cb8aa9f694e847c5d9a`.
+- PR #146 dan PR #147 sudah lulus gate masing-masing; PR #147 menunggu merge ke `develop`.
 - `main` tetap `f38d25a6203ab486d7170369e86874f838af627a`. Hostless Build tidak dipicu; LIVE tidak berubah dan tidak diverifikasi. Main monitor run `45690836381` gagal membaca metadata deployment, sedangkan readiness/snapshot/news probes sukses.
-- Tahap berikutnya setelah pilot: durable queue lease/claim + retry/dead-letter + provider-specific quotas, lalu versioned dataset/experiment manifests dan walk-forward tests. Tidak ada production activation tanpa approval serta readiness/rollback gate.
+- NEXT setelah dokumentasi terintegrasi: implementasikan durable queue lease/claim + retry/dead-letter + provider-specific quotas, lalu versioned dataset/experiment manifests dan walk-forward tests. Tetap OFF sampai approval dan readiness/rollback gate.
