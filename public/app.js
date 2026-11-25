@@ -17,6 +17,7 @@ const el = (tag, attrs = {}, ...children) => {
 const money = (v) => v == null || !Number.isFinite(Number(v)) ? '—' : Number(v) >= 1e9 ? '$' + (Number(v)/1e9).toFixed(2)+'B' : Number(v)>=1e6 ? '$'+(Number(v)/1e6).toFixed(2)+'M' : Number(v)>=1e3 ? '$'+(Number(v)/1e3).toFixed(1)+'K' : '$'+Number(v).toFixed(2);
 const pct = (v) => v == null || !Number.isFinite(Number(v)) ? '—' : (Number(v)>0?'+':'')+Number(v).toFixed(2)+'%';
 const ratio = (v) => v == null || !Number.isFinite(Number(v)) ? '—' : Number(v).toFixed(2)+'x';
+const priceLabel = (v) => Number.isFinite(Number(v)) ? '$' + Number(v).toPrecision(6) : '—';
 const dateTime = (v) => v ? new Date(v).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}) : 'Belum tersedia';
 const esc = (v) => String(v ?? '—');
 const FLAG = {fdv_unknown:'FDV tidak diketahui',fdv_gt_5x_mcap:'FDV > 5x MCap',volume_gt_mcap:'Volume > MCap',stale:'Data basi'};
