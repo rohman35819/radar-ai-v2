@@ -3336,5 +3336,13 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Tag immutable `v2.3.0` dibuat dan di-push pada commit rilis `1ed78c5...` (SemVer; tidak ada tag sebelumnya di repository).
 - Verifikasi lokal pada checkout `origin/main`: `public/top5.js` ada, menu `action` dan `intel` ada di `index.html`, `npm test` **207 pass, 0 fail, 0 skipped**.
 - Perubahan yang ikut rilis: Top 5 Action Center + Radar Intelligence (§133), Top Movers dual chart (PR #114), cloud worker hardening, sidebar drawer fix, dan perbaikan dokumentasi terkait. Tidak ada migrasi database baru pada rilis ini; rollback = revert merge PR #117 pada `main` + redeploy commit sebelumnya.
-- Hostless Build/LIVE **tidak diverifikasi**; tidak ada klaim website sudah menampilkan versi ini. Perlu pengecekan terpisah terhadap deployment SHA.
+- Status Hostless pada saat penulisan belum diverifikasi; **superseded** oleh §135 setelah BOS melaporkan Live `1ed78c5` dan verifikasi publik berhasil.
 - NEXT TASK: verifikasi Hostless build/deploy SHA dan QA browser desktop/mobile pada menu Top 5 Action Center, Radar Intelligence, dan modal Trading Analysis.
+
+## 135. VERIFIKASI LIVE v2.3.0 — 26 NOVEMBER 2026
+
+- BOS melaporkan Hostless menunjukkan **Live `1ed78c5`** (build `2fab35ee`, git push ~11 menit lalu oleh rohman35819),yaitu commit rilis `v2.3.0`.
+- Verifikasi publik mandiri dengan cache-buster: `https://radar-ai-v2.hostless.app/` → HTTP 200; `top5.js` → **HTTP 200**, ukuran 9.582 byte, isi dimulai dengan modul `public/top5.js`; HTML memuat `data-t="action"`, `data-t="intel"`, dan tag `<script src="/top5.js">`.
+- Ini adalah bukti LIVE yang terpisah dari CI/GitHub merge: commit di GitHub → Hostless build → LIVE sudah dikonfirmasi untuk SHA yang sama.
+- Batasan: QA klik/visual pada browser desktop dan ponsel belum dilakukan; verifikasi ini hanya HTTP/HTML/asset, bukan render interaktif.
+- NEXT TASK: QA browser nyata untuk Top 5 Action Center, Radar Intelligence, dan modal Trading Analysis; pastikan `NOT ENOUGH DATA` tampil ketika histori harga tidak cukup.
