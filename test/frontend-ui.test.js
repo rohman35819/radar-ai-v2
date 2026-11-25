@@ -22,7 +22,7 @@ test('Screener mounts its controls before querying or binding them',()=>{
 });
 
 test('Dashboard keeps all existing primary navigation destinations',()=>{
-  const destinations=['overview','screener','early-gems','watch','analytics','news','unlock','alerts','ai','workspace','system'];
+  const destinations=['overview','screener','early-gems','action','intel','watch','analytics','news','unlock','alerts','ai','workspace','system'];
   for(const destination of destinations)assert.match(html,new RegExp('data-t="'+destination+'"'));
   assert.match(html,/href="\/trading\.html"/);
   assert.match(html,/href="\/market\.html"/);
@@ -32,6 +32,14 @@ test('Dashboard keeps all existing primary navigation destinations',()=>{
 
 const membershipHtml=fs.readFileSync(require.resolve('../public/membership.html'),'utf8');
 const membershipCss=fs.readFileSync(require.resolve('../public/membership.css'),'utf8');
+
+test('Top 5 and Radar Intelligence navigation resolve to their own renderers',()=>{
+  assert.match(app,/function renderAction\(\)/);
+  assert.match(app,/function renderIntel\(\)/);
+  assert.match(app,/else if\(tab==='action'\)renderAction\(\)/);
+  assert.match(app,/else if\(tab==='intel'\)renderIntel\(\)/);
+  assert.match(app,/else renderSystem\(\)/);
+});
 
 test('Membership preview keeps the registration name field hidden in login mode',()=>{
   assert.match(membershipHtml,/id="name-field" hidden/);
