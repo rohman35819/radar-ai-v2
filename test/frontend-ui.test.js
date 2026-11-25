@@ -33,6 +33,19 @@ test('Dashboard keeps all existing primary navigation destinations',()=>{
 const membershipHtml=fs.readFileSync(require.resolve('../public/membership.html'),'utf8');
 const membershipCss=fs.readFileSync(require.resolve('../public/membership.css'),'utf8');
 
+test('Dashboard assets are versioned so a stale CDN/edge response cannot pair new menus with old app.js',()=>{
+  assert.match(html,/href="\/style\.css\?v=v2\.3\.1"/);
+  assert.match(html,/src="\/top5\.js\?v=v2\.3\.1"/);
+  assert.match(html,/src="\/app\.js\?v=v2\.3\.1"/);
+  assert.doesNotMatch(html,/src="\/app\.js"/);
+  assert.doesNotMatch(html,/src="\/top5\.js"/);
+  const sw=require('node:fs').readFileSync(require.resolve('../public/sw.js'),'utf8');
+  assert.match(sw,/ASSET_VERSION = 'v2\.3\.1'/);
+  assert.match(sw,/radar-shell-v15/);
+  assert.match(sw,/\/app\.js\?v=' \+ ASSET_VERSION/);
+  assert.match(sw,/\/top5\.js\?v=' \+ ASSET_VERSION/);
+});
+
 test('Top 5 and Radar Intelligence navigation resolve to their own renderers',()=>{
   assert.match(app,/function renderAction\(\)/);
   assert.match(app,/function renderIntel\(\)/);
