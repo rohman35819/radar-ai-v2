@@ -1,6 +1,6 @@
 # RADAR AI Shared Project Memory
 
-> Compact, curated handoff for every AI agent. This is the **only shared cross-agent memory**; it is not a chat archive. Last verified: 25 November 2026.
+> Compact, curated handoff for every AI agent. This is the **only shared cross-agent memory**; it is not a chat archive. Last verified: 26 November 2026.
 
 ## Project identity
 - Product: RADAR AI V2; repository: https://github.com/rohman35819/radar-ai-v2
@@ -24,16 +24,15 @@
 - Explicit BOS approval is required for paid spend/service activation, production credential/access changes, destructive or materially risky production operations, and live trading/withdrawal/financial execution.
 - Do not claim always-on/background autonomy unless scheduler, durable queue/state, workers, permissions, audit, budgets, approval gates and kill switch are implemented and verified.
 
-## Verified project handoff — 25 November 2026
-- `develop` HEAD: `c9c3a1403b19e5fe52250d0354e03bf7a1af1319`; `main` HEAD: `0f8521a4ab2399f80a102af4e422b2586d32e437` at last check. Re-check before action.
-- PR #110 (single shared memory + no-chat-archive policy) merged to `develop` as `c9c3a1403b19e5fe52250d0354e03bf7a1af1319`. Exact-head npm tests, disposable PostgreSQL Agent Platform/queue/memory smoke tests, Gitleaks, Trivy and branch-source policy all passed.
-- PR #107 is closed as superseded by #110; do not revive its stale/diverged branch.
-- PR #106 (mobile sidebar drawer) remains open and needs rebase/validation against current develop plus Android/iOS/browser QA. Prior Termux report: 5 frontend tests passed and `git diff --check` clean; device QA was not completed.
-- PR #108 (cloud-worker hardening) and #109 (master-context status) are merged to `develop`. Exact-head tests, PostgreSQL disposable migration/queue/memory smoke tests, Gitleaks, Trivy and branch-source policy passed for #108.
-- Cloud worker hardening exists on `develop`, not yet released to `main`. GitHub Actions worker is periodic (every two hours), not continuous 24/7. It can run without the phone/Termux, but workflow must reach default branch `main` before scheduled runs use the new version.
-- Groq provider support is opt-in and OFF by default. Do not configure `GROQ_API_KEY` or enable `GROQ_AUTONOMOUS_ENABLED=1` without BOS explicitly approving after quota/billing review. OpenRouter fallback is pinned to `openrouter/free`.
-- PostgreSQL Agent Platform queue/control plane is not activated for production: pause + kill switch defaults, USD 0 budget and restrictive grants remain. No VPS or paid service has been provisioned.
-- Hostless Build/LIVE status was not verified by the above GitHub work. Do not infer deployment from a merge.
+## Verified project handoff — 26 November 2026
+- main HEAD: 0f8521a4ab2399f80a102af4e422b2586d32e437; develop HEAD: 2673606dac0c75c4bd43cf81b36af2262c002152. GitHub compare verifies develop is 35 commits ahead and 0 behind main.
+- PR #106 (mobile sidebar drawer) is now merged to develop (merge commit ee53b04d39e51f5f95f88a2c02ff38a30c4cc638). Its historical device/browser QA caveat remains: Android/iOS gesture and desktop browser QA were not verified in the PR evidence.
+- PR #81 (guarded autonomous development pilot) is merged to main (merge commit 6e2dc1defcff19189cbf455ea25be8c4d71eca6a). Main workflow is scheduled every two hours and defaults AUTONOMOUS_AGENT_ENABLED to 1; it uses only the explicit OpenRouter openrouter/free route in the worker. Actual secret availability, account-level zero-charge behavior, and successful scheduled worker runs are not verified. Do not claim the worker is operating until run evidence is inspected. If zero-charge cannot be verified, set the repository variable to 0 via an authorized maintainer and leave it disabled.
+- PR #110 shared-memory policy is merged to develop; its earlier CI evidence covered npm tests, disposable PostgreSQL Agent Platform/queue/memory smoke tests, Gitleaks, Trivy and branch-source policy.
+- Current open PRs targeting develop: #115 (Grok contributor/dashboard autonomy charter), #112 (shared-memory handoff, stale base), and #105 (Termux/Groq handoff, diverged/non-mergeable). The normal WIP limit is 3; do not open another develop PR until this queue is dispositioned. PR #115 is the active documentation branch currently carrying this update.
+- Railway project RADAR AI V2 - Development has a staged service/source/volume/configuration only. No deployment/runtime has been activated and no Railway charge is authorized. Keep the patch staged; do not deploy unless the exact plan and runtime cost are verified as Rp0.
+- Groq remains OFF. No provider keys/secrets were changed. PostgreSQL Agent Platform is not activated for production. Hostless Build/LIVE and Hostless deployment metadata remain separate; current verification is not established by GitHub CI.
+- BOS's standing policy is ZERO-COST FIRST: no paid services, overages, trials that can convert to paid, paid provider fallback, or new spend until RADAR AI produces revenue and BOS explicitly approves a specific upgrade. If free-route billing/limits are uncertain, disable the path and continue deterministic/mock/local work.
 
 ## Grok onboarding
 - `GROK.md` is the dedicated Grok/xAI startup and engineering charter. `AGENTS.md` links it and requires Grok to read it with shared memory and master context at session start.
@@ -41,10 +40,11 @@
 - Grok is xAI's assistant; Groq is a separate inference provider. Groq provider activation remains OFF unless BOS explicitly approves.
 
 ## Next actions
-1. Keep this shared memory concise and current; every AI contributor must read it first on startup.
-2. Rebase/revalidate PR #106 against current develop and complete mobile/browser device QA before merging.
-3. Prepare a normal `develop` → `main` release PR for the cloud worker; verify exact-head release checks. Keep Groq disabled.
-4. After release, run a controlled manual worker test; later design a least-privilege non-production adapter to the existing PostgreSQL queue before any production activation.
+1. Finish exact-head CI/security and self-review for the current PR #115 update; integrate only through its normal PR gates.
+2. Disposition stale PR #112 and #105 after preserving any unique useful content; keep the develop WIP limit at 3.
+3. Verify the merged main worker's scheduled run history and zero-charge provider behavior. If either cannot be proven, leave/return AUTONOMOUS_AGENT_ENABLED=0; do not configure new secrets or spend.
+4. Implement the next Agent Platform increment in an isolated branch after a PR slot opens: a least-privilege non-production adapter from the existing PostgreSQL queue to a bounded worker, with durable audit, approval and kill-switch semantics. No paid database or production activation.
+5. Keep Railway staged until a genuinely Rp0 deployment path is confirmed; prioritize local/mock tests, GitHub free CI and repository improvements.
 
 
 ## Contributor policy update — 25 November 2026
