@@ -3311,3 +3311,18 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - `npm test` belum dinyatakan lulus dan QA browser belum dilakukan.
 - Hostless Build dan LIVE belum diverifikasi; perubahan belum disebut deployed.
 - NEXT: buat PR ke `develop`, tunggu CI exact-head, review diff, uji tombol internal/eksternal, lalu koordinasikan promosi melalui PR develop ke main.
+
+---
+
+## 133. TOP 5 ACTION CENTER & RADAR INTELLIGENCE — 25 NOVEMBER 2026
+
+- Branch: `feat/top5-action-center` dari `develop` `2673606dac0c75c4bd43cf81b36af2262c002152`. Tidak ada perubahan backend, endpoint berbayar, kredensial, trading/withdrawal, atau dependency baru.
+- Audit: data token nyata dari `/api/snapshot` hanya memuat `id`, simbol, nama, harga, market cap, volume, FDV, `change_24h`, `flags`, dan timestamp. Tidak tersedia liquidity, contract address, RSI/MACD, whale, atau holder distribution untuk seluruh aset. Karena itu field tersebut ditandai `NOT ENOUGH DATA`, tidak dikarang.
+- File baru `public/top5.js` (UMD, murni, tanpa DOM/jaringan): `rankTop5()` dengan breakdown skor transparan (momentum 24 jam ≤20, volume/market cap ≤25, likuiditas ≤15 bila ada, kesegaran 10, kelengkapan 10; data basi dibatasi ≤45 dan tidak boleh BUY SETUP); `buildTradePlan()` menghitung entry/TP1-3/SL dari volatilitas histori 12 titik terakhir dengan status `MECHANICAL_PLAN`, atau `NOT_ENOUGH_DATA` tanpa angka bila histori kurang; `indicatorSummary()` menghitung SMA20/EMA12/EMA26/RSI14/MACD dari harga nyata dan menandai VWAP `NOT ENOUGH DATA`. Confidence dinyatakan sebagai kualitas data, bukan probabilitas profit.
+- `public/index.html`: menambah menu `Top 5 Action Center` (`data-t="action"`) dan `Radar Intelligence` (`data-t="intel"`) tanpa menghapus menu lama; memuat `/top5.js` sebelum `/app.js`.
+- `public/app.js`: panel Top 5 ringkas di Ringkasan; halaman Action Center berisi 5 kartu dengan tombol **VIEW TRADE ANALYSIS**; modal analisis menampilkan identitas/provenansi, trading plan simulasi, indikator, dan signal quality; halaman Radar Intelligence berisi matriks 11 kemampuan dengan status jujur (AKTIF hanya untuk Live Market Scanner, Top 5 Action Center, Trading Analysis, Token Discovery; sisanya TERBATAS/BELUM TERSEDIA).
+- `public/sw.js`: shell dinaikkan v12 → v13 dan `/top5.js` masuk precache agar PWA tidak menyajikan aset lama; fixture test diperbarui.
+- Pengujian: `test/top5.test.js` 7 test (peringkat, data basi/invalid, duplikat simbol, plan mekanis, penolakan data kurang, indikator, tanpa `Math.random`); `test/top5-ui.test.js` 4 test (menu lama utuh, tombol analisis, matrix status, tanpa klaim profit/order); `npm test` **207 pass, 0 fail, 0 skipped** (26 file); `node --check public/app.js` dan `public/top5.js` lulus; `git diff --check` bersih.
+- Smoke HTTP lokal (port 38714, DATA_DIR sementara): `/`, `/app.js`, `/top5.js`, `/style.css`, `/api/health` → 200; marker fitur ditemukan pada `/app.js` yang disajikan.
+- Batasan: rencana trading adalah perhitungan mekanis dari volatilitas teramati, bukan prediksi; tidak ada order/transfer/withdrawal; profit tidak dijamin. QA browser desktop/mobile dan Hostless Build/LIVE belum diverifikasi.
+- NEXT TASK: buat PR ke `develop`, verifikasi exact-head test/security/branch-source, QA modal pada browser nyata, lalu promosi `develop`→`main` terpisah.
