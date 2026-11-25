@@ -255,3 +255,18 @@ Grok/xAI is authorized as a creative product and frontend contributor for the RA
 This authority is intentionally broad but does not permit removing existing routes, menus, core workflows, features or data contracts; fabricating market data or AI signals; exposing secrets/private data; enabling live trading/withdrawals; adding paid services/assets without approval; weakening security/branch protection/QA; or deploying directly to production. Keep financial actions separate from informational UI and retain read-only/simulation defaults. Respect accessibility, reduced motion, responsive layouts, data provenance/freshness and performance budgets.
 
 Use isolated `exp/*` branches for visual exploration and scoped `feat/*` branches from current `develop` for validated implementation. Preserve one writer per branch/worktree. Document rationale, preserved-feature checklist, responsive/accessibility considerations, screenshots where available, tests, risks and rollback in the PR. Changes still follow PR → CI → develop → release PR → main → Hostless. This is a policy authorization, not a claim that automated enforcement or production deployment has changed.
+
+
+## ZERO-COST-FIRST OPERATING DIRECTIVE — BOS (26 NOVEMBER 2026)
+
+**Status: ACTIVE PROJECT-WIDE POLICY.** Until RADAR AI has generated revenue and BOS explicitly approves an upgrade, all development and operations must target a strict Rp0 incremental spend.
+
+- Prefer existing resources, open-source software, GitHub Actions free allowance, and genuinely free tiers with verified terms and limits.
+- Do not activate paid compute, databases, storage, APIs, model routes, subscriptions, add-ons, trials that convert to paid plans, or usage that can incur overage. Do not add a payment method or spend credits without BOS's explicit approval.
+- A provider/model labelled "free" is not sufficient evidence by itself. Verify the exact route, account quota/billing behavior, terms, and fallback behavior. No automatic paid fallback. If zero-charge behavior cannot be established, disable that provider path and continue with deterministic/local work.
+- Existing staged Railway configuration is not permission to deploy. Do not commit/activate it or provision runtime/storage until the exact plan and any possible charge are verified as Rp0; otherwise leave it staged.
+- Keep a lightweight cost ledger for any external service already in use: purpose, free allowance, actual observed usage/charges when available, quota/overage risk, and disable switch. Never invent account usage or billing evidence.
+- Continue safe work without waiting: code, tests, documentation, local/mock integration, free CI, security hardening, and optimizations. Defer only the specific blocked paid/external action.
+- Revisit paid upgrades only after revenue exists and BOS expressly authorizes the specific spend.
+
+This directive is stricter than the generic preference for free tiers and supersedes any prior instruction that could be read as permission to use paid services or paid fallback. It does not weaken security, QA, release, secret, production, or financial-action gates.
