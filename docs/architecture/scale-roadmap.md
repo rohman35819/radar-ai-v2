@@ -66,11 +66,14 @@ Do not introduce Java, C++, Rust or Go merely to increase the language count. Mo
 
 ### Phase 3 — durable ingestion workers
 - Typed PostgREST adapter pilot exists in src/market-data-store.mts. It is disabled by default and has no production caller; it requires an explicitly configured HTTPS Supabase endpoint/service-role key and radar_market schema exposure.
-- Connect worker processes to the existing PostgreSQL queue only after adapter, leases, retry/dead-letter, idempotency, permission and kill-switch tests pass.
+- An isolated one-shot orchestrator now exists in `src/ingestion-worker.mts`: explicit `enabled: true`, max concurrency 3, max 50 tasks/run, max 250 rows per entity batch, strict contract validation, run records, and checkpoint advancement only after all idempotent writes succeed.
+- Provider/store failures are sanitized; a failed or partial batch retains the prior cursor so the same batch can be replayed safely. No implicit retry, scheduler, queue polling, provider credentials, or production caller is present.
+- Connect worker processes to the existing PostgreSQL queue only after leases, retry/dead-letter, per-provider quotas, permission and kill-switch tests pass.
 - Separate dashboard API lifecycle from ingestion lifecycle.
 - Gate: restart recovery, bounded concurrency/rate-limit tests, failure injection and queue-age SLO.
 
 ### Phase 4 — research and experimentation platform
+- The standard-library Python backtester now computes rolling SMA series in O(n) and exposes an explicit bounded `run_parameter_sweep` process pool (default serial, hard cap 4 workers, deterministic input-order results).
 - Add versioned datasets, experiment manifests, reproducible runs and walk-forward evaluation.
 - Python workers consume immutable snapshots; results are stored with code/data/config hashes.
 - Gate: no look-ahead leakage, deterministic reruns, out-of-sample evaluation and explicit separation from order execution.
