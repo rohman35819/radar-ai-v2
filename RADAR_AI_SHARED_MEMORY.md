@@ -45,3 +45,7 @@
 2. Rebase/revalidate PR #106 against current develop and complete mobile/browser device QA before merging.
 3. Prepare a normal `develop` → `main` release PR for the cloud worker; verify exact-head release checks. Keep Groq disabled.
 4. After release, run a controlled manual worker test; later design a least-privilege non-production adapter to the existing PostgreSQL queue before any production activation.
+
+
+## Contributor policy update — 25 November 2026
+- Grok/xAI is a full engineering peer with the same project scope as ChatGPT and other approved agents: research, implementation, tests, branches, commits, pushes, PRs, reviews and routine validated integration. No provider-based restriction; one writer per branch/worktree prevents conflicts. Grok's reported PR-creation 403 requires its own GitHub token to have Pull requests: Read and write. This policy does not grant token scopes or bypass production/security approval gates.
