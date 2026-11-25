@@ -3525,3 +3525,31 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - PR #140 di-merge ke `develop` dengan `merge_commit_sha` `80c460133ddf16dfbbcf8bf5bd82e906401b4257`. Head terverifikasi `80bd31be2b37d285c5df5d6d508401af9f5b114f`; `mergeable=true`, `mergeable_state=clean`.
 - Gate exact-head: run `45702419852` (`test` **success**, `Branch source policy` **success**) dan `45702420025` (`Gitleaks` **success**, `Trivy` **success**). Lokal: `npm test` 226/226 pass sebelum merge.
 - Tidak ada rilis ke `main` yang saya lakukan pada siklus ini; Hostless Build/LIVE tidak diverifikasi untuk perubahan ini.
+
+
+---
+
+## 144. ISOLATED INGESTION WORKER + PARALLEL PYTHON RESEARCH — 26 NOVEMBER 2026
+
+### Implementasi
+- Branch `exp/isolated-research-ingestion-worker-v2` dibuat dari develop SHA `118006d333e5d53c1602bafd98e0aa4605637359`; tidak mengubah `main` atau runtime V2.
+- `src/ingestion-worker.mts` menambahkan orchestrator one-shot yang terpisah: explicit opt-in `enabled: true`, maksimum 3 task paralel, 50 task per run, dan 250 baris per jenis data per batch.
+- Worker memvalidasi task/provider payload dengan kontrak TypeScript, mencatat ingestion run, menyimpan checkpoint status running, melakukan upsert asset / append observation / upsert candle, lalu hanya memajukan cursor setelah semua write berhasil.
+- Kegagalan provider/store disanitasi. Jika sebagian write sudah terjadi, run ditandai partial; checkpoint mempertahankan cursor sebelumnya agar batch dapat diputar ulang dengan conflict keys idempotent. Tidak ada retry otomatis, scheduler, queue polling, atau pemanggil production.
+- `test/ingestion-worker.test.js` mencakup disabled default/no I/O, write order dan cursor commit, write/provider failure, source isolation, concurrency cap, stable result ordering, duplicate stream, payload invalid dan batch cap.
+- `research/python/backtest.py` menghitung rolling SMA dalam O(n), menggantikan penjumlahan ulang setiap window. Ditambahkan `run_parameter_sweep` berbasis ProcessPoolExecutor; default serial, worker maksimum 4, hasil mengikuti urutan input.
+- `research/python/test_backtest.py` menambah pembandingan hasil serial/parallel, validasi batas worker/parameter, dan backtest historis 10.000 candle.
+- Tidak ada dependency baru; Python memakai standard library. Tidak ada provider live, PostgREST production write, secret, database production, scheduler, Hostless config atau deploy.
+
+### QA / status
+- GitHub Actions test run `45703472886` lulus pada code/test head sebelumnya `a2470e1b053afce02833f3913449493fc5239342`: npm, strict TypeScript, Python 3.13, dan seluruh disposable PostgreSQL migration/smoke tests sukses.
+- Exact-head security scan Gitleaks + Trivy masih wajib dijalankan pada PR head yang sudah sinkron dengan develop.
+- Test lokal tidak dijalankan karena sesi ini hanya memiliki akses GitHub connector, bukan working clone/runtime repository.
+- Baseline develop test run `45702176052` dan security run `45702176391` sukses pada SHA `2f44965ea005cc4751d54bf9464acfc8cc351ed9`; develop setelah itu maju ke `118006d333e5d53c1602bafd98e0aa4605637359`.
+- `main` tetap `f38d25a6203ab486d7170369e86874f838af627a`; TypeScript/Python/worker pilot berada di jalur develop/eksperimen, belum menjadi runtime atau release production.
+- Hostless deployment monitor pada main run `45690836381` gagal membaca metadata deployment; LIVE readiness, snapshot dan news probes sukses. Build SHA Hostless tidak terverifikasi; LIVE commit tidak dibuktikan oleh monitor ini.
+
+### NEXT TASK
+- Selesaikan exact-head CI/security untuk branch ini; perbaiki seluruh kegagalan sebelum membuka/menandai PR ready.
+- Setelah lulus, lakukan review khusus atas checkpoint recovery, partial-write replay, process-pool memory cost dan backtest no-look-ahead. Tetap OFF dan tidak terhubung ke runtime produksi.
+- Tahap berikutnya setelah pilot: durable queue lease/claim + retry/dead-letter + provider-specific quotas, lalu versioned dataset/experiment manifests dan walk-forward tests. Tidak ada production activation tanpa approval serta readiness/rollback gate.
