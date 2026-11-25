@@ -65,9 +65,9 @@ export function createMarketDataStore(config: MarketDataStoreConfig = {}): Marke
     } catch {
       return { ok: false, code: 'CONFIG_MISSING', records: 0 };
     }
-    if (!Array.isArray(rows) || rows.length > MAX_BATCH_SIZE || !rows.every(valid)) {
-      return { ok: false, code: rows.length > MAX_BATCH_SIZE ? 'BATCH_TOO_LARGE' : 'INVALID_PAYLOAD', records: 0 };
-    }
+    if (!Array.isArray(rows)) return { ok: false, code: 'INVALID_PAYLOAD', records: 0 };
+    if (rows.length > MAX_BATCH_SIZE) return { ok: false, code: 'BATCH_TOO_LARGE', records: 0 };
+    if (!rows.every(valid)) return { ok: false, code: 'INVALID_PAYLOAD', records: 0 };
     if (rows.length === 0) return { ok: true, code: 'EMPTY', records: 0 };
 
     endpoint.searchParams.set('on_conflict', conflict);
