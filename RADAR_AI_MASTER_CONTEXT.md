@@ -3456,10 +3456,11 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Tidak ada integrasi ke `lib/ingest.js`, tidak ada production env flag, schema exposure, database URL/key, atau write ke database. Ini adapter pilot yang belum dipanggil runtime.
 
 ### QA / status
-- Exact-head CI belum selesai sampai branch checks dijalankan; TypeScript strict check dan Node test suite mencakup modul baru.
+- CI awal menemukan TypeScript TS5097 (explicit .mts import) dan TS7060 (generic arrow syntax); diperbaiki dengan `allowImportingTsExtensions` pada no-emit tsconfig dan generic `<T,>`.
+- Exact-head sebelumnya `c5f4c06...` lulus push run `45699053064`: npm **223/223**, strict TypeScript, Python **5/5**, semua PostgreSQL smoke tests; PR run `45699063873` sukses, security `45699063915` sukses (Gitleaks + Trivy). Setelah itu kontrak diperketat agar timestamp/UUID/counter runtime guards sesuai constraint database; latest head `f7aecb76...` sedang menjalani exact-head test `45699312937`/`45699302998` dan security `45699312716`.
 - Production activation memerlukan konfirmasi Supabase PostgREST exposed schema `radar_market`, backup, permission review, secrets, quotas, and separate BOS-approved rollout. Jangan mengubah Supabase settings atau environment produksi di pilot ini.
 - Hostless Build tidak dijalankan; LIVE tidak berubah/tidak diklaim.
 
 ### NEXT TASK
-- Jalankan exact-head Node tests + strict TypeScript + Python + PostgreSQL smoke tests, serta Gitleaks/Trivy pada PR.
+- Tunggu latest exact-head `f7aecb76...` tests + Gitleaks/Trivy; perbaiki seluruh regresi sebelum merge.
 - Jika lulus, merge hanya ke develop; lanjutkan desain bounded ingestion worker dan integration tests menggunakan mocked provider/store. Feature flag tetap OFF dan production runtime tetap tidak terhubung.
