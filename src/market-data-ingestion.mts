@@ -91,6 +91,7 @@ async function sha256(value: string): Promise<string> {
 }
 
 function isoTimestamp(value: string, field: string): string {
+  if (typeof value !== 'string' || !value.trim()) throw new TypeError(field + ' must be a valid timestamp');
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) throw new TypeError(field + ' must be a valid timestamp');
   return date.toISOString();
@@ -103,9 +104,12 @@ function validateAsset(asset: MarketAssetInput): void {
   if (typeof asset.symbol !== 'string' || asset.symbol.length < 1 || asset.symbol.length > 32) throw new TypeError('symbol is invalid');
   if (typeof asset.name !== 'string' || asset.name.length < 1 || asset.name.length > 160) throw new TypeError('name is invalid');
   if ((asset.chain == null) !== (asset.contract_address == null)) throw new TypeError('chain and contract_address must be supplied together');
-  if (asset.chain != null && (asset.chain.length > 64 || asset.contract_address!.length > 160)) throw new TypeError('chain or contract_address is too long');
+  if (asset.chain != null && (typeof asset.chain !== 'string' || typeof asset.contract_address !== 'string' || asset.chain.length < 1 || asset.chain.length > 64 || asset.contract_address.length < 1 || asset.contract_address.length > 160)) throw new TypeError('chain or contract_address is invalid');
   if (asset.decimals != null && (!Number.isInteger(asset.decimals) || asset.decimals < 0 || asset.decimals > 36)) throw new TypeError('decimals is invalid');
-  if (asset.provider_ids != null) safeJsonObject(asset.provider_ids, 'provider_ids', 8192);
+  if (asset.provider_ids != null) {
+    safeJsonObject(asset.provider_ids, 'provider_ids', 8192);
+    if (Object.values(asset.provider_ids).some((value) => typeof value !== 'string')) throw new TypeError('provider_ids values must be strings');
+  }
   if (asset.metadata != null) safeJsonObject(asset.metadata, 'metadata', 16384);
 }
 
@@ -195,7 +199,6 @@ export function createPostgrestMarketDataStore(options: {
       await request('ingestion_checkpoints?on_conflict=source%2Cstream', '', 'POST', {
         source, stream, cursor, status, last_attempt_at: at,
         ...(status === 'succeeded' ? { last_success_at: at, consecutive_failures: 0 } : {}),
-        ...(status === 'failed' ? { consecutive_failures: 1 } : {}),
         updated_at: at,
       }, 'resolution=merge-duplicates,return=minimal');
     },
