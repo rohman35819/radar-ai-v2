@@ -150,3 +150,39 @@ No additional approval or narrower scope may be imposed solely because the contr
 **Concurrency is the only ordinary collaboration constraint:** one writing agent per branch/worktree. Multiple agents may work simultaneously on separate branches and exchange changes through PRs. This prevents lost updates; it is not a limit on how many agents may research or contribute.
 
 All existing hard safety boundaries remain identical for every agent: no secret disclosure, unauthorized permission changes, unapproved spending, destructive production action, live trading/withdrawals, or risky production release. This equal-rights charter does not itself grant GitHub token scopes, change branch protection, or create an always-on worker.
+
+
+## 12. Dashboard creative autonomy — BOS directive (26 November 2026)
+
+Grok is explicitly authorized and encouraged to act as a creative product designer and frontend innovator for the RADAR AI V2 **main dashboard**. Do not wait for BOS to specify every visual detail or propose only conservative variations. Within the normal branch and QA gates, Grok may independently identify opportunities and design a coherent, ambitious dashboard experience.
+
+### Creative authority
+Grok may independently:
+- Reimagine dashboard information hierarchy, page composition, navigation presentation, spacing, typography, color systems, visual language, responsive layouts and interaction patterns.
+- Create or redesign cards, widgets, charts, market heatmaps, signal panels, AI insight panels, alert summaries, watchlist views, empty/loading/error states, tooltips, micro-interactions and tasteful animations.
+- Propose and implement new dashboard capabilities that materially improve market intelligence, clarity, speed, accessibility or decision support.
+- Explore multiple visual concepts in isolated branches/prototypes, compare them against usability and performance criteria, and select the strongest result without asking for routine design approval.
+- Improve desktop, tablet and mobile experiences; use progressive disclosure and sensible density rather than simply shrinking desktop layouts.
+- Use modern browser-native techniques and compatible libraries when justified, while preferring lightweight, maintainable solutions and avoiding unnecessary dependencies.
+- Make reasonable product/design decisions autonomously, document the rationale, and deliver a working implementation rather than stopping at mockups or suggestions.
+
+### Dashboard guardrails
+Creative freedom is broad, not destructive:
+- Preserve every existing route, menu, core workflow, feature and data contract unless BOS explicitly authorizes a change. Do not hide or remove a capability merely to make the screen look cleaner; reorganize it accessibly instead.
+- Treat market data as evidence: show source/freshness, units and timestamps where relevant. Never invent values, signals, rankings or AI confidence. Distinguish live data, stale data, estimates, simulations and unavailable data.
+- Keep financial/trading controls visibly distinct from informational dashboard controls. Do not add live order placement, withdrawals, account permission changes or other financial execution as a creative UI enhancement. Existing read-only/simulation defaults remain.
+- Do not expose API keys, secrets, private account data or privileged server responses in browser code, HTML, assets, logs or screenshots.
+- Do not introduce paid services, paid assets, licensed fonts/icons, external trackers or new recurring costs without BOS approval. Prefer open-source assets with compatible licenses.
+- Respect accessibility: keyboard operation, visible focus, semantic controls, sufficient contrast, reduced-motion preferences and readable chart alternatives.
+- Keep performance bounded: avoid oversized bundles, unbounded polling, expensive animation loops, layout thrashing and unnecessary network calls.
+- Maintain responsive behavior and test representative desktop and narrow mobile widths. Do not claim device/browser QA that was not actually performed.
+
+### Experiment and delivery model
+- Visual exploration may happen in isolated `exp/*` branches or prototypes; production-intended implementation uses a scoped `feat/*` branch from current `develop`.
+- One writer per branch/worktree. Do not edit another agent's active branch concurrently.
+- Include before/after screenshots or a concise visual rationale when available, changed-file summary, preserved-feature checklist, responsive/accessibility notes, performance considerations and rollback approach in the PR.
+- Run the relevant existing tests, syntax/build checks, secret/security scans and dashboard regression checks. Add focused tests for new behavior where practical.
+- Route completed work through the existing PR → CI → develop → release PR → main → Hostless process. This directive grants creative/product authority, **not permission to bypass QA, branch protection, release approval or production deployment gates**.
+- Treat this section as policy-only until specific automation or tests enforce it. The existing QA and release gates remain authoritative.
+
+**Success criterion:** the main dashboard should become clearer, more distinctive, more useful and more delightful through Grok's own initiative, while preserving RADAR AI's existing capabilities, data integrity, safety and reliability.
