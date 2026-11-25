@@ -3411,12 +3411,12 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### QA dan status
 - Eksperimen sebelumnya pada branch `exp/python-backtest-typescript-contracts` telah lulus exact-code CI run `45691537934` pada SHA `6620346...`: npm 216/216, Python 4/4, dan disposable PostgreSQL Agent Platform/queue/memory smoke tests lulus. Ini adalah bukti pilot sebelumnya, bukan bukti branch baru.
-- PR exact-head head `a3187e898a6600ad704a142cda9b0571452a8447`: run `45695516637` lulus (npm **217/217**, strict TypeScript typecheck sukses, Python **5/5**, seluruh disposable PostgreSQL Agent Platform/queue/memory smoke tests sukses, Branch source policy sukses); run `45695516748` lulus (Gitleaks + Trivy). Belum ada hasil lokal karena tidak tersedia working clone pada sesi ini.
+- Code/test head `a3187e898a6600ad704a142cda9b0571452a8447` lulus pada run `45695516637` (npm **217/217**, strict TypeScript typecheck, Python **5/5**, disposable PostgreSQL smoke tests, branch policy) dan `45695516748` (Gitleaks + Trivy). Setelah itu hanya dokumentasi master/shared memory dan deskripsi PR yang berubah; latest head `469006a5100495f356b109de13250e0e442a3b21` sedang menjalani ulang PR checks `45695742240` dan `45695742355`. Belum ada hasil lokal karena tidak tersedia working clone pada sesi ini.
 - Branch `develop` tertinggal 3 commit dari `main`; branch eksperimen dibuat dari main agar tidak kehilangan rilis v2.3.2. PR #126 menuju develop membawa tiga commit main tersebut ke integration lane bersama fondasi baru.
 - Open PR saat audit awal: #121, #115, #112, #105 (empat PR dokumentasi). PR #126 kini dibuka sebagai draft karena penting membangun fondasi sebelum volume data dan biaya migrasi membesar; ini pengecualian WIP yang dijelaskan di body PR. Exact-head test + security scans sedang berjalan.
 - GitHub branch tersimpan; CI branch baru pending; Hostless Build belum dijalankan; LIVE belum berubah dan tidak diklaim.
 - Tidak ada production route, data, schema, secret, service, atau deploy yang diubah.
 
 ### NEXT TASK
-- PR #126 exact-head tests, Branch source policy, Gitleaks, dan Trivy lulus pada SHA `a3187e8...`; review diff dan mergeability telah dilakukan. Tandai ready lalu integrasikan ke develop setelah memastikan PR tetap mergeable dan head tidak berubah.
+- PR #126 code head tests, Branch source policy, Gitleaks, dan Trivy lulus pada SHA `a3187e8...`; documentation-only head `469006a...` checks queued. Setelah latest head lulus, review mergeability lalu tandai ready dan integrasikan ke develop.
 - Fase berikutnya: rancang additive PostgreSQL market-data schema + smoke tests di disposable PostgreSQL; jangan terapkan ke production sebelum backup, backfill, compatibility dan rollback plan tervalidasi.
