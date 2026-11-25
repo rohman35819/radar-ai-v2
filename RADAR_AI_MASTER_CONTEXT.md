@@ -3379,13 +3379,13 @@ BOS menetapkan kebijakan ZERO-COST FIRST sampai RADAR AI menghasilkan pendapatan
 - main: 0f8521a4ab2399f80a102af4e422b2586d32e437.
 - develop: 2673606dac0c75c4bd43cf81b36af2262c002152; GitHub compare: 35 commits ahead, 0 behind main.
 - PR #106 telah merged ke develop, merge commit ee53b04d39e51f5f95f88a2c02ff38a30c4cc638; browser/device QA masih belum dibuktikan.
-- PR #81 telah merged ke main, merge commit 6e2dc1defcff19189cbf455ea25be8c4d71eca6a. Workflow main cron setiap 2 jam dan default enable 1; worker hanya diarahkan ke OpenRouter openrouter/free. Namun secret availability, account-level zero-charge behavior, dan scheduled run success belum diverifikasi. Jangan klaim worker aktif tanpa run evidence. Bila zero-charge tidak terbukti, maintainer harus set AUTONOMOUS_AGENT_ENABLED=0.
+- PR #81 telah merged ke main, merge commit 6e2dc1defcff19189cbf455ea25be8c4d71eca6a. Workflow main cron setiap 2 jam dan default enable 1; worker hanya diarahkan ke OpenRouter openrouter/free. Dua scheduled runs terverifikasi: #1 (45501751557) dan #2 (45578754585) berstatus workflow success, tetapi keduanya mencatat `SKIP: no free provider key`. Tidak ada panggilan model/provider atau biaya provider pada dua run tersebut; worker belum menghasilkan patch/Draft PR. Workflow job tetap berjalan tiap dua jam. Jangan menambahkan key atau mengaktifkan provider sebelum zero-charge diverifikasi dan BOS menyetujui konfigurasi.
 - PR #115, #112, #105 masih terbuka menuju develop (3/3 WIP). #112 memiliki base lama; #105 diverged/non-mergeable. Tidak boleh membuka PR develop keempat sebelum queue didisposisi.
 - Railway project RADAR AI V2 - Development hanya memiliki konfigurasi staged; tidak ada deployment/runtime. Tidak ada biaya yang disetujui.
 - GitHub CI, Railway Build, Hostless Build, dan Hostless LIVE adalah status terpisah. Tidak ada inferensi deployment dari commit/CI.
 
 ### Immediate risk and response
-- Main autonomous worker default-enabled is a potential operational cost/control risk even though its code selects the explicit free router. Provider label alone is insufficient to prove account-level zero charge. Verify actual Actions run history and billing/usage evidence; if unavailable, disable through an authorized repository setting rather than assuming Rp0.
+- Main autonomous worker is default-enabled, but two inspected scheduled runs both safely skipped because no free provider key was configured. No provider request was made in those runs. The workflow still consumes scheduled GitHub Actions execution; if even that activity must be paused, an authorized maintainer must set AUTONOMOUS_AGENT_ENABLED=0. Do not add a provider key until zero-charge behavior is verified.
 - No repository secret, billing setting, provider key, branch protection, production configuration, or trading permission was changed in this update.
 
 ### Files and validation
@@ -3394,6 +3394,6 @@ BOS menetapkan kebijakan ZERO-COST FIRST sampai RADAR AI menghasilkan pendapatan
 
 ### NEXT TASK
 1. Verify exact-head CI/security on PR #115 and inspect its full diff.
-2. Verify main worker scheduled run records and zero-charge evidence; if uncertain, disable it using an authorized repository variable.
+2. Keep provider use disabled until a free key/route has verified zero-charge terms; currently two scheduled runs safely skip for missing key. Decide whether an authorized maintainer should also set AUTONOMOUS_AGENT_ENABLED=0 to stop the recurring no-key job.
 3. Resolve stale PR #112/#105 after preserving useful history; then take the next Agent Platform queue/worker integration task within the 3-PR WIP limit.
 4. Keep Railway staged; continue only with verified Rp0 resources.
