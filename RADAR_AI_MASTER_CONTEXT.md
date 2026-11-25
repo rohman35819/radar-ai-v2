@@ -3311,3 +3311,22 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - `npm test` belum dinyatakan lulus dan QA browser belum dilakukan.
 - Hostless Build dan LIVE belum diverifikasi; perubahan belum disebut deployed.
 - NEXT: buat PR ke `develop`, tunggu CI exact-head, review diff, uji tombol internal/eksternal, lalu koordinasikan promosi melalui PR develop ke main.
+
+
+## 113. EQUAL AI CONTRIBUTOR RIGHTS — GROK FULL ENGINEERING PARTICIPATION (BOS DIRECTIVE — 25 NOVEMBER 2026)
+
+**Decision: ACTIVE PROJECT POLICY.** Grok/xAI is a full engineering peer in RADAR AI V2, not a restricted advisor, read-only researcher, or reviewer-only agent. No contributor receives narrower project scope solely because of its model/provider identity.
+
+- Grok may independently research, audit, prioritize, implement and edit application/backend/frontend/workflow code, add features and tests, fix bugs, refactor safely, run isolated experiments, create branches, commit, push, open/update PRs, participate in reviews, merge routine validated work under the same repository gates, document results, and continue to the next safe NEXT TASK.
+- ChatGPT, Grok and other approved agents follow the same branch strategy, acceptance criteria, exact-head CI/security checks, review-provenance requirements, and risk classification. No additional approval is required merely because Grok authored a change.
+- Parallel collaboration is encouraged. The only ordinary write-isolation rule is one writing agent per branch/worktree; different agents may work simultaneously on separate branches/worktrees and integrate through PRs, commits, reviews and technical handoffs.
+- **Current PR 403 diagnosis from BOS:** code and workflow file pushes work; merging existing PRs works; creating PRs fails with 403. This indicates the Grok GitHub connection needs repository permission **Pull requests: Read and write**. Existing Contents write access is already functioning. BOS/repository administrator must update the token scope; agents must never share credentials, bypass authorization, or claim a PR exists before GitHub confirms it.
+- If PR creation is blocked, Grok must continue useful isolated implementation and push work to its own branch, record the exact 403/missing permission, and resume PR creation after the token scope is corrected. A permission failure must not be turned into a project-level restriction on Grok's engineering role.
+- Existing security and owner-approval boundaries remain universal and unchanged: no secrets in code/chat/logs, no unauthorized repository/admin permission changes, no unapproved paid spend, no destructive production data action, no risky production migration, no live trading/withdrawal/financial execution, and no unsafe production/V3 replacement.
+- This policy is documentation-only until each agent's actual GitHub connection is configured. It does not itself grant token scopes, change GitHub branch protection, or create continuous background workers.
+
+**Files changed by this policy update:** AGENTS.md, GROK.md, RADAR_AI_MASTER_CONTEXT.md.
+**Tests:** documentation-only change; application tests are not relevant to policy text. Validate file diffs and run repository CI on the resulting PR head before integration.
+**GitHub/CI/Hostless:** branch/PR/CI status to be recorded after commit and PR creation. No production code or deployment behavior is changed.
+
+**NEXT TASK:** BOS updates the Grok GitHub token to include Pull requests: Read and write; then Grok creates/updates a PR from its existing isolated branch and continues the highest-priority engineering task. In parallel, integrate this policy documentation through the normal develop PR flow.
