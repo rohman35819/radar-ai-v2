@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 test('TypeScript snapshot contracts validate the existing API shape', async () => {
-  const { isRadarSnapshot, isRadarToken } = await import('../src/contracts.ts');
+  const { isRadarSnapshot, isRadarToken } = await import('../src/contracts.mts');
   const token = {
     id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin',
     price: 90000, market_cap: 1e12, volume_24h: 2e10,
@@ -19,7 +19,7 @@ test('TypeScript snapshot contracts validate the existing API shape', async () =
 });
 
 test('TypeScript snapshot contracts reject malformed API data', async () => {
-  const { isRadarSnapshot, isRadarToken } = await import('../src/contracts.ts');
+  const { isRadarSnapshot, isRadarToken } = await import('../src/contracts.mts');
   assert.equal(isRadarToken({ id: 'btc', symbol: 'BTC', name: 'Bitcoin', price: '90000' }), false);
   assert.equal(isRadarSnapshot({ status: 'success', tokens: [{ id: '', symbol: 'BTC', name: 'Bitcoin' }] }), false);
   assert.equal(isRadarSnapshot({ status: 'error', tokens: [] }), false);
