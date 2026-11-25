@@ -3487,7 +3487,26 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ---
 
-## 142. SNAPSHOT CONDITIONAL GET / ETag — 26 NOVEMBER 2026
+## 142. BOUNDED PARALLEL INGESTION REFRESH — 26 NOVEMBER 2026
+
+### Implementasi
+- Branch `exp/bounded-ingestion-concurrency-v2` dibuat ulang dari latest develop setelah branch percobaan pertama diverged; PR #134 ditutup sebagai superseded agar tidak menggabungkan basis lama.
+- `lib/ingest.js` menambahkan `INGEST_CONCURRENCY` (default 3, minimum 1, hard cap 3) dan `runBounded()` dengan jumlah worker tetap serta hasil dalam urutan input.
+- Fetch CoinGecko utama dan exchange yang bergantung pada token tetap berurutan. Setelah itu DefiLlama, News, Unlocks dan On-chain (hanya jika due) berjalan sebagai task independen dengan bounded concurrency.
+- Error isolation per provider dipertahankan: kegagalan satu task tidak menggagalkan task lain dan data lama tetap dipertahankan sesuai perilaku existing.
+- `test/ingest-concurrency.test.js` memverifikasi max concurrency, stable result ordering, overlap aktual pada refresh, health provider dan clamp konfigurasi.
+
+### QA dan status
+- Exact-head PR SHA `99e4cce51e8db645c4bbd82266b4d2ace9af7ee5`: push run `45701172896` sukses; PR test run `45701179151` sukses (npm **226/226**, strict TypeScript, Python **5/5**, seluruh disposable PostgreSQL migrations/smoke tests); PR security run `45701179003` sukses (Gitleaks + Trivy). Merge commit `1fe5b5b165ace8c4321c7343fc56f629f2508eed` juga lulus test run `45701378046` (226/226, TS, Python 5/5, PostgreSQL) dan security run `45701378059` (Gitleaks + Trivy).
+- PR #135 di-squash merge ke develop sebagai `1fe5b5b165ace8c4321c7343fc56f629f2508eed` setelah exact-head checks lulus.
+- Tidak ada provider fetch nyata dalam test; semua sumber dimock. Tidak ada retry baru, kuota berbayar, perubahan database, secrets, Hostless config atau LIVE deployment.
+- Belum ada benchmark end-to-end terhadap provider LIVE; concurrency overlap teruji, tetapi persentase pengurangan waktu refresh belum diukur.
+
+### NEXT TASK
+- Selesaikan exact-head rerun setelah update dokumentasi, lalu merge PR #135 ke develop jika seluruh checks lulus.
+- Fase berikutnya: buat ingestion worker terpisah yang memakai durable queue/checkpoint dan adapter market-data OFF-by-default; lakukan failure/restart/rate-limit tests sebelum integrasi apa pun ke runtime production.
+
+## 143. SNAPSHOT CONDITIONAL GET / ETag — 26 NOVEMBER 2026
 
 - Peran: Independent Principal Engineer & Performance Architect. Branch `perf/snapshot-etag` dari `develop` `0a2619f70fff306118bfb4922edd591c8829f5f4`. Tidak menyentuh `lib/ingest.js` atau test konkurensi yang dikerjakan PR #135 (hindari duplikasi).
 - Temuan arsitektur: `GET /api/snapshot` melakukan `st.tokens.map(...)` dengan spread per token dan mengirim seluruh payload (token + fundamental + vol10m + news + alerts + early gems) pada setiap request, meskipun state tidak berubah. Polling dashboard dan beberapa klien/agent menggandakan biaya serialisasi & bandwidth secara linear terhadap jumlah token.
@@ -3499,5 +3518,5 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
   - 1.000 token: payload penuh **249.372 byte/request**, p50 **8,376 ms**, p95 **20,948 ms**, p99 **27,497 ms**; kondisional **2 byte/request**, p50 **2,260 ms**, p95 **5,740 ms**, p99 **5,742 ms**.
   - Penghematan total 30 request: **1.545.964 byte** (205 token) dan **7.481.104 byte** (1.000 token). Angka ini hasil eksekusi `scripts/benchmark-snapshot.js`, bukan estimasi.
 - Batasan: benchmark lokal dengan data sintetis, bukan produksi/Hostless; manfaat penuh bergantung pada klien/CDN yang mengirim `If-None-Match`. Tidak ada database migration, dependency, secret, service berbayar, atau perubahan produksi. Belum ada pengukuran CPU/RAM terpisah.
-- Pengujian: `node --check server.js` lulus; `node --test test/radar.test.js` 26/26 pass; `npm test` **223 pass, 0 fail, 0 skipped** (29 file); `git diff --check` bersih.
+- Pengujian: `node --check server.js` lulus; `node --test test/radar.test.js` 26/26 pass; `npm test` **226 pass, 0 fail, 0 skipped** (30 file); `git diff --check` bersih.
 - NEXT TASK: PR ke `develop`, verifikasi gate exact-head, lalu evaluasi apakah CDN/Hostless meneruskan conditional request; setelah itu pertimbangkan kompresi gzip/br dan pagination untuk endpoint dengan payload terbesar.
