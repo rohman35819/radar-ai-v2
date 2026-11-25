@@ -3,6 +3,33 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
+const asset = {
+  asset_id: 'ethereum:0x0000000000000000000000000000000000000001',
+  asset_kind: 'token', symbol: 'TST', name: 'Test Token',
+  chain: 'ethereum', contract_address: '0x0000000000000000000000000000000000000001',
+  decimals: 18,
+};
+const candle = {
+  asset_id: asset.asset_id, symbol: 'TSTUSDT', interval_code: '1m',
+  bucket_at: '2026-11-25T00:00:00Z', source: 'fixture',
+  open: 1, high: 1.5, low: 0.9, close: 1.2, volume: 100,
+  observed_at: '2026-11-25T00:01:00Z',
+};
+const observation = {
+  source: 'fixture', entity_type: 'asset', entity_id: asset.asset_id,
+  observed_at: '2026-11-25T00:00:00Z', payload: { price: 1.2 },
+  payload_hash: 'a'.repeat(64),
+};
+const run = {
+  run_id: '20000000-0000-4000-8000-000000000001', source: 'fixture',
+  stream: 'market', status: 'running', started_at: '2026-11-25T00:00:00Z',
+};
+const checkpoint = {
+  source: 'fixture', stream: 'market', cursor: { page: 2 },
+  status: 'succeeded', last_attempt_at: '2026-11-25T00:00:00Z',
+  last_success_at: '2026-11-25T00:00:00Z',
+};
+
 test('TypeScript snapshot contracts validate the existing API shape', async () => {
   const { isRadarSnapshot, isRadarToken } = await import('../src/contracts.mts');
   const token = {
@@ -18,12 +45,20 @@ test('TypeScript snapshot contracts validate the existing API shape', async () =
   }), true);
 });
 
-test('market data contracts validate candles and source provenance', async () => {
-  const { isRadarCandle, isMarketObservation } = await import('../src/contracts.mts');
-  assert.equal(isRadarCandle({ timestamp: '2026-11-25T00:00:00Z', close: 10, source: 'fixture', symbol: 'BTCUSDT', interval: '1m', observed_at: '2026-11-25T00:01:00Z', volume: 2 }), true);
-  assert.equal(isRadarCandle({ timestamp: 'x', close: -1, source: 'fixture', symbol: 'BTC', interval: '1m', observed_at: 'x' }), false);
-  assert.equal(isMarketObservation({ source: 'provider', entity_id: 'btc', observed_at: '2026-11-25T00:00:00Z', payload: { price: 1 } }), true);
-  assert.equal(isMarketObservation({ source: '', entity_id: 'btc', observed_at: 'x', payload: {} }), false);
+test('market-data contracts validate canonical asset, OHLCV, provenance and checkpoints', async () => {
+  const { isRadarAsset, isRadarCandle, isMarketObservation, isIngestionRun, isIngestionCheckpoint } =
+    await import('../src/contracts.mts');
+  assert.equal(isRadarAsset(asset), true);
+  assert.equal(isRadarCandle(candle), true);
+  assert.equal(isMarketObservation(observation), true);
+  assert.equal(isIngestionRun(run), true);
+  assert.equal(isIngestionCheckpoint(checkpoint), true);
+  assert.equal(isRadarCandle({ ...candle, high: 0.5 }), false);
+  assert.equal(isRadarCandle({ ...candle, bucket_at: 'not-a-time' }), false);
+  assert.equal(isMarketObservation({ ...observation, payload_hash: 'bad' }), false);
+  assert.equal(isRadarAsset({ ...asset, chain: null }), false);
+  assert.equal(isMarketObservation({ ...observation, source_updated_at: 'not-a-time' }), false);
+  assert.equal(isIngestionRun({ ...run, run_id: 'not-a-uuid' }), false);
 });
 
 test('TypeScript snapshot contracts reject malformed API data', async () => {

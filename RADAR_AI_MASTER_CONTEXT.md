@@ -3442,3 +3442,25 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ### NEXT TASK
 - PR #128 telah merged; `develop` HEAD `4266dba...`, `main` tetap `f38d25a...`. Exact-head PR dan merge-commit CI/security semuanya lulus.
 - NEXT: implementasikan adapter/worker ingestion terisolasi dengan feature flag OFF dan mock PostgREST tests; jangan aktifkan koneksi production sebelum schema exposure, backup, partition provisioning, idempotency, retention, rollback dan operasional diverifikasi.
+---
+
+## 140. TYPED MARKET DATA POSTGREST ADAPTER PILOT — 26 NOVEMBER 2026
+
+### Implementasi
+- Branch `exp/market-data-adapter-pilot`, dibuat dari develop setelah market-data schema v1 dan handoff QA terintegrasi.
+- `src/contracts.mts` diperluas dengan kontrak `RadarAsset`, `RadarCandle`, `MarketObservation`, `IngestionRun`, dan `IngestionCheckpoint` sesuai schema `radar_market`, termasuk runtime validation OHLCV, ISO timestamp, payload hash, canonical asset ID, dan cursor/checkpoint.
+- `src/market-data-store.mts` menyediakan typed PostgREST adapter untuk schema `radar_market`: asset upsert, append-only observation, candle upsert, ingestion run, dan checkpoint.
+- Safety defaults: adapter OFF kecuali `enabled: true`; HTTPS saja; service-role key eksplisit; `Accept-Profile`/`Content-Profile` terkunci ke `radar_market`; batch maksimum 250; no-store; tidak ada retry otomatis; tidak membaca/log response body; hasil error tidak membocorkan credential/body.
+- Conflict policies: observations `ignore-duplicates` pada source/entity/time/payload_hash; assets, candles, runs dan checkpoints `merge-duplicates` pada conflict key schema.
+- `test/market-data-store.test.js` mem-mock fetch dan menguji disabled default/no network, HTTPS, service-role/profile headers, conflict semantics, invalid payload, batch cap, HTTP/network failure redaction, run/checkpoint writes.
+- Tidak ada integrasi ke `lib/ingest.js`, tidak ada production env flag, schema exposure, database URL/key, atau write ke database. Ini adapter pilot yang belum dipanggil runtime.
+
+### QA / status
+- CI awal menemukan TypeScript TS5097 (explicit .mts import) dan TS7060 (generic arrow syntax); diperbaiki dengan `allowImportingTsExtensions` pada no-emit tsconfig dan generic `<T,>`.
+- Exact-head sebelumnya `c5f4c06...` lulus push run `45699053064`: npm **223/223**, strict TypeScript, Python **5/5**, semua PostgreSQL smoke tests; PR run `45699063873` sukses, security `45699063915` sukses (Gitleaks + Trivy). Setelah itu kontrak diperketat agar timestamp/UUID/counter runtime guards sesuai constraint database; latest head `f7aecb76...` sedang menjalani exact-head test `45699312937`/`45699302998` dan security `45699312716`.
+- Production activation memerlukan konfirmasi Supabase PostgREST exposed schema `radar_market`, backup, permission review, secrets, quotas, and separate BOS-approved rollout. Jangan mengubah Supabase settings atau environment produksi di pilot ini.
+- Hostless Build tidak dijalankan; LIVE tidak berubah/tidak diklaim.
+
+### NEXT TASK
+- Tunggu latest exact-head `f7aecb76...` tests + Gitleaks/Trivy; perbaiki seluruh regresi sebelum merge.
+- Jika lulus, merge hanya ke develop; lanjutkan desain bounded ingestion worker dan integration tests menggunakan mocked provider/store. Feature flag tetap OFF dan production runtime tetap tidak terhubung.
