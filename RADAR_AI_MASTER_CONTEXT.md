@@ -3361,3 +3361,39 @@ This directive grants creative/product decision authority, not a production depl
 - Hostless Build: not checked / unknown. Hostless LIVE: not checked / unknown.
 - Remaining issue: policy is documented but not enforced by a UI-specific automation rule; ordinary CI/QA gates remain in force.
 - NEXT TASK: after this policy PR merges to `develop`, Grok should create an isolated dashboard concept/prototype branch from the latest `develop`, inspect current `public/index.html`, `public/app.js`, `public/style.css`, preserve all existing menu/workflow behavior, and submit a visual-refresh PR with desktop/mobile evidence and regression checks.
+
+
+---
+
+## 107. ZERO-COST-FIRST EXECUTION POLICY & VERIFIED HANDOFF — 26 NOVEMBER 2026
+
+### Owner directive
+BOS menetapkan kebijakan ZERO-COST FIRST sampai RADAR AI menghasilkan pendapatan dan BOS secara eksplisit menyetujui upgrade tertentu:
+- Target incremental spend Rp0. Gunakan resource yang sudah tersedia, open-source, GitHub Actions free allowance, dan free tier yang syarat/kuotanya telah diverifikasi.
+- Dilarang mengaktifkan compute/database/storage/API/model/subscription/add-on berbayar, overage, payment method, atau trial yang dapat berubah menjadi tagihan.
+- Label "free" bukan bukti biaya nol. Periksa route, quota, billing, terms, dan fallback. Jika zero-charge tidak dapat dibuktikan, disable provider path dan lanjutkan pekerjaan deterministik/local/mock. Tidak boleh ada paid fallback otomatis.
+- Railway staged service/volume bukan izin deploy. Jangan commit staged changes atau mengaktifkan runtime sampai paket dan biaya persis terbukti Rp0.
+- Lanjutkan code, test, dokumentasi, security, dan optimasi yang aman tanpa menunggu approval; hanya aksi berbayar/berisiko yang ditunda.
+
+### Verified repository state
+- main: 0f8521a4ab2399f80a102af4e422b2586d32e437.
+- develop: 2673606dac0c75c4bd43cf81b36af2262c002152; GitHub compare: 35 commits ahead, 0 behind main.
+- PR #106 telah merged ke develop, merge commit ee53b04d39e51f5f95f88a2c02ff38a30c4cc638; browser/device QA masih belum dibuktikan.
+- PR #81 telah merged ke main, merge commit 6e2dc1defcff19189cbf455ea25be8c4d71eca6a. Workflow main cron setiap 2 jam dan default enable 1; worker hanya diarahkan ke OpenRouter openrouter/free. Namun secret availability, account-level zero-charge behavior, dan scheduled run success belum diverifikasi. Jangan klaim worker aktif tanpa run evidence. Bila zero-charge tidak terbukti, maintainer harus set AUTONOMOUS_AGENT_ENABLED=0.
+- PR #115, #112, #105 masih terbuka menuju develop (3/3 WIP). #112 memiliki base lama; #105 diverged/non-mergeable. Tidak boleh membuka PR develop keempat sebelum queue didisposisi.
+- Railway project RADAR AI V2 - Development hanya memiliki konfigurasi staged; tidak ada deployment/runtime. Tidak ada biaya yang disetujui.
+- GitHub CI, Railway Build, Hostless Build, dan Hostless LIVE adalah status terpisah. Tidak ada inferensi deployment dari commit/CI.
+
+### Immediate risk and response
+- Main autonomous worker default-enabled is a potential operational cost/control risk even though its code selects the explicit free router. Provider label alone is insufficient to prove account-level zero charge. Verify actual Actions run history and billing/usage evidence; if unavailable, disable through an authorized repository setting rather than assuming Rp0.
+- No repository secret, billing setting, provider key, branch protection, production configuration, or trading permission was changed in this update.
+
+### Files and validation
+- Files updated on the existing PR #115 branch: AGENTS.md, RADAR_AI_SHARED_MEMORY.md, and this master context.
+- Documentation-only change; no runtime code changed. Exact-head CI/security must be checked after this commit. No Hostless/Railway deployment performed.
+
+### NEXT TASK
+1. Verify exact-head CI/security on PR #115 and inspect its full diff.
+2. Verify main worker scheduled run records and zero-charge evidence; if uncertain, disable it using an authorized repository variable.
+3. Resolve stale PR #112/#105 after preserving useful history; then take the next Agent Platform queue/worker integration task within the 3-PR WIP limit.
+4. Keep Railway staged; continue only with verified Rp0 resources.
