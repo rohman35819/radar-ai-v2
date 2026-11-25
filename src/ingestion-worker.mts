@@ -1,6 +1,5 @@
 import {
   isIngestionCheckpoint,
-  isIngestionRun,
   isMarketObservation,
   isRadarAsset,
   isRadarCandle,
@@ -185,7 +184,7 @@ export function createIngestionWorker(options: IngestionWorkerOptions) {
       const rows = write;
       try {
         const response = await safeStoreWrite(rows);
-        if (!resultOk(response)) return finishFailure('STORE_WRITE_FAILED');
+        if (!response || response.ok !== true) return finishFailure('STORE_WRITE_FAILED');
         if (response.records > 0) wroteAny = true;
       } catch {
         return finishFailure('STORE_WRITE_FAILED');
