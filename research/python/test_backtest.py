@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from backtest import Candle, load_candles, run_backtest, run_parameter_sweep
@@ -69,8 +70,9 @@ class BacktestTests(unittest.TestCase):
             run_parameter_sweep(self.candles, [(2, 100)])
 
     def test_large_history_backtest_uses_rolling_sma_path(self):
+        start = datetime.fromisoformat("2026-01-01T00:00:00+00:00")
         candles = [
-            Candle(f"2026-01-01T00:{index // 60:02d}:{index % 60:02d}Z", 100 + (index % 97) / 10)
+            Candle((start + timedelta(minutes=index)).isoformat().replace("+00:00", "Z"), 100 + (index % 97) / 10)
             for index in range(10000)
         ]
         result = run_backtest(candles, fast_period=8, slow_period=55)
