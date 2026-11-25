@@ -35,6 +35,21 @@ class BacktestTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             run_backtest(self.candles[:5], 3, 5)
 
+    def test_backtest_orders_timestamps_by_instant_not_string(self):
+        out_of_order = [
+            Candle("2026-01-01T00:00:00Z", 10),
+            Candle("2026-01-01T00:30:00+02:00", 11),
+            Candle("2026-01-01T01:00:00Z", 12),
+            Candle("2026-01-01T02:00:00Z", 13),
+            Candle("2026-01-01T03:00:00Z", 14),
+            Candle("2026-01-01T04:00:00Z", 15),
+        ]
+        with self.assertRaises(ValueError):
+            run_backtest(out_of_order, 2, 3)
+        missing_timezone = [Candle("2026-01-01T00:00:00", 10)] + self.candles[1:]
+        with self.assertRaises(ValueError):
+            run_backtest(missing_timezone, 3, 5)
+
     def test_csv_requires_timezone_sorted_positive_close(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "candles.csv"
