@@ -49,3 +49,9 @@
 
 ## Contributor policy update — 25 November 2026
 - Grok/xAI is a full engineering peer with the same project scope as ChatGPT and other approved agents: research, implementation, tests, branches, commits, pushes, PRs, reviews and routine validated integration. No provider-based restriction; one writer per branch/worktree prevents conflicts. Grok's reported PR-creation 403 requires its own GitHub token to have Pull requests: Read and write. This policy does not grant token scopes or bypass production/security approval gates.
+
+
+## Grok dashboard creative autonomy — 26 November 2026
+- BOS authorizes Grok/xAI to proactively design and implement ambitious main-dashboard UI/UX improvements: layout, visual hierarchy, widgets/charts, AI insight panels, interactions, animation, accessibility and responsive desktop/mobile behavior. Routine design decisions do not require per-change BOS approval.
+- Preserve all existing menus/routes/features/data contracts; never fabricate market data/signals or expose secrets; no paid services/assets or live financial actions without approval. Respect accessibility, performance, source/freshness and reduced-motion.
+- Explore in isolated `exp/*`; implement from latest `develop` on scoped `feat/*`; one writer per branch. All PR/CI/QA/release gates remain unchanged. This is creative authority, not permission to bypass production controls or a claim of automated enforcement.
