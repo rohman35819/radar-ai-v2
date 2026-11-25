@@ -57,6 +57,8 @@ test('market-data contracts validate canonical asset, OHLCV, provenance and chec
   assert.equal(isRadarCandle({ ...candle, bucket_at: 'not-a-time' }), false);
   assert.equal(isMarketObservation({ ...observation, payload_hash: 'bad' }), false);
   assert.equal(isRadarAsset({ ...asset, chain: null }), false);
+  assert.equal(isMarketObservation({ ...observation, source_updated_at: 'not-a-time' }), false);
+  assert.equal(isIngestionRun({ ...run, run_id: 'not-a-uuid' }), false);
 });
 
 test('TypeScript snapshot contracts reject malformed API data', async () => {
