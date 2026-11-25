@@ -54,3 +54,5 @@
 - Second proven bug (26 Nov): `renderAction()` threw `ReferenceError: priceLabel is not defined`. Fix is included in main v2.3.2 via PR #125; verify Hostless and browser behavior separately.
 
 - Scale foundation branch `exp/scalable-platform-foundation` starts from main `f38d25a` (v2.3.2). Adds strict TS contract/typecheck, Python 3.13 offline backtest CI, provenance/OHLCV contract guards and a staged architecture roadmap. Production runtime/data/deployment unchanged; exact-head CI and security scans pending.
+
+- Snapshot ETag change merged to develop via PR #140 (`80c4601`) after all gates passed; initial PR #137 failed only because `perf/*` is not an allowed branch prefix (use `feat/*`). No main release performed for this change.

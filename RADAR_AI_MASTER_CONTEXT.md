@@ -3505,3 +3505,8 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ### NEXT TASK
 - Selesaikan exact-head rerun setelah update dokumentasi, lalu merge PR #135 ke develop jika seluruh checks lulus.
 - Fase berikutnya: buat ingestion worker terpisah yang memakai durable queue/checkpoint dan adapter market-data OFF-by-default; lakukan failure/restart/rate-limit tests sebelum integrasi apa pun ke runtime production.
+### Penutup PR #140 — 26 November 2026
+- PR awal #137 gagal pada `Branch source policy` bukan karena kode: prefix `perf/*` tidak termasuk allowlist workflow (hanya `feat/*`, `fix/*`, `exp/*`, `docs/*`, `chore/*`, `ci/*`, `security/*`, `test/*`, `refactor/*`). Job `test` pada PR #137 sukses. PR #137 ditutup, branch diganti menjadi `feat/snapshot-etag`, dan PR #140 dibuat ulang.
+- PR #140 di-merge ke `develop` dengan `merge_commit_sha` `80c460133ddf16dfbbcf8bf5bd82e906401b4257`. Head terverifikasi `80bd31be2b37d285c5df5d6d508401af9f5b114f`; `mergeable=true`, `mergeable_state=clean`.
+- Gate exact-head: run `45702419852` (`test` **success**, `Branch source policy` **success**) dan `45702420025` (`Gitleaks` **success**, `Trivy` **success**). Lokal: `npm test` 226/226 pass sebelum merge.
+- Tidak ada rilis ke `main` yang saya lakukan pada siklus ini; Hostless Build/LIVE tidak diverifikasi untuk perubahan ini.
