@@ -194,7 +194,7 @@ export function isIngestionRun(value: unknown): value is IngestionRun {
   if (!counters.every(key => value[key] === undefined || (Number.isInteger(value[key]) && Number(value[key]) >= 0))) return false;
   const received = Number(value.records_received ?? 0);
   const handled = Number(value.records_inserted ?? 0) + Number(value.records_updated ?? 0) + Number(value.records_rejected ?? 0);
-  return handled <= received && (value.completed_at == null || Date.parse(value.completed_at) >= Date.parse(value.started_at));
+  return handled <= received && (value.completed_at == null || Date.parse(String(value.completed_at)) >= Date.parse(String(value.started_at)));
 }
 
 export function isIngestionCheckpoint(value: unknown): value is IngestionCheckpoint {
