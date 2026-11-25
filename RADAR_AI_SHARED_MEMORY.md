@@ -57,3 +57,10 @@
 
 - Snapshot ETag/304 benchmarked on branch `perf/snapshot-etag` (synthetic, local): 205 tokens 51.5KB→2B per conditional request, p99 24.4ms→3.8ms; 1000 tokens 249KB→2B, p99 27.5ms→5.7ms. 226/226 tests pass. No production changes; needs PR + CDN conditional-request verification.
 - Snapshot ETag change merged to develop via PR #140 (`80c4601`) after all gates passed; initial PR #137 failed only because `perf/*` is not an allowed branch prefix (use `feat/*`). No main release performed for this change.
+
+
+## Engineering governance
+- Permanent 12-area policy: `docs/architecture/engineering-constitution.md`; all agents/contributors apply it alongside `AGENTS.md` and the master context.
+- Covers architecture, agent collaboration, security, data/storage, memory/provenance, API contracts, reliability, cost/quota, QA/CI, observability, UI/accessibility, and version/release governance.
+- TypeScript-first language direction remains recorded in owner-confirmed issue #138. The constitution is policy-only where technical enforcement is not verified; it activates no service, worker, DB, paid plan, or production capability.
+- Current constitution delivery branch: `docs/engineering-constitution` → `develop`; exact-head CI/security and PR status must be verified before calling it integrated.
