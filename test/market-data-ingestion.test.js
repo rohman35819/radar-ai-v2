@@ -40,6 +40,8 @@ test('market ingestion validates batch bounds and untrusted payloads before netw
   await assert.rejects(worker.ingest({ source: 'fixture', stream: 'spot', observations: [{ ...observation, asset: { ...asset, asset_id: '../bad' } }] }), /asset_id/);
   await assert.rejects(worker.ingest({ source: 'fixture', stream: 'spot', observations: [observation, observation] }), /0\.\.1 records/);
   await assert.rejects(worker.ingest({ source: 'fixture', stream: 'spot', observations: [{ ...observation, observed_at: 'not-a-date' }] }), /valid timestamp/);
+  await assert.rejects(worker.ingest({ source: 'fixture', stream: 'spot', observations: [{ ...observation, payload: { price: Number.NaN } }] }), /finite/);
+  await assert.rejects(worker.ingest({ source: 'fixture', stream: 'spot', observations: [{ ...observation, asset: { ...asset, metadata: { huge: 'x'.repeat(17000) } } }] }), /byte limit/);
   assert.equal(calls, 0);
 });
 
@@ -59,6 +61,8 @@ test('market ingestion writes assets, idempotent observations and durable checkp
   assert.match(calls[1].url, /\/assets\?on_conflict=asset_id$/);
   assert.match(calls[2].url, /\/market_observations\?on_conflict=/);
   assert.equal(calls[1].headers.Prefer, 'resolution=merge-duplicates,return=minimal');
+  assert.equal(calls[1].headers['Content-Profile'], 'radar_market');
+  assert.equal(calls[1].headers['Accept-Profile'], 'radar_market');
   assert.equal(calls[2].headers.Prefer, 'resolution=ignore-duplicates,return=representation');
   assert.equal(calls[2].body[0].entity_id, asset.asset_id);
   assert.match(calls[2].body[0].payload_hash, /^[a-f0-9]{64}$/);
