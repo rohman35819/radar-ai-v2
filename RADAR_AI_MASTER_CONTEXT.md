@@ -3386,3 +3386,39 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Pengujian: `node --check public/app.js` lulus; `node --test test/top5-runtime.test.js` 3/3 pass; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
 - Status: perbaikan pada branch `fix/top5-price-label` dari `develop` `8ac4642`; perlu PR ke `develop` lalu rilis ke `main`. Hostless LIVE untuk perbaikan ini belum diverifikasi.
 - NEXT TASK: setelah deploy, ulangi reproduksi terhadap aset LIVE dan pastikan `renderAction()` menghasilkan kartu; lanjutkan QA klik browser nyata.
+
+---
+
+## 138. FONDASI ARSITEKTUR SKALA BESAR — 26 NOVEMBER 2026
+
+### Keputusan arsitektur
+- BOS mengarahkan RADAR disiapkan untuk pertumbuhan data, eksperimen paralel, dan pengembangan berkelanjutan. Diputuskan migrasi bertahap (strangler pattern), bukan big-bang rewrite.
+- TypeScript menjadi default strategis untuk modul aplikasi/domain baru; JavaScript produksi tetap dipertahankan sampai setiap modul pengganti memiliki parity tests dan kontrak kompatibel.
+- Python dipakai untuk riset kuantitatif/backtest offline dan nantinya worker eksperimen yang terisolasi. Tidak memiliki kapabilitas order exchange.
+- PostgreSQL ditetapkan sebagai target system-of-record untuk observasi pasar, OHLCV, dan job state. JSON state tetap kompatibel selama masa transisi; belum ada migrasi produksi.
+- Throughput ditingkatkan dengan bounded concurrency, provider quotas, durable queue, idempotency, backpressure, observability, dan scale-out berbasis metrik. Tidak menggunakan concurrency tanpa batas.
+- Rust/Go hanya dipertimbangkan setelah profiling membuktikan hot path atau bottleneck yang terukur. Tidak menambah bahasa sekadar menambah jumlah bahasa.
+- Tidak ada layanan berbayar, VPS, Redis, object storage, perubahan secret, deployment setting, atau konfigurasi produksi yang diaktifkan.
+
+### Implementasi fondasi pada branch eksperimen
+- Branch `exp/scalable-platform-foundation`, dibuat dari `main` SHA `f38d25a6203ab486d7170369e86874f838af627a` (rilis v2.3.2).
+- `src/contracts.mts`: kontrak TypeScript untuk snapshot/token, candle OHLCV, dan provenance observation serta runtime guards.
+- `tsconfig.json`: strict type-checking (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, no emit).
+- `package.json`: `npm run typecheck` memakai TypeScript 5.9.3 yang dipatok; `npm run test:python` menjalankan unit tests Python.
+- `.github/workflows/test.yml`: CI menambah Python 3.13 unit tests dan strict TypeScript type-check; existing Node tests dan disposable PostgreSQL smoke tests dipertahankan.
+- `research/python/`: deterministic SMA crossover offline backtester, biaya fee/slippage, no-look-ahead, drawdown, dan validasi timestamp/harga.
+- `docs/architecture/scale-roadmap.md` dan README menjelaskan target modular API/ingestion/storage/research/AI workers, urutan migrasi, throughput, dan safety gates.
+
+### QA dan status
+- Eksperimen sebelumnya pada branch `exp/python-backtest-typescript-contracts` telah lulus exact-code CI run `45691537934` pada SHA `6620346...`: npm 216/216, Python 4/4, dan disposable PostgreSQL Agent Platform/queue/memory smoke tests lulus. Ini adalah bukti pilot sebelumnya, bukan bukti branch baru.
+- Branch baru masih menunggu GitHub Actions exact-head untuk perubahan strict `tsc`, Python CI dan semua regression/PostgreSQL tests. Belum ada hasil lokal karena tidak tersedia working clone pada sesi ini.
+- Branch `develop` tertinggal 3 commit dari `main`; branch eksperimen dibuat dari main agar tidak kehilangan rilis v2.3.2. PR menuju develop akan membawa tiga commit main tersebut ke integration lane bersama fondasi baru.
+- Open PR yang terverifikasi saat audit: #121, #115, #112, #105 (empat PR dokumentasi). Branch eksperimen belum membuka PR; alasan pentingnya pekerjaan: membangun fondasi sebelum volume data dan biaya migrasi membesar. PR baru tetap memerlukan triage antrean dan exact-head checks.
+- GitHub branch tersimpan; CI branch baru pending; Hostless Build belum dijalankan; LIVE belum berubah dan tidak diklaim.
+- Tidak ada production route, data, schema, secret, service, atau deploy yang diubah.
+
+### NEXT TASK
+- Tunggu exact-head CI branch ini. Perbaiki seluruh error `tsc`/test yang ditemukan.
+- Jalankan Gitleaks dan Trivy pada PR exact-head; review seluruh diff dan kompatibilitas develop/main.
+- Setelah lulus, buka PR ke `develop` dengan catatan bahwa branch berasal dari latest main dan membawa tiga commit rilis yang belum masuk develop.
+- Fase berikutnya: rancang additive PostgreSQL market-data schema + smoke tests di disposable PostgreSQL; jangan terapkan ke production sebelum backup, backfill, compatibility dan rollback plan tervalidasi.
