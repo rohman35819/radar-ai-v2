@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from backtest import Candle, load_candles, run_backtest
+from backtest import Candle, load_candles, run_backtest, run_parameter_sweep
 
 
 class BacktestTests(unittest.TestCase):
@@ -49,6 +49,33 @@ class BacktestTests(unittest.TestCase):
         missing_timezone = [Candle("2026-01-01T00:00:00", 10)] + self.candles[1:]
         with self.assertRaises(ValueError):
             run_backtest(missing_timezone, 3, 5)
+
+    def test_parallel_parameter_sweep_matches_serial_and_preserves_order(self):
+        parameters = [(2, 4), (3, 6), (4, 8)]
+        serial = run_parameter_sweep(self.candles, parameters, fee_bps=12, slippage_bps=7, max_workers=1)
+        parallel = run_parameter_sweep(self.candles, parameters, fee_bps=12, slippage_bps=7, max_workers=2)
+        self.assertEqual(parallel, serial)
+        self.assertEqual(
+            [(row["fast_period"], row["slow_period"]) for row in parallel],
+            parameters,
+        )
+
+    def test_parameter_sweep_rejects_unbounded_workers_and_invalid_periods(self):
+        with self.assertRaises(ValueError):
+            run_parameter_sweep(self.candles, [(2, 4)], max_workers=5)
+        with self.assertRaises(ValueError):
+            run_parameter_sweep(self.candles, [(4, 2)])
+        with self.assertRaises(ValueError):
+            run_parameter_sweep(self.candles, [(2, 100)])
+
+    def test_large_history_backtest_uses_rolling_sma_path(self):
+        candles = [
+            Candle(f"2026-01-01T00:{index // 60:02d}:{index % 60:02d}Z", 100 + (index % 97) / 10)
+            for index in range(10000)
+        ]
+        result = run_backtest(candles, fast_period=8, slow_period=55)
+        self.assertEqual(result["candles"], 10000)
+        self.assertGreaterEqual(result["max_drawdown_pct"], 0)
 
     def test_csv_requires_timezone_sorted_positive_close(self):
         with tempfile.TemporaryDirectory() as folder:
