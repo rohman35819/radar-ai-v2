@@ -18,7 +18,7 @@ test('Dashboard mempertahankan semua menu lama dan menambah dua menu intelijen',
   assert.match(html, /href="\/market\.html"/);
   assert.match(html, /href="\/solscan\.html"/);
   assert.match(html, /href="\/command\.html"/);
-  assert.match(html, /src="\/top5\.js"/);
+  assert.match(html, /src="\/top5\.js\?v=v2\.3\.1"/);
 });
 
 test('Top 5 Action Center memakai analitik nyata dan tombol VIEW TRADE ANALYSIS', () => {

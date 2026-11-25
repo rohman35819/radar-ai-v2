@@ -1,7 +1,9 @@
 'use strict';
-const SHELL = 'radar-shell-v14';
+const SHELL = 'radar-shell-v15';
+// Versi aset dashboard mengikat HTML ke JS/CSS yang benar bila CDN edge cache menyimpan respons lama.
+const ASSET_VERSION = 'v2.3.1';
 const FILES = [
-  '/', '/index.html', '/app.js', '/top5.js', '/style.css', '/market.html', '/market.js', '/market.css',
+  '/', '/index.html?v=' + ASSET_VERSION, '/app.js?v=' + ASSET_VERSION, '/top5.js?v=' + ASSET_VERSION, '/style.css?v=' + ASSET_VERSION, '/market.html', '/market.js', '/market.css',
   '/trading.html', '/trading.js', '/trading.css',
   '/command.html', '/command.css', '/command.js', '/membership.html', '/membership.js', '/membership.css',
   '/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png'
