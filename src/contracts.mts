@@ -1,7 +1,7 @@
 /**
  * TypeScript boundary contracts for the existing RADAR snapshot API.
  *
- * These contracts are the first typed boundary for the incremental TypeScript migration.
+ * Typed contracts for snapshot compatibility and the staged market-data pipeline.
  * Production JavaScript remains unchanged until each module has parity tests and a
  * reviewed deployment path. Runtime guards validate untrusted provider/API JSON.
  */
