@@ -78,6 +78,10 @@ jobs:
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/migrations/20261124_radar_memory.sql
       - name: Verify memory RLS, privileges, provenance and proposal-only lifecycle
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/tests/20261124_radar_memory_smoke.sql
+      - name: Apply market-data storage schema (disposable PostgreSQL only)
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < db/migrations/003_market_data.sql
+      - name: Verify market-data provenance, idempotency, RLS and OHLCV partitions
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < db/tests/003_market_data_smoke.sql
       - name: Hostless LIVE readiness and News probe (diagnostic only)
         if: github.head_ref == 'ops/hostless-live-check'
         run: npm run hostless-check
