@@ -80,3 +80,5 @@
 - `main` and `develop` diverged (develop 23 ahead / 3 behind at audit). Do not bulk-merge. Railway staged resources remain untouched.
 - Docs-only; tests not run; PR CI pending; Hostless status not changed/verified.
 - Next: Division 05 exact-head CI/security evidence, Division 01 security review, then Division 06/07 queue and memory implementation behind OFF flags. Prove Rp0 compute/storage before any runtime provisioning.
+
+- Follow-up: SQL smoke test now asserts queue fail-closed defaults and denies service/runtime role access to global control changes. Commit `4c6bf31e2b0204c471b837eeb84c4b6fb8fbdd73`; disposable PostgreSQL CI pending. PR #149 remains Draft/unmerged.
