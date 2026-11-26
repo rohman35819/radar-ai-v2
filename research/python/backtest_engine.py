@@ -167,25 +167,29 @@ def run_backtest(dataset: Dataset, config: StrategyConfig, signals: Sequence[Sig
             trade_funding += funding_pct
             equity *= 1.0 + funding_pct
             bars_in_position += 1
-        bar_return = equity - 1.0 if index == 0 else equity / (equity_curve[-1] if equity_curve else 1.0) - 1.0
-        bar_returns.append(bar_return)
-        equity_curve.append(equity)
         peak = max(peak, equity)
         drawdown = (peak - equity) / peak
-        max_drawdown = max(max_drawdown, drawdown)
 
+        # Apply the kill switch BEFORE recording this bar, so the equity curve,
+        # per-bar returns and reported drawdown describe the same final equity.
         if kill_active is False and drawdown > config.max_drawdown_stop_pct and position == 1:
             fill = candle.close * (1.0 - slip - fee)
             net = fill / entry_price - 1.0
             gross = candle.close / entry_price - 1.0
-            trades.append(Trade(entry_time, candle.timestamp, entry_price, fill, gross, net, funding_pct,
+            trades.append(Trade(entry_time, candle.timestamp, entry_price, fill, gross, net, trade_funding,
                                 index - entry_index + 1, "drawdown_stop"))
             equity *= 1.0 + net * fraction
             gross_equity *= 1.0 + gross * fraction
             position = 0
             mark_price = None
             kill_active = True
-            equity_curve[-1] = equity
+            peak = max(peak, equity)
+            drawdown = (peak - equity) / peak
+
+        max_drawdown = max(max_drawdown, drawdown)
+        bar_return = equity - 1.0 if index == 0 else equity / (equity_curve[-1] if equity_curve else 1.0) - 1.0
+        bar_returns.append(bar_return)
+        equity_curve.append(equity)
 
     net_return = (equity - 1.0) * 100.0
     gross_return = (gross_equity - 1.0) * 100.0

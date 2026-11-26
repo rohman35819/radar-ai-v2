@@ -96,7 +96,11 @@ python3 research/python/quant_cli.py research/python/fixtures/btcusdt_1d_public.
 - QA independen otomatis `verify_report.py`: **12/12 check passed** (`research/python/output/qa_verification.json`). Ini bukan sign-off manusia Divisi 05.
 - Hostless Build/LIVE: **tidak diverifikasi**. Tidak ada deploy, worker, produksi DB, live order, atau withdrawal yang diaktifkan.
 
-## 8. Batasan dan larangan
+## 8. Eksperimen strategi terdaftar
+
+`research/python/experiments/registry.json` berisi hipotesis, grid, biaya, dan kriteria yang **ditetapkan sebelum hasil dilihat**. Jalankan `python3 research/python/run_experiments.py` untuk BTC dan ETH; hasil mentah, laporan `quant-report.v1` per eksperimen, dan QA otomatis ada di `research/python/output/experiments/`. Ringkasan, kegagalan, dan diagnosis ada di `docs/quant-strategy-experiments.md`. Semua delapan eksperimen saat ini ditolak oleh kriteria yang tidak diubah; tidak ada strategi yang dipromosikan ke paper ledger.
+
+## 9. Batasan dan larangan
 
 - Data sintetik → angka tidak boleh dipakai sebagai bukti profit atau keputusan finansial.
 - Satu aset, satu interval, satu strategi; tidak digeneralisasi.
@@ -105,6 +109,6 @@ python3 research/python/quant_cli.py research/python/fixtures/btcusdt_1d_public.
 - Rp0: tanpa API berbayar, VPS, database produksi, atau modal.
 - Pertahankan semua menu/route dashboard RADAR AI V2; perubahan ini tidak menyentuh frontend produksi.
 
-## 9. NEXT TASK
+## 10. NEXT TASK
 
 Jalankan dengan data publik nyata (`fetch_ohlcv.py`) pada lingkungan berjaringan, evaluasi apakah kriteria validasi lolos, lalu — hanya jika lolos dan disetujui — lanjut ke paper ledger TypeScript dengan reconciliation. Tetap tanpa order sungguhan.

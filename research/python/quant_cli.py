@@ -12,7 +12,7 @@ from backtest_engine import run_backtest
 from quant_data import load_ohlcv
 from report import REPORT_SCHEMA, RunMeta, build_report, write_report
 from strategy import StrategyConfig, generate_signals
-from validation import run_validation
+from validation import candidate_config, run_validation
 
 
 def make_parser() -> argparse.ArgumentParser:
@@ -71,9 +71,11 @@ def main(argv: list[str] | None = None) -> int:
         stop_loss_pct=args.stop_loss_pct,
         max_drawdown_stop_pct=args.max_drawdown_stop_pct,
     )
-    signals = generate_signals(dataset.candles, config)
-    backtest = run_backtest(dataset, config, signals)
     validation = run_validation(dataset, config)
+    selected_params = validation['selected_parameters']['params']
+    selected_config = candidate_config(config, selected_params)
+    signals = generate_signals(dataset.candles, selected_config)
+    backtest = run_backtest(dataset, selected_config, signals)
     meta = RunMeta(generated_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
     report = build_report(dataset, backtest, validation, meta, signals)
     path = write_report(Path(args.report), report)
@@ -84,6 +86,8 @@ def main(argv: list[str] | None = None) -> int:
         "start": dataset.start,
         "end": dataset.end,
         "bars": len(dataset.candles),
+        "selected_params": selected_params,
+        "strategy_id": selected_config.strategy_id,
         "total_trades": backtest.metrics["total_trades"],
         "gross_return_pct": backtest.metrics["gross_return_pct"],
         "net_return_pct": backtest.metrics["net_return_pct"],
