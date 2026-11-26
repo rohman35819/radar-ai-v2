@@ -41,6 +41,27 @@ After completing a task:
 
 Do not claim to work between messages, while a chat is closed, or 24/7 unless a deployed scheduler, persistent queue/state, worker runtime, permissions, audit trail, budgets, approval gates and kill switch have been implemented and verified. A prompt alone does not create background execution.
 
+## 3A. Standing NEXT TASK continuation protocol — BOS directive (effective 26 November 2026)
+
+This is a standing execution instruction for every Grok RADAR AI V2 session. It converts the current approved backlog into a continuous in-session work loop; BOS must not need to send "lanjutkan" after each completed task.
+
+### Mandatory behavior
+1. At session start, complete the startup checks in section 1, inspect the current GitHub queue and latest project NEXT TASK, then begin the highest-priority task already authorized and not blocked.
+2. After completing a task, verify acceptance criteria, tests, diff, security/cost constraints, documentation, commit SHA and PR/CI state. Then immediately re-read the current backlog and select the next highest-priority authorized, unblocked NEXT TASK.
+3. Repeat this cycle: **SELECT NEXT TASK → IMPLEMENT → TEST → SELF-REVIEW → DOCUMENT → VERIFY → SELECT NEXT TASK**. Do not wait for BOS to say "lanjut", "terus", or issue a new prompt between ordinary authorized tasks.
+4. A task is not complete merely because code was written. Use the repository's definition of done and report exact evidence.
+5. If one task is blocked by a BOS decision, external approval, unavailable credential, full PR WIP capacity, or an unsafe dependency, record the precise blocker and the single required decision/action. Do not make that decision on BOS's behalf. Continue with another independent, authorized task where possible; do not idle solely because one item is blocked.
+6. When PR capacity is full, continue safe audit, design, tests, local validation, and preparation on an appropriate isolated branch or existing matching PR. Do not open an extra PR, evade WIP policy, or push task work to `main`.
+7. Do not invent backlog items just to remain active. Select only tasks grounded in current issues, approved roadmap, documented defects, or explicit BOS directives. Reprioritize only for evidenced P0/P1 risks or a documented dependency.
+8. **Stop and report only when the authorized, actionable NEXT TASK queue is exhausted**, or every remaining item is blocked and no independent safe work remains. At that point send one concise BOS report with: completed tasks and evidence; commit SHAs; branch/PR and exact-head CI; tests; unresolved blockers and the exact BOS decisions required; and confirmation that no authorized unblocked NEXT TASK remains.
+9. This protocol governs work only while a Grok session or deployed worker is actually executing. It does not make a chat run after it is closed, between messages, or continuously in the background. Never claim always-on autonomy without a verified scheduler, durable queue/state, worker runtime, permissions, audit, budget controls, approval gates and kill switch.
+
+### Authority boundaries — unchanged
+- This protocol is **not** permission to merge PRs, deploy production, change secrets/permissions, activate paid services, exceed free quotas, enable live trading, submit real orders, withdraw, or move funds.
+- Obtain BOS approval wherever existing repository policy requires it. In particular, PR #153's Advisor evaluation and BOS merge decision remain explicit gates; do not mark them approved or merge without authorization.
+- Maintain the Rp0/free-tier limit and all existing security, QA, branch, WIP and financial safeguards.
+- If the backlog or repository instructions conflict, follow the higher-level safety/approval policy and report the conflict rather than silently weakening a gate.
+
 ## 4. Risk-first engineering
 
 Continuously inspect for:
