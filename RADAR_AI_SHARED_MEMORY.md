@@ -25,12 +25,12 @@
 - Do not claim always-on/background autonomy unless scheduler, durable queue/state, workers, permissions, audit, budgets, approval gates and kill switch are implemented and verified.
 
 ## Verified project handoff — 25 November 2026
-- `main` HEAD: `f38d25a6203ab486d7170369e86874f838af627a` (v2.3.2 release); `develop` HEAD: `63d950e2eeca0a8b059c5681e1df924dac3c6fb2`, three commits behind main. Re-check before integration.
+- `main` HEAD: `f38d25a6203ab486d7170369e86874f838af627a` (v2.3.2); `develop` HEAD: `1226a5d96072fe626b1a554192e4d652d440c8e0`. Branches diverged: develop is 23 commits ahead and 3 behind main. Do not bulk-merge; select release scope.
 - PR #110 (single shared memory + no-chat-archive policy) merged to `develop` as `c9c3a1403b19e5fe52250d0354e03bf7a1af1319`. Exact-head npm tests, disposable PostgreSQL Agent Platform/queue/memory smoke tests, Gitleaks, Trivy and branch-source policy all passed.
 - PR #107 is closed as superseded by #110; do not revive its stale/diverged branch.
-- PR #106 (mobile sidebar drawer) remains open and needs rebase/validation against current develop plus Android/iOS/browser QA. Prior Termux report: 5 frontend tests passed and `git diff --check` clean; device QA was not completed.
+- PR #106 mobile sidebar fix merged to develop and was included in main release #117. Android/iOS and real-browser device QA remain unverified.
 - PR #108 (cloud-worker hardening) and #109 (master-context status) are merged to `develop`. Exact-head tests, PostgreSQL disposable migration/queue/memory smoke tests, Gitleaks, Trivy and branch-source policy passed for #108.
-- Cloud worker hardening exists on `develop`, not yet released to `main`. GitHub Actions worker is periodic (every two hours), not continuous 24/7. It can run without the phone/Termux, but workflow must reach default branch `main` before scheduled runs use the new version.
+- Cloud worker hardening was included in main release #117. GitHub Actions is periodic (every two hours), not continuous 24/7. Do not claim successful scheduled execution or always-on operation without run evidence.
 - Groq provider support is opt-in and OFF by default. Do not configure `GROQ_API_KEY` or enable `GROQ_AUTONOMOUS_ENABLED=1` without BOS explicitly approving after quota/billing review. OpenRouter fallback is pinned to `openrouter/free`.
 - PostgreSQL Agent Platform queue/control plane is not activated for production: pause + kill switch defaults, USD 0 budget and restrictive grants remain. No VPS or paid service has been provisioned.
 - Hostless Build/LIVE status was not verified by the above GitHub work. Do not infer deployment from a merge.
@@ -40,23 +40,24 @@
 - Repository docs alone do not force Grok to load them. The Grok project/client must have repository access and a startup/custom instruction to read `GROK.md`; verify this separately before claiming automatic onboarding.
 - Grok is xAI's assistant; Groq is a separate inference provider. Groq provider activation remains OFF unless BOS explicitly approves.
 
-## Next actions
-1. PR #126 (`exp/scalable-platform-foundation` → `develop`) code head `a3187e8...` passed 217 Node tests, strict TypeScript typecheck, Python 5/5, PostgreSQL smoke tests, branch policy, Gitleaks and Trivy. Latest docs-only head `469006a...` has rerun checks queued.
-2. PR #121 and #112 closed as superseded; #115 (Grok contributor charter) and #105 (Termux/Groq handoff) remain open and need triage/rebase.
-3. Keep production JavaScript, market state, secrets, Hostless settings, and paid infrastructure unchanged until additive data migrations and worker integration pass isolated gates.
-4. Bounded parallel refresh PR #135 merged to develop as 1fe5b5b...; exact PR + merge commit passed 226 Node tests, strict TS, Python 5/5, PostgreSQL smoke, Gitleaks/Trivy. Independent sources now run at concurrency max 3; CoinGecko/exchange ordering preserved. No Hostless deploy.
+## Next actions — 26 November 2026
+1. **P0 Storage:** verify Hostless active backend, real persistent mount, quota/overage and restart persistence. No guessed `DATA_DIR`, `/tmp` fallback, disk provisioning or paid resource.
+2. **P1 Browser QA:** one Playwright pilot for Dashboard desktop/mobile (all navigation, sidebar, Action/Intel cards + modal) and Exchange Hub (Binance/Bybit, token mask/clear, permission/error states, GET-only network). Capture sanitized artifacts.
+3. **P1 Cache delivery:** verify normal `/app.js?v=v2.3.1` contains `priceLabel`; the monitor did not fetch this asset. If stale, bump asset version + SW shell in a focused hotfix.
+4. **P1 Release integrity:** `main`/`develop` diverged 23 ahead / 3 behind; promote only reviewed commits, never the entire branch.
+5. **WIP:** open PRs are #149, #115 and #105 (3/3). #115 is 13 ahead / 36 behind develop and touches shared governance docs; #105 is 1 ahead / 53 behind and touches master context. Triage before opening another PR.
+6. Keep production queue/database and all autonomous runtime OFF until zero-cost capacity, persistence, security and recovery are independently proven.
 
-- Top 5 Action Center + Radar Intelligence added on branch `feat/top5-action-center`: transparent scoring from real snapshot fields, mechanical trade plan from observed price history with NOT_ENOUGH_DATA guard, honest capability matrix (whale/smart money/portfolio marked unavailable). 207/207 tests pass; no trading/withdrawal enabled. Browser QA and Hostless verification pending.
+- Top 5 Action Center + Radar Intelligence are in main v2.3.2 via PR #125. Runtime regression tests cover Action/Intel/modal; exact release-head CI run #1123 passed **214/214**. No trading/withdrawal enabled; real-browser QA remains pending.
 
-- Hostless LIVE verified at v2.3.0 commit `1ed78c5` (build `2fab35ee` per BOS). Public probe: homepage 200, `/top5.js` 200, action/intel menus present. Browser interaction QA still pending.
+- Latest available Hostless monitor run [#45690836381](https://github.com/rohman35819/radar-ai-v2/actions/runs/45690836381), 25 Nov 2026 20:01 UTC: `/api/ready` 200 `ready`, storage `ok`; `/api/snapshot` 200, 50 news; storage/snapshot/news/Binance Futures/DEX checks all true. Deployment metadata API returned valid JSON with no recognized list, so Hostless Build and deployed SHA remain UNKNOWN. This is the last available snapshot, not a current probe; persistence across restart is unverified.
 
-- Proven routing bug (26 Nov): Cloudflare edge served stale `/app.js` (cf-cache-status HIT, max-age 14400) alongside new index.html, so new menus fell through to System Health. Fix: version dashboard assets `?v=v2.3.1` in index.html and SW precache, shell v15, keeping QA's network-first SW. 211/211 tests pass. Needs release to main + LIVE recheck.
-- Second proven bug (26 Nov): `renderAction()` threw `ReferenceError: priceLabel is not defined`. Fix is included in main v2.3.2 via PR #125; verify Hostless and browser behavior separately.
+- Proven routing/cache bug fixed in main via PR #123: dashboard assets use `?v=v2.3.1`, SW shell v15 and network-first. Follow-up PR #125 changed `public/app.js` but did not change the asset URL or SW version; this is a **cache-delivery risk, not a proven current LIVE failure**. Verify the normal asset URL and browser render before closing QA.
+- `priceLabel` was added to `public/app.js` via PR #125 and released to main v2.3.2. Monitor #45690836381 checks API/providers, not this JS asset; actual browser delivery remains unverified.
 
-- Scale foundation branch `exp/scalable-platform-foundation` starts from main `f38d25a` (v2.3.2). Adds strict TS contract/typecheck, Python 3.13 offline backtest CI, provenance/OHLCV contract guards and a staged architecture roadmap. Production runtime/data/deployment unchanged; exact-head CI and security scans pending.
+- PR #126 merged to `develop` only: TypeScript contracts/strict typecheck, Python offline research baseline and scalable data roadmap. Existing JavaScript remains; no big-bang rewrite or production runtime activation.
 
-- Snapshot ETag/304 benchmarked on branch `perf/snapshot-etag` (synthetic, local): 205 tokens 51.5KB→2B per conditional request, p99 24.4ms→3.8ms; 1000 tokens 249KB→2B, p99 27.5ms→5.7ms. 226/226 tests pass. No production changes; needs PR + CDN conditional-request verification.
-- Snapshot ETag change merged to develop via PR #140 (`80c4601`) after all gates passed; initial PR #137 failed only because `perf/*` is not an allowed branch prefix (use `feat/*`). No main release performed for this change.
+- Snapshot ETag/304 change merged to `develop` via PR #140 after exact-head tests; it is not in main and Hostless conditional-request behavior has not been verified.
 
 
 ## Engineering governance
@@ -70,8 +71,8 @@
 - PR #146 merged to `develop` as `1b13ae17f2c221df50d1aeaf558e892eb98f7df1`: OFF-by-default TypeScript one-shot ingestion worker (3-way bounded concurrency, 50 tasks/run, 250 rows/type/batch, idempotent writes, checkpoint replay) plus Python O(n) rolling SMA and bounded process-pool parameter sweep (default serial, max 4 workers).
 - PR #147 docs follow-up merged to `develop` as `dd46a5a74b39a0b749427b08415253c70c4894a9`. Latest merge-commit test run `45706453762`: npm 233/233, strict TypeScript, Python 8/8, PostgreSQL 16 migrations/smoke. Security run `45706453707`: Gitleaks no leaks; Trivy secret scan no findings.
 - Trivy vulnerability scanner reports no supported dependency manifests; dependency CVE coverage is NOT AVAILABLE. No runtime dependency added.
-- `main` remains `f38d25a6203ab486d7170369e86874f838af627a`. No Hostless build/deploy was triggered. Public LIVE readiness/snapshot/news probes succeeded in main monitor run `45690836381`, but Hostless deployment metadata lookup failed, so LIVE commit/version remains unverified.
-- Next: durable queue lease/claim, retry/dead-letter and provider-specific quotas; then experiment manifests and walk-forward tests. Worker remains OFF and unconnected to production.
+- `main` remains `f38d25a6203ab486d7170369e86874f838af627a`; `develop` remains `1226a5d96072fe626b1a554192e4d652d440c8e0`. Hostless readiness was healthy in the last monitor snapshot, but Build/deployed SHA and restart persistence remain unknown.
+- Next Agent Platform work: durable lease/claim, retry/dead-letter and provider-specific quotas; worker remains proposal-only/OFF and not connected to production.
 
 
 ## Rp0 cloud runtime decision — 26 November 2026
@@ -81,4 +82,4 @@
 - Docs-only; tests not run; PR CI pending; Hostless status not changed/verified.
 - Next: Division 05 exact-head CI/security evidence, Division 01 security review, then Division 06/07 queue and memory implementation behind OFF flags. Prove Rp0 compute/storage before any runtime provisioning.
 
-- Follow-up: SQL smoke test now asserts queue fail-closed defaults and denies service/runtime role access to global control changes. Commit `4c6bf31e2b0204c471b837eeb84c4b6fb8fbdd73`; disposable PostgreSQL CI pending. PR #149 remains Draft/unmerged.
+- Follow-up exact-head CI for PR #149 (`d9f1df31f24c3eb5d0ca21e8e6ae1000626bda77`) passed: Node **233/233**, strict TypeScript, Python **8/8**, PostgreSQL 16 migrations/smokes (Agent Platform, queue guard, memory, market data), and branch-source policy. Security run #688: Gitleaks/Trivy jobs passed; Trivy vulnerability scanner found no supported dependency manifest, so CVE coverage is unavailable. PR #149 remains Draft/open/unmerged, 8 ahead / 0 behind develop; no production DB/worker.
