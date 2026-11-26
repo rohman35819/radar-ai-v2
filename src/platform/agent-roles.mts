@@ -42,7 +42,7 @@ export interface AgentRole {
   readonly allowed_outputs: readonly string[];
 }
 
-const BASE_CAPABILITIES: AgentCapabilitySet = {
+const BASE_CAPABILITIES: AgentCapabilitySet = Object.freeze({
   read_market: true,
   propose_strategy: true,
   write_code: false,
@@ -50,9 +50,9 @@ const BASE_CAPABILITIES: AgentCapabilitySet = {
   approve: false,
   execute_trade: false,
   withdraw: false,
-};
+});
 
-export const AGENT_ROLES: readonly AgentRole[] = [
+const ROLE_DEFINITIONS: readonly AgentRole[] = [
   {
     id: 'market-analyst',
     title: 'Market Analyst',
@@ -102,6 +102,23 @@ export const AGENT_ROLES: readonly AgentRole[] = [
     allowed_outputs: ['review_findings', 'acceptance_decision_proposal', 'regression_checklist'],
   },
 ];
+
+/**
+ * Defensive copy + deep freeze. A consumer can never raise a permission by
+ * mutating a role, its capabilities, its outputs, or the registry array.
+ */
+function freezeRole(role: AgentRole): AgentRole {
+  return Object.freeze({
+    id: role.id,
+    title: role.title,
+    division: role.division,
+    autonomy_stage: role.autonomy_stage,
+    capabilities: Object.freeze({ ...role.capabilities }),
+    allowed_outputs: Object.freeze([...role.allowed_outputs]),
+  });
+}
+
+export const AGENT_ROLES: readonly AgentRole[] = Object.freeze(ROLE_DEFINITIONS.map(freezeRole));
 
 const FORBIDDEN_CAPABILITIES: readonly AgentCapability[] = [
   'write_code',

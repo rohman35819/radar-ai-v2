@@ -33,6 +33,21 @@ test('AI Research Council has exactly six fail-closed specialist roles', async (
   assert.equal(isAgentRole(forged), false);
   assert.equal(canPerform(forged, 'read_market'), false);
   assert.equal(canPerform(null, 'read_market'), false);
+
+  // Advisor finding: the registry must resist runtime mutation/escalation.
+  const role = getAgentRole('market-analyst');
+  assert.ok(role);
+  assert.equal(Object.isFrozen(AGENT_ROLES), true);
+  assert.equal(Object.isFrozen(role), true);
+  assert.equal(Object.isFrozen(role.capabilities), true);
+  assert.equal(Object.isFrozen(role.allowed_outputs), true);
+  assert.throws(() => { AGENT_ROLES.push(forged); }, TypeError);
+  assert.throws(() => { role.capabilities.execute_trade = true; }, TypeError);
+  assert.throws(() => { role.capabilities.approve = true; }, TypeError);
+  assert.throws(() => { role.allowed_outputs.push('trade.execute'); }, TypeError);
+  assert.equal(AGENT_ROLES.length, 6);
+  assert.equal(canPerform(getAgentRole('market-analyst'), 'execute_trade'), false);
+  assert.equal(canPerform(AGENT_ROLES[4], 'withdraw'), false);
 });
 
 test('task admission denies unless worker, Rp0 budget and kill-switch gates all pass', async () => {
@@ -47,6 +62,22 @@ test('task admission denies unless worker, Rp0 budget and kill-switch gates all 
   assert.equal(evaluateTaskAdmission({ ...base, control: { ...control, kill_switch: true } }).reasons.includes('KILL_SWITCH_ON'), true);
   assert.equal(evaluateTaskAdmission({ ...base, active_tasks: 1 }).reasons.includes('CONCURRENCY_LIMIT'), true);
   assert.equal(evaluateTaskAdmission({ ...base, autonomy_stage: 2 }).reasons.includes('AUTONOMY_STAGE_TOO_HIGH'), true);
+
+  // Advisor finding: autonomy stage must be within 0..1, including negative rejection.
+  const negativeStage = evaluateTaskAdmission({ ...base, autonomy_stage: -1 });
+  assert.equal(negativeStage.allow, false);
+  assert.equal(negativeStage.reasons.includes('AUTONOMY_STAGE_NEGATIVE'), true);
+  const fractionalStage = evaluateTaskAdmission({ ...base, autonomy_stage: 0.5 });
+  assert.equal(fractionalStage.allow, false);
+  assert.equal(fractionalStage.reasons.includes('INVALID_AUTONOMY_STAGE'), true);
+  assert.equal(evaluateTaskAdmission({ ...base, autonomy_stage: 0 }).allow, true);
+
+  // Malformed-input coverage: every invalid shape must deny, never grant.
+  assert.equal(evaluateTaskAdmission(null).reasons.includes('INVALID_INPUT'), true);
+  assert.equal(evaluateTaskAdmission({ ...base, active_tasks: Number.NaN }).reasons.includes('INVALID_ACTIVE_TASKS'), true);
+  assert.equal(evaluateTaskAdmission({ ...base, active_tasks: -1 }).reasons.includes('INVALID_ACTIVE_TASKS'), true);
+  assert.equal(evaluateTaskAdmission({ ...base, control: { ...control, max_concurrency: -1 } }).allow, false);
+  assert.equal(evaluateTaskAdmission({ ...base, control: { ...control, daily_budget_usd: Number.NaN } }).allow, false);
   assert.equal(evaluateTaskAdmission({ ...base, control: null }).reasons.includes('INVALID_CONTROL'), true);
   const paid = { ...control, daily_budget_usd: 5 };
   assert.equal(evaluateTaskAdmission({ ...base, control: paid }).reasons.includes('BUDGET_NOT_RP0'), true);

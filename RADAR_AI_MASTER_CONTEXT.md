@@ -3653,3 +3653,11 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ### 147.4 Risiko dan NEXT TASK
 - Risiko: modul belum dipanggil produksi dan belum ada integrasi dengan `radar_agent.*`/PostgREST; jangan menyebutnya sebagai agent platform aktif. Typecheck lokal memakai cache, sehingga perlu verifikasi CI.
 - **NEXT TASK:** verifikasi CI/security exact-head pada PR P1, lalu lanjut P2 (`Observation` contract + provenance/freshness flag dengan tes payload cacat) atau pentest skema task admission terhadap migrasi `002_queue_operations.sql` di PostgreSQL disposable. Worker tetap OFF; tidak ada live order/withdrawal.
+
+### 147.5 Advisor review fixes — 27 November 2026
+- Chief Strategy Advisor menemukan dua celah pada pertama kali PR #153: (1) `evaluateTaskAdmission()` menerima `autonomy_stage` negatif; (2) registry role dapat dimutasi pada runtime sehingga izin bisa dinaikkan.
+- Perbaikan pada branch yang sama (tanpa PR baru): `src/platform/task-policy.mts` kini membedakan `INVALID_AUTONOMY_STAGE` (non-integer), `AUTONOMY_STAGE_NEGATIVE` (< 0), dan `AUTONOMY_STAGE_TOO_HIGH` (> 1); rentang yang diterima hanya 0–1.
+- `src/platform/agent-roles.mts` kini memakai defensive copy + deep freeze: `BASE_CAPABILITIES`, setiap objek `capabilities`, array `allowed_outputs`, setiap objek role, dan array `AGENT_ROLES` dibekukan. `getAgentRole()` mengembalikan objek beku yang sama, sehingga mutasi tidak bisa menaikkan izin.
+- `test/quant-foundation.test.js` menambah regression: stage negatif/fracional/null, `active_tasks` NaN/negatif, control cacat, serta `Object.isFrozen()` + `assert.throws()` untuk mutasi registry, capabilities, dan allowed_outputs.
+- Verifikasi lokal setelah perbaikan: `node --test test/quant-foundation.test.js` 4/4; `npm test` **237 pass, 0 fail**; strict `tsc --noEmit` exit 0; `git diff --check` bersih. `gitleaks`/`trivy` tidak terpasang lokal; security scan final mengikuti CI exact-head PR #153.
+- BOS memerintahkan **jangan merge** sampai evaluasi ulang Advisor selesai. Worker, live trading, withdrawal, produksi, dan Hostless tetap tidak diaktifkan/diverifikasi.

@@ -53,7 +53,11 @@ export function evaluateTaskAdmission(input: TaskAdmissionInput): TaskPolicyDeci
     if (!Number.isInteger(input.active_tasks) || input.active_tasks < 0) reasons.push('INVALID_ACTIVE_TASKS');
     else if (input.active_tasks >= control.max_concurrency) reasons.push('CONCURRENCY_LIMIT');
   }
-  if (!Number.isInteger(input.autonomy_stage) || input.autonomy_stage > MAX_AUTONOMY_STAGE) {
+  if (!Number.isInteger(input.autonomy_stage)) {
+    reasons.push('INVALID_AUTONOMY_STAGE');
+  } else if (input.autonomy_stage < 0) {
+    reasons.push('AUTONOMY_STAGE_NEGATIVE');
+  } else if (input.autonomy_stage > MAX_AUTONOMY_STAGE) {
     reasons.push('AUTONOMY_STAGE_TOO_HIGH');
   }
   return { allow: reasons.length === 0, reasons };
