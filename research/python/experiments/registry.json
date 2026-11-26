@@ -1,0 +1,77 @@
+{
+  "registry_version": "1.0.0",
+  "registered_at": "2026-11-27T00:00:00Z",
+  "owner": "BOS",
+  "lead": "Grok / Divisi 04",
+  "purpose": "Pre-registered quant experiments. Hypotheses, grids and decision rules are fixed BEFORE results are observed. Failed experiments are retained and never rewritten to pass.",
+  "criteria_version": "validation-v1",
+  "criteria": {
+    "min_out_of_sample_trades": 2,
+    "max_out_of_sample_drawdown_pct": 25.0,
+    "validation_selection_must_be_accepted": true,
+    "walk_forward_positive_folds_must_be_majority": true,
+    "costs_bps_per_side": 15,
+    "funding_bps_per_day": 0,
+    "position_fraction": 1.0,
+    "stop_loss_pct": 0.1,
+    "max_drawdown_stop_pct": 0.3
+  },
+  "data": {
+    "source": "https://data-api.binance.vision/api/v3/klines",
+    "symbols": ["BTCUSDT", "ETHUSDT"],
+    "interval": "1d",
+    "limit": 365,
+    "note": "SOLUSDT is excluded until the acceptance criteria are met for BTC/ETH."
+  },
+  "decision_rule": "promote_candidate only if accepted_for_paper_candidate is true; even then paper ledger requires separate BOS approval. No criterion may be weakened after seeing results.",
+  "experiments": [
+    {
+      "id": "exp-01-sma-baseline",
+      "strategy": "sma_crossover",
+      "hypothesis": "A slow SMA crossover can capture persistent BTC/ETH trends net of 15 bps per turn.",
+      "grid": [
+        {"fast": 3, "slow": 8},
+        {"fast": 5, "slow": 20},
+        {"fast": 10, "slow": 30}
+      ],
+      "symbols": ["BTCUSDT", "ETHUSDT"],
+      "status": "registered"
+    },
+    {
+      "id": "exp-02-trend-momentum",
+      "strategy": "trend_momentum",
+      "hypothesis": "Requiring both price above a trend SMA and positive momentum reduces whipsaw losses versus a single SMA crossover.",
+      "grid": [
+        {"trend_period": 20, "momentum_period": 5},
+        {"trend_period": 50, "momentum_period": 10},
+        {"trend_period": 100, "momentum_period": 20}
+      ],
+      "symbols": ["BTCUSDT", "ETHUSDT"],
+      "status": "registered"
+    },
+    {
+      "id": "exp-03-mean-reversion",
+      "strategy": "mean_reversion",
+      "hypothesis": "Daily close z-score extremes revert enough to overcome costs when trading only from oversold entries.",
+      "grid": [
+        {"zscore_period": 10, "entry_z": -1.0, "exit_z": 0.0},
+        {"zscore_period": 20, "entry_z": -1.5, "exit_z": 0.0},
+        {"zscore_period": 30, "entry_z": -2.0, "exit_z": 0.5}
+      ],
+      "symbols": ["BTCUSDT", "ETHUSDT"],
+      "status": "registered"
+    },
+    {
+      "id": "exp-04-regime-aware",
+      "strategy": "regime_aware",
+      "hypothesis": "Taking pullback entries only while price is above a long trend SMA, with RSI exits, improves walk-forward robustness.",
+      "grid": [
+        {"trend_period": 20, "rsi_period": 7, "rsi_entry": 35.0, "rsi_exit": 55.0},
+        {"trend_period": 50, "rsi_period": 14, "rsi_entry": 30.0, "rsi_exit": 60.0},
+        {"trend_period": 100, "rsi_period": 14, "rsi_entry": 40.0, "rsi_exit": 65.0}
+      ],
+      "symbols": ["BTCUSDT", "ETHUSDT"],
+      "status": "registered"
+    }
+  ]
+}

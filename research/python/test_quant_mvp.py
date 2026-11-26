@@ -74,8 +74,8 @@ class QuantMvpTests(unittest.TestCase):
 
     def test_costs_reduce_returns_and_metrics_are_well_formed(self):
         signals = generate_signals(self.dataset.candles, self.config)
-        cheap = run_backtest(self.dataset, StrategyConfig(5, 20, 0, 0), signals)
-        costly = run_backtest(self.dataset, StrategyConfig(5, 20, 40, 25), signals)
+        cheap = run_backtest(self.dataset, StrategyConfig(fast=5, slow=20, fee_bps=0, slippage_bps=0), signals)
+        costly = run_backtest(self.dataset, StrategyConfig(fast=5, slow=20, fee_bps=40, slippage_bps=25), signals)
         self.assertLessEqual(costly.metrics["net_return_pct"], cheap.metrics["net_return_pct"])
         self.assertLessEqual(costly.metrics["net_return_pct"], costly.metrics["gross_return_pct"])
         metrics = costly.metrics
@@ -89,7 +89,8 @@ class QuantMvpTests(unittest.TestCase):
 
     def test_stop_loss_and_kill_switch_are_recorded(self):
         rows = list(self.dataset.candles[:60])
-        config = StrategyConfig(5, 20, 10, 5, stop_loss_pct=0.001, max_drawdown_stop_pct=0.01)
+        config = StrategyConfig(fast=5, slow=20, fee_bps=10, slippage_bps=5,
+                                stop_loss_pct=0.001, max_drawdown_stop_pct=0.01)
         segment = slice_dataset(self.dataset, 0, 60)
         result = run_backtest(segment, config, generate_signals(rows, config))
         self.assertTrue(result.metrics["kill_switch_triggered"])
@@ -114,7 +115,7 @@ class QuantMvpTests(unittest.TestCase):
         self.assertEqual(result["out_of_sample_config"]["fast"], fast)
         self.assertEqual(result["out_of_sample_config"]["slow"], slow)
         self.assertEqual(result["selected_parameters"]["signal_source"],
-                         "candidate_specific_sma_stream_sliced_from_full_history")
+                         "candidate_specific_stream_sliced_from_full_history")
         _, _, oos = split_three(self.dataset)
         signals = signals_for_candidate(self.dataset, self.config, fast, slow)
         oos_start = len(self.dataset.candles) - len(oos.candles)
@@ -166,6 +167,24 @@ class QuantMvpTests(unittest.TestCase):
                 signal.computed_from is None or signal.computed_from <= self.dataset.candles[index].timestamp
                 for index, signal in enumerate(full[:validation_end])
             ))
+
+    def test_alternative_strategies_are_deterministic_and_causal(self):
+        configs = [
+            StrategyConfig(strategy_id='trend_momentum', trend_period=20, momentum_period=5),
+            StrategyConfig(strategy_id='mean_reversion', zscore_period=20, entry_z=-1.5, exit_z=0.0),
+            StrategyConfig(strategy_id='regime_aware', trend_period=20, rsi_period=7,
+                           rsi_entry=35.0, rsi_exit=55.0),
+        ]
+        for config in configs:
+            first = generate_signals(self.dataset.candles, config)
+            second = generate_signals(self.dataset.candles, config)
+            self.assertEqual(first, second)
+            self.assertTrue(all(
+                signal.computed_from is None or signal.computed_from <= self.dataset.candles[index].timestamp
+                for index, signal in enumerate(first)
+            ))
+            self.assertTrue(any(signal.target_position == 1 for signal in first))
+            self.assertTrue(any(signal.target_position == 0 for signal in first))
 
     def test_splits_and_walk_forward_are_contiguous_and_disjoint(self):
         train, validation, oos = split_three(self.dataset)
