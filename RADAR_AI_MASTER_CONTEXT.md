@@ -3590,3 +3590,13 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - `main` tetap `f38d25a6203ab486d7170369e86874f838af627a`. Hostless Build tidak dipicu; LIVE tidak berubah dan tidak diverifikasi. Main monitor run `45690836381` gagal membaca metadata deployment, sedangkan readiness/snapshot/news probes sukses.
 - PR #147 documentation follow-up merged to `develop` as `dd46a5a74b39a0b749427b08415253c70c4894a9`. Merge-commit test run `45706453762` passed (npm **233/233**, strict TypeScript, Python **8/8**, PostgreSQL 16 smoke); security run `45706453707` passed (Gitleaks no leaks, Trivy secret scan no findings). Trivy vulnerability scan still reports no supported dependency manifests, so dependency CVE coverage is unavailable.
 - NEXT setelah dokumentasi terintegrasi: implementasikan durable queue lease/claim + retry/dead-letter + provider-specific quotas, lalu versioned dataset/experiment manifests dan walk-forward tests. Tetap OFF sampai approval dan readiness/rollback gate.
+
+
+## 2026-11-26 — Rp0 cloud runtime decision and implementation handoff
+
+- BOS approved free-services-only cloud development. No paid service, upgrade, card, overage, paid fallback, production DB migration, or resource provisioning is authorized.
+- Added `docs/architecture/rp0-cloud-runtime-implementation.md` on branch `feat/rp0-cloud-runtime-architecture-20261126` (commit `9d0101c528fb0d3ef52cf2a00d5de4aaf4cd8b50`); Draft PR #149 targets `develop`: https://github.com/rohman35819/radar-ai-v2/pull/149.
+- Verified current architecture: GitHub Actions scheduled worker runs every two hours and proposes Draft PRs; PostgreSQL queue/schema is CI-only; no production database or continuous worker verified. Scheduled Actions is periodic automation, not 24/7 always-on compute.
+- `main` and `develop` are divergent (develop 23 ahead / 3 behind at audit); do not bulk-merge develop into main. Railway staged resources remain undeployed; do not accept staged deployment.
+- Validation: documentation-only change; no application code/tests run in this session. PR CI pending. Hostless Build/LIVE not changed or verified.
+- NEXT: Division 05 verifies exact-head CI/security; Division 01 reviews permissions/secrets; Division 06/07 continue queue/memory work behind OFF-by-default gates. No production runtime activation until a genuinely Rp0 compute + durable storage option is proven and separately approved.
