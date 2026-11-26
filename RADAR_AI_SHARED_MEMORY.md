@@ -40,23 +40,16 @@
 - Repository docs alone do not force Grok to load them. The Grok project/client must have repository access and a startup/custom instruction to read `GROK.md`; verify this separately before claiming automatic onboarding.
 - Grok is xAI's assistant; Groq is a separate inference provider. Groq provider activation remains OFF unless BOS explicitly approves.
 
-## Next actions
-1. PR #126 (`exp/scalable-platform-foundation` → `develop`) code head `a3187e8...` passed 217 Node tests, strict TypeScript typecheck, Python 5/5, PostgreSQL smoke tests, branch policy, Gitleaks and Trivy. Latest docs-only head `469006a...` has rerun checks queued.
-2. PR #121 and #112 closed as superseded; #115 (Grok contributor charter) and #105 (Termux/Groq handoff) remain open and need triage/rebase.
-3. Keep production JavaScript, market state, secrets, Hostless settings, and paid infrastructure unchanged until additive data migrations and worker integration pass isolated gates.
-4. Bounded parallel refresh PR #135 merged to develop as 1fe5b5b...; exact PR + merge commit passed 226 Node tests, strict TS, Python 5/5, PostgreSQL smoke, Gitleaks/Trivy. Independent sources now run at concurrency max 3; CoinGecko/exchange ordering preserved. No Hostless deploy.
+## Next actions — verified 27 November 2026
+- `origin/main` = `f38d25a` (v2.3.2 release); `origin/develop` = `1226a5d`. Branches are divergent (main 3 ahead, develop 23 ahead). `main` is production/LIVE truth; `develop` carries newer typed contracts, worker pilot and Python backtest, not yet released.
+- Open PRs (4): #151 → main (docs); #149 draft → develop (Rp0 cloud runtime baseline); #115 and #105 → develop (docs, need triage/rebase). Non-draft PRs toward develop = 2, within the 3-PR WIP limit.
+- **P0 delivered:** `docs/quant-platform-capability-audit.md` — traceable capability/gap matrix, threat model, contracts and P0–P7 backlog for issue #150 (autonomous quant trading platform). Local `npm test` on branch `docs/quant-platform-capability-audit` @ `1226a5d`: 233/233 pass. Documentation only; no production change. PR/CI evidence must be re-verified on exact head.
+- **Capability truth:** real today = market aggregation, read-only exchange adapters, derivatives funding/OI, on-chain adapters, AI multi-provider + Command Center, Agent Platform schema with pause/kill switch/Rp0, periodic two-hour GitHub Actions worker, shared memory. Absent = strategy registry/versioning, walk-forward/out-of-sample, portfolio/risk engine, paper trading/order lifecycle/reconciliation, six AI specialist roles, factor risk scoring, market-regime engine, scoped memory retrieval. Memory table/validator exist (`supabase/migrations/20261124_radar_memory.sql`, `lib/knowledge/memory.js`) but are not a production runtime. Agent Platform is schema-only; no durable worker claims tasks. Never claim offline autonomy or Hostless LIVE without separate evidence.
 
-- Top 5 Action Center + Radar Intelligence added on branch `feat/top5-action-center`: transparent scoring from real snapshot fields, mechanical trade plan from observed price history with NOT_ENOUGH_DATA guard, honest capability matrix (whale/smart money/portfolio marked unavailable). 207/207 tests pass; no trading/withdrawal enabled. Browser QA and Hostless verification pending.
+- **NEXT TASK (P1):** from latest `develop`, add disabled-by-default foundation: six `AgentRole` registry entries, task-client adapter to existing `radar_agent.*`, scoped/sensitivity memory retrieval helper, and sanitized audit-event helper. The `radar_memory_records` table and its CI smoke already exist under `supabase/migrations/` and `supabase/tests/` — do not duplicate the migration. Deterministic unit tests only; no worker/production/trading activation. Then P2 Observation/provenance, P3 strategy/backtest, P4 risk+paper execution, P5 Command Center, P6 bounded worker (BOS approval), P7 live readiness (separate BOS approval).
 
-- Hostless LIVE verified at v2.3.0 commit `1ed78c5` (build `2fab35ee` per BOS). Public probe: homepage 200, `/top5.js` 200, action/intel menus present. Browser interaction QA still pending.
-
-- Proven routing bug (26 Nov): Cloudflare edge served stale `/app.js` (cf-cache-status HIT, max-age 14400) alongside new index.html, so new menus fell through to System Health. Fix: version dashboard assets `?v=v2.3.1` in index.html and SW precache, shell v15, keeping QA's network-first SW. 211/211 tests pass. Needs release to main + LIVE recheck.
-- Second proven bug (26 Nov): `renderAction()` threw `ReferenceError: priceLabel is not defined`. Fix is included in main v2.3.2 via PR #125; verify Hostless and browser behavior separately.
-
-- Scale foundation branch `exp/scalable-platform-foundation` starts from main `f38d25a` (v2.3.2). Adds strict TS contract/typecheck, Python 3.13 offline backtest CI, provenance/OHLCV contract guards and a staged architecture roadmap. Production runtime/data/deployment unchanged; exact-head CI and security scans pending.
-
-- Snapshot ETag/304 benchmarked on branch `perf/snapshot-etag` (synthetic, local): 205 tokens 51.5KB→2B per conditional request, p99 24.4ms→3.8ms; 1000 tokens 249KB→2B, p99 27.5ms→5.7ms. 226/226 tests pass. No production changes; needs PR + CDN conditional-request verification.
-- Snapshot ETag change merged to develop via PR #140 (`80c4601`) after all gates passed; initial PR #137 failed only because `perf/*` is not an allowed branch prefix (use `feat/*`). No main release performed for this change.
+- Preserve all existing menus/routes and truthful-data behavior (Top 5, Radar Intelligence capability matrix, stale-data banners). Never show demo numbers as live. No withdrawal capability; live trading OFF. Rp0 hard budget: no paid service, card, VPS or production DB provisioning without BOS approval. Keep secrets server-side and out of Git/chat/frontend/logs.
+- Hostless Build/LIVE remains unverified in this session. Storage/EROFS decision still pending BOS. Dependency CVE coverage is unavailable because the repo has no supported dependency manifest; Trivy secret scan is not a CVE scan.
 
 
 ## Engineering governance
