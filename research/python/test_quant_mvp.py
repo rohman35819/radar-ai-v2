@@ -95,6 +95,14 @@ class QuantMvpTests(unittest.TestCase):
         result = run_backtest(segment, config, generate_signals(rows, config))
         self.assertTrue(result.metrics["kill_switch_triggered"])
         self.assertTrue(any(trade.reason in ("stop_loss", "drawdown_stop") for trade in result.trades))
+        peak = result.equity_curve[0]
+        recomputed = 0.0
+        for value in result.equity_curve:
+            peak = max(peak, value)
+            recomputed = max(recomputed, (peak - value) / peak)
+        self.assertAlmostEqual(recomputed * 100.0, result.metrics["max_drawdown_pct"], places=6)
+        self.assertAlmostEqual((result.equity_curve[-1] - 1.0) * 100.0,
+                               result.metrics["net_return_pct"], places=6)
 
     def test_each_candidate_generates_its_own_signal_stream(self):
         streams = {

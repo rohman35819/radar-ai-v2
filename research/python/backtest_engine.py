@@ -187,6 +187,16 @@ def run_backtest(dataset: Dataset, config: StrategyConfig, signals: Sequence[Sig
             kill_active = True
             equity_curve[-1] = equity
 
+    # Path-dependent metrics must be derived from the FINAL recorded equity
+    # curve. A kill-switch exit can adjust the last bar after it was appended;
+    # recomputing here keeps reported drawdown identical to an independent QA
+    # recomputation instead of using the pre-exit peak/drawdown.
+    peak = 1.0
+    max_drawdown = 0.0
+    for recorded_equity in equity_curve:
+        peak = max(peak, recorded_equity)
+        max_drawdown = max(max_drawdown, (peak - recorded_equity) / peak)
+
     net_return = (equity - 1.0) * 100.0
     gross_return = (gross_equity - 1.0) * 100.0
     wins = [trade.net_pct for trade in trades if trade.net_pct > 0]
