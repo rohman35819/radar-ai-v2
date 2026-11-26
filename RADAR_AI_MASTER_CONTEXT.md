@@ -3654,5 +3654,5 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ### 148.4 Blocker, risiko, dan NEXT TASK
 - **Bloker terbesar:** endpoint market publik (Binance/Coinbase/Kraken) tidak terjangkau dari sesi ini, sehingga angka backtest hanya pada data sintetik. Adapter `fetch_ohlcv.py` sudah siap dan teruji dengan mock; eksekusi data nyata menunggu jaringan.
 - Risiko lain: satu aset/interval, asumsi fill intrabar, biaya perpetual belum diverifikasi venue, WIP PR penuh, Hostless Build/LIVE tidak diverifikasi.
-- Commit: `8ac02b6af39da7d0c9a4139820fcf04c074a8569`. PR dibuka ke `develop` setelah push; exact-head CI/security wajib diverifikasi sebelum merge. Tidak ada merge/deploy/aktivasi worker oleh sesi ini.
+- Commit: `b3e0bd9cfadaf347bbb367b7fc90a77e577a8015`. PR dibuka ke `develop` setelah push; exact-head CI/security wajib diverifikasi sebelum merge. Tidak ada merge/deploy/aktivasi worker oleh sesi ini.
 - **NEXT TASK:** jalankan `fetch_ohlcv.py` pada lingkungan berjaringan, hasilkan `public_report.json`, evaluasi kriteria validasi; hanya jika lolos + disetujui lanjut paper ledger TypeScript dengan reconciliation. Worker dan live trading tetap OFF.
