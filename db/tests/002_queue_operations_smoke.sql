@@ -5,7 +5,7 @@ INSERT INTO radar_agent.agent_registry
 VALUES
   ('10000000-0000-4000-8000-000000000001', 'queue-test-agent', 'Queue Test Agent', '06', 'Queue Test', 'active', 1, 'ci'),
   ('10000000-0000-4000-8000-000000000002', 'queue-dependency-agent', 'Dependency Test Agent', '07', 'Dependency Test', 'active', 1, 'ci');
-DO $
+DO $queue_guard$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM radar_agent.platform_control
@@ -26,7 +26,7 @@ BEGIN
      OR has_table_privilege('radar_agent_runtime','radar_agent.platform_control','UPDATE') THEN
     RAISE EXCEPTION 'Runtime role can change global pause/kill-switch controls';
   END IF;
-END $;
+END $queue_guard$;
 UPDATE radar_agent.platform_control SET paused=false,kill_switch=false,reason='CI only',changed_by='ci' WHERE singleton=true;
 DO $$
 DECLARE e record; d record; t radar_agent.task_queue%ROWTYPE; a uuid; s text; old_token uuid; new_token uuid;
