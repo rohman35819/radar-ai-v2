@@ -72,3 +72,11 @@
 - Trivy vulnerability scanner reports no supported dependency manifests; dependency CVE coverage is NOT AVAILABLE. No runtime dependency added.
 - `main` remains `f38d25a6203ab486d7170369e86874f838af627a`. No Hostless build/deploy was triggered. Public LIVE readiness/snapshot/news probes succeeded in main monitor run `45690836381`, but Hostless deployment metadata lookup failed, so LIVE commit/version remains unverified.
 - Next: durable queue lease/claim, retry/dead-letter and provider-specific quotas; then experiment manifests and walk-forward tests. Worker remains OFF and unconnected to production.
+
+
+## Rp0 cloud runtime decision — 26 November 2026
+- BOS approved free-only implementation; no paid provisioning, card, trial-to-paid, overage, or paid fallback.
+- Draft PR #149 adds `docs/architecture/rp0-cloud-runtime-implementation.md` (branch `feat/rp0-cloud-runtime-architecture-20261126`, commit `9d0101c528fb0d3ef52cf2a00d5de4aaf4cd8b50`). It documents the current boundary: GitHub Actions is periodic (2-hour cadence), not 24/7; PostgreSQL remains disposable-CI only; production DB and always-on worker are not deployed.
+- `main` and `develop` diverged (develop 23 ahead / 3 behind at audit). Do not bulk-merge. Railway staged resources remain untouched.
+- Docs-only; tests not run; PR CI pending; Hostless status not changed/verified.
+- Next: Division 05 exact-head CI/security evidence, Division 01 security review, then Division 06/07 queue and memory implementation behind OFF flags. Prove Rp0 compute/storage before any runtime provisioning.
