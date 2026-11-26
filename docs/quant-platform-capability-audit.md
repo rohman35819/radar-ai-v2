@@ -109,8 +109,8 @@ Aturan pembacaan: `RADAR_AI_SHARED_MEMORY.md`, `AGENTS.md` (termasuk Engineering
 | Komponen | Status | Bukti | Celah |
 |---|---|---|---|
 | Shared cross-agent memory | **IMPLEMENTED** | `RADAR_AI_SHARED_MEMORY.md` (curated, <12 KB, bukan chat archive) | File handoff statis, bukan sistem retrieval |
-| Memory record validator + adapter | **PARTIAL (main)** | `lib/knowledge/memory.js`: `validateProposal` mewajibkan `sourceRef`, `sourceRevision`, `retentionUntil`, `supersedes`, `confidence`; menolak pola secret; `createMemoryStore` (PostgREST), `test/memory-store.test.js` | **BLOCKER:** tabel `radar_memory_records` tidak didefinisikan di `db/migrations/001–003`. Adapter belum bisa dipakai secara durable |
-| Provenance / versioning / retention model | **PARTIAL (design + validator)** | `docs/division-07-memory-knowledge-architecture.md`, `lib/knowledge/memory.js` | Tidak ada tabel, indeks full-text, atau kebijakan retention yang dieksekusi |
+| Memory record validator + adapter | **PARTIAL (main)** | `lib/knowledge/memory.js`: `validateProposal` mewajibkan `sourceRef`, `sourceRevision`, `retentionUntil`, `supersedes`, `confidence`; menolak pola secret; `createMemoryStore` (PostgREST), `test/memory-store.test.js`. Tabel `radar_memory_records` sudah didefinisikan di `supabase/migrations/20261124_radar_memory.sql` (RLS, proposal-only trigger, GIN full-text, grants least-privilege) dan diuji oleh `supabase/tests/20261124_radar_memory_smoke.sql` melalui CI | Migration ada di jalur `supabase/`, bukan `db/migrations/`; produksi Supabase belum dipilih/diaktifkan. Tidak ada retrieval helper berscope, approval/update flow, atau pemanggil runtime |
+| Provenance / versioning / retention model | **PARTIAL (design + validator + schema)** | `docs/division-07-memory-knowledge-architecture.md`, `lib/knowledge/memory.js`, `supabase/migrations/20261124_radar_memory.sql` (source_revision wajib, `supersedes`, `retention_until`, GIN `search_vector`) | Skema ada di migration Supabase disposable/CI, bukan produksi; belum ada retrieval berscope, approval/update flow, atau retention job |
 | Strategy/decision/task memory & retrieval | **PLANNED** | Desain saja | Belum ada implementasi; dilarang menambah vector DB/Redis tanpa justifikasi biaya & privasi |
 
 ## 5. Quant Command Center (UI)
@@ -179,7 +179,7 @@ Mengikuti `docs/architecture/engineering-constitution.md` §1 dan `docs/architec
 | Fase | Deliverable | Acceptance criteria | Gate sebelum lanjut |
 |---|---|---|---|
 | **P0 — selesai pada dokumen ini** | Matrix capability/gap, architecture spec, threat model, backlog | Bukti SHA & tes tercantum; tidak ada perubahan produksi | Review PR + CI exact-head |
-| **P1 — Divisi 06/07 foundation** | `AgentRole` registry (6 specialist) + `Task` client adapter ke skema existing + `MemoryRecord` migration (`radar_memory_records`) + audit event sanitizer; semua disabled-by-default | Unit test deterministik; migration smoke di PostgreSQL disposable; Gitleaks/Trivy; tidak ada worker produksi | P0 merge + exact-head CI + security |
+| **P1 — Divisi 06/07 foundation** | `AgentRole` registry (6 specialist) + `Task` client adapter ke skema `radar_agent.*` + retrieval helper memory berscope + audit event sanitizer; semua disabled-by-default (migration memory sudah ada di `supabase/migrations/`) | Unit test deterministik; memakai smoke PostgreSQL disposable yang sudah ada; Gitleaks/Trivy; tidak ada worker produksi | P0 merge + exact-head CI + security |
 | **P2 — Market Intelligence & Quant Research** | `Observation` contract, provenance/freshness flags, features deterministik, factor score dasar | Contract test menolak payload cacat; nol data tidak dianggap valid; source/timestamp hadir | P1 acceptance |
 | **P3 — Strategy & Backtest** | Strategy registry/versioning, walk-forward + out-of-sample, fee/slippage/funding, metrik lengkap | Backtest deterministik & reproducible; anti-look-ahead test; tidak ada klaim profit | P2 acceptance |
 | **P4 — Portfolio/Risk & Paper Trading** | Position sizing, exposure/daily-loss/drawdown limit, stale block, paper order lifecycle + reconciliation + audit | Fail-closed tests; restart recovery di disposable env; kill switch test | P3 acceptance |
@@ -187,7 +187,7 @@ Mengikuti `docs/architecture/engineering-constitution.md` §1 dan `docs/architec
 | **P6 — Autonomous research & scheduled ops** | Satu bounded read-only research worker, durable queue/memory, scheduler, budget, approval, kill switch, QA independen | Restart/reclaim/idempotency test; audit lengkap; Rp0; disetujui BOS untuk aktivasi | P5 + persetujuan BOS |
 | **P7 — Live trading readiness** | Assessment, permission review, small bounded pilot, monitoring & emergency stop | **Persetujuan BOS eksplisit terpisah**; tidak ada withdrawal; QA/Security independen | P6 + BOS approval |
 
-**Next task tunggal:** P1 — implementasi fondasi Divisi 06/07 pada branch terpisah dari `develop`, dimulai dari **migration `radar_memory_records`** dan `AgentRole` registry (enam specialist) dengan tes, tanpa mengaktifkan worker/produksi.
+**Next task tunggal:** P1 — implementasi fondasi Divisi 06/07 pada branch terpisah dari `develop`: `AgentRole` registry (enam specialist), task-client adapter ke skema `radar_agent.*` yang sudah ada, retrieval helper memory berscope/sensitivity, dan audit-event sanitizer — semuanya disabled-by-default dengan tes deterministik, tanpa mengaktifkan worker/produksi. Tidak perlu menambah migration memory; `supabase/migrations/20261124_radar_memory.sql` sudah menyediakannya.
 
 ## 9. Non-goal & larangan (berlaku selama audit dan implementasi)
 
