@@ -3626,3 +3626,33 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Risiko terbuka: main/develop divergen, Hostless build/LIVE tidak terverifikasi, EROFS/DATA_DIR belum terselesaikan, dependency CVE coverage tidak tersedia tanpa manifest, QA independen tidak dilakukan (temporary override).
 - **NEXT TASK (P1):** pada branch terpisah dari `develop`, implementasi fondasi Divisi 06/07 yang disabled-by-default: registry enam `AgentRole`, task-client adapter ke skema `radar_agent.*`, retrieval helper memory berscope/sensitivity, dan audit-event sanitizer — masing-masing dengan unit test deterministik; memakai migration/smoke PostgreSQL disposable yang sudah ada. Tidak mengaktifkan worker, produksi, atau trading.
 - Fase berikutnya setelah P1 lulus: P2 kontrak `Observation` + provenance, P3 strategy/backtest walk-forward, P4 risk + paper execution, P5 Command Center, P6 worker otonom terbatas (perlu BOS), P7 live readiness (persetujuan BOS terpisah).
+
+---
+
+## 148. QUANT MVP VERTICAL SLICE — 27 NOVEMBER 2026
+
+### 148.1 Mandat dan audit singkat
+- BOS memerintahkan percepatan Quant Trading MVP sesuai issue #154: satu vertical slice riset + backtest + validasi + integrasi TypeScript, tanpa roadmap baru atau perluasan scope.
+- Audit kode: sudah ada `research/python/backtest.py` (SMA close-only, fee/slippage, buy&hold) + 8 tes, adapter exchange read-only, `src/contracts.mts`, dan typed market-data schema. **Hambatan terbesar:** tidak ada dataset OHLCV dengan quality guard + provenance + checksum yang dapat direproduksi, tidak ada split train/validation/OOS maupun metrik per-trade, dan belum ada kontrak JSON versi untuk integrasi TypeScript.
+- `main` = `f38d25a`; `develop` = `44cc49e8`; PR #153 masih terbuka (menunggu evaluasi ulang Advisor, **tidak di-merge** oleh sesi ini). Open PR ke develop sudah 3 non-draft; PR baru vertical slice diberi justifikasi WIP di body karena ini prioritas eksplisit BOS dan tidak dapat digabung dengan PR docs/foundation lain.
+
+### 148.2 Implementasi (branch `feat/quant-mvp-vertical-slice`)
+- Python: `quant_data.py` (OHLCV quality guard, provenance, checksum SHA-256), `strategy.py` (SMA crossover long/flat, sinyal dari close sebelumnya), `backtest_engine.py` (eksekusi open berikutnya, fee + slippage + funding + stop loss + kill switch, metrik lengkap), `validation.py` (train/validation/OOS + walk-forward + kriteria penolakan), `report.py` + `quant_cli.py` (`quant-report.v1`), `make_fixture.py` (fixture deterministik berlabel **synthetic**), `fetch_ohlcv.py` (adapter Binance publik gratis, tanpa API key, diuji dengan mock), `verify_report.py` (QA independen otomatis).
+- TypeScript: `src/quant/contracts.mts` (guard `quant-report.v1` dan `quant-signal.v1`), `src/quant/risk.mts` (fail-closed), `src/quant/paper.mts` (shadow simulation tanpa `fetch`/order).
+- Tes: `test/quant-integration.test.js`, `research/python/test_quant_mvp.py`.
+- Artifact: `research/python/output/example_report.json`, `research/python/output/qa_verification.json`, fixture + provenance.
+- Dokumentasi: `docs/quant-mvp-runbook.md`; `.gitignore` untuk `__pycache__/`.
+- Status produksi: tidak ada perubahan route/menu/API/Hostless/credential; tidak ada worker, live order, withdrawal, atau layanan berbayar.
+
+### 148.3 Hasil uji faktual
+- Python `unittest discover`: **19/19 lulus** (8 lama + 11 baru).
+- `npm test`: **237/237 lulus** (233 baseline + 4 integrasi).
+- Strict TypeScript `tsc --noEmit -p tsconfig.json` (TypeScript 5.9.3): **exit 0**.
+- `verify_report.py`: **12/12 check passed** — hitung ulang win rate, expectancy, profit factor, max drawdown, checksum dataset, flag safety, dan bentuk validasi. Ini QA otomatis objektif, **bukan** sign-off manusia Divisi 05.
+- Contoh laporan: 360 bar sintetik, 6 trade, net return 130,09%, max drawdown 4,05%, namun `accepted_for_paper_candidate=false` (`oos_too_few_trades`, `walk_forward_not_majority_positive`). **Tidak ada klaim profit**; data sintetik, bukan pasar nyata.
+
+### 148.4 Blocker, risiko, dan NEXT TASK
+- **Bloker terbesar:** endpoint market publik (Binance/Coinbase/Kraken) tidak terjangkau dari sesi ini, sehingga angka backtest hanya pada data sintetik. Adapter `fetch_ohlcv.py` sudah siap dan teruji dengan mock; eksekusi data nyata menunggu jaringan.
+- Risiko lain: satu aset/interval, asumsi fill intrabar, biaya perpetual belum diverifikasi venue, WIP PR penuh, Hostless Build/LIVE tidak diverifikasi.
+- Commit: `8ac02b6af39da7d0c9a4139820fcf04c074a8569`. PR dibuka ke `develop` setelah push; exact-head CI/security wajib diverifikasi sebelum merge. Tidak ada merge/deploy/aktivasi worker oleh sesi ini.
+- **NEXT TASK:** jalankan `fetch_ohlcv.py` pada lingkungan berjaringan, hasilkan `public_report.json`, evaluasi kriteria validasi; hanya jika lolos + disetujui lanjut paper ledger TypeScript dengan reconciliation. Worker dan live trading tetap OFF.
