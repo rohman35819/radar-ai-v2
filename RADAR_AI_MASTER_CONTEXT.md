@@ -3620,9 +3620,36 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - File diperbarui: `RADAR_AI_MASTER_CONTEXT.md` (bagian ini), `RADAR_AI_SHARED_MEMORY.md` (status & next task ringkas).
 - Tidak ada kode aplikasi, route, migrasi produksi, credential, environment, deployment, atau perilaku trading yang diubah.
 - Test lokal `npm test`: 233/233 lulus pada base `1226a5d`; tidak ada test baru karena perubahan dokumentasi murni.
-- Commit: lihat SHA pada commit branch audit ini; PR dan CI exact-head dicatat setelah push.
+- Commit branch: `e50d90dbe7734793bbd13d4dd38f94bea0b5148d` (audit awal), `a4e96a3a9fc6f22192992782b5831b41c3163f9a` (koreksi bukti migration memory). PR #152 di-merge ke `develop` sebagai `44cc49e8e73a5452a789004dd2b87e52af0aebfb`.
+- CI exact-head `a4e96a3`: test run `45869090739` completed/success (`npm test`, strict TypeScript, Python 8/8, PostgreSQL 16 migration + smoke Agent Platform/queue/memory/market-data, branch-source policy); security run `45869090521` completed/success (Gitleaks + Trivy). Diagnostic Hostless steps di-skip sesuai branch condition, bukan bukti deployment. Hostless Build/LIVE tetap tidak diverifikasi.
 
 ### 146.5 Risiko dan NEXT TASK
 - Risiko terbuka: main/develop divergen, Hostless build/LIVE tidak terverifikasi, EROFS/DATA_DIR belum terselesaikan, dependency CVE coverage tidak tersedia tanpa manifest, QA independen tidak dilakukan (temporary override).
 - **NEXT TASK (P1):** pada branch terpisah dari `develop`, implementasi fondasi Divisi 06/07 yang disabled-by-default: registry enam `AgentRole`, task-client adapter ke skema `radar_agent.*`, retrieval helper memory berscope/sensitivity, dan audit-event sanitizer — masing-masing dengan unit test deterministik; memakai migration/smoke PostgreSQL disposable yang sudah ada. Tidak mengaktifkan worker, produksi, atau trading.
 - Fase berikutnya setelah P1 lulus: P2 kontrak `Observation` + provenance, P3 strategy/backtest walk-forward, P4 risk + paper execution, P5 Command Center, P6 worker otonom terbatas (perlu BOS), P7 live readiness (persetujuan BOS terpisah).
+
+---
+
+## 147. P1 — FONDASI DISABLED-BY-DEFAULT DIVISI 06/07 — 27 NOVEMBER 2026
+
+### 147.1 Tujuan dan batas
+- Melaksanakan NEXT TASK bagian 146: fondasi nyata Divisi 06/07 tanpa mengaktifkan worker, produksi, atau trading. Branch `feat/quant-foundation-p1` dibuat dari `develop` `44cc49e8...` (setelah P0 merge) dan tidak menyentuh `main`.
+- Modul baru bersifat murni/tanpa I/O: tidak ada koneksi DB, tidak ada fetch, tidak ada kredensial, tidak ada pemanggil runtime. Ini adalah building block, **bukan** sistem otonom yang berjalan.
+
+### 147.2 File baru
+- `src/platform/agent-roles.mts`: registry enam peran AI Research Council (Market Analyst, Quant Researcher, Strategy Developer, Risk Analyst, Portfolio Manager, Independent Reviewer). Semua `execute_trade`, `withdraw`, `approve`, `read_private_account`, dan `write_code` = false; `canPerform()` fail-closed terhadap objek palsu/role null; `isAgentRole()` menolak eskalasi hak.
+- `src/platform/task-policy.mts`: `evaluateTaskAdmission()` menolak semua input kecuali worker enabled, control valid, `paused=false`, `kill_switch=false`, `max_concurrency=1`, active task di bawah limit, `daily_budget_usd=0` (Rp0), autonomy stage ≤ 1. `isRp0Control()` untuk verifikasi anggaran.
+- `src/memory/retrieval.mts`: helper `isMemoryVisible()` dan `rankVisibleMemory()` dengan filter scope → sensitivity → status approved → validity/retention sebelum ranking. Tidak mengganti/tulis ulang provenance; tidak membaca secret.
+- `src/platform/audit-event.mts`: `buildAuditEvent()` memvalidasi actor/action/entity/outcome/correlation/time, membatasi panjang, menolak pola secret dan action tidak dikenal, serta menormalkan newline.
+- `test/quant-foundation.test.js`: 4 tes deterministik untuk enam role + eskalasi hak, admission policy (disable/pause/kill switch/concurrency/budget/autonomy), retrieval scope/sensitivity/validity, dan sanitasi audit event.
+
+### 147.3 Hasil uji dan verifikasi
+- `node --test test/quant-foundation.test.js`: 4/4 lulus.
+- `npm test` lokal pada branch: **237 pass, 0 fail, 0 skipped** (233 baseline + 4 baru).
+- Strict TypeScript `tsc --noEmit -p tsconfig.json` dengan TypeScript 5.9.3 dari cache npx: **exit 0**. Perintah `npm run typecheck` gagal lokal karena `npx tsc: not found` pada lingkungan Termux; ini masalah resolver lokal, bukan error tipe. CI exact-head wajib diverifikasi.
+- `git diff --check` dan pemindaian secret pada baris baru: bersih.
+- Tidak ada perubahan route, menu, API, state, migrasi, environment, Hostless, provider, kredensial, atau perilaku trading. Tidak ada worker yang berjalan; tidak ada claim Hostless LIVE.
+
+### 147.4 Risiko dan NEXT TASK
+- Risiko: modul belum dipanggil produksi dan belum ada integrasi dengan `radar_agent.*`/PostgREST; jangan menyebutnya sebagai agent platform aktif. Typecheck lokal memakai cache, sehingga perlu verifikasi CI.
+- **NEXT TASK:** verifikasi CI/security exact-head pada PR P1, lalu lanjut P2 (`Observation` contract + provenance/freshness flag dengan tes payload cacat) atau pentest skema task admission terhadap migrasi `002_queue_operations.sql` di PostgreSQL disposable. Worker tetap OFF; tidak ada live order/withdrawal.
