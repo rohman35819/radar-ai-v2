@@ -27,8 +27,11 @@ Costs: 7.5 bps fee + 7.5 bps slippage per side (15 bps per turn), funding 0 (spo
 | exp-03 mean reversion | ETHUSDT | z20, -1.5/0 | -24.67 | -27.49 | 3/6 | -44.03 | reject |
 | exp-04 regime aware | BTCUSDT | t20, rsi7 | 2.82 | 10.49 | 3/6 | -34.00 | reject |
 | exp-04 regime aware | ETHUSDT | t20, rsi7 | 6.60 | -0.72 | 1/6 | -44.03 | reject |
+| exp-05 regime aware fast | BTCUSDT | t20, rsi7, 35/60 | 6.86 | 13.90 | 2/6 | -34.00 | reject |
 
 No-trade return is 0% by definition. Every rejected result retains its JSON report and QA sidecar; criteria were never relaxed after observing results. Walk-forward never reached a positive majority; SMA additionally failed OOS drawdown on ETH, and regime-aware had too few OOS trades on BTC.
+
+`exp-05-regime-aware-fast` was pre-registered in `research/python/experiments/registry.json` at `2026-11-26T19:38:43Z`, **before** it was run. Its shorter lookbacks raised full-sample net to 13.90% and OOS net to 6.86%, but it still had too few OOS trades and only 2/6 positive walk-forward folds, so it was rejected. Further parameter tuning on the same 364 bars would be data snooping; the next valid step is a fresh holdout period or a different, pre-registered hypothesis rather than relaxing criteria. No strategy is promoted.
 
 ## Correctness fix applied here
 
