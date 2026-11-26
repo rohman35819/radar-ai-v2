@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import time
 import urllib.parse
@@ -107,6 +108,7 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("Data publik tidak cukup untuk backtest")
     path = write_csv(rows, args.output)
     provenance = {
+        "schema_version": "1.0.0",
         "source": url,
         "symbol": args.symbol.upper(),
         "interval": args.interval,
@@ -115,9 +117,12 @@ def main(argv: list[str] | None = None) -> int:
         "rows": len(rows),
         "start": rows[0]["timestamp"],
         "end": rows[-1]["timestamp"],
+        "checksum_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "output": str(path),
     }
-    print(json.dumps(provenance, indent=2, sort_keys=True, ensure_ascii=False))
+    sidecar = path.with_suffix(".provenance.json")
+    sidecar.write_text(json.dumps(provenance, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(json.dumps({**provenance, "provenance": str(sidecar)}, indent=2, sort_keys=True, ensure_ascii=False))
     return 0
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +23,8 @@ def make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--interval", default="1d", help="1m,5m,15m,1h,4h,1d")
     parser.add_argument("--retrieved-at", default=None, help="ISO-8601 UTC saat data diambil")
     parser.add_argument("--data-kind", default="synthetic", choices=("synthetic", "public_api"))
+    parser.add_argument("--provenance", default=None,
+                        help="Sidecar JSON dari fetch_ohlcv.py; auto-detect jika tidak diberikan")
     parser.add_argument("--report", default="research/python/output/example_report.json")
     parser.add_argument("--fast", type=int, default=5)
     parser.add_argument("--slow", type=int, default=20)
@@ -36,13 +39,27 @@ def make_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = make_parser().parse_args(argv)
+    csv_path = Path(args.csv)
+    provenance_path = Path(args.provenance) if args.provenance else csv_path.with_suffix(".provenance.json")
+    source, symbol = args.source, args.symbol
+    interval, retrieved_at, data_kind = args.interval, args.retrieved_at, args.data_kind
+    if provenance_path.exists():
+        meta = json.loads(provenance_path.read_text(encoding="utf-8"))
+        source = meta.get("source", source)
+        symbol = meta.get("symbol", symbol)
+        interval = meta.get("interval", interval)
+        retrieved_at = meta.get("retrieved_at", retrieved_at)
+        data_kind = meta.get("data_kind", data_kind)
+        expected = meta.get("checksum_sha256")
+        if expected and expected != hashlib.sha256(csv_path.read_bytes()).hexdigest():
+            raise SystemExit("Provenance checksum tidak cocok dengan CSV; hentikan eksperimen")
     dataset = load_ohlcv(
-        args.csv,
-        source=args.source,
-        symbol=args.symbol,
-        interval=args.interval,
-        retrieved_at=args.retrieved_at,
-        data_kind=args.data_kind,
+        csv_path,
+        source=source,
+        symbol=symbol,
+        interval=interval,
+        retrieved_at=retrieved_at,
+        data_kind=data_kind,
     )
     config = StrategyConfig(
         fast=args.fast,

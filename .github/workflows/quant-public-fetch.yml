@@ -1,0 +1,56 @@
+name: RADAR Quant Public Data Fetch
+
+# Manual only. Uses the free, key-less Binance public klines endpoint.
+# Rp0: no paid provider, no API key, no secret. No exchange order is sent.
+on:
+  workflow_dispatch:
+    inputs:
+      symbol:
+        description: 'Market symbol (public spot)'
+        required: false
+        default: 'BTCUSDT'
+      interval:
+        description: 'Kline interval'
+        required: false
+        default: '1d'
+      limit:
+        description: 'Number of candles (max 1000)'
+        required: false
+        default: '365'
+
+jobs:
+  fetch-and-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Fetch free public OHLCV with provenance
+        run: |
+          python3 research/python/fetch_ohlcv.py \
+            --symbol "${{ inputs.symbol }}" \
+            --interval "${{ inputs.interval }}" \
+            --limit "${{ inputs.limit }}" \
+            --output research/python/fixtures/btcusdt_1d_public.csv
+      - name: Generate versioned quant report
+        run: |
+          python3 research/python/quant_cli.py \
+            research/python/fixtures/btcusdt_1d_public.csv \
+            --report research/python/output/public_report.json
+      - name: Independent QA verification
+        run: |
+          python3 research/python/verify_report.py \
+            research/python/output/public_report.json \
+            --csv research/python/fixtures/btcusdt_1d_public.csv \
+            --output research/python/output/public_qa_verification.json
+      - name: Upload research artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: quant-public-report
+          path: |
+            research/python/fixtures/btcusdt_1d_public.csv
+            research/python/fixtures/btcusdt_1d_public.provenance.json
+            research/python/output/public_report.json
+            research/python/output/public_qa_verification.json
+          if-no-files-found: error

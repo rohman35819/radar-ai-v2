@@ -65,6 +65,7 @@ python3 research/python/quant_cli.py research/python/fixtures/btcusdt_1d_public.
   --data-kind public_api --report research/python/output/public_report.json
 ```
   Adapter membuang candle yang belum selesai (`close_time` di masa depan), memvalidasi OHLC, dan tidak mengirim kunci/secret. Jangan menjalankan ini pada lingkungan tanpa akses jaringan; `parse_klines()` sudah diuji dengan response mock.
+- Jika jaringan hanya tersedia di GitHub runner, jalankan workflow manual **RADAR Quant Public Data Fetch** (`workflow_dispatch`) pada branch ini. Workflow menjalankan `fetch_ohlcv.py` → `quant_cli.py` → `verify_report.py` dan mengunggah artifact `quant-public-report` berisi CSV, sidecar provenance, `public_report.json`, dan `public_qa_verification.json`. `fetch_ohlcv.py` menulis `retrieved_at` hasil fetch ke sidecar; `quant_cli.py` membaca sidecar otomatis dan memverifikasi checksum sebelum menyusun laporan, sehingga `public_report.json` memuat source, symbol, interval, retrieval time, range, row count, dan checksum yang benar-benar berasal dari fetch.
 
 ## 4. Strategi, biaya, dan anti-look-ahead
 

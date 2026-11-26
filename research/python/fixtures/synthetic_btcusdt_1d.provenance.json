@@ -10,5 +10,5 @@
   "rows": 360,
   "source": "deterministic generator research/python/make_fixture.py",
   "start": "2025-01-01T00:00:00Z",
-  "symbol": "BTCUSDT (label only; not real market data)"
+  "symbol": "BTCUSDT"
 }

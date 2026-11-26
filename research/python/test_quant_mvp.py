@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import tempfile
 import unittest
@@ -11,10 +12,14 @@ from pathlib import Path
 from backtest_engine import run_backtest
 from fetch_ohlcv import build_url, drop_incomplete, parse_klines
 from make_fixture import generate
+from quant_cli import main as cli_main
 from quant_data import DataQualityError, load_ohlcv, slice_dataset
 from report import REPORT_SCHEMA, RunMeta, build_report, write_report
 from strategy import StrategyConfig, generate_signals
-from validation import run_validation, split_three, walk_forward
+from validation import (
+    candidate_config, run_validation, select_parameters, signals_for_candidate,
+    split_three, walk_forward, PARAMETER_GRID,
+)
 
 FIXTURE = Path(__file__).parent / "fixtures" / "synthetic_btcusdt_1d.csv"
 
@@ -90,6 +95,78 @@ class QuantMvpTests(unittest.TestCase):
         self.assertTrue(result.metrics["kill_switch_triggered"])
         self.assertTrue(any(trade.reason in ("stop_loss", "drawdown_stop") for trade in result.trades))
 
+    def test_each_candidate_generates_its_own_signal_stream(self):
+        streams = {
+            pair: signals_for_candidate(self.dataset, self.config, pair[0], pair[1])
+            for pair in PARAMETER_GRID
+        }
+        self.assertEqual(len(streams), 3)
+        self.assertNotEqual(streams[(3, 8)], streams[(5, 20)])
+        self.assertNotEqual(streams[(5, 20)], streams[(10, 30)])
+        for fast, slow in PARAMETER_GRID:
+            expected = generate_signals(self.dataset.candles, candidate_config(self.config, fast, slow))
+            self.assertEqual(streams[(fast, slow)], expected)
+
+    def test_selected_parameters_are_used_on_out_of_sample(self):
+        result = run_validation(self.dataset, self.config)
+        fast = result["selected_parameters"]["fast"]
+        slow = result["selected_parameters"]["slow"]
+        self.assertEqual(result["out_of_sample_config"]["fast"], fast)
+        self.assertEqual(result["out_of_sample_config"]["slow"], slow)
+        self.assertEqual(result["selected_parameters"]["signal_source"],
+                         "candidate_specific_sma_stream_sliced_from_full_history")
+        _, _, oos = split_three(self.dataset)
+        signals = signals_for_candidate(self.dataset, self.config, fast, slow)
+        oos_start = len(self.dataset.candles) - len(oos.candles)
+        replay = run_backtest(oos, candidate_config(self.config, fast, slow), signals[oos_start:])
+        self.assertEqual(replay.metrics, result["out_of_sample_metrics"])
+
+    def test_walk_forward_selects_and_tests_candidate_signals(self):
+        result = run_validation(self.dataset, self.config)
+        folds = result["walk_forward_folds"]
+        self.assertTrue(folds)
+        for fold in folds:
+            # Independent local selection over the same candidate grid.
+            best = None
+            for fast, slow in PARAMETER_GRID:
+                config = candidate_config(self.config, fast, slow)
+                signals = generate_signals(self.dataset.candles, config)
+                train = slice_dataset(self.dataset, fold["train_start_index"], fold["train_end_index"])
+                train_signals = signals[fold["train_start_index"]:fold["train_end_index"]]
+                backtest = run_backtest(train, config, train_signals)
+                score = backtest.metrics["profit_factor"]
+                score = -1.0 if score is None else score
+                accepted = (backtest.metrics["total_trades"] >= 2
+                            and backtest.metrics["max_drawdown_pct"] <= 25.0)
+                key = (1 if accepted else 0, score, slow)
+                if best is None or key > best[0]:
+                    best = (key, fast, slow)
+            selected_fast, selected_slow = best[1], best[2]
+            self.assertEqual((fold["selected_fast"], fold["selected_slow"]),
+                             (selected_fast, selected_slow))
+            config = candidate_config(self.config, selected_fast, selected_slow)
+            signals = generate_signals(self.dataset.candles, config)
+            test_segment = slice_dataset(self.dataset, fold["test_start_index"], fold["test_end_index"])
+            replay = run_backtest(test_segment, config,
+                                  signals[fold["test_start_index"]:fold["test_end_index"]])
+            self.assertEqual(replay.metrics["net_return_pct"], fold["test_net_return_pct"])
+
+    def test_no_future_leakage_across_segments(self):
+        train, validation, oos = split_three(self.dataset)
+        total = len(self.dataset.candles)
+        validation_end = len(train.candles) + len(validation.candles)
+        for fast, slow in PARAMETER_GRID:
+            full = signals_for_candidate(self.dataset, self.config, fast, slow)
+            truncated = signals_for_candidate(slice_dataset(self.dataset, 0, validation_end),
+                                              self.config, fast, slow)
+            self.assertEqual(full[:validation_end], truncated)
+            late = signals_for_candidate(slice_dataset(self.dataset, 0, total), self.config, fast, slow)
+            self.assertEqual(full, late)
+            self.assertTrue(all(
+                signal.computed_from is None or signal.computed_from <= self.dataset.candles[index].timestamp
+                for index, signal in enumerate(full[:validation_end])
+            ))
+
     def test_splits_and_walk_forward_are_contiguous_and_disjoint(self):
         train, validation, oos = split_three(self.dataset)
         self.assertLess(train.end, validation.start)
@@ -151,6 +228,33 @@ class QuantMvpTests(unittest.TestCase):
         self.assertIn("interval=1d", url)
         self.assertIn("limit=100", url)
         self.assertNotIn("apiKey", url)
+
+    def test_fetch_provenance_sidecar_drives_public_report(self):
+        with tempfile.TemporaryDirectory() as folder:
+            csv_path = Path(folder) / "public.csv"
+            csv_path.write_bytes(FIXTURE.read_bytes())
+            sidecar = {
+                "schema_version": "1.0.0",
+                "source": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d",
+                "symbol": "BTCUSDT",
+                "interval": "1d",
+                "retrieved_at": "2026-11-27T01:02:03Z",
+                "data_kind": "public_api",
+                "rows": 360,
+                "checksum_sha256": hashlib.sha256(csv_path.read_bytes()).hexdigest(),
+            }
+            csv_path.with_suffix(".provenance.json").write_text(
+                json.dumps(sidecar, sort_keys=True), encoding="utf-8")
+            report_path = Path(folder) / "public_report.json"
+            self.assertEqual(cli_main([str(csv_path), "--report", str(report_path)]), 0)
+            provenance = json.loads(report_path.read_text(encoding="utf-8"))["data"]["provenance"]
+            self.assertEqual(provenance["source"], sidecar["source"])
+            self.assertEqual(provenance["symbol"], "BTCUSDT")
+            self.assertEqual(provenance["interval"], "1d")
+            self.assertEqual(provenance["retrieved_at"], "2026-11-27T01:02:03Z")
+            self.assertEqual(provenance["data_kind"], "public_api")
+            self.assertEqual(provenance["checksum_sha256"], sidecar["checksum_sha256"])
+            self.assertEqual(provenance["rows"], 360)
 
     def test_fixture_generator_is_deterministic(self):
         self.assertEqual(generate(12), generate(12))

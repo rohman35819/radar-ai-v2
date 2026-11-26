@@ -60,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     provenance = {
         "data_kind": "synthetic",
         "source": "deterministic generator research/python/make_fixture.py",
-        "symbol": "BTCUSDT (label only; not real market data)",
+        "symbol": "BTCUSDT",
         "interval": "1d",
         "retrieved_at": "2026-11-27T00:00:00Z",
         "rows": len(rows),
