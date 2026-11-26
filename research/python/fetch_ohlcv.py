@@ -20,15 +20,21 @@ from typing import Any, Callable, Mapping, Sequence
 
 from quant_data import REQUIRED_COLUMNS, canonical_timestamp
 
-BASE_URL = "https://api.binance.com/api/v3/klines"
+BASE_URL = "https://data-api.binance.vision/api/v3/klines"
 FetchJson = Callable[[str], Any]
 
 
-def build_url(symbol: str, interval: str, limit: int, start_time: int | None = None) -> str:
+def build_url(
+    symbol: str,
+    interval: str,
+    limit: int,
+    start_time: int | None = None,
+    base_url: str = BASE_URL,
+) -> str:
     params: dict[str, str | int] = {"symbol": symbol.upper(), "interval": interval, "limit": limit}
     if start_time is not None:
         params["startTime"] = start_time
-    return BASE_URL + "?" + urllib.parse.urlencode(params)
+    return base_url + "?" + urllib.parse.urlencode(params)
 
 
 def parse_klines(payload: Any) -> list[dict[str, Any]]:
@@ -98,11 +104,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--symbol", default="BTCUSDT")
     parser.add_argument("--interval", default="1d")
     parser.add_argument("--limit", type=int, default=365)
+    parser.add_argument("--base-url", default=BASE_URL,
+                        help="Free public klines endpoint (default: data-api.binance.vision)")
     parser.add_argument("--output", default="research/python/fixtures/btcusdt_1d_public.csv")
     args = parser.parse_args(argv)
     if not 1 <= args.limit <= 1000:
         raise SystemExit("--limit wajib 1..1000")
-    url = build_url(args.symbol, args.interval, args.limit)
+    url = build_url(args.symbol, args.interval, args.limit, base_url=args.base_url)
     rows = drop_incomplete(parse_klines(default_fetch(url)))
     if len(rows) < 3:
         raise SystemExit("Data publik tidak cukup untuk backtest")

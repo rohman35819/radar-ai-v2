@@ -61,11 +61,12 @@ Output `example_report.json` adalah contoh artifact nyata hasil menjalankan CLI 
 python3 research/python/fetch_ohlcv.py --symbol BTCUSDT --interval 1d --limit 365 \
   --output research/python/fixtures/btcusdt_1d_public.csv
 python3 research/python/quant_cli.py research/python/fixtures/btcusdt_1d_public.csv \
-  --source 'https://api.binance.com/api/v3/klines' --symbol BTCUSDT --interval 1d \
-  --data-kind public_api --report research/python/output/public_report.json
+  --report research/python/output/public_report.json
 ```
   Adapter membuang candle yang belum selesai (`close_time` di masa depan), memvalidasi OHLC, dan tidak mengirim kunci/secret. Jangan menjalankan ini pada lingkungan tanpa akses jaringan; `parse_klines()` sudah diuji dengan response mock.
-- Jika jaringan hanya tersedia di GitHub runner, jalankan workflow manual **RADAR Quant Public Data Fetch** (`workflow_dispatch`) pada branch ini. Workflow menjalankan `fetch_ohlcv.py` → `quant_cli.py` → `verify_report.py` dan mengunggah artifact `quant-public-report` berisi CSV, sidecar provenance, `public_report.json`, dan `public_qa_verification.json`. `fetch_ohlcv.py` menulis `retrieved_at` hasil fetch ke sidecar; `quant_cli.py` membaca sidecar otomatis dan memverifikasi checksum sebelum menyusun laporan, sehingga `public_report.json` memuat source, symbol, interval, retrieval time, range, row count, dan checksum yang benar-benar berasal dari fetch.
+- Endpoint default `fetch_ohlcv.py` adalah `https://data-api.binance.vision/api/v3/klines` — data publik Binance gratis tanpa API key. Endpoint `api.binance.com`, Coinbase, dan Kraken tidak terjangkau dari sesi pengembangan ini; `data-api.binance.vision` terverifikasi dapat diakses. Opsi `--base-url` tersedia bila endpoint lain diperlukan.
+- `fetch_ohlcv.py` menulis `retrieved_at` hasil fetch ke sidecar `.provenance.json` bersama source URL, symbol, interval, range, row count, dan checksum SHA-256. `quant_cli.py` membaca sidecar itu otomatis dan memverifikasi checksum sebelum menyusun laporan. Dengan demikian `public_report.json` memuat provenance yang benar-benar berasal dari fetch, bukan nilai yang diketik manual.
+- Contoh hasil nyata: `research/python/fixtures/btcusdt_1d_public.csv` + sidecar, `research/python/output/public_report.json`, dan `research/python/output/public_qa_verification.json`. Hasil validasi gagal (`accepted_for_paper_candidate=false`) dan tidak diubah agar lolos.
 
 ## 4. Strategi, biaya, dan anti-look-ahead
 

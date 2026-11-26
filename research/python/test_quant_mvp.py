@@ -224,6 +224,7 @@ class QuantMvpTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_klines([payload[0], [start_ms, "101", "99", "100", "100", "1"]])
         url = build_url("btcusdt", "1d", 100)
+        self.assertIn("data-api.binance.vision", url)
         self.assertIn("symbol=BTCUSDT", url)
         self.assertIn("interval=1d", url)
         self.assertIn("limit=100", url)
