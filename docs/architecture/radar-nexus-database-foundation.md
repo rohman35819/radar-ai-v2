@@ -258,3 +258,33 @@ Decision recorded 2026-11-27 (Asia/Jakarta), superseding any conflicting v1 stat
 
 ### Authority clarification
 This decision grants NEXUS the intended ability to trade; it does not grant unlimited capital, unrestricted account administration, withdrawal, or permission to activate live trading immediately. BOS remains the sole authority for withdrawal and the final authority for enabling live trading mandates. This architecture decision does not itself connect an exchange, create credentials, place an order, or activate a worker.
+
+
+## 16. BOS decision — standing autonomous strategy and trading mandate
+
+Decision recorded 2026-11-27 (Asia/Jakarta). This section clarifies the intended autonomy level in Section 15.
+
+### No per-trade BOS approval
+- Once BOS establishes and enables a standing operating mandate, NEXUS does **not** need BOS approval for each trade, order, position adjustment, strategy selection, or routine strategy execution that stays inside that mandate.
+- NEXUS is expected to independently discover opportunities, formulate hypotheses, evaluate and select strategies, backtest, paper trade, monitor, execute enabled strategies, reconcile results, and adjust strategy parameters within the mandate.
+- NEXUS should pursue sustainable net returns for RADAR AI V2 rather than wait for BOS to issue individual trading instructions. It must report performance, drawdown, exposure, incidents and material strategy changes to the RADAR control center.
+- NEXUS may autonomously stop or reduce risk when safety conditions, data quality, loss limits, drawdown limits, connectivity, reconciliation or execution integrity require it. It must never disable or raise its own risk limits.
+
+### Standing mandate, not unlimited authority
+- BOS approval is required to establish or materially expand the standing mandate: permitted exchange/account, capital allocation ceiling, instruments/markets, leverage policy (default disabled), order types, exposure caps, maximum position size, daily/weekly loss and drawdown limits, slippage bounds, strategy classes, operating hours, and expiry/review conditions.
+- Within an enabled mandate, routine execution and strategy optimization are autonomous and do not require per-action BOS approval.
+- NEXUS may not increase capital allocation, leverage, risk ceilings, allowed markets, or permissions; enable a new exchange/account; or override a stop condition. Such changes require a new BOS-approved mandate revision.
+- Strategy evaluation must avoid look-ahead bias, data leakage, survivorship bias and overfitting; include fees, spread, slippage, latency and realistic fill assumptions. Promotion from research to paper and from paper to live must follow explicit objective acceptance gates. A live mandate must be enabled by BOS once, after the relevant evidence is reviewed; subsequent in-mandate trades do not need repeated approval.
+- If no live mandate has been explicitly enabled, NEXUS may continue research and paper/testnet execution but must not place live orders.
+
+### Withdrawal remains categorically excluded
+- NEXUS has no withdrawal permission, no transfer-out capability and no ability to alter exchange API key permissions.
+- Only BOS may initiate and authorize withdrawal through a separate BOS-controlled workflow.
+- Trading automation must be technically unable to invoke withdrawal or equivalent external asset-egress operations.
+
+### Operational reporting and stop conditions
+- NEXUS runs only while its approved runtime, budget and risk limits permit. It must stop new orders and enter a safe state on kill-switch activation, stale/invalid market data, exceeded loss/exposure limits, uncertain order status, failed reconciliation, suspected credential compromise or policy service unavailability.
+- Every autonomous strategy action must be attributable and auditable, including strategy/version, inputs and data provenance, mandate revision, risk checks, order idempotency, exchange acknowledgements/fills, fees and resulting positions.
+- The system must never claim guaranteed profit. Profit generation is the objective; losses remain possible and must be bounded, measured and reported.
+
+This decision authorizes the product design for autonomous in-mandate trading without per-trade BOS approval. It does not mean live trading is active today, does not itself enable exchange credentials or workers, and does not waive the one-time BOS approval required to activate a live trading mandate.
