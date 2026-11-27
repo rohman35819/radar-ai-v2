@@ -126,7 +126,7 @@ Initial bridge should be read-only and versioned:
 
 ## 9. Phased implementation and acceptance gates
 
-### N0 — Schema/security design (current)
+### N0 — Schema/security design (draft implementation started)
 - Division 07: approve table ownership, provenance, retention and retrieval rules.
 - Division 01: threat model, identity mapping, RLS/grants and secret boundary.
 - Division 06: task lifecycle, API contract, agent/permission registry interface.
@@ -134,8 +134,8 @@ Initial bridge should be read-only and versioned:
 - Exit: all four divisions review design; no unresolved P0/P1 security finding.
 
 ### N1 — Disposable migration validation
-- Create versioned migration only after N0 review.
-- Apply to disposable PostgreSQL/Supabase-compatible database first.
+- Review the draft SQL with Division 01/06/07 and correct findings.
+- Apply to disposable PostgreSQL/Supabase-compatible database first; never target the BOS project.
 - Test schema constraints, RLS allow/deny matrix, append-only audit, task transition/lease/idempotency, dependency cycle rejection and rollback.
 - Exit: exact migration SHA, test logs, security review and QA sign-off.
 
@@ -170,7 +170,7 @@ Initial bridge should be read-only and versioned:
 ## 11. Explicit non-goals / current status
 
 - No SQL has been run on the NEXUS project.
-- No migration file has been created or applied for this separate-project design.
+- Draft migration `supabase/nexus-migrations/20261127_0001_nexus_private_foundation.sql` has been created on the review branch. It is not a Supabase CLI migration path and has not been executed or validated against PostgreSQL.
 - No application code, API bridge, worker, scheduler, agent runtime, or cloud persistence is active.
 - No backup/restore has been demonstrated.
 - No production or RADAR data has been copied.
@@ -183,4 +183,4 @@ Initial bridge should be read-only and versioned:
 2. Division 07 resolves owner identity, memory provenance, retention and deletion semantics.
 3. Division 06 reviews task lifecycle, idempotency, lease and API bridge contracts.
 4. Division 05 prepares a disposable PostgreSQL test matrix; do not target the NEXUS project yet.
-5. After reviews, revise this design and only then draft a migration. Applying SQL to the BOS NEXUS project remains a separate explicit approval gate.
+5. Review and validate the draft migration on a disposable PostgreSQL database. Applying SQL to the BOS NEXUS project remains a separate explicit approval gate.
