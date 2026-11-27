@@ -3386,3 +3386,19 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Pengujian: `node --check public/app.js` lulus; `node --test test/top5-runtime.test.js` 3/3 pass; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
 - Status: perbaikan pada branch `fix/top5-price-label` dari `develop` `8ac4642`; perlu PR ke `develop` lalu rilis ke `main`. Hostless LIVE untuk perbaikan ini belum diverifikasi.
 - NEXT TASK: setelah deploy, ulangi reproduksi terhadap aset LIVE dan pastikan `renderAction()` menghasilkan kartu; lanjutkan QA klik browser nyata.
+
+
+## 151. RADAR NEXUS Cloud Storage — BOS decision (27 November 2026)
+
+- BOS decision: all permanent RADAR NEXUS data must be stored in cloud, not on BOS's phone. Termux is a thin client; only executable, minimal connection configuration, and bounded disposable cache may remain locally. No persistent local fallback for NEXUS sessions/memory/tasks.
+- If cloud is unavailable, NEXUS must clearly report that a write was not saved; it must not silently persist to phone storage.
+- GitHub stores versioned source, policies, architecture and durable engineering decisions; operational sessions/messages/task state belong in an approved cloud database.
+- New proposal branch: `feat/nexus-cloud-storage-foundation`.
+- Added `supabase/migrations/20261127_nexus_cloud_storage.sql`: proposal schema for sessions, ordered messages and durable task state; client roles denied, server-side service_role only. **Not applied**; owner identity is a placeholder pending auth audit.
+- Added `docs/architecture/nexus-cloud-storage.md`: target architecture, acceptance gates, migration and rollout plan.
+- Existing `lib/ingest.js` has a Supabase REST adapter for `radar_state`, but falls back to local `DATA_DIR/state.json` when Supabase is absent. This behavior must not be reused as NEXUS storage without a cloud-only adapter and explicit no-local-fallback semantics.
+- `radar_memory_records` migration from 24 Nov is proposal-only; no evidence it has been applied. Supabase project/configuration and free-tier eligibility remain unverified.
+- Railway project `RADAR AI V2 - Development` has one app service and one volume in staged-create state; 17 changes are staged, no deployment exists. No staged changes were applied. Do not activate Railway or any paid resource without verified Rp0 eligibility and BOS approval.
+- No cloud database was selected, provisioned, migrated, or connected in this task. No NEXUS API, CLI, dashboard integration, or cloud-only runtime is yet active.
+- PR deferred: current repository WIP limit is already exceeded by existing open non-draft PRs. Keep branch isolated; do not open another PR until a slot is freed.
+- Next: Divisi 01 audits authentication and Supabase account/project/free-tier/backup; Divisi 07 reviews schema, privacy, retention/export/deletion; Divisi 06 defines authenticated NEXUS Core API. Then implement and test cross-user isolation, no-local-fallback, cloud outage, and clean-device restore.
