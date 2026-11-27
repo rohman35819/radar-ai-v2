@@ -68,3 +68,11 @@
 - Separate Supabase projects are storage isolation only; cross-system communication uses authenticated, versioned, least-privilege APIs with audit/provenance/freshness. No direct database sharing or shared credentials.
 - This clarification does not authorize applying SQL, production integration, worker/scheduler activation or paid resources.
 - Next: update the NEXUS API and Agent Platform contracts to express RADAR-owned authority and fail-closed behavior; continue PR #165 validation.
+
+
+## NEXUS core-brain mandate (27 Nov 2026)
+- BOS intent: NEXUS is the core intelligence/brain inside RADAR AI V2. It should learn useful capabilities from approved external AIs and manage/evolve RADAR, including dashboard UI and functions.
+- External AI outputs are untrusted until independently evaluated; retain validated knowledge/skills with provenance, versioning and evaluation evidence. This is curated learning, not automatic model-weight training.
+- NEXUS may inspect approved repo/dashboard context and implement bounded changes in isolated branches/workspaces; require tests, secret scans, diff/preview, rollback and risk-based approval. Merge/deploy and sensitive changes remain RADAR policy-gated, with BOS final authority.
+- NEXUS cannot self-grant permissions, bypass CI/review, or disable safeguards. No continuous autonomous editing/learning claim until runtime and evidence exist. No paid services activated.
+- Next: design RADAR-issued scoped capabilities and the change proposal → isolated implementation → validation → approval → integration workflow; define external-model evaluation and knowledge curation.
