@@ -76,3 +76,11 @@
 - NEXUS may inspect approved repo/dashboard context and implement bounded changes in isolated branches/workspaces; require tests, secret scans, diff/preview, rollback and risk-based approval. Merge/deploy and sensitive changes remain RADAR policy-gated, with BOS final authority.
 - NEXUS cannot self-grant permissions, bypass CI/review, or disable safeguards. No continuous autonomous editing/learning claim until runtime and evidence exist. No paid services activated.
 - Next: design RADAR-issued scoped capabilities and the change proposal → isolated implementation → validation → approval → integration workflow; define external-model evaluation and knowledge curation.
+
+
+## Grok NEXUS execution mandate (27 Nov 2026)
+- Dedicated instructions: `NEXUS_GROK_MANDATE.md`; linked from `GROK.md`.
+- NEXUS is RADAR AI V2's core brain; build curated, provenance-backed learning from approved external AIs, controlled RADAR development workflow, and dashboard evolution.
+- First implementation deliverable: deterministic Knowledge & Skill Learning vertical slice plus RADAR-issued scoped capability contract; fixture-based until NEXUS schema/security approval.
+- TypeScript + Python; Rp0/free only; no model-weight training, provider activation, live database write, worker, scheduler, merge/deploy, trading or withdrawal without required approvals.
+- Grok must inspect current main/PR queue and continue implementation rather than produce another plan; do not create duplicate NEXUS PRs.
