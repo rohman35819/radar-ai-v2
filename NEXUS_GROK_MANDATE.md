@@ -65,7 +65,7 @@ E. Dashboard control surface
 - BOS → RADAR policy/control plane → NEXUS runtime/agents. No bypass.
 - RADAR issues short-lived, scoped, least-privilege capabilities; every action checks actor, scope, resource, expiry, autonomy stage and approval requirement.
 - NEXUS may observe, research, propose and make isolated low-risk patches when granted. It cannot self-expand scope, grant permissions, alter policy, disable tests/security, or authorize itself.
-- Merge, production deployment, identity/security changes, production schema/data migrations, external spend, exchange private account access, live trading and withdrawals require the established explicit approvals and safeguards. No live trading/withdrawal in this workstream.
+- Merge, production deployment, identity/security changes, production schema/data migrations and external spend remain governed by their established controls. Trading product behavior is autonomous within a fixed machine-enforced operating envelope: no per-opportunity/per-trade BOS approval queue. Do not interpret autonomy as unlimited capital, unrestricted account access or permission to bypass risk controls. NEXUS and all its agents/credentials are categorically denied withdrawals and external asset-egress. No live trading is active merely because this mandate exists.
 - Free-only / Rp0. Do not enable paid compute, add-ons, paid APIs, overages, free trials converting to paid, or billing. Prefer local/CI fixtures and approved free quotas.
 - Never commit credentials. Never place service-role keys in browser, Termux, prompts, logs or Git.
 - Fail closed when auth, policy, storage or provenance checks fail. Do not silently fall back to a different database or phone-local persistent storage.
@@ -136,3 +136,14 @@ Repeat while the active session/runtime permits:
 ## 8. First deliverable expected
 
 Within the first implementation cycle, deliver a working, tested, no-secret, no-paid-service vertical slice of **NEXUS Knowledge & Skill Learning** using deterministic fixtures, plus the RADAR-issued capability contract for a future development agent. Do not answer BOS with another roadmap alone.
+
+
+## 9. BOS clarification — autonomous trading behavior
+
+BOS's 2026-11-27 direction is that NEXUS must not wait for BOS approval when an opportunity appears and must not require a separate human approval for each strategy decision or trade. The expected flow is autonomous opportunity detection → evidence/risk evaluation → strategy selection → execution → monitoring/reconciliation → reporting.
+
+Do not implement a per-trade approval queue as the normal operating path. Do not pause routine in-scope strategy execution for BOS confirmation. This does not grant unlimited capital or remove technical safeguards: execution requires a machine-enforced operating envelope (account, capital ceiling, instruments, leverage policy, exposure and loss limits, execution constraints, expiry and kill switch) that the model cannot modify. If any required envelope or safety service is absent, fail closed and continue research/paper/testnet only; never infer or invent missing financial limits.
+
+NEXUS may not withdraw or transfer assets out. Withdrawal and equivalent external asset-egress must be denied at exchange credential and RADAR gateway layers for every NEXUS identity. BOS alone controls withdrawal.
+
+This is a target-state instruction, not evidence of a connected exchange, active worker, live order or profit. Live execution remains unavailable until the required technical integration and validation exist.
