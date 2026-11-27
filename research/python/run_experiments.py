@@ -43,7 +43,8 @@ def run_one(
     data_dir: Path,
     out_dir: Path,
 ) -> dict[str, Any]:
-    csv_path = data_dir / f'{symbol.lower()}_1d_public.csv'
+    suffix = registry.get('data', {}).get('file_suffix', '_1d_public')
+    csv_path = data_dir / f'{symbol.lower()}{suffix}.csv'
     dataset = load_ohlcv(
         csv_path,
         source=provenance_for(csv_path)['source'],

@@ -1,0 +1,57 @@
+{
+  "registry_version": "2.0.0-holdout",
+  "registered_at": "2026-11-27T05:23:58Z",
+  "owner": "BOS",
+  "lead": "Grok / Divisi 04",
+  "purpose": "Fresh pre-registered holdout on an earlier, non-overlapping 2024 window. Registered before any 2024 data was fetched or any result observed. No parameter is tuned on the previous 2025-11 to 2026-11 sample.",
+  "criteria_version": "validation-v1",
+  "criteria": {
+    "min_out_of_sample_trades": 2,
+    "max_out_of_sample_drawdown_pct": 25.0,
+    "validation_selection_must_be_accepted": true,
+    "walk_forward_positive_folds_must_be_majority": true,
+    "costs_bps_per_side": 15,
+    "funding_bps_per_day": 0,
+    "position_fraction": 1.0,
+    "stop_loss_pct": 0.1,
+    "max_drawdown_stop_pct": 0.3
+  },
+  "data": {
+    "source": "https://data-api.binance.vision/api/v3/klines",
+    "symbols": ["BTCUSDT", "ETHUSDT"],
+    "interval": "1d",
+    "start_time": "2024-01-01T00:00:00Z",
+    "limit": 365,
+    "file_suffix": "_1d_holdout2024",
+    "note": "Non-overlapping with the 2025-11-27 to 2026-11-25 development sample. SOL excluded until BTC/ETH admission passes."
+  },
+  "decision_rule": "promote_candidate only if accepted_for_paper_candidate is true; paper ledger still requires separate BOS approval. Criteria are identical to registry v1 and must not be relaxed.",
+  "experiments": [
+    {
+      "id": "exp-06-trend-momentum-holdout",
+      "strategy": "trend_momentum",
+      "registered_at": "2026-11-27T05:23:58Z",
+      "hypothesis": "If the trend+momentum family has a real out-of-sample edge, it should produce a majority of positive walk-forward folds on an independent 2024 window using the same fixed grid as exp-02; otherwise the earlier rejection was not sample-specific.",
+      "grid": [
+        {"trend_period": 20, "momentum_period": 5},
+        {"trend_period": 50, "momentum_period": 10},
+        {"trend_period": 100, "momentum_period": 20}
+      ],
+      "symbols": ["BTCUSDT", "ETHUSDT"],
+      "status": "registered"
+    },
+    {
+      "id": "exp-07-regime-aware-holdout",
+      "strategy": "regime_aware",
+      "registered_at": "2026-11-27T05:23:58Z",
+      "hypothesis": "If the regime-aware pullback family generalises, the same fixed grid as exp-04 should satisfy unchanged validation-v1 on an independent 2024 window; otherwise its earlier positive OOS net was sample-specific.",
+      "grid": [
+        {"trend_period": 20, "rsi_period": 7, "rsi_entry": 35.0, "rsi_exit": 55.0},
+        {"trend_period": 50, "rsi_period": 14, "rsi_entry": 30.0, "rsi_exit": 60.0},
+        {"trend_period": 100, "rsi_period": 14, "rsi_entry": 40.0, "rsi_exit": 65.0}
+      ],
+      "symbols": ["BTCUSDT", "ETHUSDT"],
+      "status": "registered"
+    }
+  ]
+}
