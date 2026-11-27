@@ -1,0 +1,96 @@
+{
+  "generated_at": "2026-11-27T13:00:38.940319Z",
+  "limitations": [
+    "Research-only simulation; no live orders, ledger or funds.",
+    "Backtest/paper results are not future profit guarantees."
+  ],
+  "paper": {
+    "equity_curve": [
+      1.0
+    ],
+    "expectancy_pct": 0.0,
+    "exposure_pct": 0.0,
+    "fills": [],
+    "kill_switch_triggered": false,
+    "limitations": [
+      "NO_TRADE_PLAN",
+      "IN_MEMORY_ONLY",
+      "NO_PERSISTENT_LEDGER",
+      "NO_RECONCILIATION_RUNTIME",
+      "NOT_LIVE_TRADING",
+      "BACKTEST_RESULTS_ARE_NOT_FUTURE_GUARANTEES"
+    ],
+    "max_drawdown_pct": 0.0,
+    "net_return_pct": 0.0,
+    "profit_factor": null,
+    "schema_version": "paper-sim.v1",
+    "total_trades": 0,
+    "win_rate_pct": 0.0
+  },
+  "plan": {
+    "confidence": 0.0,
+    "decision": "NO_TRADE",
+    "entry_high": null,
+    "entry_low": null,
+    "reasons": [
+      "CROSS_ASSET_CONFIRMATION_FAILED"
+    ],
+    "rr_tiers": [],
+    "schema_version": "trade-plan.v1",
+    "stop_loss": null,
+    "symbol": null,
+    "tp1": null,
+    "tp2": null,
+    "tp3": null
+  },
+  "scan": {
+    "assets": [
+      {
+        "as_of": "2026-08-03T00:00:00Z",
+        "atr": 1557.792857142857,
+        "close": 63520.0,
+        "realized_vol": 0.25646069592633103,
+        "reasons": [
+          "close=63520.000000",
+          "atr=1557.792857",
+          "vol=0.256461",
+          "trend=0.002488",
+          "volume_ratio=1.0622",
+          "regime=FLAT"
+        ],
+        "regime": "FLAT",
+        "score": 0.01030430542918237,
+        "symbol": "BTCUSDT",
+        "trend_strength": 0.0024878997248473384,
+        "volume_ratio": 1.0622009058535262
+      },
+      {
+        "as_of": "2026-08-03T00:00:00Z",
+        "atr": 63.02714285714286,
+        "close": 1860.5,
+        "realized_vol": 0.3773370522097458,
+        "reasons": [
+          "close=1860.500000",
+          "atr=63.027143",
+          "vol=0.377337",
+          "trend=0.042244",
+          "volume_ratio=0.8073",
+          "regime=LOW_VOL_UP"
+        ],
+        "regime": "LOW_VOL_UP",
+        "score": 0.09038139764343064,
+        "symbol": "ETHUSDT",
+        "trend_strength": 0.04224425185909381,
+        "volume_ratio": 0.8073110224587267
+      }
+    ],
+    "decision": "NO_TRADE",
+    "evaluated_at": "2026-11-25T00:00:00Z",
+    "reasons": [
+      "CROSS_ASSET_CONFIRMATION_FAILED"
+    ],
+    "schema_version": "quantum-scan.v1",
+    "selected_symbol": null
+  },
+  "schema_version": "quantum-season1-scan.v1"
+}
