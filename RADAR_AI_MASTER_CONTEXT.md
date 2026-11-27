@@ -3397,3 +3397,14 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Snapshot repo saat blueprint dibuat: `main` HEAD `f38d25a6203ab486d7170369e86874f838af627a`. PR #165 (storage foundation) dan #168 (dashboard chat pilot) masih open. PR #168 menyatakan tes belum dijalankan dan belum deploy; key masih dimasukkan saat runtime. Branch blueprint belum dibuat PR karena batas WIP aktif; jangan menambah PR sampai PR NEXUS yang ada dikonsolidasikan atau batas WIP diselesaikan oleh Executive Office.
 - Hostless environment-variable injection, status build/live, konfigurasi provider, dan runtime worker tidak diverifikasi. Tidak ada klaim worker/scheduler/otomasi aktif.
 - NEXT TASK: Divisi 06 audit queue/schema yang sudah ada di main/develop dan hindari duplikasi; Divisi 07 audit memory schema + RLS negative tests; Divisi 01 audit JWT/CORS/secrets; Divisi 02/04 benahi dashboard config agar key tidak diminta tiap kunjungan; Divisi 05 lakukan QA independen. Setelah WIP turun, ajukan blueprint untuk review/integrasi.
+
+
+## 139. NEXUS EIGHT-HOUR ENGINEERING BACKLOG — 27 NOVEMBER 2026
+
+- BOS requested an eight-hour NEXUS build effort while offline. The ChatGPT session cannot execute continuously after the turn ends; do not claim background work. A bounded, implementation-ready work package was committed instead.
+- Added `docs/NEXUS_8_HOUR_ENGINEERING_BACKLOG.md` on `docs/nexus-platform-blueprint`, commit `0d6ad7f08d241e8acaad3ab6a24d0f3f8b820fe1`.
+- The document defines request/response envelopes, Model Gateway rules, Divisi 07 memory contract, Divisi 06 task lifecycle and safety invariants, reasoning/tool loop, autonomy stages, security/QA matrix, free-first deployment constraints, and 12 assignable backlog tickets (NX-001..NX-012).
+- Repository evidence checked: `main` = `f38d25a6203ab486d7170369e86874f838af627a`; `develop` = `411e7b7114c9642c0e4d567e7e666c82910d2b3c`. Existing NEXUS queue/memory code is a foundation, not proof of an active unified runtime.
+- No application code, database migration, provider call, secret, Hostless setting, deployment, worker, scheduler, trading order, or withdrawal was changed or activated. No tests were run because this commit is a planning document only.
+- PR WIP policy remains: do not open another non-draft PR until existing #165/#168 integration capacity is resolved.
+- NEXT TASK: execute NX-001 (versioned request/response/task/memory schemas + contract tests), then NX-002..NX-006 with independent Division 01/05 review. First inspect existing contracts to avoid duplicate schemas/migrations.
