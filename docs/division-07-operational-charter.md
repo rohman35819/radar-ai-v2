@@ -40,3 +40,20 @@ Provenance drift, stale facts treated as current, sensitive leakage, unbounded r
 - **N5:** any runtime integration after BOS approval; no always-on claim without tested worker.
 
 Current state: N0 design only. No durable memory tables/service/runtime active in production.
+
+## Human ownership and RACI
+
+**Manusia/penanggung jawab:** BOS (approval policy/retention/privacy), Direktur Utama (koordinasi), serta reviewer Divisi 01/05 yang **belum ditunjuk**. Tidak ada identitas manusia yang direkayasa. Agent hanya `Responsible` untuk proposal/ingestion yang tervalidasi; tidak pernah `Accountable` untuk promosi knowledge, retention, atau akses sensitif.
+
+| Aktivitas | BOS/Direktur | Divisi 01 | Divisi 04 | Divisi 05 | Divisi 06 | Divisi 07 |
+|---|---|---|---|---|---|---|
+| Taxonomy & provenance schema | A | C | C | C | C | R |
+| Ingestion dari artifact committed | I | C | C | C | C | R |
+| Access control / privacy review | A | R | I | C | C | C |
+| Retrieval scope/sensitivity filter | I | R | C | C | C | R |
+| Validation, expiry, supersession | I | C | C | C | C | R |
+| Audit perubahan knowledge | I | C | I | C | C | R |
+| Backup/restore drill | I | C | I | R | C | R |
+| Promotion of memory to canonical | A | C | C | C | C | R |
+
+Aturan: knowledge dari model/tool eksternal tetap proposal sampai provenance, deterministic check, dan domain review lulus. Agent tidak dapat menyetujui record-nya sendiri atau mengubah retention/access control sendiri.

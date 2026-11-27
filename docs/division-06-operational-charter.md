@@ -41,3 +41,20 @@ Restart duplication, lease fencing bugs, queue unboundedness, permission creep, 
 - **N5:** any execution capability only after separate live-readiness gate.
 
 Current state: N0 design only. Worker, scheduler, queue runtime and kill-switch runtime are OFF/unimplemented.
+
+## Human ownership and RACI
+
+**Manusia/penanggung jawab:** BOS (approval risk boundaries), Direktur Utama (koordinasi), serta Divisi 01/05 reviewer yang **belum ditunjuk**. Tidak ada identitas manusia yang direkayasa; penunjukan menjadi keputusan BOS/Direktur Utama. Agent/AI hanya `Responsible` untuk implementasi dan test, tidak pernah `Accountable` untuk approval/permission/kill-switch release.
+
+| Aktivitas | BOS/Direktur | Divisi 01 | Divisi 04 | Divisi 05 | Divisi 06 | Divisi 07 |
+|---|---|---|---|---|---|---|
+| Contract & threat model N0 | A | C | C | C | R | C |
+| Durable schema + lease tests | I | C | I | C | R | C |
+| Observe-only task runtime | A (activate) | C | C | C | R | I |
+| Security review / permission gate | A | R | I | C | C | I |
+| Independent QA / release gate | I | C | C | R | C | C |
+| Knowledge/task provenance | I | C | C | C | C | R |
+| Kill-switch activation | A | R | I | I | R | I |
+| Strategy promotion to paper | A | C | R | C | I | C |
+
+Aturan: agent tidak dapat menaikkan permission, budget, allowlist, atau autonomy stage sendiri; `A` pada keputusan berisiko selalu manusia.

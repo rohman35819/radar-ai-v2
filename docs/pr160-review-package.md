@@ -46,3 +46,15 @@ No funds, orders, transfers, withdrawals, ledger or reconciliation path exists i
 ## 6. Rollback
 
 Revert PR #160 merge (not performed). No production data, permission, deployment, exchange credential, worker or fund state is changed. Work exists only on the feature branch.
+
+## 8. Questions the human Divisi 01 reviewer must answer
+
+1. Does the frozen role capability map (`lib/exchange-gateway.js:22-26,62-73`) prevent a quantum-research caller from reaching private account snapshots or any order/transfer/withdraw path?
+2. Are the recursive canonicalization and dual-boundary digest verification (`lib/exchange-gateway.js:39-52,147-150`; `src/exchange/observation.mts:75-120`) sufficient for the **stated** trust model (gateway is sole trusted producer)?
+3. Is the residual unkeyed-digest limitation acceptable for observe-only, or is HMAC/keyed attestation (`docs/keyed-attestation-design.md`) required before merge?
+4. Is caller-supplied `seen` in `market-observation-shadow.mts:40-42,139-142` acceptable as a boundary test given ADR-002 requires durable replay state before runtime activation?
+5. Are redaction, label UID filtering, depth/cycle bounds and 24h age caps sufficient to prevent secret/private-account leakage and resource abuse?
+6. Are the exact-head tests and the AI re-review evidence adequate under the temporary QA override, or is Divisi 05 independent QA additionally required before merge?
+7. Any P0/P1 finding not addressed in §4? Give file:line and reproduction.
+
+No reviewer identity is assigned in this package: no CODEOWNERS, no addressable team, and the only collaborator is the PR author. BOS/Direktur Utama must appoint the reviewer.
