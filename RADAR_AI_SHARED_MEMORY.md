@@ -69,3 +69,8 @@
 - Trivy vulnerability scanner reports no supported dependency manifests; dependency CVE coverage is NOT AVAILABLE. No runtime dependency added.
 - `main` remains `f38d25a6203ab486d7170369e86874f838af627a`. No Hostless build/deploy was triggered. Public LIVE readiness/snapshot/news probes succeeded in main monitor run `45690836381`, but Hostless deployment metadata lookup failed, so LIVE commit/version remains unverified.
 - Next: durable queue lease/claim, retry/dead-letter and provider-specific quotas; then experiment manifests and walk-forward tests. Worker remains OFF and unconnected to production.
+
+## RADAR NEXUS — official name (BOS approved 27 Nov 2026)
+- **RADAR NEXUS** is the official umbrella name for RADAR AI V2's in-development AI/Agent Platform and knowledge system. Use it in all divisions, agent prompts, docs and future chats.
+- NEXUS Core, Memory, Orchestrator, Agents and Model Engine are architecture labels, not claims of implementation. No proprietary model weights have been trained or deployed; begin with reviewed RAG/knowledge, skills and evaluation records.
+- Divisi 06 owns orchestration/platform; Divisi 07 owns knowledge/memory/provenance. Rp0 only; workers remain OFF. Each agent must read this shared memory, AGENTS.md, master context, advisor handoff and its charter (Grok also GROK.md). Repo docs do not automatically broadcast: configure and verify startup access per agent.
