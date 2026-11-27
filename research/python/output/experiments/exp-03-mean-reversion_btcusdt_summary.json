@@ -6,15 +6,15 @@
   "accepted_for_paper_candidate": false,
   "benchmarks": {
     "buy_hold_net_pct": -34.003831,
-    "no_trade_return_pct": 0.0
+    "no_trade_return_pct": 0
   },
   "criteria": {
     "costs_bps_per_side": 15,
     "funding_bps_per_day": 0,
     "max_drawdown_stop_pct": 0.3,
-    "max_out_of_sample_drawdown_pct": 25.0,
+    "max_out_of_sample_drawdown_pct": 25,
     "min_out_of_sample_trades": 2,
-    "position_fraction": 1.0,
+    "position_fraction": 1,
     "stop_loss_pct": 0.1,
     "validation_selection_must_be_accepted": true,
     "walk_forward_positive_folds_must_be_majority": true
@@ -26,7 +26,7 @@
     "bars": 364,
     "buy_hold_gross_pct": -33.805545,
     "buy_hold_net_pct": -34.003831,
-    "cost_bps_per_turn": 15.0,
+    "cost_bps_per_turn": 15,
     "end": "2026-11-25T00:00:00Z",
     "expectancy_pct_per_trade": -0.02916,
     "exposure_pct": 9.065934,
@@ -38,9 +38,9 @@
     "max_drawdown_pct": 29.586079,
     "max_drawdown_stop_pct": 0.3,
     "net_return_pct": -22.664416,
-    "no_trade_return_pct": 0.0,
+    "no_trade_return_pct": 0,
     "position_changes": 7,
-    "position_fraction": 1.0,
+    "position_fraction": 1,
     "profit_factor": 0.424565,
     "sharpe": -1.34819,
     "slippage_bps_per_side": 7.5,
@@ -49,7 +49,7 @@
     "stop_loss_pct": 0.1,
     "total_trades": 4,
     "turnover_events": 7,
-    "win_rate_pct": 50.0
+    "win_rate_pct": 50
   },
   "hypothesis": "Daily close z-score extremes revert enough to overcome costs when trading only from oversold entries.",
   "id": "exp-03-mean-reversion",
@@ -64,7 +64,7 @@
     "bars": 91,
     "buy_hold_gross_pct": -24.662522,
     "buy_hold_net_pct": -24.888196,
-    "cost_bps_per_turn": 15.0,
+    "cost_bps_per_turn": 15,
     "end": "2026-11-25T00:00:00Z",
     "expectancy_pct_per_trade": -0.029928,
     "exposure_pct": 49.450549,
@@ -76,9 +76,9 @@
     "max_drawdown_pct": 33.379018,
     "max_drawdown_stop_pct": 0.3,
     "net_return_pct": -21.037655,
-    "no_trade_return_pct": 0.0,
+    "no_trade_return_pct": 0,
     "position_changes": 13,
-    "position_fraction": 1.0,
+    "position_fraction": 1,
     "profit_factor": 0.310984,
     "sharpe": -1.924195,
     "slippage_bps_per_side": 7.5,
@@ -112,10 +112,10 @@
     "rows": 364,
     "start": "2025-11-27T00:00:00Z"
   },
-  "report_path": "/data/data/com.termux/files/usr/tmp/opencode/quant157/research/python/output/experiments/exp-03-mean-reversion_btcusdt_report.json",
+  "report_path": "research/python/output/experiments/exp-03-mean-reversion_btcusdt_report.json",
   "selected_params": {
     "entry_z": -1.5,
-    "exit_z": 0.0,
+    "exit_z": 0,
     "zscore_period": 20
   },
   "strategy": "mean_reversion",

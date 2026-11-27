@@ -6,15 +6,15 @@
   "accepted_for_paper_candidate": false,
   "benchmarks": {
     "buy_hold_net_pct": -44.031478,
-    "no_trade_return_pct": 0.0
+    "no_trade_return_pct": 0
   },
   "criteria": {
     "costs_bps_per_side": 15,
     "funding_bps_per_day": 0,
     "max_drawdown_stop_pct": 0.3,
-    "max_out_of_sample_drawdown_pct": 25.0,
+    "max_out_of_sample_drawdown_pct": 25,
     "min_out_of_sample_trades": 2,
-    "position_fraction": 1.0,
+    "position_fraction": 1,
     "stop_loss_pct": 0.1,
     "validation_selection_must_be_accepted": true,
     "walk_forward_positive_folds_must_be_majority": true
@@ -26,7 +26,7 @@
     "bars": 364,
     "buy_hold_gross_pct": -43.863321,
     "buy_hold_net_pct": -44.031478,
-    "cost_bps_per_turn": 15.0,
+    "cost_bps_per_turn": 15,
     "end": "2026-11-25T00:00:00Z",
     "expectancy_pct_per_trade": 0.00097,
     "exposure_pct": 4.120879,
@@ -38,9 +38,9 @@
     "max_drawdown_pct": 16.80457,
     "max_drawdown_stop_pct": 0.3,
     "net_return_pct": -0.722826,
-    "no_trade_return_pct": 0.0,
+    "no_trade_return_pct": 0,
     "position_changes": 12,
-    "position_fraction": 1.0,
+    "position_fraction": 1,
     "profit_factor": 1.039667,
     "sharpe": 0.035763,
     "slippage_bps_per_side": 7.5,
@@ -64,7 +64,7 @@
     "bars": 91,
     "buy_hold_gross_pct": -32.588991,
     "buy_hold_net_pct": -32.790921,
-    "cost_bps_per_turn": 15.0,
+    "cost_bps_per_turn": 15,
     "end": "2026-11-25T00:00:00Z",
     "expectancy_pct_per_trade": 0.025835,
     "exposure_pct": 7.692308,
@@ -76,9 +76,9 @@
     "max_drawdown_pct": 2.060211,
     "max_drawdown_stop_pct": 0.3,
     "net_return_pct": 6.596709,
-    "no_trade_return_pct": 0.0,
+    "no_trade_return_pct": 0,
     "position_changes": 4,
-    "position_fraction": 1.0,
+    "position_fraction": 1,
     "profit_factor": null,
     "sharpe": 2.355194,
     "slippage_bps_per_side": 7.5,
@@ -87,7 +87,7 @@
     "stop_loss_pct": 0.1,
     "total_trades": 2,
     "turnover_events": 4,
-    "win_rate_pct": 100.0
+    "win_rate_pct": 100
   },
   "provenance": {
     "checksum_sha256": "b262d6648b35c8fa9fa2c432d086daa37d0865937365a30a38913b885f1e3b06",
@@ -112,10 +112,10 @@
     "rows": 364,
     "start": "2025-11-27T00:00:00Z"
   },
-  "report_path": "/data/data/com.termux/files/usr/tmp/opencode/quant157/research/python/output/experiments/exp-04-regime-aware_ethusdt_report.json",
+  "report_path": "research/python/output/experiments/exp-04-regime-aware_ethusdt_report.json",
   "selected_params": {
-    "rsi_entry": 35.0,
-    "rsi_exit": 55.0,
+    "rsi_entry": 35,
+    "rsi_exit": 55,
     "rsi_period": 7,
     "trend_period": 20
   },
