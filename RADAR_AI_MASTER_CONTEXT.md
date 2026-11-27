@@ -3696,3 +3696,12 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### 149.3 NEXT TASK
 Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat hasil (menghindari data snooping pada 364 bar yang sama). Paper ledger/reconciliation tetap terkunci sampai strategi lolos `validation-v1` dan BOS menyetujui. Worker, live trading, withdrawal OFF; Rp0.
+
+### 151. RADAR NEXUS CLI — 27 NOVEMBER 2026
+- Mandat BOS (issue #163): `nexus` di Termux harus setara pengalaman kerja OpenCode, bukan terminal chatbot/wrapper provider. Nama resmi RADAR NEXUS berasal dari PR #161 (tidak diubah).
+- Branch `feat/nexus-cli` dari `develop` `6b278cc`, worktree terpisah. Dokumen `docs/radar-nexus-core-architecture.md` belum ada di repository dan dibuat sebagai catatan batas implementasi, bukan klaim backend baru.
+- Implementasi: `src/nexus/contracts.mts` + `client.mts` (tipe/validator, API client ke `/api/ai/command`, `/api/ai/workspace`, `/api/ai/usage`, `/api/health`), `cli.mjs` (REPL identitas RADAR NEXUS, `/help`, `/status`, `/memory`, `/sessions`, `/new`, `/resume`, `/clear`, `/structure`, `/files`, `/read`, `/search`, `/edit`, `/run`, `/exit`), `repo.mjs` (read-only bounded), `session.mjs` (sesi lokal `~/.radar-nexus`, redaksi secret), `policy.mjs` (default read-only, diff + approval, allowlist perintah audit).
+- Launcher `bin/nexus`, script `npm run nexus`, panduan `docs/nexus-cli-termux.md` (symlink ke `$PREFIX/bin/nexus`, env `NEXUS_BASE_URL`/`NEXUS_ADMIN_TOKEN`/`NEXUS_PARTICIPANTS`).
+- Tidak ada backend/model/memory kedua. Tidak ada provider berbayar, secret di kode/log, arbitrary shell, worker, scheduler, deploy, order, withdrawal, trading, paper ledger, atau perubahan konfigurasi Railway.
+- Verifikasi: `npm test` **247/247** termasuk 6 test NEXUS (contract, client injected-fetch, session redaction, repo traversal, policy denial/approval, CLI smoke). `tsc` lokal tidak tersedia (`tsc: not found`); exact-head CI wajib memverifikasi strict typecheck. `git diff --check` bersih.
+- PR **tidak dibuka**: antrean 9 PR open dengan 6 non-draft menuju `develop` (#161, #160, #159, #153, #115, #105), jauh melebihi WIP 3. Branch sudah di-push? belum — menyusul setelah dokumentasi. NEXT TASK: triase WIP, push branch, buka PR, verifikasi CI, lalu selaraskan NEXUS Chat dashboard (#162) ke kontrak API yang sama.
