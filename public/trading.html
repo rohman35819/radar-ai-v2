@@ -7,12 +7,12 @@
 <link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/trading.css">
 </head>
 <body class="trading-page">
-<header class="trade-header"><a class="back-link" href="/">← RADAR AI</a><div><b>EXCHANGE HUB</b><small>Multi-exchange trading workspace</small></div><span class="status-pill" id="hub-status">READ-ONLY / MEMERIKSA SERVER</span></header>
+<header class="trade-header"><a class="back-link" href="/">← RADAR AI</a><div><b>EXCHANGE HUB</b><small>Binance-only trading workspace · Season 1</small></div><span class="status-pill" id="hub-status">READ-ONLY / MEMERIKSA SERVER</span></header>
 <main class="trade-wrap">
-<section class="trade-intro"><div class="eyebrow">RADAR EXCHANGE WORKSPACE</div><h1>Satu halaman untuk semua exchange.</h1><p>Pusat Binance, Bybit, dan exchange berikutnya. Pantau koneksi dan siapkan analisis dari satu tempat. Saat ini halaman masih read-only/simulasi; belum ada order live.</p></section>
+<section class="trade-intro"><div class="eyebrow">RADAR EXCHANGE WORKSPACE</div><h1>Exchange Hub — Binance Season 1.</h1><p>Binance adalah satu-satunya exchange aktif. Data market publik read-only tanpa API key; koneksi akun privat memerlukan token akses server. Bybit ditunda (DEFERRED) dan tidak dipakai sebagai sumber data aktif. Belum ada order live.</p></section>
 <section class="exchange-switcher" aria-label="Pilih exchange">
   <button type="button" class="exchange-tab active" data-exchange-tab="Binance" aria-pressed="true"><span class="exchange-mark binance-mark">B</span><span><b>Binance</b><small>USDⓈ-M Futures · Spot</small></span><i class="tab-state">DIPILIH</i></button>
-  <button type="button" class="exchange-tab" data-exchange-tab="Bybit" aria-pressed="false"><span class="exchange-mark bybit-mark">B</span><span><b>Bybit</b><small>Derivatives · Spot</small></span><i class="tab-state">SIAP DISIAPKAN</i></button>
+  <button type="button" class="exchange-tab" disabled aria-disabled="true"><span class="exchange-mark bybit-mark">B</span><span><b>Bybit</b><small>DEFERRED · Season 1</small></span><i class="tab-state">TIDAK AKTIF</i></button>
   <button type="button" class="exchange-tab future-tab" disabled><span class="exchange-mark">＋</span><span><b>Exchange lain</b><small>Ditambahkan berikutnya</small></span><i class="tab-state">SEGERA</i></button>
 </section>
 <section class="exchange-overview trade-panel" aria-live="polite">
@@ -34,7 +34,7 @@
 <article class="trade-panel">
 <div class="panel-heading"><div><h2>Kalkulator posisi</h2><p>Simulasi perhitungan, bukan order sungguhan.</p></div><span class="demo-tag">SIMULASI</span></div>
 <form id="position-form">
-<label>Exchange<select id="exchange"><option>Binance</option><option>Bybit</option></select></label>
+<label>Exchange<select id="exchange"><option value="Binance">Binance</option></select></label>
 <label>Pair<input id="pair" value="BTCUSDT" maxlength="24" autocomplete="off"></label><div class="market-actions"><button type="button" class="market-btn" id="load-market">Ambil harga market</button><span id="market-feedback" role="status">Harga publik, tanpa API key.</span></div><div id="market-data" class="market-data"><p class="muted">Belum ada harga market.</p></div>
 <div class="form-two"><label>Arah<select id="side"><option value="LONG">Long</option><option value="SHORT">Short</option></select></label><label>Leverage<select id="leverage"><option>1</option><option>2</option><option>3</option><option>5</option><option>10</option><option>20</option><option>25</option><option>50</option><option>75</option><option>100</option></select></label></div>
 <div class="form-two"><label>Margin (USDT)<input id="margin" type="number" min="0.1" step="0.1" value="10"></label><label>Harga masuk (USDT)<input id="entry" type="number" min="0.00000001" step="any" placeholder="Isi harga"></label></div>
@@ -49,5 +49,5 @@
 <div class="notice"><b>Mode akun: read-only</b><p>Saldo dan posisi dibaca dari exchange. RADAR AI tidak membuat, mengubah, atau membatalkan order. Izin trading dan withdrawal harus tetap nonaktif.</p></div>
 </article>
 </section>
-<section class="trade-panel roadmap-panel"><h2>Rencana aktivasi</h2><div class="roadmap"><div><b>01 · Exchange Hub</b><small>Binance dan Bybit dalam satu halaman</small><strong class="done">Fondasi UI</strong></div><div><b>02 · Koneksi API</b><small>API resmi, secret hanya di server</small><strong>Berikutnya</strong></div><div><b>03 · Demo trading</b><small>Testnet, order dan proteksi</small><strong>Wajib diuji</strong></div><div><b>04 · Live trading</b><small>Manual dahulu, auto setelah evaluasi</small><strong>Butuh persetujuan</strong></div></div></section>
+<section class="trade-panel roadmap-panel"><h2>Rencana aktivasi</h2><div class="roadmap"><div><b>01 · Exchange Hub</b><small>Binance-only Season 1; Bybit DEFERRED</small><strong class="done">Sumber aktif: Binance</strong></div><div><b>02 · Koneksi API</b><small>API resmi, secret hanya di server</small><strong>Berikutnya</strong></div><div><b>03 · Demo trading</b><small>Testnet, order dan proteksi</small><strong>Wajib diuji</strong></div><div><b>04 · Live trading</b><small>Manual dahulu, auto setelah evaluasi</small><strong>Butuh persetujuan</strong></div></div></section>
 </main><script src="/trading.js"></script></body></html>

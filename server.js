@@ -20,6 +20,9 @@ const { getAIRequestQueueSnapshot } = require('./lib/ai/request-queue');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 const PUB = path.join(__dirname, 'public');
+// Season 1 policy: Binance is the only active exchange. Bybit adapters remain
+// in source but are DEFERRED and unreachable through active routes.
+const ACTIVE_EXCHANGE = 'binance';
 
 function resolveClientIp(req, trustedProxyHops = 0) {
   const socketIp = String(req.socket?.remoteAddress || 'unknown');
@@ -186,9 +189,23 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           return send(res, 404, { status: 'error', code: 'SOLSCAN_ROUTE_NOT_FOUND' }, 'application/json', { 'cache-control': 'no-store' });
         }
         if (url.pathname === '/api/exchanges/status' && req.method === 'GET') {
-          return send(res, 200, { status: 'success', exchanges: exchangeApi.status(), access_configured: Boolean(privateExchangeToken) }, 'application/json', { 'cache-control': 'no-store' });
+          const rawStatus = exchangeApi.status() || {};
+          const binance = rawStatus.binance || { configured: false };
+          // Never present Bybit as configured/connected during Season 1.
+          const exchanges = Object.freeze({
+            binance: { configured: Boolean(binance.configured), mode: 'read-only', products: ['spot', 'usd-m-futures'] },
+            bybit: { configured: false, mode: 'deferred', deferred: true, products: [] },
+          });
+          return send(res, 200, { status: 'success', active_exchange: ACTIVE_EXCHANGE, exchanges, access_configured: Boolean(privateExchangeToken) }, 'application/json', { 'cache-control': 'no-store' });
         }
-        const exchangeAccount = url.pathname.match(/^\/api\/exchanges\/(binance|bybit)\/account$/);
+        const exchangeAccount = url.pathname.match(/^\/api\/exchanges\/([a-z0-9-]+)\/account$/);
+        if (exchangeAccount && exchangeAccount[1] !== ACTIVE_EXCHANGE) {
+          const code = exchangeAccount[1] === 'bybit' ? 'EXCHANGE_DEFERRED' : 'EXCHANGE_NOT_SUPPORTED';
+          return send(res, exchangeAccount[1] === 'bybit' ? 403 : 404,
+            { status: 'error', exchange: exchangeAccount[1], code, message: code === 'EXCHANGE_DEFERRED'
+              ? 'Bybit ditunda pada Season 1. Binance adalah satu-satunya exchange aktif.' : 'Exchange tidak dikenal.' },
+            'application/json', { 'cache-control': 'no-store' });
+        }
         if (exchangeAccount && req.method === 'GET') {
           if (!privateExchangeToken) return send(res, 503, { status: 'error', code: 'EXCHANGE_ACCESS_NOT_CONFIGURED', message: 'Akses privat Exchange Hub belum dikonfigurasi di server.' }, 'application/json', { 'cache-control': 'no-store' });
           if (!hasValidExchangeToken(req.headers['x-exchange-access-token'])) return send(res, 401, { status: 'error', code: 'EXCHANGE_ACCESS_DENIED', message: 'Token akses Exchange Hub tidak valid.' }, 'application/json', { 'cache-control': 'no-store' });
@@ -212,7 +229,16 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
           return;
         }
         if (url.pathname === '/api/exchanges/market' && req.method === 'GET') {
-          exchangeApi.market(url.searchParams.get('exchange'), url.searchParams.get('symbol')).then((market) => {
+          const requestedExchange = url.searchParams.get('exchange');
+          if (requestedExchange === 'bybit' || (requestedExchange && requestedExchange !== ACTIVE_EXCHANGE)) {
+            return send(res, requestedExchange === 'bybit' ? 403 : 404,
+              { status: 'error', exchange: requestedExchange,
+                code: requestedExchange === 'bybit' ? 'EXCHANGE_DEFERRED' : 'EXCHANGE_NOT_SUPPORTED',
+                message: requestedExchange === 'bybit'
+                  ? 'Bybit ditunda pada Season 1. Gunakan Binance.' : 'Exchange tidak dikenal.' },
+              'application/json', { 'cache-control': 'public, max-age=10' });
+          }
+          exchangeApi.market(ACTIVE_EXCHANGE, url.searchParams.get('symbol')).then((market) => {
             send(res, 200, { status: 'success', ...market }, 'application/json', { 'cache-control': 'public, max-age=10' });
           }).catch((error) => {
             const known = error instanceof ExchangeError;

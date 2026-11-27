@@ -1,21 +1,23 @@
 'use strict';
 const form=document.getElementById('position-form');
 const fmt=n=>Number.isFinite(n)?n.toLocaleString('en-US',{maximumFractionDigits:6}):'—';
+// Season 1: Binance is the only active exchange. Bybit adapter code below is
+// kept for future reactivation but is DEFERRED and unreachable via the UI.
 const exchangeCopy={
- Binance:{description:'Spot dan USDⓈ-M Futures. Baca saldo dan posisi melalui API read-only server-side.',note:'Kredensial Binance dibaca dari environment server. API Secret tidak pernah dikirim ke browser.'},
- Bybit:{description:'Unified Wallet dan Linear Derivatives. Baca saldo dan posisi melalui API read-only server-side.',note:'Bybit menggunakan signature V5 di server. Kredensial tidak pernah dikirim atau disimpan di browser.'}
+ Binance:{description:'Spot dan USDⓈ-M Futures. Baca saldo dan posisi melalui API read-only server-side.',note:'Kredensial Binance dibaca dari environment server. API Secret tidak pernah dikirim ke browser.'}
 };
 function selectExchange(name){
  accountRequestId++;
  accountConnected=false;
- const selected=exchangeCopy[name]?name:'Binance';
+ const selected='Binance';
+ void name;
  activeExchange=selected;
  document.querySelectorAll('[data-exchange-tab]').forEach(button=>{
   const active=button.dataset.exchangeTab===selected;
   button.classList.toggle('active',active);
   button.setAttribute('aria-pressed',String(active));
   const state=button.querySelector('.tab-state');
-  if(state)state.textContent=active?'DIPILIH':(button.dataset.exchangeTab==='Bybit'?'SIAP DISIAPKAN':'SEGERA');
+  if(state)state.textContent=active?'DIPILIH':'TIDAK AKTIF';
  });
  document.getElementById('exchange').value=selected;
  document.getElementById('exchange-title').textContent=selected;
