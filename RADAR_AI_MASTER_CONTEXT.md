@@ -3407,3 +3407,13 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - The separate Supabase organization/project is an infrastructure/storage boundary, not a separate command hierarchy or independently governed product.
 - This is an architecture/governance decision only. No SQL deployment, API bridge, worker, scheduler, production integration or paid resource is authorized by this clarification.
 - Recorded in PR #165 design branch; exact commit to be recorded after this update. Next: align API/control-plane contracts and UI/admin representation to RADAR-owned control plane.
+
+
+## 140. NEXUS core brain and RADAR evolution mandate — 27 Nov 2026
+- BOS clarified product intent: NEXUS is the core intelligence/brain of RADAR AI V2, able to learn usable capabilities from other approved AI systems and manage/evolve RADAR, including dashboard appearance and functions.
+- External AIs are teachers/critics/specialists, not trusted authorities. NEXUS must evaluate outputs, verify evidence/tests, and retain validated knowledge/skills with provenance, versions and evaluation records. This is curated learning, not model-weight training/fine-tuning.
+- NEXUS may inspect approved RADAR code/dashboard and prepare UI/function changes in isolated workspaces/branches with scoped permissions, tests, secret scans, previews, diff review and rollback.
+- RADAR remains the authority gateway. NEXUS cannot self-expand permissions or bypass policy. Merge/deploy, security/identity changes, migrations, production and financial actions remain gated; BOS retains final approval and kill-switch authority.
+- Capability stages: observe → propose → isolated build → validate → policy-gated integrate → monitor/rollback. No claim of continuous learning, autonomous dashboard management, or deployment until runtime and tests prove it.
+- No paid provider/resource is enabled. No production capability is activated by this strategic decision alone.
+- Next: evolve Agent Platform contracts to issue scoped capabilities from RADAR and add change-proposal/preview/approval/audit workflow; define model-learning evaluation pipeline.
