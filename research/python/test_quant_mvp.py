@@ -218,6 +218,31 @@ class QuantMvpTests(unittest.TestCase):
             held = held + 1 if signal.target_position == 1 else 0
             self.assertLessEqual(held, config.max_hold_bars)
 
+    def test_gap_continuation_is_causal_deterministic_and_bounded(self):
+        config = StrategyConfig(strategy_id='gap_continuation', gap_threshold_pct=0.005,
+                                max_hold_bars=2)
+        source = load_ohlcv(
+            Path(__file__).parent / 'fixtures' / 'btcusdt_1d_public.csv',
+            source='test-fixture', symbol='BTCUSDT', interval='1d', data_kind='public_api')
+        candles = source.candles
+        first = generate_signals(candles, config)
+        self.assertEqual(first, generate_signals(candles, config))
+        extended = generate_signals(list(candles) + list(candles[-10:]), config)
+        self.assertEqual(first, extended[:len(first)])
+        self.assertTrue(all(
+            signal.computed_from is None or signal.computed_from <= candles[index].timestamp
+            for index, signal in enumerate(first)
+        ))
+        held = 0
+        for signal in first:
+            held = held + 1 if signal.target_position == 1 else 0
+            self.assertLessEqual(held, config.max_hold_bars)
+        breakout = generate_signals(candles, StrategyConfig(
+            strategy_id='volatility_breakout', lookback_period=20, atr_period=14,
+            atr_multiple=2.0, max_hold_bars=10))
+        self.assertNotEqual([s.target_position for s in first],
+                            [s.target_position for s in breakout])
+
     def test_spread_cost_is_charged_without_changing_other_config(self):
         signals = generate_signals(self.dataset.candles, self.config)
         free = run_backtest(self.dataset, StrategyConfig(fast=5, slow=20, spread_bps=0), signals)
