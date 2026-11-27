@@ -1,0 +1,13 @@
+{
+  "checksum_sha256": "9976744e46f7fac896995ac45e1b042d3626647ddafd0c00dfe94ce4864dc013",
+  "data_kind": "public_api",
+  "end": "2026-11-25T00:00:00Z",
+  "interval": "1d",
+  "output": "research/python/fixtures/btcusdt_1d_public.csv",
+  "retrieved_at": "2026-11-26T18:46:03.982305Z",
+  "rows": 364,
+  "schema_version": "1.0.0",
+  "source": "https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=365",
+  "start": "2025-11-27T00:00:00Z",
+  "symbol": "BTCUSDT"
+}
