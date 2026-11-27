@@ -1,0 +1,53 @@
+{
+  "registry_version": "feature-research-1.0",
+  "registered_at": "2026-11-27T14:03:40Z",
+  "owner": "BOS",
+  "lead": "Grok / Divisi 04",
+  "status": "pre-registered-before-data-fetch-and-results",
+  "data_plan": {
+    "source": "https://data-api.binance.vision/api/v3/klines (free, no key)",
+    "symbols": ["BTCUSDT", "ETHUSDT"],
+    "interval": "1d",
+    "start_time": "2023-01-01T00:00:00Z",
+    "limit": 365,
+    "reason": "2023 is non-overlapping with all fixtures used in prior experiments (2025-26, 2024, 2022, 2020, 2018)."
+  },
+  "criteria": {
+    "validation_v1_unchanged": true,
+    "chronological_split": [0.6, 0.4],
+    "walk_forward": "rolling evaluation on later 40% with fixed parameters",
+    "min_oos_trades": 2,
+    "max_oos_drawdown_pct": 25.0,
+    "costs_bps_per_side": 15,
+    "funding_bps_per_day": 0,
+    "benchmarks": ["no_trade_0_pct", "buy_and_hold_net", "prior_scan_by_trend_score"],
+    "no_grid_search": true,
+    "promotion": "only if OOS net > no-trade AND walk-forward majority positive; no threshold relaxation"
+  },
+  "hypotheses": [
+    {
+      "id": "F1-vol-conditioned-reversion",
+      "theory": "Mean reversion has an edge only when realized volatility is contained; in high-volatility regimes the same z-score signal is noise dominated and costs erase it.",
+      "mechanism": "Enter long when close z-score <= -1.2 versus a 10-bar window AND volatility regime is LOW_VOL or NORMAL_VOL; exit when z >= -0.2 or after 3 bars; require liquidity proxy OK.",
+      "fixed_parameters": {"zscore_period": 10, "entry_z": -1.2, "exit_z": -0.2, "max_hold_bars": 3},
+      "source_edge": "short-horizon overreaction in calm markets; no leverage, no options",
+      "bias_risks": "threshold choice, regime lookback, survivorship of assets, multiple-testing if re-run",
+      "falsification": "reject if OOS trades <2, OOS drawdown >25%, OOS net <= no-trade, or walk-forward not majority positive",
+      "status": "registered"
+    },
+    {
+      "id": "F2-volume-regime-transition",
+      "theory": "A jump in volume participation together with a positive close marks a transition from accumulation to directional participation; static high-volume filters (exp-10) failed because they ignored the change.",
+      "mechanism": "Enter long when 20-bar volume z-score >= 2.0 AND close[i-1] > close[i-2] AND liquidity proxy OK; exit when volume z <= 0 or after 3 bars.",
+      "fixed_parameters": {"volume_lookback": 20, "transition_z": 2.0, "exit_z": 0.0, "max_hold_bars": 3},
+      "source_edge": "informed participation visible in volume surprise before price continuation",
+      "bias_risks": "volume manipulation, thin symbols, threshold sensitivity, regime dependence",
+      "falsification": "reject if OOS trades <2, OOS drawdown >25%, OOS net <= no-trade, or walk-forward not majority positive",
+      "status": "registered"
+    }
+  ],
+  "deferred": [
+    {"feature": "actual order-book imbalance/depth", "reason": "no reproducible historical L2 dataset at Rp0; see docs/order-book-source-audit.md"},
+    {"feature": "options Greeks and implied volatility", "reason": "no valid options dataset; fabricated Greeks prohibited"}
+  ]
+}
