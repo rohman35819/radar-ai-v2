@@ -41,11 +41,11 @@
 - Grok is xAI's assistant; Groq is a separate inference provider. Groq provider activation remains OFF unless BOS explicitly approves.
 
 ## Next actions — verified 27 November 2026
-- `main` = `f38d25a` (v2.3.2); `develop` = `411e7b7`. `main` is production truth; `develop` is integration, not LIVE.
-- WIP non-draft toward develop = 5: #165, #160 (P0 exception), #159, #153, #115. No new PR opened; no merge.
-- Capability truth: market adapters, AI Council, Agent Platform schema, periodic Actions worker, shared memory exist. No validated strategy across 5 windows/16 daily + 6 M5 runs; no profit claim. See `docs/quant-cross-window-evidence-audit.md`.
-- PR #160 open at `c2b03f2`, exact-head CI/security success, NOT merged; human review BLOCKED_FOR_BOS (no CODEOWNERS/team/independent collaborator). ADR-002 DRAFT/BLOCKED_FOR_BOS. Divisi 01–07 INACTIVE for manual ops until BOS reactivation.
-- Season 1 quantum slice on `exp/quantum-season1`: cross-asset BTC+ETH regime scan + ATR tiered trade plan + in-memory paper sim with explicit costs; scan returned NO_TRADE on real fixtures (BTC FLAT, ETH LOW_VOL_UP). Python 36/36, npm 241/241, tsc 0. Artifact `research/python/output/season1_scan_report.json`.
+- `main` = `f38d25a`, `develop` = `411e7b7`. WIP non-draft toward develop = 5: #165, #160 (exception), #159, #153, #115; no new PR/merge.
+- No validated strategy; no profit claim. PR #160 human review + ADR-002 = BLOCKED_FOR_BOS. Divisi 01–07 INACTIVE for manual ops; Rp0.
+- Season 1 slice `exp/quantum-season1`: cross-asset BTC/ETH scan + ATR tiered plan + in-memory paper sim; walk-forward 3 candidates all net negative. No promotion.
+- Microstructure branch `exp/market-microstructure`: OHLCV spread/depth/volatility PROXIES only (actual order book deferred); no fake options Greeks (deferred). Pre-registered H1 liquidity filter / H2 low-vol selection; 5-fold walk-forward: H1 -20.36%, H2 -110.57%, baseline -27.40%; all rejected. Python 42/42. Artifact `research/python/output/microstructure_experiments/report.json`.
+- NEXT TASK: find genuinely public free order-book source with provenance or ML feature study with walk-forward + no-trade baseline; no worker/ledger/live/withdrawal; Rp0.
 - Season 1 walk-forward (5 folds): 3 cross-asset candidates, all net negative after costs (-7.0%, -9.3%, -11.0%), 2 NO_TRADE; artifact `research/python/output/season1_walkforward_report.json`. No promotion.
 - NEXT TASK: new quantum mechanism/evaluation on another free dataset or ML feature study with walk-forward + no-trade baseline; no ledger/worker/live/withdrawal; Rp0.
 

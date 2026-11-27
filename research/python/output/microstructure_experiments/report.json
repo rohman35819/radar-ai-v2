@@ -1,0 +1,228 @@
+{
+  "criteria": {
+    "benchmarks": [
+      "no_trade_0_pct",
+      "prior_cross_asset_scan"
+    ],
+    "costs_bps_per_side": 15,
+    "funding_bps_per_day": 0,
+    "max_oos_drawdown_pct": 25.0,
+    "min_oos_trades": 2,
+    "promotion": "only if OOS net > no-trade and walk-forward majority positive; no relaxation",
+    "validation_v1_unchanged": true
+  },
+  "data_provenance": {
+    "BTCUSDT": {
+      "checksum_sha256": "9976744e46f7fac896995ac45e1b042d3626647ddafd0c00dfe94ce4864dc013",
+      "data_kind": "public_api",
+      "end": "2026-11-25T00:00:00Z",
+      "interval": "1d",
+      "retrieved_at": null,
+      "rows": 364,
+      "schema_version": "1.0.0",
+      "source": "public-fixture",
+      "start": "2025-11-27T00:00:00Z",
+      "symbol": "BTCUSDT"
+    },
+    "ETHUSDT": {
+      "checksum_sha256": "b262d6648b35c8fa9fa2c432d086daa37d0865937365a30a38913b885f1e3b06",
+      "data_kind": "public_api",
+      "end": "2026-11-25T00:00:00Z",
+      "interval": "1d",
+      "retrieved_at": null,
+      "rows": 364,
+      "schema_version": "1.0.0",
+      "source": "public-fixture",
+      "start": "2025-11-27T00:00:00Z",
+      "symbol": "ETHUSDT"
+    }
+  },
+  "folds": [
+    {
+      "baseline": {
+        "decision": "NO_TRADE",
+        "drawdown_pct": 0.0,
+        "net_pct": 0.0,
+        "trades": 0
+      },
+      "baseline_symbol": null,
+      "end_index": 250,
+      "evaluated_at": "2026-08-03T00:00:00Z",
+      "fold": 1,
+      "h1": {
+        "decision": "NO_TRADE",
+        "drawdown_pct": 0.0,
+        "net_pct": 0.0,
+        "trades": 0
+      },
+      "h1_symbol": null,
+      "h2": {
+        "decision": "BUY_SETUP",
+        "drawdown_pct": 91.07007,
+        "net_pct": -90.700847,
+        "trades": 84
+      },
+      "h2_symbol": "ETHUSDT",
+      "scan_decision": "NO_TRADE",
+      "scan_reasons": [
+        "CROSS_ASSET_CONFIRMATION_FAILED"
+      ]
+    },
+    {
+      "baseline": {
+        "decision": "BUY_SETUP",
+        "drawdown_pct": 9.728254,
+        "net_pct": -7.043965,
+        "trades": 32
+      },
+      "baseline_symbol": "ETHUSDT",
+      "end_index": 270,
+      "evaluated_at": "2026-08-23T00:00:00Z",
+      "fold": 2,
+      "h1": {
+        "decision": "NO_TRADE",
+        "drawdown_pct": 0.0,
+        "net_pct": 0.0,
+        "trades": 0
+      },
+      "h1_symbol": null,
+      "h2": {
+        "decision": "NO_TRADE",
+        "drawdown_pct": 0.0,
+        "net_pct": 0.0,
+        "trades": 0
+      },
+      "h2_symbol": null,
+      "scan_decision": "NO_TRADE",
+      "scan_reasons": [
+        "VOLATILITY_REGIME_REJECTED"
+      ]
+    },
+    {
+      "baseline": {
+        "decision": "BUY_SETUP",
+        "drawdown_pct": 10.52286,
+        "net_pct": -9.34178,
+        "trades": 41
+      },
+      "baseline_symbol": "ETHUSDT",
+      "end_index": 290,
+      "evaluated_at": "2026-09-12T00:00:00Z",
+      "fold": 3,
+      "h1": {
+        "decision": "BUY_SETUP",
+        "drawdown_pct": 10.52286,
+        "net_pct": -9.34178,
+        "trades": 41
+      },
+      "h1_symbol": "ETHUSDT",
+      "h2": {
+        "decision": "BUY_SETUP",
+        "drawdown_pct": 10.52286,
+        "net_pct": -9.34178,
+        "trades": 41
+      },
+      "h2_symbol": "ETHUSDT",
+      "scan_decision": "SCAN_CANDIDATE",
+      "scan_reasons": [
+        "CROSS_ASSET_CONFIRMATION",
+        "LIQUIDITY_PROXY_OK"
+      ]
+    },
+    {
+      "baseline": {
+        "decision": "BUY_SETUP",
+        "drawdown_pct": 11.489063,
+        "net_pct": -11.014735,
+        "trades": 40
+      },
+      "baseline_symbol": "BTCUSDT",
+      "end_index": 310,
+      "evaluated_at": "2026-10-02T00:00:00Z",
+      "fold": 4,
+      "h1": {
+        "decision": "BUY_SETUP",
+        "drawdown_pct": 11.489063,
+        "net_pct": -11.014735,
+        "trades": 40
+      },
+      "h1_symbol": "BTCUSDT",
+      "h2": {
+        "decision": "BUY_SETUP",
+        "drawdown_pct": 11.210276,
+        "net_pct": -10.531207,
+        "trades": 49
+      },
+      "h2_symbol": "ETHUSDT",
+      "scan_decision": "SCAN_CANDIDATE",
+      "scan_reasons": [
+        "CROSS_ASSET_CONFIRMATION",
+        "LIQUIDITY_PROXY_OK"
+      ]
+    },
+    {
+      "baseline": {
+        "decision": "NO_TRADE",
+        "drawdown_pct": 0.0,
+        "net_pct": 0.0,
+        "trades": 0
+      },
+      "baseline_symbol": null,
+      "end_index": 330,
+      "evaluated_at": "2026-10-22T00:00:00Z",
+      "fold": 5,
+      "h1": {
+        "decision": "NO_TRADE",
+        "drawdown_pct": 0.0,
+        "net_pct": 0.0,
+        "trades": 0
+      },
+      "h1_symbol": null,
+      "h2": {
+        "decision": "NO_TRADE",
+        "drawdown_pct": 0.0,
+        "net_pct": 0.0,
+        "trades": 0
+      },
+      "h2_symbol": null,
+      "scan_decision": "NO_TRADE",
+      "scan_reasons": [
+        "CROSS_ASSET_CONFIRMATION_FAILED"
+      ]
+    }
+  ],
+  "generated_at": "2026-11-27T13:34:50.663036Z",
+  "limitations": [
+    "Spread/depth/order-book imbalance are OHLCV proxies, not observed quotes.",
+    "No options data; delta/gamma/theta/vega and implied volatility remain deferred.",
+    "No live orders, ledger or reconciliation; results are historical simulations."
+  ],
+  "registry_version": "microstructure-1.0",
+  "schema_version": "microstructure-experiment.v1",
+  "summary": {
+    "baseline": {
+      "accepted": false,
+      "max_drawdown_pct": 11.489063,
+      "oos_net_pct": -27.40048,
+      "oos_trades": 113,
+      "positive_folds": 0,
+      "total_folds": 5
+    },
+    "h1": {
+      "accepted": false,
+      "max_drawdown_pct": 11.489063,
+      "oos_net_pct": -20.356515,
+      "oos_trades": 81,
+      "positive_folds": 0,
+      "total_folds": 5
+    },
+    "h2": {
+      "accepted": false,
+      "max_drawdown_pct": 91.07007,
+      "oos_net_pct": -110.573834,
+      "oos_trades": 174,
+      "positive_folds": 0,
+      "total_folds": 5
+    }
+  }
+}

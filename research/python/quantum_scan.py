@@ -36,6 +36,8 @@ class AssetFeatures:
     regime: str
     score: float
     reasons: tuple[str, ...]
+    microstructure: dict | None = None
+    volatility: dict | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -43,6 +45,7 @@ class AssetFeatures:
             'atr': self.atr, 'realized_vol': self.realized_vol,
             'trend_strength': self.trend_strength, 'volume_ratio': self.volume_ratio,
             'regime': self.regime, 'score': self.score, 'reasons': list(self.reasons),
+            'microstructure': self.microstructure, 'volatility': self.volatility,
         }
 
 
@@ -80,7 +83,7 @@ def atr_at(candles: Sequence[Candle], end: int, period: int = 14) -> float | Non
     return math.fsum(true_ranges) / period
 
 
-def compute_features(dataset: Dataset, end: int, symbol: str) -> AssetFeatures:
+def compute_features(dataset: Dataset, end: int, symbol: str, enrich: bool = False) -> AssetFeatures:
     """Features for the closed bar at index end-1; no future bars are read."""
     candles = dataset.candles[:end]
     if len(candles) < MIN_BARS:
@@ -115,8 +118,18 @@ def compute_features(dataset: Dataset, end: int, symbol: str) -> AssetFeatures:
         f'close={closes[-1]:.6f}', f'atr={atr:.6f}', f'vol={realized_vol:.6f}',
         f'trend={trend:.6f}', f'volume_ratio={volume_ratio:.4f}', f'regime={regime}',
     )
+    micro_state = None
+    vol_state = None
+    if enrich:
+        from market_microstructure import observe_microstructure
+        from volatility_intel import observe_volatility
+        micro_state = observe_microstructure(dataset.candles, symbol, end).to_dict()
+        vol_state = observe_volatility(dataset.candles, symbol, end).to_dict()
+        reasons += ('liquidity_proxy=' + micro_state['liquidity_state'],
+                    'vol_state=' + vol_state['regime'])
     return AssetFeatures(symbol, last.timestamp, closes[-1], atr, realized_vol,
-                         trend, volume_ratio, regime, score, reasons)
+                         trend, volume_ratio, regime, score, reasons,
+                         micro_state, vol_state)
 
 
 def scan(
@@ -142,15 +155,25 @@ def scan(
             raise ScanError('FUTURE_DATA')
         if age_ms > max_age_ms:
             raise ScanError('STALE_DATA')
-        features.append(compute_features(dataset, end, symbol))
+        features.append(compute_features(dataset, end, symbol, enrich=True))
     by_symbol = {item.symbol: item for item in features}
     required = ('BTCUSDT', 'ETHUSDT')
     if not all(symbol in by_symbol for symbol in required):
         return ScanResult('quantum-scan.v1', evaluated_at, tuple(features), None, 'NO_TRADE',
                           ('MISSING_REQUIRED_ASSET',))
+    poor_liquidity = [item.symbol for item in features
+                      if item.microstructure and item.microstructure.get('liquidity_state') == 'POOR']
+    if poor_liquidity:
+        return ScanResult('quantum-scan.v1', evaluated_at, tuple(features), None, 'NO_TRADE',
+                          ('LIQUIDITY_PROXY_POOR',) + tuple(poor_liquidity))
     if all(by_symbol[symbol].regime == 'LOW_VOL_UP' and by_symbol[symbol].score > 0 for symbol in required):
-        selected = max((by_symbol[symbol] for symbol in required), key=lambda item: item.score)
+        eligible = [by_symbol[symbol] for symbol in required
+                    if by_symbol[symbol].volatility and by_symbol[symbol].volatility.get('regime') != 'HIGH_VOL']
+        if not eligible:
+            return ScanResult('quantum-scan.v1', evaluated_at, tuple(features), None, 'NO_TRADE',
+                              ('VOLATILITY_REGIME_REJECTED',))
+        selected = max(eligible, key=lambda item: item.score)
         return ScanResult('quantum-scan.v1', evaluated_at, tuple(features), selected.symbol, 'SCAN_CANDIDATE',
-                          ('CROSS_ASSET_CONFIRMATION',))
+                          ('CROSS_ASSET_CONFIRMATION', 'LIQUIDITY_PROXY_OK'))
     return ScanResult('quantum-scan.v1', evaluated_at, tuple(features), None, 'NO_TRADE',
                       ('CROSS_ASSET_CONFIRMATION_FAILED',))

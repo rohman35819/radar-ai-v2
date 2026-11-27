@@ -3746,3 +3746,21 @@ Lima fold scan kausal pada index 250/270/290/310/330 dengan simulasi maju dari o
 
 ### 154.4 NEXT TASK Quantum
 Uji mekanisme scan dengan jendela/data publik lain tanpa mengulang eksperimen gagal, atau perluasan ML feature/evaluation dengan walk-forward dan baseline no-trade—tetap Python riset, Rp0, tanpa paper ledger operasional, worker, live order, transfer atau withdrawal.
+
+---
+
+## 155. MARKET MICROSTRUCTURE & INSTITUTIONAL INTELLIGENCE — 27 NOVEMBER 2026
+
+### 155.1 Modul baru (branch `exp/market-microstructure`, dari `exp/quantum-season1`)
+- `research/python/market_microstructure.py`: spread/range proxy, widening/narrowing, liquidity proxy, close-position imbalance proxy; `actual_order_book=false` dan alasan `NO_ACTUAL_BID_ASK_OR_DEPTH`. Depth/imbalance aktual **deferred** karena tidak ada artifact order book publik.
+- `research/python/volatility_intel.py`: realized volatility, percentile, regime, expansion, shock, perbandingan antar-coin. `implied_volatility=null`; tidak menyamakan realized dengan implied. Opsi **deferred**.
+- `research/python/institutional_risk.py`: exposure spot/perp, risk-budget sizing, exposure limits, correlation proxy, hedged-book aggregation. `options_delta/gamma/theta/vega=null` dengan alasan `OPTIONS_GREEKS_DEFERRED_NO_VALID_OPTIONS_DATA`; tidak ada Greeks palsu.
+- `research/python/execution_intel.py`: entry quality, spread/slippage/fee, market-impact proxy, fee-adjusted net return, liquidity-aware assessment; tidak mengirim order.
+- `quantum_scan.py` diperluas dengan kontrak mikrostruktur + volatilitas; `NO_TRADE` bila liquidity proxy POOR atau regime HIGH_VOL.
+- Test: `test_market_intel.py` 6 kasus; total Python **42/42**, npm **241/241**, strict TS exit 0.
+
+### 155.2 Pra-registrasi dan hasil
+Dua hipotesis dicatat di `research/python/experiments/microstructure_registry.json` pada commit `d748e89` **sebelum** hasil dijalankan: H1 filter likuiditas, H2 seleksi vol-relatif. Chronological/walk-forward 5 fold pada fixture BTC/ETH yang sudah ada; biaya 15 bps/sisi; baseline no-trade dan scan lama. Hasil: baseline net −27,40% (113 trade, DD 11,49%, 0/5 positif); H1 net **−20,36%** (81 trade, DD 11,49%, 0/5 positif); H2 net −110,57% (174 trade, DD 91,07%, 0/5 positif). **Semua DITOLAK**; tidak ada promosi, tidak ada klaim profit. QA hitung ulang summary cocok. Artifact `research/python/output/microstructure_experiments/report.json` (memuat provenance). H1 mengurangi kerugian absolut tetapi tetap gagal kriteria walk-forward.
+
+### 155.3 Deferred dan NEXT TASK
+Deferred: actual bid/ask + order-book depth (tanpa artifact publik), options Greeks/IV (tanpa data opsi valid), ML training (belum ada candidate layak). WIP non-draft ke develop = 5, sehingga tanpa PR baru; branch `exp/market-microstructure` didorong untuk CI. Worker/paper ledger/live/withdrawal OFF; Rp0. NEXT: desain source order-book gratis yang benar-benar publik dengan provenance, atau ML feature study dengan walk-forward + no-trade baseline tanpa mengulang grid lama.
