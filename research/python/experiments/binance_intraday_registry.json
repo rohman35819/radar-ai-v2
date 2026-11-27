@@ -1,0 +1,54 @@
+{
+  "registry_version": "binance-intraday-1.0",
+  "registered_at": "2026-11-27T14:27:54Z",
+  "owner": "BOS",
+  "lead": "Grok / Divisi 04",
+  "status": "pre-registered-before-data-and-results",
+  "exchange": "binance-only",
+  "data_plan": {
+    "source": "https://data-api.binance.vision/api/v3/klines (free public Binance market data, no key)",
+    "symbols": ["BTCUSDT", "ETHUSDT"],
+    "interval": "4h",
+    "start_time": "2026-06-01T00:00:00Z",
+    "limit": 1000,
+    "reason": "Intraday 4h window not used in prior daily experiments; chronological split and walk-forward possible within one reproducible page."
+  },
+  "criteria": {
+    "validation_v1_unchanged": true,
+    "chronological_split": [0.6, 0.4],
+    "walk_forward": "rolling forward segments on later 40%",
+    "min_oos_trades": 2,
+    "max_oos_drawdown_pct": 25.0,
+    "costs_bps_per_side": 15,
+    "funding_bps_per_day": 0,
+    "benchmarks": ["no_trade_0_pct", "buy_and_hold_net", "prior_trend_score_scan"],
+    "no_grid_search": true,
+    "promotion": "only if OOS net > no-trade and walk-forward majority positive; no relaxation"
+  },
+  "hypotheses": [
+    {
+      "id": "I1-vol-transition",
+      "theory": "On intraday bars, a volatility expansion from a contraction regime marks the start of a directional move; entering after confirmation avoids the noise of calm ranges.",
+      "mechanism": "Enter long when realized_vol(20) > 1.5x trailing 60-bar median AND previous 20-bar vol was <= median AND close > SMA(50); exit when vol falls below median or after 6 bars (24h). Liquidity proxy must be OK.",
+      "fixed_parameters": {"vol_period": 20, "median_lookback": 60, "expansion_multiple": 1.5, "trend_sma": 50, "max_hold_bars": 6},
+      "source_edge": "volatility clustering and regime transition on continuous crypto market",
+      "bias_risks": "regime lookback choice, 4h sampling, threshold sensitivity, no large grid",
+      "falsification": "reject if OOS trades <2, OOS drawdown >25%, OOS net <= no-trade, or walk-forward not majority positive",
+      "status": "registered"
+    },
+    {
+      "id": "I2-volume-regime-confirm",
+      "theory": "A volume surprise that coincides with a volatility regime shift confirms informed participation; static volume filters previously failed because they ignored the transition.",
+      "mechanism": "Enter long when volume z-score(24) >= 2.0 AND realized_vol regime changes from LOW/NORMAL to HIGH within the last 3 bars AND close[i-1] > close[i-2]; exit when volume z <= 0 or after 6 bars. Liquidity proxy must be OK.",
+      "fixed_parameters": {"volume_lookback": 24, "transition_z": 2.0, "max_hold_bars": 6},
+      "source_edge": "informed volume participation at regime change",
+      "bias_risks": "volume manipulation, threshold choice, correlated BTC/ETH moves, multiple testing if re-run",
+      "falsification": "reject if OOS trades <2, OOS drawdown >25%, OOS net <= no-trade, or walk-forward not majority positive",
+      "status": "registered"
+    }
+  ],
+  "deferred": [
+    {"feature": "historical L2 order book imbalance", "reason": "no reproducible free historical depth artifact"},
+    {"feature": "options Greeks and implied volatility", "reason": "no valid options dataset"}
+  ]
+}
