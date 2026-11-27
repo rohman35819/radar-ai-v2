@@ -54,7 +54,7 @@
 
 - Preserve all existing menus/routes and truthful-data behavior (Top 5, Radar Intelligence capability matrix, stale-data banners). Never show demo numbers as live. No withdrawal capability; live trading OFF. Rp0 hard budget: no paid service, card, VPS or production DB provisioning without BOS approval. Keep secrets server-side and out of Git/chat/frontend/logs.
 - Hostless Build/LIVE remains unverified in this session. Storage/EROFS decision still pending BOS. Dependency CVE coverage is unavailable because the repo has no supported dependency manifest; Trivy secret scan is not a CVE scan.
-
+- **Advisor pivot (branch `exp/quant-evidence-audit`, no PR — WIP 4):** cross-window audit of 5 non-overlapping daily windows (16 runs) + 6 DeepSeek M5 runs: 0 pass `validation-v1`; best WF 3/6 daily, 1/15 M5; positive OOS repeatedly loses to buy-and-hold; low-frequency filters fail min trades. Five new mechanisms evaluated; order-flow blocked by `aggTrades` retention, spread-aware is enabler. Proposed (NOT APPROVED, NO DATA FETCHED): A=volatility-compression state gate, B=volume-regime transition, both on untouched 2019 BTC window; see `docs/quant-preregistration-proposal.md`. DeepSeek M5 branch `34752b7` CI `45956609501` success; gaps: non-strict O(n), no explicit m5_quality, verify_report schema mismatch, absolute paths; files not edited. Docs: `docs/quant-cross-window-evidence-audit.md`, `docs/quant-new-mechanisms-evaluation.md`, `docs/quant-engine-roadmap.md`.
 
 ## Engineering governance
 - Permanent 12-area policy: `docs/architecture/engineering-constitution.md`; all agents/contributors apply it alongside `AGENTS.md` and the master context.

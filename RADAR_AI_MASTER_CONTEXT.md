@@ -3696,3 +3696,29 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### 149.3 NEXT TASK
 Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat hasil (menghindari data snooping pada 364 bar yang sama). Paper ledger/reconciliation tetap terkunci sampai strategi lolos `validation-v1` dan BOS menyetujui. Worker, live trading, withdrawal OFF; Rp0.
+
+---
+
+## 150. CROSS-WINDOW EVIDENCE AUDIT & QUANT MECHANISM PIVOT — 27 NOVEMBER 2026
+
+### 150.1 Mandat Advisor
+Chief Strategy Advisor menghentikan iterasi strategi lama: tidak ada grid baru, penggantian parameter, atau kombinasi indikator untuk profit historis. Tugas: audit bukti lintas jendela, evaluasi mekanisme baru, pilih maksimal dua hipotesis untuk pra-registrasi (tanpa menjalankan eksperimen sebelum disetujui), koordinasi M5 DeepSeek, dan roadmap komponen.
+
+### 150.2 Fakta audit
+- Matriks 22 baris: 16 eksperimen harian (5 jendela non-overlap: 2025–26, 2024, 2022, 2020, 2018; BTC+ETH) + 6 eksperimen M5 DeepSeek. **0 lolos `validation-v1`**.
+- Walk-forward adalah kegagalan binding di semua baris: terbaik harian 3/6, terbaik M5 1/15. Tidak ada yang mencapai mayoritas fold positif.
+- OOS positif bukan edge: exp-06 BTC +46,00% dengan PF 2,869 tetapi kalah dari buy&hold +109,4% dan WF 3/6. exp-04/05/07 OOS positif dengan 1–2 trade dan PF undefined.
+- Full-sample vs OOS sering berlawanan tanda (exp-06 ETH +72,37% vs −33,55%; exp-02 BTC +5,70% vs −13,43%). Klaim profit full-sample ditolak.
+- Pelanggaran drawdown terkonsentrasi pada reversion/scalp (exp-01/02/03 ETH, exp-06 ETH, m5-03/04). Filter frekuensi rendah gagal minimum trade (exp-04/05/07/09/10, m5-01/05). exp-09 gagal karena tidak ada daily gap ≥0,5% di pasar 24/7 — data-contract failure, bukan strategi gagal.
+- M5 DeepSeek: branch `feat/quantum-m5-engine` head `34752b7`, CI test `45956609501` sukses, 6 eksperimen semua ditolak. Pagination/provenance/checksum/staleness ada; `generate_signals` masih O(n·k) karena slice max/min per bar; tidak ada API `m5_quality` eksplisit; `verify_report.py` tidak dapat memverifikasi report M5 (schema `experiment_schema` bukan `quant-report.v1`); path artifact absolut. File DeepSeek **tidak diubah** oleh sesi ini.
+- Anggapan ("interpretasi", bukan fakta): kegagalan walk-forward menandakan ketidakstabilan rezim/param, bukan bukti universal semua mekanisme salah; M5 belum menyelamatkan hasil.
+
+### 150.3 Mekanisme baru dan pemilihan
+Lima mekanisme dievaluasi di `docs/quant-new-mechanisms-evaluation.md`: (1) ekspansi/kontraksi volatilitas, (2) liquidity imbalance/order-flow proxy, (3) microstructure & spread-aware execution, (4) mean reversion terkondisi volatilitas, (5) transisi rezim + perilaku volume. Order-flow **diblokir** oleh retensi data publik `aggTrades` (hanya data terbaru); spread-aware adalah enabler, bukan alpha; reversion terlalu dekat dengan keluarga yang ditolak.
+**Dipilih maksimal dua (PROPOSED, belum disetujui):** A = volatility-compression state gate (ATR% ≤ persentil 20 dari 100 bar + close > SMA50; exit pada persentil 80 / close < SMA50 / 5 bar); B = volume-regime transition (volume z ≥ 2,0 + close naik; exit z ≤ 0 / 3 bar). Jendela keenam usulan: BTCUSDT 1d **2019-01-01→2019-12-31**, non-overlap (`2019-12-31 < 2020-01-01`). Dokumen: `docs/quant-preregistration-proposal.md`; **tidak ada data 2019 yang diambil, tidak ada backtest dijalankan**.
+
+### 150.4 Roadmap dan aturan
+`docs/quant-engine-roadmap.md` menetapkan batas tanggung jawab: Python (data quality, riset, indikator, registry, backtest, validasi, report, QA) dan TypeScript (contract, risk interface, audit, shadow readiness). Urutan gate: quality gate → O(n) engine → QA adapter M5 → registry/lineage → criteria-version guard → risk/audit tests → paper readiness → autonomous ops. Tidak ada PR baru (WIP non-draft = 4), tidak ada merge, Rp0, worker/paper ledger/live/withdrawal OFF.
+
+### 150.5 NEXT TASK
+Minta persetujuan Advisor untuk pra-registrasi Candidate A/B; setelah disetujui, tulis registry + commit dengan timestamp sebelum fetch data 2019. Sambil menunggu, koordinasikan dengan DeepSeek untuk O(n), `m5_quality`, dan QA adapter M5 tanpa menyentuh file miliknya.
