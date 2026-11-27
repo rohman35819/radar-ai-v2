@@ -286,3 +286,12 @@ Do not report offline autonomy until scheduler, durable queue/state, worker runt
 - Divisi 06/07 charters now include human ownership placeholders, RACI with human `A` for risky decisions, and an explicit rule that agents cannot grant themselves permissions or approvals.
 - `docs/pr160-review-package.md` now lists the seven mandatory human-review questions. CODEOWNERS/team/independent collaborator remain unavailable; only BOS/Direktur appointment can unblock human review.
 - No DB schema, worker, scheduler, paper ledger, live order or withdrawal was activated. Rp0 preserved. Implementation of the smallest disposable idempotency slice is gated until ADR approval, Divisi 01/05 contract review, human PR #160 review and WIP availability.
+
+## Command 14 — Divisi 01–07 inactive (BOS decision, 27 November 2026)
+
+- Divisi 01–07 are **INACTIVE for manual operational work** until further BOS decision. All charters, designs, backlogs and artifacts remain intact; nothing was deleted.
+- Operating model: Grok is the sole primary engineering executor and pulls the NEXT TASK sequentially from the repository. Chief Strategy Advisor sets priority and evaluates results. No per-division manual activation/task workflow remains.
+- Routine work uses automated tests and independent AI review; their limits are recorded and they are not human sign-off. Any item requiring human safety approval is labeled `BLOCKED_FOR_BOS` and work continues elsewhere.
+- PR #160 human review and ADR-002 approval are now `BLOCKED_FOR_BOS`. Reactivation of divisions requires a tested Agent Platform (orchestration, durable queue/state, permissions, approvals, audit persistence, recovery, kill switch, end-to-end evidence) plus explicit BOS decision.
+- WIP toward `develop` is 5 non-draft (#165, #160, #159, #153, #115; #160 documented P0 exception), so no new PR was opened. No merge, no direct `main`/`develop` write. Worker/scheduler/paper ledger/reconciliation/live trading/orders/transfers/withdrawals OFF; Rp0.
+- **NEXT TASK:** isolated, safe keyed-attestation/HMAC reference testing without production secrets or runtime; retain blocked gates until BOS acts. Do not claim automation is active.

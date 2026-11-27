@@ -3751,3 +3751,28 @@ Pekerjaan dokumentasi pada branch `docs/nexus-agent-platform-contract` dari `dev
 - **Divisi 06/07 final:** mandat/batas kewenangan, subfungsi, I/O, kontrak, KPI, risiko, roadmap N0–N5, penanggung jawab manusia yang belum ditunjuk, dan **RACI** Divisi 01/04/05/06/07 dengan `A` untuk manusia pada keputusan berisiko; agent tidak dapat memberi approval/permission pada dirinya sendiri.
 - **Paket review PR #160** diperkuat dengan 7 pertanyaan wajib reviewer manusia; CODEOWNERS tidak ada, teams 403, hanya collaborator = author, sehingga penunjukan BOS/Direktur Utama tetap blocker. Tidak ada review request palsu.
 - Implementasi schema/idempotency DB **ditahan** sampai ADR disetujui, Divisi 01/05 review kontrak, human review PR #160, dan slot WIP tersedia. Worker/scheduler/ledger/live/withdrawal OFF; Rp0.
+
+---
+
+## 153. COMMAND 14 — DIVISI 01–07 NONAKTIF SEMENTARA — 27 NOVEMBER 2026
+
+### 153.1 Keputusan BOS
+- Divisi **01 sampai 07 berstatus INACTIVE** untuk kegiatan operasional manual mulai keputusan ini. Semua dokumen, mandat, desain, backlog, dan hasil kerja divisi **dipertahankan**; tidak ada yang dihapus.
+- Tujuan: menghilangkan ketergantungan engineering pada perintah manual BOS kepada tiap divisi.
+- **Grok** menjadi pelaksana engineering utama, mengambil NEXT TASK berurutan, dan boleh riset/coding/testing/dokumentasi/audit/perbaikan pada branch terisolasi tanpa instruksi manual per tugas.
+- **Chief Strategy Advisor** mengarahkan prioritas dan mengevaluasi hasil.
+- Tidak ada workflow yang mengharuskan BOS mengaktifkan atau memberi tugas manual ke divisi. Review divisi yang nonaktif **tidak ditunggu** untuk pekerjaan rutin; automated tests dan independent AI review dipakai sebagai kontrol tambahan dengan keterbatasan dicatat.
+
+### 153.2 Status gate dan pelabelan
+- Pekerjaan yang mensyaratkan persetujuan manusia berdasarkan kebijakan keselamatan ditandai **`BLOCKED_FOR_BOS`**; Grok mengalihkan ke pekerjaan aman lain.
+- Human review PR #160 berubah menjadi **`BLOCKED_FOR_BOS`** karena Divisi 01 tidak aktif dan tidak ada reviewer manusia teridentifikasi (CODEOWNERS tidak ada, teams 403, collaborator = author). Tidak ada review request palsu.
+- ADR-002 tetap **DRAFT, BLOCKED_FOR_BOS** untuk persetujuan. Divisi 05 independent QA manual juga tidak aktif; QA otomatis + AI review menjadi bukti sementara, bukan human sign-off.
+
+### 153.3 Aktivasi kembali
+Divisi 01–07 hanya dapat diaktifkan kembali setelah Agent Platform menyediakan: task orchestration, persistent queue/state, permission enforcement, approval workflow, audit persistence, recovery, kill switch, dan pengujian end-to-end yang memadai—**serta keputusan BOS eksplisit**. Aktivasi kembali tidak boleh diasumsikan dari dokumentasi atau schema.
+
+### 153.4 Batas operasional terverifikasi
+Branch/docs working: `docs/nexus-agent-platform-contract` commit `6d2c928`. `main` `f38d25a`, `develop` `411e7b7`. WIP non-draft ke develop = **5** (#165, #160, #159, #153, #115; #160 adalah exception P0), sehingga **PR baru tidak dibuka**. Tidak ada merge, tidak ada tulis langsung ke `main`/`develop`. Worker/scheduler aktif, paper ledger/reconciliation runtime, live trading, order, transfer, withdrawal tetap **OFF**. Rp0; tidak ada layanan berbayar.
+
+### 153.5 NEXT TASK Grok
+Lanjut pekerjaan aman terisolasi: uji referensi keyed attestation/HMAC tanpa secret produksi dan tanpa runtime, sambil menjaga PR #160 dan ADR-002 berstatus `BLOCKED_FOR_BOS`. Setelah gate BOS terpenuhi, usulkan slice disposable DB/idempotency terkecil. Tidak mengklaim otomasi aktif.
