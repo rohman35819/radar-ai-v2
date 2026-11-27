@@ -3776,3 +3776,13 @@ Slice ini **tidak** membuktikan NEXUS belajar persisten: store hanya in-memory d
 - `test/nexus-lessons-02-06.test.mjs`: **5/5 pass** (struktur 5 pelajaran, ujian benar/salah, ingest + reload 5 record, failed lesson tidak otoritatif, artefak ringkas & tanpa secret). `npm test`: **265/265 pass**, 0 fail; strict `tsc` exit 0; `git diff --check` clean.
 - Commit: `d3005039395a749991a0d42b4f3347968813da22`. Tidak ada perubahan kebijakan, izin baru, provider eksternal, worker, trading, atau klaim NEXUS belajar mandiri. Indeks ringkas <1.000 karakter dan dokumen transfer <12 KB agar memory tidak cepat penuh.
 - NEXT: selesaikan integrasinya setelah PR queue ≤2, lalu uji koreksi lintas pelajaran dan retrieval berscope pada NEXUS storage setelah BOS menyetujui MCP/durable memory.
+
+---
+
+## 156. Benchmark kurikulum NEXUS — batas klaim kemampuan — 27 November 2026
+
+- BOS meminta “latih terus sampai mengalahkan ChatGPT”. Tidak ada benchmark bersama, evaluator independen, inference eksternal, atau runtime latar belakang yang disetujui, sehingga klaim unggul/parity **tidak dapat dibuktikan dan tidak dibuat**.
+- `src/nexus/curriculum/benchmark.mjs`: 30 task deterministik dari 6 pelajaran; `runBenchmark({})` = 0, `runBenchmark(TRAINING_ANSWERS)` = 100; `selectWeakAreas` untuk koreksi terarah; `trainLoop` meng-ingest seluruh pelajaran lewat pipeline ber-approval dengan log dibatasi 5 epoch. Field `comparable_to_external_models=false` dan `claim` menolak klaim parity/superiority.
+- `docs/nexus-curriculum/benchmark.md` menjelaskan apa yang diukur (penguasaan kurikulum) dan apa yang tidak (pengetahuan umum, bobot model, persistensi durable, perbandingan model eksternal, continuous training).
+- `test/nexus-benchmark.test.mjs`: **5/5 pass**. `npm test`: **270/270 pass**, 0 fail; strict `tsc` exit 0; secret scan bersih; `fetch` di-stub saat training. Commit: `ce4b43ad67e6b1ecdc324df62b101713f14472f8`.
+- Tidak ada perubahan kebijakan, izin, provider berbayar, worker, scheduler, trading, withdrawal, atau klaim NEXUS otonom. NEXT: benchmark eksternal + evaluator independen hanya setelah BOS menyetujui sarana dan storage durable; sampai itu, siklus kurikulum tetap fixture-based dan di bawah grant RADAR.

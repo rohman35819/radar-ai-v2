@@ -37,3 +37,6 @@ ingest → provenance → evaluate → approve/reject → versioned store → re
 Kurikulum tidak mengubah kebijakan keamanan, tidak memberi izin baru, tidak mengaktifkan worker/scheduler/live trading/withdrawal, tidak memanggil provider berbayar, dan tidak mengklaim NEXUS sudah belajar mandiri. Target akhir “belajar dari banyak AI tanpa menunggu perintah BOS” adalah arsitektur yang ingin dibangun — sampai ada approval, pipeline berjalan hanya dengan fixture deterministik dan di bawah capability grant RADAR.
 
 Artefak tambahan: `lessons-02-06.md` (ringkasan manusia) dan `grok-knowledge-transfer.md` (transfer pengetahuan durable bersumber repo, tanpa transkrip chat/secret).
+
+## Benchmark internal
+`src/nexus/curriculum/benchmark.mjs` + `docs/nexus-curriculum/benchmark.md`: 30 task dari 6 pelajaran, baseline 0, terlatih 100, loop koreksi terarah. Ini **bukan** perbandingan dengan ChatGPT/model eksternal dan bukan continuous training.
