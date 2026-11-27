@@ -3765,3 +3765,14 @@ Slice ini **tidak** membuktikan NEXUS belajar persisten: store hanya in-memory d
 - `test/nexus-lesson-01.test.mjs`: **5/5 pass** (struktur, ingest ke memory + reload, ujian benar/salah + koreksi, failed lesson tidak otoritatif, tanpa secret/klaim berbayar). `npm test`: **260/260 pass**, 0 fail; strict `tsc` exit 0; `git diff --check` clean.
 - Commit: `00ce72b43baa6f72a76397d1221fb0fd0dda953c`. Branch `feat/nexus-core-brain-learning` sudah di-push; **PR tidak dibuka** (5 non-draft → develop > WIP 3). Tidak ada perubahan kebijakan, izin baru, provider eksternal, worker, trading, atau klaim NEXUS belajar mandiri/always-on.
 - NEXT: lesson-02 (Python, TypeScript, software engineering & debugging) dengan pola artefak + fixture + ujian + koreksi yang sama; lanjut sesuai antrean kurikulum setelah PR queue sehat.
+
+---
+
+## 155. Kurikulum NEXUS — Pelajaran 02–06 & transfer pengetahuan — 27 November 2026
+
+- BOS meminta pelajaran berikutnya dan pemindahan pengetahuan Grok yang rinci tetapi ringkas. Dibuat `src/nexus/curriculum/engine.mjs` (grader generik, koreksi, fixture builder, ringkasan indeks) dan `src/nexus/curriculum/lessons-02-06.mjs` dengan lesson-02 Python/TypeScript/engineering/debugging, lesson-03 agent/orkestrasi, lesson-04 knowledge/memory, lesson-05 kuant, lesson-06 keamanan/operasional.
+- Tiap pelajaran: 5 bagian materi + `source_refs`, objectives, contoh benar/salah, 3 latihan, 5 soal ujian dengan `required`/`forbidden`, ambang lulus 80, koreksi berversi. Semua bisa di-ingest lewat `runLearningPipeline`; jawaban benar skor 100, jawaban mengandung klaim terlarang gagal dan tidak dipromosikan.
+- `docs/nexus-curriculum/lessons-02-06.md` (ringkasan) dan `docs/nexus-curriculum/grok-knowledge-transfer.md` (15 bagian pengetahuan durable dari repository: identitas, startup, loop, risiko, eksperimen, wewenang, branch/CI, QA, dokumentasi, konstitusi 12 area, divisi, fakta kemampuan, kuant, NEXUS saat ini, target gated). **Tidak ada transkrip chat, prompt/response, reasoning log, kredensial, atau data privat** yang dipindahkan; detail tetap pada `source_refs` dokumen asal.
+- `test/nexus-lessons-02-06.test.mjs`: **5/5 pass** (struktur 5 pelajaran, ujian benar/salah, ingest + reload 5 record, failed lesson tidak otoritatif, artefak ringkas & tanpa secret). `npm test`: **265/265 pass**, 0 fail; strict `tsc` exit 0; `git diff --check` clean.
+- Commit: `d3005039395a749991a0d42b4f3347968813da22`. Tidak ada perubahan kebijakan, izin baru, provider eksternal, worker, trading, atau klaim NEXUS belajar mandiri. Indeks ringkas <1.000 karakter dan dokumen transfer <12 KB agar memory tidak cepat penuh.
+- NEXT: selesaikan integrasinya setelah PR queue ≤2, lalu uji koreksi lintas pelajaran dan retrieval berscope pada NEXUS storage setelah BOS menyetujui MCP/durable memory.

@@ -26,12 +26,14 @@ ingest → provenance → evaluate → approve/reject → versioned store → re
 | ID | Topik | Status |
 |---|---|---|
 | lesson-01 | Arsitektur RADAR AI V2 & peran NEXUS | materi + ujian + koreksi, teruji |
-| lesson-02 | Python, TypeScript, software engineering & debugging | belum |
-| lesson-03 | AI Agent, autonomous systems, orkestrasi | belum |
-| lesson-04 | Knowledge engineering, memory, pembelajaran mandiri | belum |
-| lesson-05 | Quantitative research & quantum trading | belum |
-| lesson-06 | Keamanan, keputusan, manajemen operasional | belum |
+| lesson-02 | Python, TypeScript, software engineering & debugging | materi + ujian + koreksi, teruji |
+| lesson-03 | AI Agent, autonomous systems, orkestrasi | materi + ujian + koreksi, teruji |
+| lesson-04 | Knowledge engineering, memory, pembelajaran mandiri | materi + ujian + koreksi, teruji |
+| lesson-05 | Quantitative research & quantum trading | materi + ujian + koreksi, teruji |
+| lesson-06 | Keamanan, keputusan, manajemen operasional | materi + ujian + koreksi, teruji |
 
 ## Batas kewenangan
 
 Kurikulum tidak mengubah kebijakan keamanan, tidak memberi izin baru, tidak mengaktifkan worker/scheduler/live trading/withdrawal, tidak memanggil provider berbayar, dan tidak mengklaim NEXUS sudah belajar mandiri. Target akhir “belajar dari banyak AI tanpa menunggu perintah BOS” adalah arsitektur yang ingin dibangun — sampai ada approval, pipeline berjalan hanya dengan fixture deterministik dan di bawah capability grant RADAR.
+
+Artefak tambahan: `lessons-02-06.md` (ringkasan manusia) dan `grok-knowledge-transfer.md` (transfer pengetahuan durable bersumber repo, tanpa transkrip chat/secret).
