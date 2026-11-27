@@ -235,3 +235,11 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - PR disposition: (1) merge only when relevant, based on latest main, exact-head checks pass, required independent reviews pass, and rollback/impact are understood; (2) close stale, duplicate, superseded, abandoned, irreparably conflicting, or low-value PRs after preserving any unique useful work; (3) keep blocked PRs only when a named dependency, owner, and next review condition are recorded. Closing a PR removes it from the active queue; it does not delete its GitHub history or automatically delete its branch.
 - Before opening a new PR, inspect the existing queue and reuse/update an appropriate active PR when scope and ownership match. Prefer one PR per coherent feature/owner; avoid stacking unrelated changes and multiple PRs editing the same files.
 - Every new RADAR conversation must read this policy from the latest main AGENTS.md and RADAR_AI_MASTER_CONTEXT.md, inspect current open PRs, and continue the existing queue. Do not rely on chat memory or old PR counts. Report the current active count, any exception and its reason, and the next actionable PR.
+
+
+## 16. Kebijakan DeepSeek on-demand — 27 November 2026
+- Keputusan BOS: DeepSeek dikesampingkan dari pekerjaan rutin karena kuota terbatas; gunakan jarang-jarang hanya sebagai pembantu spesialis.
+- Chief Strategy Advisor tetap memimpin strategi, audit, arsitektur, koordinasi, dan pekerjaan aman yang dapat diselesaikan langsung. Grok/Divisi 04 menjadi jalur utama implementasi/riset sesuai mandat; Direktur Utama mengoordinasikan integrasi.
+- DeepSeek bukan dependency, blocker, worker aktif, atau reviewer wajib. Gunakan hanya untuk second opinion teknis, audit algoritma/performa, edge-case review, atau pemeriksaan independen bernilai tinggi.
+- Buat permintaan singkat dan terarah dengan konteks/file/commit yang relevan, pertanyaan spesifik, batasan, serta keluaran yang diminta. Jangan pernah menyertakan secret/kredensial.
+- Bila kuota tidak tersedia, lanjutkan pekerjaan yang aman tanpa menunggu DeepSeek. Tetap Rp0 dan tidak mengaktifkan layanan berbayar.
