@@ -3696,3 +3696,20 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### 149.3 NEXT TASK
 Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat hasil (menghindari data snooping pada 364 bar yang sama). Paper ledger/reconciliation tetap terkunci sampai strategi lolos `validation-v1` dan BOS menyetujui. Worker, live trading, withdrawal OFF; Rp0.
+
+---
+
+## 150. WINDOW-5 VOLUME-CONFIRMED CLOSING STRENGTH — 27 NOVEMBER 2026
+
+### 150.1 Pra-registrasi
+- BOS memerintahkan lanjut riset. `exp-10-volume-close-strength-window5` memakai dimensi **volume** yang belum dipakai eksperimen mana pun: close di 20% teratas rentang harian + volume ≥1,5× rata-rata 20 bar; exit pada close di bawah 50% rentang atau setelah 3 bar. Satu konfigurasi tetap, tanpa grid search.
+- Registry `research/python/experiments/registry_window5_volume_strength.json` first commit **`976a1a38a3844a2c01252ffd7145073c15277bf4`**, `2026-11-27T06:56:04Z`, sebelum fetch `07:00:32Z`; implementasi `82581d6` juga sebelum fetch. WIP non-draft = 4 → tanpa PR; branch `exp/volume-close-strength-window5`.
+- Jendela kelima: BTCUSDT 1d 2018-01-01→2018-12-31, 365 bar, checksum `8f6e90b6a9a8e039b35c7ac2d9aa0437f6535e2c48cffb0278a7e64bf9c25654`. Non-overlap: `2018-12-31 < 2020-01-01 < 2022-01-01 < 2024-01-01 < 2025-11-27`. Biaya 5+5+5 bps/sisi, kriteria tidak diubah.
+
+### 150.2 Hasil
+- Integritas accepted, 0 duplikat/gap/violasi OHLC; freshness historis, `live_ready=false`.
+- OOS 2018-10-01→12-31: gross −5,364%, net **−5,506%**, DD 5,506%, **1 trade**, win 0%, PF **0**, expectancy −0,0551%, Sharpe −1,992, Sortino null, exposure 1,087%, turnover 2; buy&hold net −44,162%, no-trade 0%. Full: net −3,635%, DD 8,550%, 7 trade, PF 0,580, buy&hold −72,408%. Walk-forward **1/6** → `accepted_for_paper_candidate=false` (`oos_too_few_trades`, `walk_forward_not_majority_positive`). **REJECTED**, bukan kandidat; tidak ada klaim profit atau kriteria yang dilonggarkan.
+- QA `verify_report.py` passed; dua run identik. Python **30/30**, npm **241/241**, strict TS exit 0. Detail: `docs/quant-window5-volume-strength.md`.
+
+### 150.3 Kesimpulan lintas jendela dan NEXT TASK
+Lima jendela non-overlapping, sepuluh hipotesis tetap: **tidak ada yang lolos `validation-v1`**. Full-sample positif berulang kali gagal OOS/walk-forward; filter frekuensi rendah berulang kali gagal minimum trade. Iterasi jendela/parameter tambahan tanpa mekanisme baru akan menjadi data snooping. Paper ledger, reconciliation runtime, worker, live trading, withdrawal OFF; Rp0. NEXT TASK: hanya hipotesis dengan mekanisme benar-benar baru dan pra-registrasi pada jendela keenam, atau analisis bukti lintas jendela; tidak ada aktivasi operasional tanpa persetujuan terpisah.

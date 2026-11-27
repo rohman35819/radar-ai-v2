@@ -1,0 +1,166 @@
+{
+  "criteria_version": "validation-v1",
+  "registry_version": "5.0.0-window5-volume-strength",
+  "results": [
+    {
+      "acceptance_reasons": [
+        "oos_too_few_trades",
+        "walk_forward_not_majority_positive"
+      ],
+      "accepted_for_paper_candidate": false,
+      "benchmarks": {
+        "buy_hold_net_pct": -72.408012,
+        "no_trade_return_pct": 0.0
+      },
+      "cost_assumptions": {
+        "fee_bps_per_side": 5.0,
+        "funding_bps_per_day": 0.0,
+        "max_drawdown_stop_pct": 0.3,
+        "note": "Same effective cost as validation-v1's 7.5 fee + 7.5 slippage; spread explicit.",
+        "position_fraction": 1.0,
+        "slippage_bps_per_side": 5.0,
+        "spread_bps_per_side": 5.0,
+        "stop_loss_pct": 0.1,
+        "total_bps_per_side": 15.0
+      },
+      "criteria": {
+        "benchmarks": [
+          "buy_and_hold_net",
+          "no_trade_0_pct"
+        ],
+        "max_out_of_sample_drawdown_pct": 25.0,
+        "min_out_of_sample_trades": 2,
+        "note": "Identical to registries v1-v4; no threshold is changed.",
+        "train_validation_oos_split": [
+          0.5,
+          0.25,
+          0.25
+        ],
+        "validation_selection_must_be_accepted": true,
+        "walk_forward_positive_folds_must_be_majority": true,
+        "walk_forward_step_bars": 40,
+        "walk_forward_test_bars": 40,
+        "walk_forward_train_bars": 120
+      },
+      "criteria_version": "validation-v1",
+      "decision": "reject",
+      "experiment_schema": "quant-experiment.v1",
+      "freshness": {
+        "age_hours_at_evaluation": 69319.018,
+        "dataset_end": "2018-12-31T00:00:00Z",
+        "evaluated_at": "2026-11-27T07:01:03.076421Z",
+        "historical_research_only": true,
+        "integrity_accepted": true,
+        "issues": [],
+        "live_ready": false,
+        "note": "Freshness is recorded as provenance for historical research, not a claim of live market data.",
+        "retrieval_after_end_hours": 69319.009,
+        "retrieved_at": "2026-11-27T07:00:32.975604Z",
+        "schema_version": "1.0.0"
+      },
+      "full_sample_metrics": {
+        "bars": 365,
+        "buy_hold_gross_pct": -72.325112,
+        "buy_hold_net_pct": -72.408012,
+        "cost_bps_per_turn": 15.0,
+        "end": "2018-12-31T00:00:00Z",
+        "expectancy_pct_per_trade": -0.009354,
+        "exposure_pct": 2.191781,
+        "fee_bps_per_side": 5.0,
+        "funding_bps_per_day": 0.0,
+        "gross_return_pct": -2.617453,
+        "interval": "1d",
+        "kill_switch_triggered": false,
+        "max_drawdown_pct": 8.549896,
+        "max_drawdown_stop_pct": 0.3,
+        "net_return_pct": -3.63538,
+        "no_trade_return_pct": 0.0,
+        "position_changes": 14,
+        "position_fraction": 1.0,
+        "profit_factor": 0.580377,
+        "sharpe": -0.237155,
+        "slippage_bps_per_side": 5.0,
+        "sortino": -0.041639,
+        "start": "2018-01-01T00:00:00Z",
+        "stop_loss_pct": 0.1,
+        "total_trades": 7,
+        "turnover_events": 14,
+        "win_rate_pct": 28.571429
+      },
+      "hypothesis": "Volume-confirmed closing strength with three-bar time exit",
+      "id": "exp-10-volume-close-strength-window5",
+      "limitations": [
+        "Historical backtest is not a guarantee of future profit.",
+        "No exchange order, withdrawal, transfer, live trading or paid service is used.",
+        "Costs are assumptions (fee + slippage per side); funding is zero for spot.",
+        "Intrabar stop fills are simplified and may differ from real fills.",
+        "One asset and one interval per experiment; results are not generalisable."
+      ],
+      "out_of_sample_metrics": {
+        "bars": 92,
+        "buy_hold_gross_pct": -43.993974,
+        "buy_hold_net_pct": -44.161741,
+        "cost_bps_per_turn": 15.0,
+        "end": "2018-12-31T00:00:00Z",
+        "expectancy_pct_per_trade": -0.055064,
+        "exposure_pct": 1.086957,
+        "fee_bps_per_side": 5.0,
+        "funding_bps_per_day": 0.0,
+        "gross_return_pct": -5.364493,
+        "interval": "1d",
+        "kill_switch_triggered": false,
+        "max_drawdown_pct": 5.506446,
+        "max_drawdown_stop_pct": 0.3,
+        "net_return_pct": -5.506446,
+        "no_trade_return_pct": 0.0,
+        "position_changes": 2,
+        "position_fraction": 1.0,
+        "profit_factor": 0.0,
+        "sharpe": -1.991831,
+        "slippage_bps_per_side": 5.0,
+        "sortino": null,
+        "start": "2018-10-01T00:00:00Z",
+        "stop_loss_pct": 0.1,
+        "total_trades": 1,
+        "turnover_events": 2,
+        "win_rate_pct": 0.0
+      },
+      "provenance": {
+        "checksum_sha256": "8f6e90b6a9a8e039b35c7ac2d9aa0437f6535e2c48cffb0278a7e64bf9c25654",
+        "data_kind": "public_api",
+        "end": "2018-12-31T00:00:00Z",
+        "interval": "1d",
+        "retrieved_at": "2026-11-27T07:00:32.975604Z",
+        "rows": 365,
+        "schema_version": "1.0.0",
+        "source": "https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=365&startTime=1514764800000",
+        "start": "2018-01-01T00:00:00Z",
+        "symbol": "BTCUSDT"
+      },
+      "quality": {
+        "accepted": true,
+        "duplicate_timestamps": 0,
+        "end": "2018-12-31T00:00:00Z",
+        "interval": "1d",
+        "issues": [],
+        "missing_intervals": 0,
+        "ohlcv_violations": 0,
+        "rows": 365,
+        "start": "2018-01-01T00:00:00Z"
+      },
+      "report_path": "exp-10-volume-close-strength-window5_btcusdt_report.json",
+      "selected_params": {
+        "close_position_min": 0.8,
+        "max_hold_bars": 3,
+        "volume_lookback": 20,
+        "volume_ratio_min": 1.5
+      },
+      "strategy": "volume_close_strength",
+      "symbol": "BTCUSDT",
+      "walk_forward": {
+        "positive": 1,
+        "total": 6
+      }
+    }
+  ]
+}

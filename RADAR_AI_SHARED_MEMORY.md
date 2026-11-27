@@ -54,7 +54,7 @@
 
 - Preserve all existing menus/routes and truthful-data behavior (Top 5, Radar Intelligence capability matrix, stale-data banners). Never show demo numbers as live. No withdrawal capability; live trading OFF. Rp0 hard budget: no paid service, card, VPS or production DB provisioning without BOS approval. Keep secrets server-side and out of Git/chat/frontend/logs.
 - Hostless Build/LIVE remains unverified in this session. Storage/EROFS decision still pending BOS. Dependency CVE coverage is unavailable because the repo has no supported dependency manifest; Trivy secret scan is not a CVE scan.
-
+- **Window-5 research (branch `exp/volume-close-strength-window5`, no PR — WIP 4):** pre-registered `registry_window5_volume_strength.json` at `976a1a3` / `06:56:04Z`, BTCUSDT 2018-01-01→12-31 fetched 07:00Z (checksum `8f6e90...c25654`). First strategy using volume: strong close + 1.5x volume, 3-bar exit; REJECTED with 1 OOS trade, net −5.51%, PF 0, WF 1/6; buy&hold −44%. QA passed, reproducible. Python 30/30, npm 241/241, tsc 0. Across 5 non-overlapping windows and 10 fixed hypotheses, none passes validation-v1; further window/parameter iteration without a new mechanism = data snooping. Doc: `docs/quant-window5-volume-strength.md`.
 
 ## Engineering governance
 - Permanent 12-area policy: `docs/architecture/engineering-constitution.md`; all agents/contributors apply it alongside `AGENTS.md` and the master context.
