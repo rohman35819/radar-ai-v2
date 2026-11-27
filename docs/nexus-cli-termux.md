@@ -32,7 +32,9 @@ Tanpa `NEXUS_ADMIN_TOKEN`, NEXUS tetap bisa dipakai untuk menjelajah repository,
 
 ## Perintah
 
-Ketik `/help` di dalam NEXUS. Ringkasnya: `/status`, `/memory`, `/structure`, `/files`, `/read`, `/search`, `/edit`, `/run`, `/sessions`, `/new`, `/resume`, `/clear`, `/exit`. Teks biasa dikirim sebagai pesan ke NEXUS Core melalui endpoint yang sama dengan dashboard.
+Ketik `/help` di dalam NEXUS. Ringkasnya: `/status`, `/memory`, `/handoff`, `/structure`, `/files`, `/read`, `/search`, `/edit`, `/run`, `/sessions`, `/new`, `/resume`, `/clear`, `/exit`. Teks biasa dikirim sebagai pesan ke NEXUS Core melalui endpoint yang sama dengan dashboard.
+
+`/handoff` mencetak ringkasan padat dan teredaksi untuk dipakai di sesi berikutnya (identitas NEXUS, status provider, batas Rp0, keputusan, bukti tes, blocker, NEXT TASK). Detail kebijakan konteks ada di `docs/nexus-context-budget.md`.
 
 ## Batas keamanan
 

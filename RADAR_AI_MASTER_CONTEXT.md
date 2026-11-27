@@ -3706,3 +3706,34 @@ Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat ha
 - Verifikasi: `npm test` **247/247** termasuk 6 test NEXUS (contract, client injected-fetch, session redaction, repo traversal, policy denial/approval, CLI smoke). `tsc` lokal tidak tersedia (`tsc: not found`); exact-head CI wajib memverifikasi strict typecheck. `git diff --check` bersih.
 - Commit `14b2a57df65b187225f11f091e023952ed48bf2f`, branch sudah **di-push** ke origin. CI push `#1399` exact-head `14b2a57`: `npm test`, **Strict TypeScript type check**, dan job `test` **success**.
 - PR **tidak dibuka**: antrean 9 PR open dengan 6 non-draft menuju `develop` (#161, #160, #159, #153, #115, #105), jauh melebihi WIP 3. NEXT TASK: triase WIP, buka PR, verifikasi CI, lalu selaraskan NEXUS Chat dashboard (#162) ke kontrak API yang sama.
+
+---
+
+## 152. GROK SESSION 2 — PR triage, NEXUS context budgeting and provider resilience — 27 November 2026
+
+### 152.1 Verifikasi state
+- `origin/main` = `f38d25a6203ab486d7170369e86874f838af627a` (v2.3.2, tidak diubah). `origin/develop` sebelum aksi = `6b278cca9bd0285a42f7bfd868976ad1baf467e2`; setelah merge #161 = `411e7b7114c9642c0e4d567e7e666c82910d2b3c`.
+- `feat/nexus-cli` HEAD laporan dan terukur adalah `34159ce964c9aeea988e9a5c262bed8033300b84` (bukan `14b2a57` seperti laporan awal); `14b2a57df65b187225f11f091e023952ed48bf2f` adalah commit implementasi dan merupakan ancestor. Keduanya punya push-test exact-head `success` (run `45974025912` / `45973819398`). Security CI hanya berjalan pada event PR, jadi pada branch tanpa PR hanya tersedia secret scan lokal.
+- Koneksi GitHub: `gh` tidak terpasang; API dipakai melalui kredensial git-helper yang sudah ada (token tidak pernah dicetak ke chat, file, atau log).
+
+### 152.2 Triage PR
+- **#161** (docs: official NEXUS identity) — mergeable `clean`, check run `45970214595` test + `45970214503` Gitleaks/Trivy/branch-policy semuanya `success` pada head `8254adc7096d`. Self-review: 4 file dokumentasi, additions-only, tidak ada secret, tidak ada penghapusan. Catatan: body PR menyatakan hanya shared memory yang diubah, tetapi diff nyata menyentuh `DIVISION_06`, `DIVISION_07`, `RADAR_AI_ADVISOR_HANDOFF.md`, dan master context — perbedaan dicatat, bukan dianggap cacat gate. Manual Divisi 01/05 **tidak performed (temporary override)**; gate otomatis exact-head dipakai. Di-merge http 200, merge commit `411e7b7114c9`.
+- **#105** (Termux/Groq onboarding handoff) — `mergeable=false` / `dirty`, isinya sudah tercakup oleh shared memory + `AGENTS.md`/`GROK.md`, dan langkah "pilih coding agent CLI eksternal" digantikan issue #163 (NEXUS CLI produk RADAR). Ditutup dengan alasan lengkap + daftar fakta unik yang dipertahankan (Termux sudah terpasang; key lama tidak disimpan, nama `RADAR-AI-DEVELOPER` belum dikonfirmasi; jangan tempel key di chat; read-only dulu; tanpa always-on claim) dan referensi pengganti. Histori/branch tidak dihapus; `main` tidak diubah.
+- **#160** dan **#159** awalnya `clean` dengan exact-head test/security sukses (`6f9ecfc`, `ddd94296`), tetapi menjadi `dirty` setelah #161 di-merge karena konflik pada dokumen bersama. Tidak di-merge dalam sesi ini; memerlukan pembaruan branch. Branch `#160` juga memiliki penulis aktif lain (perubahan worktree muncul saat sesi berjalan), jadi tidak disentuk.
+- **#153** (`959ff80`) dan **#115** (`4f96d6b`) tetap terbuka dan `dirty`; #153 memiliki exact-head test `45871293644` + security `45871293608` sukses tetapi belum diperbarui ke develop terbaru.
+- Jumlah non-draft menuju develop: 6 → 5 (setelah #161 merge) → **4** (setelah #105 close). Masih melebihi WIP 3, jadi **PR feat/nexus-cli tidak dibuka** sesuai instruksi BOS.
+
+### 152.3 Akar masalah konteks Groq
+- `runWorkspaceReview` mengirim `PROJECT` + `current_context` penuh pada tiga putaran, `discussion_transcript` akumulatif, dan seluruh transkrip ke sekretaris; tidak ada batas input. Request 14.721 token menabrak batas 8.000 TPM pada `openai/gpt-oss-120b`.
+
+### 152.4 Perubahan kode (branch `feat/nexus-cli`, worktree terpisah)
+- Baru: `lib/ai/context-budget.js` (budget keras 6.000 token, Estimasi `ceil(chars/4)`, `selectContext`, `truncateSafe`, `compactJson`, `budgetMessages`, `buildHandoffSummary`), `lib/ai/provider-errors.js` (klasifikasi 429/TPM/timeout/unavailable/auth/queue, pesan teredaksi), `lib/ai/provider-fallback.js` (hanya `openrouter/free` dan Groq `openai/gpt-oss-20b`, opt-in, tidak di-wire ke runtime), `src/nexus/handoff.mjs` (`/handoff` ringkas lintas sesi), `test/context-budget.test.js` (11 tes), `docs/nexus-context-budget.md`.
+- Diubah: `lib/ai/chat-completions.js`, `lib/ai/workspace.js` (budget diterapkan pada payload; retry TPM/429 sekali dengan budget setengah; error teredaksi), `src/nexus/cli.mjs` (perintah `/handoff`), `docs/nexus-cli-termux.md`, shared memory, dokumen ini.
+- Tidak ada perubahan: kontrak API `/api/ai/*`, dashboard, provider berbayar, worker/scheduler, order/withdrawal, secret, atau konfigurasi produksi. Satu NEXUS Core tetap dipakai; tidak ada backend/identitas AI kedua.
+
+### 152.5 Bukti dan batas
+- `node --test test/context-budget.test.js`: **11/11 pass**. `npm test`: **258/258 pass**, 0 fail (tidak ada regresi). `git diff --check`: clean. `npm run typecheck` lokal gagal karena `tsc` tidak tersedia di Termux; CI yang menjalankan strict typecheck.
+- Secret scan manual file baru: tidak ada kredensial nyata; string uji memakai placeholder sintetis.
+- **Tidak ada PR untuk perubahan ini** (WIP 4 > 3), belum ada CI exact-head dan Hostless Build/LIVE, belum ada verifikasi interaktif Termux oleh BOS, belum ada fallback otomatis yang aktif. Tidak ada klaim LIVE, always-on, atau provider berbayar.
+- Commit: `8acfdfda2459c217b4b881aaa93fdb882dfee12b`.
+- **NEXT TASK:** tunggu slot WIP (maksimal 3) — #160/#159 perlu pembaruan branch, #153 perlu rebase ke develop; setelah ≤2, buka PR `feat/nexus-cli` → `develop`, verifikasi exact-head test/typecheck/security, lalu selaraskan dashboard NEXUS Chat issue #162 dengan kontrak `/api/ai/command` yang sama.

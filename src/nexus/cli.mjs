@@ -5,11 +5,13 @@ import { createNexusClient } from './client.mts';
 import { createSessionStore, redact } from './session.mjs';
 import { createRepoContext } from './repo.mjs';
 import { createPolicyGateway } from './policy.mjs';
+import { compactHandoff } from './handoff.mjs';
 
 const HELP = `RADAR NEXUS — perintah:
   /help                  tampilkan bantuan ini
   /status                status NEXUS Core, provider, dan memory
   /memory                ringkasan memori dari AI Workspace
+  /handoff               ringkasan NEXUS ringkas untuk sesi berikutnya
   /sessions              daftar sesi lokal
   /new                   sesi baru
   /resume <id>           lanjutkan sesi
@@ -76,6 +78,16 @@ export async function main(argv = []) {
         }
         if (line === '/memory') {
           say(await client.memorySummary());
+          continue;
+        }
+        if (line === '/handoff') {
+          const handoffStatus = await client.status();
+          say(compactHandoff({
+            session, status: handoffStatus,
+            decisions: ['NEXUS CLI dan dashboard memakai satu NEXUS Core; bukan dua backend/identitas AI.'],
+            evidence: ['Rp0; tanpa paid provider/fallback; tanpa worker/scheduler/order/withdrawal.'],
+            next: ['Verifikasi interaktif Termux oleh BOS belum dilakukan.'],
+          }));
           continue;
         }
         if (line === '/sessions') {
