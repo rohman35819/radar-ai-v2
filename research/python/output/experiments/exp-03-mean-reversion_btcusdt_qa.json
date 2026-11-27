@@ -1,0 +1,19 @@
+{
+  "checks": {
+    "dataset_checksum": true,
+    "dataset_range_and_rows": true,
+    "expectancy_recomputed": true,
+    "max_drawdown_recomputed": true,
+    "net_not_above_gross": true,
+    "paper_only_safety_flags": true,
+    "profit_factor_recomputed": true,
+    "schema_version": true,
+    "signals_within_contract": true,
+    "trade_count_matches_ledger": true,
+    "validation_shape": true,
+    "win_rate_recomputed": true
+  },
+  "failed": [],
+  "note": "Automated independent recomputation; not human Divisi 05 sign-off.",
+  "passed": true
+}
