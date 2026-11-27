@@ -70,6 +70,16 @@ jobs:
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/migrations/20261124_radar_memory.sql
       - name: Verify memory RLS, privileges, provenance and proposal-only lifecycle
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/tests/20261124_radar_memory_smoke.sql
+      - name: Apply isolated NEXUS private foundation migration
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/20261127_0001_nexus_private_foundation.sql
+      - name: Verify NEXUS schema isolation, forced RLS and default-deny grants
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/tests/20261127_0001_nexus_private_foundation_smoke.sql
+      - name: Verify NEXUS migration rollback in disposable database
+        run: |
+          docker exec ${{ job.services.postgres.id }} createdb -U radar_test nexus_rollback
+          docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d nexus_rollback < supabase/nexus-migrations/20261127_0001_nexus_private_foundation.sql
+          docker exec ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d nexus_rollback -c "DROP SCHEMA nexus CASCADE"
+          docker exec ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d nexus_rollback -c "SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name='nexus') THEN 1 ELSE 1/0 END"
       - name: Hostless LIVE readiness and News probe (diagnostic only)
         if: github.head_ref == 'ops/hostless-live-check'
         run: npm run hostless-check
