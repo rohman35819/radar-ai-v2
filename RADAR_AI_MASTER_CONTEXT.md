@@ -3386,3 +3386,15 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Pengujian: `node --check public/app.js` lulus; `node --test test/top5-runtime.test.js` 3/3 pass; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
 - Status: perbaikan pada branch `fix/top5-price-label` dari `develop` `8ac4642`; perlu PR ke `develop` lalu rilis ke `main`. Hostless LIVE untuk perbaikan ini belum diverifikasi.
 - NEXT TASK: setelah deploy, ulangi reproduksi terhadap aset LIVE dan pastikan `renderAction()` menghasilkan kartu; lanjutkan QA klik browser nyata.
+
+
+## 139. KEBIJAKAN PENGGUNAAN DEEPSEEK SECARA ON-DEMAND — 27 NOVEMBER 2026
+
+- Keputusan BOS: DeepSeek dikesampingkan dari jalur kerja rutin karena kuota terbatas dan hanya digunakan sesekali untuk membantu.
+- Jalur pelaksanaan utama tetap Chief Strategy Advisor untuk strategi/audit/koordinasi dan Grok/Divisi 04 untuk implementasi serta riset yang ditugaskan; Direktur Utama mengoordinasikan integrasi.
+- DeepSeek berstatus konsultan spesialis on-demand, bukan blocker, dependency, reviewer wajib, atau worker yang diasumsikan selalu tersedia.
+- Gunakan DeepSeek hanya untuk pertanyaan sempit bernilai tinggi: second opinion teknis, audit algoritma/performa, pemeriksaan edge case, atau review independen ketika kuota tersedia dan manfaatnya jelas.
+- Sebelum meminta bantuan DeepSeek, siapkan konteks ringkas, file/commit relevan, pertanyaan spesifik, batasan, dan keluaran yang diharapkan agar penggunaan kuota efisien. Jangan mengirim secret, kredensial, atau data sensitif.
+- Jika DeepSeek tidak tersedia/kuota habis, pekerjaan aman tetap dilanjutkan oleh lead yang ditugaskan; catat keterbatasan bila review spesialis memang diperlukan. Jangan menunggu atau mengulang permintaan tanpa alasan.
+- Kebijakan biaya tetap: Rp0, tidak mengaktifkan layanan berbayar atau menambah resource.
+- NEXT TASK: lanjutkan backlog aktif Agent Platform/Knowledge dan audit Quant dengan kapasitas yang tersedia; panggil DeepSeek hanya jika ada kebutuhan spesialis yang konkret.
