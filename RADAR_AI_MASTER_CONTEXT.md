@@ -3386,3 +3386,14 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Pengujian: `node --check public/app.js` lulus; `node --test test/top5-runtime.test.js` 3/3 pass; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
 - Status: perbaikan pada branch `fix/top5-price-label` dari `develop` `8ac4642`; perlu PR ke `develop` lalu rilis ke `main`. Hostless LIVE untuk perbaikan ini belum diverifikasi.
 - NEXT TASK: setelah deploy, ulangi reproduksi terhadap aset LIVE dan pastikan `renderAction()` menghasilkan kartu; lanjutkan QA klik browser nyata.
+
+
+## 138. RADAR NEXUS PLATFORM BLUEPRINT — 27 NOVEMBER 2026
+
+- BOS meminta NEXUS dibangun sebaik mungkin sebagai platform AI milik RADAR, bukan hanya chatbot. Arah resmi: NEXUS menjadi intelligence + agent orchestration platform; model foundation tidak dilatih dari nol pada fase awal. Gunakan model/provider adapter yang dapat diganti di balik Model Gateway.
+- Dokumen arsitektur baru: `docs/RADAR_NEXUS_PLATFORM_BLUEPRINT.md` pada branch `docs/nexus-platform-blueprint`, commit `970dff0ee44b9afbbe778a312d4e3ab4f24c480f`.
+- Cakupan blueprint: NEXUS Experience (dashboard + CLI), API/control plane, Model Gateway, Agent Runtime Divisi 06, Knowledge & Memory Divisi 07, Tool/Permission Gateway, observability/audit, budget, kill switch, staged autonomy, data trust boundaries, free-first deployment topology, roadmap dan acceptance criteria.
+- Aturan utama: RADAR market/trading data dan NEXUS memory/agent data tetap terpisah; integrasi hanya melalui API terautentikasi. Publishable key boleh di client; Supabase secret/service-role dan provider secrets hanya backend. Tidak ada fallback provider berbayar tanpa persetujuan. Worker awal observe/propose; live trading/withdrawal tetap OFF.
+- Snapshot repo saat blueprint dibuat: `main` HEAD `f38d25a6203ab486d7170369e86874f838af627a`. PR #165 (storage foundation) dan #168 (dashboard chat pilot) masih open. PR #168 menyatakan tes belum dijalankan dan belum deploy; key masih dimasukkan saat runtime. Branch blueprint belum dibuat PR karena batas WIP aktif; jangan menambah PR sampai PR NEXUS yang ada dikonsolidasikan atau batas WIP diselesaikan oleh Executive Office.
+- Hostless environment-variable injection, status build/live, konfigurasi provider, dan runtime worker tidak diverifikasi. Tidak ada klaim worker/scheduler/otomasi aktif.
+- NEXT TASK: Divisi 06 audit queue/schema yang sudah ada di main/develop dan hindari duplikasi; Divisi 07 audit memory schema + RLS negative tests; Divisi 01 audit JWT/CORS/secrets; Divisi 02/04 benahi dashboard config agar key tidak diminta tiap kunjungan; Divisi 05 lakukan QA independen. Setelah WIP turun, ajukan blueprint untuk review/integrasi.
