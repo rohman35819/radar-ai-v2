@@ -122,6 +122,13 @@ Before any production data movement, rollback means disabling the API bridge and
 5. Division 05: disposable migration, isolation, API contract, backup/restore acceptance tests.
 6. Advisor: reconcile this ADR into the master context and advisor handoff after review of the complete current files.
 
+## Follow-up design artifact — 2026-11-27
+
+- Added [NEXUS database foundation design](radar-nexus-database-foundation.md) on the same documentation branch.
+- Design defines NEXUS-owned data boundaries, proposed private-schema tables, identity/RLS requirements, provenance-first retrieval, future task lifecycle, read-only API bridge boundary, Rp0 backup/restore controls, staged acceptance gates, and division backlog.
+- The design is proposal-only. No SQL migration has been created or applied; no runtime, API bridge, worker, or scheduler has been activated.
+- Lead: Division 07. Required reviewers: Divisions 01, 06 and 05. SQL deployment into the BOS NEXUS project remains a separate explicit approval gate.
+
 ## Change log
 
-- 2026-11-27: BOS approved separate RADAR and NEXUS persistent storage with two-way API interoperability. Recorded as an architecture decision; implementation remains pending.
+- 2026-11-27: BOS approved separate RADAR and NEXUS persistent storage with two-way API interoperability. NEXUS Supabase Free project provisioned and dashboard evidence recorded; logical database design added for review. SQL/runtime/API implementation remains pending.
