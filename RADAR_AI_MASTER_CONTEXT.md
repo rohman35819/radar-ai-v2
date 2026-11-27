@@ -3696,3 +3696,22 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### 149.3 NEXT TASK
 Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat hasil (menghindari data snooping pada 364 bar yang sama). Paper ledger/reconciliation tetap terkunci sampai strategi lolos `validation-v1` dan BOS menyetujui. Worker, live trading, withdrawal OFF; Rp0.
+
+---
+
+## 150. WINDOW-3 VOLATILITY BREAKOUT — 27 NOVEMBER 2026
+
+### 150.1 Pra-registrasi dan jendela ketiga
+- BOS memerintahkan satu hipotesis BTC/USDT yang substantif berbeda, riset-only, pada jendela ketiga non-overlapping, tanpa grid search/curve fitting.
+- `research/python/experiments/registry_window3_vol_breakout.json` first commit **`25d54774d9a7d45ef93a9e2c342d33a433ef52ca`** pada `2026-11-27T05:39:57Z`; data diambil `05:49:02Z` — setelah pra-registrasi. Penyesuaian struktural runner (`723e276`) tidak mengubah hipotesis, parameter, biaya, atau kriteria.
+- Jendela: BTCUSDT 1d, 2022-01-01→2022-12-31, 365 bar, endpoint gratis `data-api.binance.vision` (`startTime=1640995200000`), checksum `9173fa337a0dda12050f310a29667a527dcb8ac7dee9613820cb8d85c00c4ee7`. Non-overlap: `2022-12-31 < 2024-01-01 < 2025-11-27`.
+- Hipotesis `exp-08`: Donchian breakout 20 bar + ATR14 trailing stop 2× + time exit 10 bar. Berbeda dari SMA/ROC/z-score/RSI karena memakai high/low, true range, dan exit volatility/time. Satu konfigurasi tetap; tidak ada grid search.
+- Biaya eksplisit: fee 5 + slippage 5 + **spread 5 bps/sisi** = 15 bps/sisi (setara total lama 7,5+7,5), funding 0. `validation-v1` tidak diubah; default spread 0 menjaga hasil lama identik.
+
+### 150.2 Validasi data dan hasil
+- Integritas: accepted, 0 duplikat, 0 missing interval, 0 pelanggaran OHLC, timestamp UTC strictly increasing. Freshness: age 34.253,845 jam, `historical_research_only=true`, `live_ready=false` — historis disengaja, tidak diklaim live.
+- OOS 2022-10-01→12-31: gross −7,541%, net **−7,818%**, DD 12,854%, 2 trade, PF **0,225**, expectancy −0,026%, win rate 50%, Sharpe −1,517, Sortino −0,492, exposure 13,043%, turnover 4; buy&hold net −14,593%, no-trade 0%. Full-sample net −15,375%, DD 20,675%, buy&hold −65,440%. Walk-forward **1/6 positif** → `accepted_for_paper_candidate=false`, alasan `walk_forward_not_majority_positive`. **REJECTED**, bukan `VALIDATION CANDIDATE`; tidak ada klaim profit.
+- QA `verify_report.py` **passed**, dua kali run identik pada semua blok metrik (`REPRODUCIBLE=true`). Python **28/28**, npm **241/241**, strict TS exit 0. Karena WIP non-draft ke develop = 4 (#159, #153, #115, #105), **tidak ada PR baru**; branch dipindah ke prefix `exp/*` agar CI push berjalan. Detail: `docs/quant-window3-vol-breakout.md`, artifact `research/python/output/experiments_window3/`.
+
+### 150.3 NEXT TASK
+Jika riset lanjut: pra-registrasikan hipotesis berbeda pada jendela keempat sebelum melihat data; jangan tuning pada tiga jendela yang ada. Paper ledger/reconciliation tetap terkunci sampai lolos `validation-v1` dan persetujuan BOS. Worker, live trading, withdrawal OFF; Rp0.

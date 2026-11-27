@@ -63,10 +63,10 @@ def run_one(
         fee_bps=fee_bps,
         slippage_bps=slippage_bps,
         spread_bps=spread_bps,
-        funding_bps_per_day=criteria['funding_bps_per_day'],
-        position_fraction=criteria['position_fraction'],
-        stop_loss_pct=criteria['stop_loss_pct'],
-        max_drawdown_stop_pct=criteria['max_drawdown_stop_pct'],
+        funding_bps_per_day=criteria.get('funding_bps_per_day', costs.get('funding_bps_per_day', 0.0)),
+        position_fraction=criteria.get('position_fraction', costs.get('position_fraction', 1.0)),
+        stop_loss_pct=criteria.get('stop_loss_pct', costs.get('stop_loss_pct', 0.10)),
+        max_drawdown_stop_pct=criteria.get('max_drawdown_stop_pct', costs.get('max_drawdown_stop_pct', 0.30)),
     )
     validation = run_validation(dataset, base, list(experiment['grid']))
     selected_params = validation['selected_parameters']['params']
@@ -87,7 +87,7 @@ def run_one(
         'id': experiment['id'],
         'strategy': experiment['strategy'],
         'symbol': symbol,
-        'hypothesis': experiment['hypothesis'],
+        'hypothesis': experiment.get('hypothesis', experiment.get('name', '')),
         'criteria_version': registry['criteria_version'],
         'criteria': criteria,
         'provenance': dataset.provenance,

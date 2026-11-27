@@ -54,7 +54,7 @@
 
 - Preserve all existing menus/routes and truthful-data behavior (Top 5, Radar Intelligence capability matrix, stale-data banners). Never show demo numbers as live. No withdrawal capability; live trading OFF. Rp0 hard budget: no paid service, card, VPS or production DB provisioning without BOS approval. Keep secrets server-side and out of Git/chat/frontend/logs.
 - Hostless Build/LIVE remains unverified in this session. Storage/EROFS decision still pending BOS. Dependency CVE coverage is unavailable because the repo has no supported dependency manifest; Trivy secret scan is not a CVE scan.
-
+- **Window-3 research-only experiment (branch `exp/vol-breakout-window3`, no PR — WIP 4 non-draft):** pre-registered `registry_window3_vol_breakout.json` at `25d5477` / `2026-11-27T05:39:57Z`, BTCUSDT 2022-01-01→12-31 fetched 05:49Z from free `data-api.binance.vision`, checksum `9173fa...c4ee7`, 365 bars, zero duplicates/gaps/OHLC issues, historical-only freshness. One fixed volatility-breakout config (20-bar Donchian + ATR14 trailing 2× + 10-bar time exit), explicit 5+5+5 bps costs, `validation-v1` unchanged. REJECTED: OOS net −7.82%, 2 trades, PF 0.225, WF 1/6; buy&hold −14.59%, no-trade 0%. QA passed, two runs deterministic. Python 28/28, npm 241/241, tsc 0. No profit claim; paper ledger/worker/live/withdrawal OFF, Rp0. Doc: `docs/quant-window3-vol-breakout.md`.
 
 ## Engineering governance
 - Permanent 12-area policy: `docs/architecture/engineering-constitution.md`; all agents/contributors apply it alongside `AGENTS.md` and the master context.

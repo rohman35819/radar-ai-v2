@@ -1,0 +1,165 @@
+{
+  "criteria_version": "validation-v1",
+  "registry_version": "3.0.0-window3-vol-breakout",
+  "results": [
+    {
+      "acceptance_reasons": [
+        "walk_forward_not_majority_positive"
+      ],
+      "accepted_for_paper_candidate": false,
+      "benchmarks": {
+        "buy_hold_net_pct": -65.440211,
+        "no_trade_return_pct": 0.0
+      },
+      "cost_assumptions": {
+        "equivalence": "15 bps per side equals validation-v1's 7.5 fee + 7.5 slippage; spread is now explicit without changing effective cost or criteria",
+        "fee_bps_per_side": 5.0,
+        "funding_bps_per_day": 0.0,
+        "max_drawdown_stop_pct": 0.3,
+        "position_fraction": 1.0,
+        "slippage_bps_per_side": 5.0,
+        "spread_bps_per_side": 5.0,
+        "stop_loss_pct": 0.1,
+        "total_bps_per_side": 15.0
+      },
+      "criteria": {
+        "benchmarks": [
+          "buy_and_hold_net",
+          "no_trade_0_pct"
+        ],
+        "max_out_of_sample_drawdown_pct": 25.0,
+        "min_out_of_sample_trades": 2,
+        "note": "Identical to all prior registries; no threshold is changed.",
+        "train_validation_oos_split": [
+          0.5,
+          0.25,
+          0.25
+        ],
+        "validation_selection_must_be_accepted": true,
+        "walk_forward_positive_folds_must_be_majority": true,
+        "walk_forward_step_bars": 40,
+        "walk_forward_test_bars": 40,
+        "walk_forward_train_bars": 120
+      },
+      "criteria_version": "validation-v1",
+      "decision": "reject",
+      "experiment_schema": "quant-experiment.v1",
+      "freshness": {
+        "age_hours_at_evaluation": 34253.845,
+        "dataset_end": "2022-12-31T00:00:00Z",
+        "evaluated_at": "2026-11-27T05:50:42.387057Z",
+        "historical_research_only": true,
+        "integrity_accepted": true,
+        "issues": [],
+        "live_ready": false,
+        "note": "Freshness is recorded as provenance for historical research, not a claim of live market data.",
+        "retrieval_after_end_hours": 34253.817,
+        "retrieved_at": "2026-11-27T05:49:02.526738Z",
+        "schema_version": "1.0.0"
+      },
+      "full_sample_metrics": {
+        "bars": 365,
+        "buy_hold_gross_pct": -65.336376,
+        "buy_hold_net_pct": -65.440211,
+        "cost_bps_per_turn": 15.0,
+        "end": "2022-12-31T00:00:00Z",
+        "expectancy_pct_per_trade": -0.014401,
+        "exposure_pct": 10.684932,
+        "fee_bps_per_side": 5.0,
+        "funding_bps_per_day": 0.0,
+        "gross_return_pct": -14.480578,
+        "interval": "1d",
+        "kill_switch_triggered": false,
+        "max_drawdown_pct": 20.674987,
+        "max_drawdown_stop_pct": 0.3,
+        "net_return_pct": -15.374501,
+        "no_trade_return_pct": 0.0,
+        "position_changes": 14,
+        "position_fraction": 1.0,
+        "profit_factor": 0.630291,
+        "sharpe": -0.56073,
+        "slippage_bps_per_side": 5.0,
+        "sortino": -0.181764,
+        "start": "2022-01-01T00:00:00Z",
+        "stop_loss_pct": 0.1,
+        "total_trades": 7,
+        "turnover_events": 14,
+        "win_rate_pct": 42.857143
+      },
+      "hypothesis": "Volatility-expansion Donchian breakout with ATR trailing stop and time exit",
+      "id": "exp-08-volatility-breakout-window3",
+      "limitations": [
+        "Historical backtest is not a guarantee of future profit.",
+        "No exchange order, withdrawal, transfer, live trading or paid service is used.",
+        "Costs are assumptions (fee + slippage per side); funding is zero for spot.",
+        "Intrabar stop fills are simplified and may differ from real fills.",
+        "One asset and one interval per experiment; results are not generalisable."
+      ],
+      "out_of_sample_metrics": {
+        "bars": 92,
+        "buy_hold_gross_pct": -14.336685,
+        "buy_hold_net_pct": -14.59329,
+        "cost_bps_per_turn": 15.0,
+        "end": "2022-12-31T00:00:00Z",
+        "expectancy_pct_per_trade": -0.026041,
+        "exposure_pct": 13.043478,
+        "fee_bps_per_side": 5.0,
+        "funding_bps_per_day": 0.0,
+        "gross_return_pct": -7.541037,
+        "interval": "1d",
+        "kill_switch_triggered": false,
+        "max_drawdown_pct": 12.85356,
+        "max_drawdown_stop_pct": 0.3,
+        "net_return_pct": -7.818206,
+        "no_trade_return_pct": 0.0,
+        "position_changes": 4,
+        "position_fraction": 1.0,
+        "profit_factor": 0.224711,
+        "sharpe": -1.516787,
+        "slippage_bps_per_side": 5.0,
+        "sortino": -0.491807,
+        "start": "2022-10-01T00:00:00Z",
+        "stop_loss_pct": 0.1,
+        "total_trades": 2,
+        "turnover_events": 4,
+        "win_rate_pct": 50.0
+      },
+      "provenance": {
+        "checksum_sha256": "9173fa337a0dda12050f310a29667a527dcb8ac7dee9613820cb8d85c00c4ee7",
+        "data_kind": "public_api",
+        "end": "2022-12-31T00:00:00Z",
+        "interval": "1d",
+        "retrieved_at": "2026-11-27T05:49:02.526738Z",
+        "rows": 365,
+        "schema_version": "1.0.0",
+        "source": "https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=365&startTime=1640995200000",
+        "start": "2022-01-01T00:00:00Z",
+        "symbol": "BTCUSDT"
+      },
+      "quality": {
+        "accepted": true,
+        "duplicate_timestamps": 0,
+        "end": "2022-12-31T00:00:00Z",
+        "interval": "1d",
+        "issues": [],
+        "missing_intervals": 0,
+        "ohlcv_violations": 0,
+        "rows": 365,
+        "start": "2022-01-01T00:00:00Z"
+      },
+      "report_path": "exp-08-volatility-breakout-window3_btcusdt_report.json",
+      "selected_params": {
+        "atr_multiple": 2.0,
+        "atr_period": 14,
+        "lookback_period": 20,
+        "max_hold_bars": 10
+      },
+      "strategy": "volatility_breakout",
+      "symbol": "BTCUSDT",
+      "walk_forward": {
+        "positive": 1,
+        "total": 6
+      }
+    }
+  ]
+}
