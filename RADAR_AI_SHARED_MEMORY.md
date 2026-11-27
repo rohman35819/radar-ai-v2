@@ -52,3 +52,11 @@
 
 - Proven routing bug (26 Nov): Cloudflare edge served stale `/app.js` (cf-cache-status HIT, max-age 14400) alongside new index.html, so new menus fell through to System Health. Fix: version dashboard assets `?v=v2.3.1` in index.html and SW precache, shell v15, keeping QA's network-first SW. 211/211 tests pass. Needs release to main + LIVE recheck.
 - Second proven bug (26 Nov): `renderAction()` threw `ReferenceError: priceLabel is not defined`, leaving Top 5 page empty even after CDN fix. Added the helper in `public/app.js` and a runtime regression test (`test/top5-runtime.test.js`, 3 tests) that actually executes action/intel renderers. 213/213 tests pass. Needs release + LIVE re-verification.
+
+
+## NEXUS storage foundation (27 Nov 2026)
+- BOS provisioned separate Supabase Free project `radar-nexus-core` (ref `zhvznjcsxrtybqcpbryu`); never store credentials in Git/chat. RADAR and NEXUS remain separate databases connected only by authenticated versioned APIs. No paid resources.
+- PR #165 on branch `docs/radar-nexus-separated-storage-decision` contains the ADR, NEXUS database design, draft migration `supabase/nexus-migrations/20261127_0001_nexus_private_foundation.sql` (10 tables, private schema, RLS forced, default-deny), and OpenAPI draft `docs/api/radar-nexus-v1-openapi.yaml` (read-only market context + bounded analysis request/status).
+- Migration is NOT executed or PostgreSQL-validated; no API server, runtime persistence, worker, scheduler, or offline automation is active. No Hostless Build/LIVE verification.
+- Exact-head checks on prior PR head `75f1c0e4b14aa2673c284279ae4846aafa8434b2`: test run 45989230338 success; security run 45989230225 success. Existing PostgreSQL steps did not include the new NEXUS migration. PR currently open; no reviews recorded at last check. Recheck exact head after each commit.
+- Next: implement dedicated disposable PostgreSQL migration test (apply/reapply/rollback, schema/constraints, default-deny access) and OpenAPI schema validation; then rerun exact-head CI/security. Never apply SQL to BOS project without separate approval.
