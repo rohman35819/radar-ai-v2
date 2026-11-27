@@ -1,6 +1,6 @@
 {
   "registry_version": "1.0.0",
-  "registered_at": "2026-11-27T00:00:00Z",
+  "registered_at": "2026-11-26T19:28:03Z",
   "owner": "BOS",
   "lead": "Grok / Divisi 04",
   "purpose": "Pre-registered quant experiments. Hypotheses, grids and decision rules are fixed BEFORE results are observed. Failed experiments are retained and never rewritten to pass.",
@@ -71,6 +71,19 @@
         {"trend_period": 100, "rsi_period": 14, "rsi_entry": 40.0, "rsi_exit": 65.0}
       ],
       "symbols": ["BTCUSDT", "ETHUSDT"],
+      "status": "registered"
+    },
+    {
+      "id": "exp-05-regime-aware-fast",
+      "strategy": "regime_aware",
+      "registered_at": "2026-11-26T19:38:43Z",
+      "hypothesis": "Shorter trend and RSI lookbacks increase signal frequency enough to satisfy the minimum OOS trade count while keeping pullback entries and RSI exits. Criteria and costs are unchanged from criteria_version validation-v1.",
+      "grid": [
+        {"trend_period": 10, "rsi_period": 5, "rsi_entry": 30.0, "rsi_exit": 60.0},
+        {"trend_period": 20, "rsi_period": 7, "rsi_entry": 35.0, "rsi_exit": 60.0},
+        {"trend_period": 30, "rsi_period": 10, "rsi_entry": 40.0, "rsi_exit": 65.0}
+      ],
+      "symbols": ["BTCUSDT"],
       "status": "registered"
     }
   ]

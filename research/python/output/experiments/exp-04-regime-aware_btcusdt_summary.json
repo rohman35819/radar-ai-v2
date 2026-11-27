@@ -112,7 +112,7 @@
     "rows": 364,
     "start": "2025-11-27T00:00:00Z"
   },
-  "report_path": "/data/data/com.termux/files/home/radar-ai-v2/research/python/output/experiments/exp-04-regime-aware_btcusdt_report.json",
+  "report_path": "/data/data/com.termux/files/usr/tmp/opencode/quant157/research/python/output/experiments/exp-04-regime-aware_btcusdt_report.json",
   "selected_params": {
     "rsi_entry": 35.0,
     "rsi_exit": 55.0,
