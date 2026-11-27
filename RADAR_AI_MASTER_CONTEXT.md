@@ -3780,3 +3780,23 @@ In-sample 60%, OOS 40%; 4 fold × 2 aset; biaya 15 bps/sisi. F1: net **−2,598%
 
 ### 156.4 Dampak scanner dan NEXT TASK
 Fitur baru hanya menambah bukti penolakan pada scanner: `NO_TRADE` tetap dipertahankan bila likuiditas/volatilitas buruk. Jalur C tidak mengubah output dashboard dengan angka tak berdasar. Branch `exp/quant-feature-research`, WIP 5 → tanpa PR/merge. Python **46/46**, npm **241/241**, strict TS exit 0. NEXT: hipotesis mekanisme baru dengan data yang benar-benar berbeda (misalnya konfirmasi multi-venue atau struktur intraday yang tersedia gratis), atau evaluasi ML ringan hanya jika ada kandidat dengan sinyal OOS positif; Rp0, worker/ledger/live/withdrawal OFF.
+
+---
+
+## 157. COMMAND 20 — BINANCE-FIRST SEASON 1 — 27 NOVEMBER 2026
+
+### 157.1 Dashboard/backend Binance-only
+Branch `feat/binance-only-season1`, commit **`bd05a7c129f6d11486597ecbbc1c5971e67e15af`**. Perubahan:
+- `public/trading.html`: Bybit bukan tab aktif (tombol disabled, label `DEFERRED · Season 1`), select exchange hanya Binance, teks intro/roadmap Binance-only.
+- `public/trading.js`: `exchangeCopy` hanya Binance; `selectExchange()` memaksa `Binance`; kode Bybit lama tetap ada tetapi tidak terjangkau UI (DEFERRED).
+- `server.js`: `ACTIVE_EXCHANGE='binance'`; `/api/exchanges/status` mengembalikan `active_exchange=binance` dan bybit `{configured:false, mode:'deferred', deferred:true, products:[]}`; route akun dan market menolak bybit dengan 403 `EXCHANGE_DEFERRED` (404 untuk exchange lain); market memakai exchange aktif sehingga tidak ada fallback diam-diam.
+- `lib/exchanges.js`: `status().bybit` ditandai deferred; adapter Bybit tidak dihapus. `.env.example` variabel Bybit dikomentari DEFERRED.
+- `test/binance-only.test.js` (2 tes) membuktikan UI hanya Binance dan route bybit ditolak 403; `npm test` 243/243 pada branch dashboard.
+
+### 157.2 Riset intraday Binance (dari `c8422cc`)
+Branch `exp/binance-quant-intraday`, pra-registrasi commit **`85e4a4735ee334597aee4c4d2c5be5089efa8749`** pukul `14:27:54Z` **sebelum** data diambil (`retrieved_at` 14:28:49/51Z). Registry `research/python/experiments/binance_intraday_registry.json`: I1 volatility-transition (expansi vol dari kontraksi + trend SMA50), I2 volume-regime confirmation (volume z24 ≥2 + perubahan regime vol), parameter tetap, tanpa grid.
+Data: BTCUSDT+ETHUSDT 4h Binance, 1000 bar, 2026-06-01→2026-11-14, checksum di sidecar. Split 60/40, 4 fold × 2 aset, biaya 15 bps/sisi.
+Hasil: I1 net rata-rata **−0,785%**, 1 trade, DD 7,09%, 0/8 fold positif → **DITOLAK**; I2 0 trade, net 0%, 0/8 → **DITOLAK**. Baseline no-trade 0%; buy&hold BTC −16,46%, ETH −26,13%. Tidak ada peningkatan OOS, tidak ada promosi, tidak ada klaim profit. Artifact `research/python/output/binance_intraday/report.json`.
+
+### 157.3 Status dan NEXT TASK
+WIP non-draft ke develop = 5, sehingga tanpa PR baru/merge. Python **50/50**, npm **241/241**, strict TS exit 0. Security scan untuk branch `exp/*` tidak otomatis berjalan; tidak ada klaim. Worker/paper ledger/live/withdrawal OFF; Rp0. NEXT: hipotesis dengan data Binance benar-benar baru (misalnya konfirmasi multi-timeframe 1h/4h dengan provenance) atau evaluasi ML ringan hanya setelah ada kandidat OOS positif; scanner tetap `NO_TRADE` bila data kurang.

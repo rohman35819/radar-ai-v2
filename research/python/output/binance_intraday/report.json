@@ -1,0 +1,304 @@
+{
+  "baselines": {
+    "BTCUSDT": {
+      "buy_hold_net_pct": -16.456044,
+      "no_trade_net_pct": 0.0
+    },
+    "ETHUSDT": {
+      "buy_hold_net_pct": -26.130267,
+      "no_trade_net_pct": 0.0
+    }
+  },
+  "criteria": {
+    "benchmarks": [
+      "no_trade_0_pct",
+      "buy_and_hold_net",
+      "prior_trend_score_scan"
+    ],
+    "chronological_split": [
+      0.6,
+      0.4
+    ],
+    "costs_bps_per_side": 15,
+    "funding_bps_per_day": 0,
+    "max_oos_drawdown_pct": 25.0,
+    "min_oos_trades": 2,
+    "no_grid_search": true,
+    "promotion": "only if OOS net > no-trade and walk-forward majority positive; no relaxation",
+    "validation_v1_unchanged": true,
+    "walk_forward": "rolling forward segments on later 40%"
+  },
+  "data_provenance": {
+    "BTCUSDT": {
+      "checksum_sha256": "c4ebf6d1c21d83644aaa8e40cca53507c5b43baf6d91703869db6ceec5684a33",
+      "data_kind": "public_api",
+      "end": "2026-11-14T12:00:00Z",
+      "interval": "4h",
+      "retrieved_at": null,
+      "rows": 1000,
+      "schema_version": "1.0.0",
+      "source": "public",
+      "start": "2026-06-01T00:00:00Z",
+      "symbol": "BTCUSDT"
+    },
+    "ETHUSDT": {
+      "checksum_sha256": "efa55295b60d8eb45bb44c8da4508df57698c6cec2513f35bde059bc80c62093",
+      "data_kind": "public_api",
+      "end": "2026-11-14T12:00:00Z",
+      "interval": "4h",
+      "retrieved_at": null,
+      "rows": 1000,
+      "schema_version": "1.0.0",
+      "source": "public",
+      "start": "2026-06-01T00:00:00Z",
+      "symbol": "ETHUSDT"
+    }
+  },
+  "folds": [
+    {
+      "end": 650,
+      "start": 600,
+      "symbols": {
+        "BTCUSDT": {
+          "I1": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          },
+          "I2": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          }
+        },
+        "ETHUSDT": {
+          "I1": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          },
+          "I2": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          }
+        }
+      }
+    },
+    {
+      "end": 750,
+      "start": 700,
+      "symbols": {
+        "BTCUSDT": {
+          "I1": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          },
+          "I2": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          }
+        },
+        "ETHUSDT": {
+          "I1": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          },
+          "I2": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          }
+        }
+      }
+    },
+    {
+      "end": 850,
+      "start": 800,
+      "symbols": {
+        "BTCUSDT": {
+          "I1": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          },
+          "I2": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          }
+        },
+        "ETHUSDT": {
+          "I1": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          },
+          "I2": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          }
+        }
+      }
+    },
+    {
+      "end": 950,
+      "start": 900,
+      "symbols": {
+        "BTCUSDT": {
+          "I1": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          },
+          "I2": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          }
+        },
+        "ETHUSDT": {
+          "I1": {
+            "expectancy_pct": -6.28292,
+            "exposure_pct": 4.0,
+            "gross_return_pct": -6.28292,
+            "max_drawdown_pct": 7.090212,
+            "net_return_pct": -6.28292,
+            "profit_factor": 0.0,
+            "trades": 1,
+            "turnover": 2,
+            "win_rate_pct": 0.0
+          },
+          "I2": {
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "trades": 0,
+            "turnover": 0,
+            "win_rate_pct": 0.0
+          }
+        }
+      }
+    }
+  ],
+  "generated_at": "2026-11-27T14:30:20.340947Z",
+  "limitations": [
+    "4h OHLCV only; no historical order book or options data.",
+    "No live order, ledger or reconciliation; results are historical simulations."
+  ],
+  "registry_version": "binance-intraday-1.0",
+  "schema_version": "binance-intraday-experiment.v1",
+  "split": {
+    "in_sample_bars": 600,
+    "oos_bars": 400
+  },
+  "summary": {
+    "I1": {
+      "accepted": false,
+      "avg_net_pct": -0.785365,
+      "max_drawdown_pct": 7.090212,
+      "oos_trades": 1,
+      "positive_folds": 0,
+      "total_folds": 8
+    },
+    "I2": {
+      "accepted": false,
+      "avg_net_pct": 0.0,
+      "max_drawdown_pct": 0.0,
+      "oos_trades": 0,
+      "positive_folds": 0,
+      "total_folds": 8
+    }
+  }
+}

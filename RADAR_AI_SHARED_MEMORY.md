@@ -42,10 +42,10 @@
 
 ## Next actions — verified 27 November 2026
 - `main` = `f38d25a`, `develop` = `411e7b7`. WIP non-draft toward develop = 5; no new PR/merge; Rp0.
-- No validated strategy; no profit claim. PR #160 human review + ADR-002 BLOCKED_FOR_BOS. Divisi 01–07 INACTIVE for manual ops.
-- Command 19: public L2 depth snapshot reachable at data-api.binance.vision but no reproducible historical order book; depth/imbalance actual DEFERRED (doc `docs/order-book-source-audit.md`). Pre-registered F1 vol-conditioned reversion / F2 volume transition at `fe46c45` before fetching 2023 BTC/ETH daily data. Results: F1 -2.60% (2/8 folds), F2 -0.35% (1/8), both rejected; no-trade 0%, buy&hold +44%/+24%. Python 46/46. Artifact `research/python/output/feature_research/report.json`.
-- NEXT TASK: genuinely new mechanism with different free data or light ML only after positive OOS candidate; no grid reuse; no worker/ledger/live/withdrawal.
-- NEXT TASK: find genuinely public free order-book source with provenance or ML feature study with walk-forward + no-trade baseline; no worker/ledger/live/withdrawal; Rp0.
+- Command 20: Binance-only Season 1. Dashboard/backend branch `feat/binance-only-season1` commit `bd05a7c`: Bybit UI DEFERRED, select only Binance, server 403 EXCHANGE_DEFERRED for bybit routes, status active_exchange=binance, no fallback; `test/binance-only.test.js` + npm 243/243 on that branch.
+- Binance intraday research branch `exp/binance-quant-intraday`: pre-registered I1 vol-transition / I2 volume-regime at `85e4a47` before 4h BTC/ETH data fetch; 1000 bars, 2026-06-01→11-14. I1 -0.79% 1 trade 0/8 folds; I2 zero trades; both rejected vs no-trade 0% and buy&hold negative. Python 50/50. Artifact `research/python/output/binance_intraday/report.json`.
+- No validated strategy/profit claim. PR #160 human review + ADR-002 BLOCKED_FOR_BOS. Divisi 01–07 INACTIVE. Worker/paper ledger/live/withdrawal OFF.
+- NEXT TASK: new Binance-only mechanism with genuinely new reproducible data or light ML only after positive OOS candidate; no grid reuse; Rp0.
 - Season 1 walk-forward (5 folds): 3 cross-asset candidates, all net negative after costs (-7.0%, -9.3%, -11.0%), 2 NO_TRADE; artifact `research/python/output/season1_walkforward_report.json`. No promotion.
 - NEXT TASK: new quantum mechanism/evaluation on another free dataset or ML feature study with walk-forward + no-trade baseline; no ledger/worker/live/withdrawal; Rp0.
 
