@@ -3696,3 +3696,23 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### 149.3 NEXT TASK
 Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat hasil (menghindari data snooping pada 364 bar yang sama). Paper ledger/reconciliation tetap terkunci sampai strategi lolos `validation-v1` dan BOS menyetujui. Worker, live trading, withdrawal OFF; Rp0.
+
+---
+
+## 150. FRESH 2024 HOLDOUT EXPERIMENTS — 27 NOVEMBER 2026
+
+### 150.1 Pra-registrasi dan data
+- Branch `feat/quant-holdout-experiment` dari `develop` `6b278cc` (setelah PR #156, #157, #158 di-merge). Registry `research/python/experiments/registry_holdout_v2.json` di-commit `eb51c77` pada `2026-11-27T05:23:58Z` **sebelum** data 2024 diambil (`retrieved_at` 05:24:50–51Z) dan sebelum hasil ada.
+- Jendela non-overlapping: 2024-01-01 → 2024-12-30, 365 candle harian BTCUSDT dan ETHUSDT dari endpoint gratis `data-api.binance.vision` dengan `startTime=1704067200000`. `fetch_ohlcv.py` kini mendukung `--start-time` (ISO UTC atau epoch ms). Provenance lengkap di sidecar.
+- Dua keluarga strategi diuji ulang dengan **grid yang persis sama** seperti sebelumnya (tanpa tuning baru): `exp-06` trend+momentum (20/5, 50/10, 100/20), `exp-07` regime aware (20/RSI7, 50/RSI14, 100/RSI14). Kriteria `validation-v1` tidak diubah.
+
+### 150.2 Hasil — semua DITOLAK
+- exp-06 BTC: OOS **+45,997%**, gross +47,761%, DD 11,27%, 8 trade, PF 2,869, expectancy +0,0259%, Sharpe 2,69, Sortino 3,13, exposure 56,52%, turnover 16; full +34,394%; buy&hold **+109,405%**; WF 3/6 → `walk_forward_not_majority_positive`.
+- exp-06 ETH: OOS **−33,550%**, DD 33,55%, 9 trade, PF 0,436, Sharpe −2,64; full **+72,368%**; buy&hold +42,505%; WF 3/6 → `oos_drawdown_limit` + walk-forward. Ini bukti kuat bahwa full-sample net saja menyesatkan.
+- exp-07 BTC: OOS +8,611%, 1 trade, PF null, exposure 1,09%, WF 3/6; exp-07 ETH: OOS 0%, 0 trade, WF 1/6 → `oos_too_few_trades` + `validation_selection_rejected` + walk-forward. No-trade mengalahkan exp-07 ETH.
+- Tidak ada strategi menjadi `VALIDATION CANDIDATE`. Tidak ada kriteria yang dilonggarkan, grid diubah setelah hasil, atau aset dipilih untuk promosi. SOL tidak diuji.
+- QA independen `verify_report.py`: **4/4**; Python **25/25**, npm **241/241**, strict TS exit 0. Laporan lengkap: `docs/quant-holdout-results.md`; artifact: `research/python/output/experiments_holdout_v2/`.
+- PR untuk hasil ini dibuka ke `develop` sebagai pengecualian P0 (WIP non-draft = 3 sebelum PR). CI exact-head wajib diverifikasi; tidak ada merge/deploy/worker/live/withdrawal oleh sesi ini.
+
+### 150.3 NEXT TASK
+Jika riset dilanjutkan: pra-registrasikan hipotesis **benar-benar berbeda** pada jendela non-overlapping ketiga sebelum melihat hasil. Jangan tuning pada dua sampel yang sudah dipakai. Paper ledger terkunci sampai lolos `validation-v1` + persetujuan BOS. Worker/live/withdrawal OFF; Rp0.
