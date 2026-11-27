@@ -3741,5 +3741,8 @@ BOS menetapkan Season 1 hanya Quantum Trading. Agent Platform, HMAC, ADR-002, Di
 ### 154.3 Hasil eksperimen nyata
 Pada public BTC/ETH 1d (index 250, evaluasi 2026-11-25): BTC regime `FLAT` skor 0,0103, ETH `LOW_VOL_UP` skor 0,0904 ⇒ scan **`NO_TRADE`** (`CROSS_ASSET_CONFIRMATION_FAILED`), plan `NO_TRADE`, paper sim 0 trade / 0% net / 0% DD. Artifact: `research/python/output/season1_scan_report.json`. Tidak ada klaim profit; hasil gagal/NO_TRADE dipertahankan sebagai bukti.
 
+### 154.3a Walk-forward scan/sim (held-out forward bars)
+Lima fold scan kausal pada index 250/270/290/310/330 dengan simulasi maju dari open bar tersebut: **3 `SCAN_CANDIDATE`, 2 `NO_TRADE`**. Semua kandidat menghasilkan net negatif setelah 15 bps/sisi: −7,044% (32 trade), −9,342% (41 trade), −11,015% (40 trade); dua fold NO_TRADE net 0%. Tidak ada yang dipromosikan; bukti `research/python/output/season1_walkforward_report.json`. Interpretation: konfirmasi lintas-aset memang menyaring regime, tetapi Tiered ATR plan dengan re-entry sering kalah oleh biaya; bukan edge.
+
 ### 154.4 NEXT TASK Quantum
 Uji mekanisme scan dengan jendela/data publik lain tanpa mengulang eksperimen gagal, atau perluasan ML feature/evaluation dengan walk-forward dan baseline no-trade—tetap Python riset, Rp0, tanpa paper ledger operasional, worker, live order, transfer atau withdrawal.

@@ -46,6 +46,7 @@
 - Capability truth: market adapters, AI Council, Agent Platform schema, periodic Actions worker, shared memory exist. No validated strategy across 5 windows/16 daily + 6 M5 runs; no profit claim. See `docs/quant-cross-window-evidence-audit.md`.
 - PR #160 open at `c2b03f2`, exact-head CI/security success, NOT merged; human review BLOCKED_FOR_BOS (no CODEOWNERS/team/independent collaborator). ADR-002 DRAFT/BLOCKED_FOR_BOS. Divisi 01–07 INACTIVE for manual ops until BOS reactivation.
 - Season 1 quantum slice on `exp/quantum-season1`: cross-asset BTC+ETH regime scan + ATR tiered trade plan + in-memory paper sim with explicit costs; scan returned NO_TRADE on real fixtures (BTC FLAT, ETH LOW_VOL_UP). Python 36/36, npm 241/241, tsc 0. Artifact `research/python/output/season1_scan_report.json`.
+- Season 1 walk-forward (5 folds): 3 cross-asset candidates, all net negative after costs (-7.0%, -9.3%, -11.0%), 2 NO_TRADE; artifact `research/python/output/season1_walkforward_report.json`. No promotion.
 - NEXT TASK: new quantum mechanism/evaluation on another free dataset or ML feature study with walk-forward + no-trade baseline; no ledger/worker/live/withdrawal; Rp0.
 
 - Preserve all existing menus/routes and truthful-data behavior (Top 5, Radar Intelligence capability matrix, stale-data banners). Never show demo numbers as live. No withdrawal capability; live trading OFF. Rp0 hard budget: no paid service, card, VPS or production DB provisioning without BOS approval. Keep secrets server-side and out of Git/chat/frontend/logs.

@@ -1,0 +1,79 @@
+{
+  "candidates": 3,
+  "folds": [
+    {
+      "btc_regime": "FLAT",
+      "end_index": 250,
+      "eth_regime": "LOW_VOL_UP",
+      "evaluated_at": "2026-08-03T00:00:00Z",
+      "fold": 1,
+      "kill": false,
+      "paper_dd_pct": 0.0,
+      "paper_net_pct": 0.0,
+      "plan": "NO_TRADE",
+      "scan": "NO_TRADE",
+      "selected": null,
+      "trades": 0
+    },
+    {
+      "btc_regime": "LOW_VOL_UP",
+      "end_index": 270,
+      "eth_regime": "LOW_VOL_UP",
+      "evaluated_at": "2026-08-23T00:00:00Z",
+      "fold": 2,
+      "kill": false,
+      "paper_dd_pct": 9.728254,
+      "paper_net_pct": -7.043965,
+      "plan": "BUY_SETUP",
+      "scan": "SCAN_CANDIDATE",
+      "selected": "ETHUSDT",
+      "trades": 32
+    },
+    {
+      "btc_regime": "LOW_VOL_UP",
+      "end_index": 290,
+      "eth_regime": "LOW_VOL_UP",
+      "evaluated_at": "2026-09-12T00:00:00Z",
+      "fold": 3,
+      "kill": false,
+      "paper_dd_pct": 10.52286,
+      "paper_net_pct": -9.34178,
+      "plan": "BUY_SETUP",
+      "scan": "SCAN_CANDIDATE",
+      "selected": "ETHUSDT",
+      "trades": 41
+    },
+    {
+      "btc_regime": "LOW_VOL_UP",
+      "end_index": 310,
+      "eth_regime": "LOW_VOL_UP",
+      "evaluated_at": "2026-10-02T00:00:00Z",
+      "fold": 4,
+      "kill": false,
+      "paper_dd_pct": 11.489063,
+      "paper_net_pct": -11.014735,
+      "plan": "BUY_SETUP",
+      "scan": "SCAN_CANDIDATE",
+      "selected": "BTCUSDT",
+      "trades": 40
+    },
+    {
+      "btc_regime": "FLAT",
+      "end_index": 330,
+      "eth_regime": "LOW_VOL_DOWN",
+      "evaluated_at": "2026-10-22T00:00:00Z",
+      "fold": 5,
+      "kill": false,
+      "paper_dd_pct": 0.0,
+      "paper_net_pct": 0.0,
+      "plan": "NO_TRADE",
+      "scan": "NO_TRADE",
+      "selected": null,
+      "trades": 0
+    }
+  ],
+  "generated_at": "2026-11-27T13:03:57.853843Z",
+  "no_trades": 2,
+  "note": "Causal scan at end index; simulated forward from that bar open. No live order or ledger.",
+  "schema_version": "quantum-season1-walkforward.v1"
+}
