@@ -1,0 +1,165 @@
+{
+  "criteria_version": "validation-v1",
+  "registry_version": "4.0.0-window4-gap-continuation",
+  "results": [
+    {
+      "acceptance_reasons": [
+        "oos_too_few_trades",
+        "validation_selection_rejected",
+        "walk_forward_not_majority_positive"
+      ],
+      "accepted_for_paper_candidate": false,
+      "benchmarks": {
+        "buy_hold_net_pct": 299.800623,
+        "no_trade_return_pct": 0.0
+      },
+      "cost_assumptions": {
+        "fee_bps_per_side": 5.0,
+        "funding_bps_per_day": 0.0,
+        "max_drawdown_stop_pct": 0.3,
+        "note": "Same effective cost as validation-v1's 7.5 fee + 7.5 slippage; spread is explicit.",
+        "position_fraction": 1.0,
+        "slippage_bps_per_side": 5.0,
+        "spread_bps_per_side": 5.0,
+        "stop_loss_pct": 0.1,
+        "total_bps_per_side": 15.0
+      },
+      "criteria": {
+        "benchmarks": [
+          "buy_and_hold_net",
+          "no_trade_0_pct"
+        ],
+        "max_out_of_sample_drawdown_pct": 25.0,
+        "min_out_of_sample_trades": 2,
+        "note": "Identical to registries v1-v3; no threshold is changed.",
+        "train_validation_oos_split": [
+          0.5,
+          0.25,
+          0.25
+        ],
+        "validation_selection_must_be_accepted": true,
+        "walk_forward_positive_folds_must_be_majority": true,
+        "walk_forward_step_bars": 40,
+        "walk_forward_test_bars": 40,
+        "walk_forward_train_bars": 120
+      },
+      "criteria_version": "validation-v1",
+      "decision": "reject",
+      "experiment_schema": "quant-experiment.v1",
+      "freshness": {
+        "age_hours_at_evaluation": 51798.892,
+        "dataset_end": "2020-12-30T00:00:00Z",
+        "evaluated_at": "2026-11-27T06:53:31.616270Z",
+        "historical_research_only": true,
+        "integrity_accepted": true,
+        "issues": [],
+        "live_ready": false,
+        "note": "Freshness is recorded as provenance for historical research, not a claim of live market data.",
+        "retrieval_after_end_hours": 51798.884,
+        "retrieved_at": "2026-11-27T06:53:00.689811Z",
+        "schema_version": "1.0.0"
+      },
+      "full_sample_metrics": {
+        "bars": 365,
+        "buy_hold_gross_pct": 301.001826,
+        "buy_hold_net_pct": 299.800623,
+        "cost_bps_per_turn": 15.0,
+        "end": "2020-12-30T00:00:00Z",
+        "expectancy_pct_per_trade": 0.0,
+        "exposure_pct": 0.0,
+        "fee_bps_per_side": 5.0,
+        "funding_bps_per_day": 0.0,
+        "gross_return_pct": 0.0,
+        "interval": "1d",
+        "kill_switch_triggered": false,
+        "max_drawdown_pct": 0.0,
+        "max_drawdown_stop_pct": 0.3,
+        "net_return_pct": 0.0,
+        "no_trade_return_pct": 0.0,
+        "position_changes": 0,
+        "position_fraction": 1.0,
+        "profit_factor": null,
+        "sharpe": null,
+        "slippage_bps_per_side": 5.0,
+        "sortino": null,
+        "start": "2020-01-01T00:00:00Z",
+        "stop_loss_pct": 0.1,
+        "total_trades": 0,
+        "turnover_events": 0,
+        "win_rate_pct": 0.0
+      },
+      "hypothesis": "Opening-price continuation with bullish confirmation and two-bar time exit",
+      "id": "exp-09-opening-continuation-window4",
+      "limitations": [
+        "Historical backtest is not a guarantee of future profit.",
+        "No exchange order, withdrawal, transfer, live trading or paid service is used.",
+        "Costs are assumptions (fee + slippage per side); funding is zero for spot.",
+        "Intrabar stop fills are simplified and may differ from real fills.",
+        "One asset and one interval per experiment; results are not generalisable."
+      ],
+      "out_of_sample_metrics": {
+        "bars": 92,
+        "buy_hold_gross_pct": 167.946911,
+        "buy_hold_net_pct": 167.144274,
+        "cost_bps_per_turn": 15.0,
+        "end": "2020-12-30T00:00:00Z",
+        "expectancy_pct_per_trade": 0.0,
+        "exposure_pct": 0.0,
+        "fee_bps_per_side": 5.0,
+        "funding_bps_per_day": 0.0,
+        "gross_return_pct": 0.0,
+        "interval": "1d",
+        "kill_switch_triggered": false,
+        "max_drawdown_pct": 0.0,
+        "max_drawdown_stop_pct": 0.3,
+        "net_return_pct": 0.0,
+        "no_trade_return_pct": 0.0,
+        "position_changes": 0,
+        "position_fraction": 1.0,
+        "profit_factor": null,
+        "sharpe": null,
+        "slippage_bps_per_side": 5.0,
+        "sortino": null,
+        "start": "2020-09-30T00:00:00Z",
+        "stop_loss_pct": 0.1,
+        "total_trades": 0,
+        "turnover_events": 0,
+        "win_rate_pct": 0.0
+      },
+      "provenance": {
+        "checksum_sha256": "cce3b9383e359126f3aabd96f464d721cd83d0f0be4d43f64b609c22e5df85ef",
+        "data_kind": "public_api",
+        "end": "2020-12-30T00:00:00Z",
+        "interval": "1d",
+        "retrieved_at": "2026-11-27T06:53:00.689811Z",
+        "rows": 365,
+        "schema_version": "1.0.0",
+        "source": "https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=365&startTime=1577836800000",
+        "start": "2020-01-01T00:00:00Z",
+        "symbol": "BTCUSDT"
+      },
+      "quality": {
+        "accepted": true,
+        "duplicate_timestamps": 0,
+        "end": "2020-12-30T00:00:00Z",
+        "interval": "1d",
+        "issues": [],
+        "missing_intervals": 0,
+        "ohlcv_violations": 0,
+        "rows": 365,
+        "start": "2020-01-01T00:00:00Z"
+      },
+      "report_path": "exp-09-opening-continuation-window4_btcusdt_report.json",
+      "selected_params": {
+        "gap_threshold_pct": 0.005,
+        "max_hold_bars": 2
+      },
+      "strategy": "gap_continuation",
+      "symbol": "BTCUSDT",
+      "walk_forward": {
+        "positive": 0,
+        "total": 6
+      }
+    }
+  ]
+}

@@ -3696,3 +3696,21 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### 149.3 NEXT TASK
 Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat hasil (menghindari data snooping pada 364 bar yang sama). Paper ledger/reconciliation tetap terkunci sampai strategi lolos `validation-v1` dan BOS menyetujui. Worker, live trading, withdrawal OFF; Rp0.
+
+---
+
+## 150. WINDOW-4 OPENING CONTINUATION — 27 NOVEMBER 2026
+
+### 150.1 Pra-registrasi
+- BOS mengizinkan riset lanjut. Hipotesis baru `exp-09-opening-continuation-window4`: entry pada open bar berikutnya bila `open[i-1]/close[i-2] − 1 ≥ 0,5%` dan `close[i-1] > open[i-1]`; exit saat `close[i-1] < open[i-1]` atau setelah 2 bar. Berbeda dari SMA/ROC/z-score/RSI/Donchian-ATR karena memakai open vs close sebelumnya dan time exit 2 bar. Satu konfigurasi tetap, tanpa grid search.
+- Registry `research/python/experiments/registry_window4_gap_continuation.json` first commit **`49090c9847fdea90dc42979b6c3f3e93759685ab`**, `2026-11-27T06:48:51Z`, sebelum fetch data `06:53:00Z`. Implementasi `fabcad0` juga sebelum fetch. WIP non-draft ke develop = 4 (#159, #153, #115, #105) → **tidak ada PR baru**; branch `exp/gap-continuation-window4`.
+- Jendela keempat: BTCUSDT 1d 2020-01-01→2020-12-30, 365 bar, checksum `cce3b9383e359126f3aabd96f464d721cd83d0f0be4d43f64b609c22e5df85ef`. Non-overlap: `2020-12-30 < 2022-01-01 < 2024-01-01 < 2025-11-27`.
+- Biaya 5+5+5 bps/sisi (setara 15 bps/sisi validation-v1), funding 0, kriteria tidak diubah.
+
+### 150.2 Hasil
+- Integritas data accepted, 0 duplikat/gap/OHLC violation; freshness `historical_research_only=true`, `live_ready=false`.
+- **0 sinyal** pada seluruh 365 bar: tidak ada satupun bar dengan opening move ≥0,5%. OOS 0 trade, net 0%, exposure 0%, PF/Sharpe/Sortino null; buy&hold OOS **+167,144%**, full **+299,801%**, no-trade 0%. Walk-forward 0/6. `accepted_for_paper_candidate=false` (`oos_too_few_trades`, `validation_selection_rejected`, `walk_forward_not_majority_positive`). **REJECTED / NO EVIDENCE** — premis tidak teramati pada data 24/7, bukan bukti strategi buruk. Threshold tidak diturunkan setelah melihat hasil.
+- QA `verify_report.py` passed; dua run identik. Python **29/29**, npm **241/241**, strict TS exit 0. CI push exact-head `fabcad0` atau head terbaru wajib diverifikasi terpisah. Detail: `docs/quant-window4-gap-continuation.md`.
+
+### 150.3 NEXT TASK
+Pra-registrasikan hipotesis kelima yang memakai dimensi data belum diuji (misalnya volume + closing strength) pada jendela non-overlap berikutnya sebelum mengambil data. Jangan tuning pada empat jendela sebelumnya. Worker/paper ledger/live/withdrawal OFF; Rp0.

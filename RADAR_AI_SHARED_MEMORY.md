@@ -54,7 +54,7 @@
 
 - Preserve all existing menus/routes and truthful-data behavior (Top 5, Radar Intelligence capability matrix, stale-data banners). Never show demo numbers as live. No withdrawal capability; live trading OFF. Rp0 hard budget: no paid service, card, VPS or production DB provisioning without BOS approval. Keep secrets server-side and out of Git/chat/frontend/logs.
 - Hostless Build/LIVE remains unverified in this session. Storage/EROFS decision still pending BOS. Dependency CVE coverage is unavailable because the repo has no supported dependency manifest; Trivy secret scan is not a CVE scan.
-
+- **Window-4 research (branch `exp/gap-continuation-window4`, no PR — WIP 4):** pre-registered `registry_window4_gap_continuation.json` at `49090c9` / `06:48:51Z`, BTCUSDT 2020-01-01→12-30 fetched 06:53Z (checksum `cce3b93...df85ef`). Opening-continuation hypothesis (≥0.5% open gap + bullish bar, 2-bar exit) produced ZERO signals: continuous 24/7 market has no tradable daily gap. REJECTED/NO EVIDENCE; OOS 0 trades, net 0%, buy&hold +167%, WF 0/6. Threshold not lowered. QA passed, reproducible. Python 29/29, npm 241/241, tsc 0. Doc: `docs/quant-window4-gap-continuation.md`.
 
 ## Engineering governance
 - Permanent 12-area policy: `docs/architecture/engineering-constitution.md`; all agents/contributors apply it alongside `AGENTS.md` and the master context.
