@@ -288,3 +288,16 @@ Decision recorded 2026-11-27 (Asia/Jakarta). This section clarifies the intended
 - The system must never claim guaranteed profit. Profit generation is the objective; losses remain possible and must be bounded, measured and reported.
 
 This decision authorizes the product design for autonomous in-mandate trading without per-trade BOS approval. It does not mean live trading is active today, does not itself enable exchange credentials or workers, and does not waive the one-time BOS approval required to activate a live trading mandate.
+
+## 17. BOS clarification — autonomous opportunity-to-execution without approval waits
+
+Decision recorded 2026-11-27 (Asia/Jakarta), clarifying BOS's requested operating behavior beyond Section 16.
+
+- BOS's desired behavior is that NEXUS does not pause to ask BOS for permission when it detects an opportunity, selects or adjusts an in-scope strategy, or executes a routine trade. NEXUS is expected to move from detection through analysis, risk evaluation and execution autonomously, then report outcomes.
+- Do not create a per-opportunity, per-strategy, per-order or per-position human approval queue. A human approval queue must not be used as the normal trading control loop.
+- BOS also requested that NEXUS not wait for a separate strategy mandate. This is a product requirement for frictionless autonomy, **not permission for unlimited use of funds or unrestricted exchange access**.
+- Before live trading can be technically possible, the system must have a fixed machine-enforced operating envelope configured outside the model's control: designated exchange/account, maximum allocated capital, allowed instruments, leverage policy (default off), position/exposure caps, loss/drawdown stops, execution constraints, and expiry/kill-switch behavior. These are hard safety invariants, not per-trade approval steps. NEXUS cannot create, expand or disable them.
+- If the operating envelope, account permissions, valid market data, risk service or reconciliation is missing or unhealthy, execution must fail closed. NEXUS may continue research and paper/testnet work and report the exact blocker; it must not guess missing limits or use unbounded capital.
+- NEXUS may independently discover, evaluate, choose, execute, monitor, stop and optimize strategies within the machine-enforced envelope without waiting for BOS. It must report activity and performance asynchronously.
+- Withdrawal and external asset-egress remain technically impossible for NEXUS and every agent, worker and credential. Only BOS-controlled workflow may withdraw.
+- This section records the requested autonomy behavior; it does not claim that exchange integration, operating limits, runtime, workers or live trading are implemented or active. No live order has been authorized or placed by this documentation change.
