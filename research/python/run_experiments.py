@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from backtest_engine import run_backtest
-from quant_data import load_ohlcv
+from quant_data import freshness_report, load_ohlcv
 from report import RunMeta, build_report, write_report
 from strategy import StrategyConfig, generate_signals
 from validation import candidate_config, run_validation
@@ -43,7 +43,8 @@ def run_one(
     data_dir: Path,
     out_dir: Path,
 ) -> dict[str, Any]:
-    csv_path = data_dir / f'{symbol.lower()}_1d_public.csv'
+    suffix = registry.get('data', {}).get('file_suffix', '_1d_public')
+    csv_path = data_dir / f'{symbol.lower()}{suffix}.csv'
     dataset = load_ohlcv(
         csv_path,
         source=provenance_for(csv_path)['source'],
@@ -53,10 +54,15 @@ def run_one(
         data_kind=provenance_for(csv_path)['data_kind'],
     )
     criteria = registry['criteria']
+    costs = registry.get('cost_assumptions', {})
+    fee_bps = costs.get('fee_bps_per_side', criteria.get('costs_bps_per_side', 15.0) / 2)
+    slippage_bps = costs.get('slippage_bps_per_side', criteria.get('costs_bps_per_side', 15.0) / 2)
+    spread_bps = costs.get('spread_bps_per_side', 0.0)
     base = StrategyConfig(
         strategy_id=str(experiment['strategy']),
-        fee_bps=criteria['costs_bps_per_side'] / 2,
-        slippage_bps=criteria['costs_bps_per_side'] / 2,
+        fee_bps=fee_bps,
+        slippage_bps=slippage_bps,
+        spread_bps=spread_bps,
         funding_bps_per_day=criteria['funding_bps_per_day'],
         position_fraction=criteria['position_fraction'],
         stop_loss_pct=criteria['stop_loss_pct'],
@@ -86,6 +92,8 @@ def run_one(
         'criteria': criteria,
         'provenance': dataset.provenance,
         'quality': dataset.quality.to_dict(),
+        'freshness': freshness_report(dataset, meta.generated_at),
+        'cost_assumptions': costs,
         'selected_params': selected_params,
         'accepted_for_paper_candidate': accepted,
         'acceptance_reasons': validation['acceptance_reasons'],
@@ -99,7 +107,8 @@ def run_one(
             'buy_hold_net_pct': backtest.metrics['buy_hold_net_pct'],
             'no_trade_return_pct': backtest.metrics['no_trade_return_pct'],
         },
-        'report_path': str(report_path),
+        'report_path': str(report_path.relative_to(Path.cwd()))
+            if report_path.is_relative_to(Path.cwd()) else report_path.name,
         'decision': 'promote_candidate' if accepted else 'reject',
         'limitations': [
             'Historical backtest is not a guarantee of future profit.',

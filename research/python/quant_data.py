@@ -209,6 +209,34 @@ def load_ohlcv(
     return Dataset(candles=tuple(candles), provenance=provenance, quality=quality, checksum=checksum)
 
 
+def freshness_report(dataset: Dataset, now: str, max_lag_hours: float = 168.0) -> dict[str, Any]:
+    """Report retrieval lag and data age without pretending history is live.
+
+    Historical research windows are intentionally old; this helper records
+    provenance ages and always marks live readiness false. It never repairs
+    or fabricates timestamps.
+    """
+    now_dt = parse_timestamp(now)
+    end_dt = parse_timestamp(dataset.end)
+    retrieved = dataset.provenance.get('retrieved_at')
+    retrieval_dt = parse_timestamp(retrieved) if retrieved else None
+    return {
+        'schema_version': '1.0.0',
+        'retrieved_at': retrieved,
+        'dataset_end': dataset.end,
+        'evaluated_at': canonical_timestamp(now),
+        'retrieval_after_end_hours': (
+            round((retrieval_dt - end_dt).total_seconds() / 3600.0, 3) if retrieval_dt else None
+        ),
+        'age_hours_at_evaluation': round((now_dt - end_dt).total_seconds() / 3600.0, 3),
+        'historical_research_only': (now_dt - end_dt).total_seconds() > max_lag_hours * 3600.0,
+        'live_ready': False,
+        'integrity_accepted': dataset.quality.accepted,
+        'issues': list(dataset.quality.issues),
+        'note': 'Freshness is recorded as provenance for historical research, not a claim of live market data.',
+    }
+
+
 def slice_dataset(dataset: Dataset, start: int, end: int) -> Dataset:
     """Contiguous, non-overlapping slice; provenance is preserved."""
     if not 0 <= start < end <= len(dataset.candles):
