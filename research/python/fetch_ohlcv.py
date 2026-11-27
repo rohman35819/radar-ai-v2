@@ -104,13 +104,28 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--symbol", default="BTCUSDT")
     parser.add_argument("--interval", default="1d")
     parser.add_argument("--limit", type=int, default=365)
+    parser.add_argument("--start-time", default=None,
+                        help="ISO-8601 UTC start time or epoch milliseconds (fresh holdout window)")
     parser.add_argument("--base-url", default=BASE_URL,
                         help="Free public klines endpoint (default: data-api.binance.vision)")
     parser.add_argument("--output", default="research/python/fixtures/btcusdt_1d_public.csv")
     args = parser.parse_args(argv)
     if not 1 <= args.limit <= 1000:
         raise SystemExit("--limit wajib 1..1000")
-    url = build_url(args.symbol, args.interval, args.limit, base_url=args.base_url)
+    start_time: int | None = None
+    if args.start_time is not None:
+        raw = args.start_time.strip()
+        if raw.isdigit():
+            start_time = int(raw)
+        else:
+            try:
+                parsed_start = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                if parsed_start.tzinfo is None:
+                    raise ValueError("timezone required")
+                start_time = int(parsed_start.timestamp() * 1000)
+            except ValueError:
+                raise SystemExit("--start-time wajib ISO-8601 berzona waktu atau epoch ms") from None
+    url = build_url(args.symbol, args.interval, args.limit, start_time=start_time, base_url=args.base_url)
     rows = drop_incomplete(parse_klines(default_fetch(url)))
     if len(rows) < 3:
         raise SystemExit("Data publik tidak cukup untuk backtest")
