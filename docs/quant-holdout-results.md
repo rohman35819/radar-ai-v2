@@ -28,6 +28,19 @@ Purpose: test whether the four explainable strategies generalise to a period nev
 - Selection scores on validation were high for every strategy (1.1–3.5 PF) yet OOS results were negative — validationPF is not a reliable predictor here. This supports the existing decision not to promote without OOS/walk-forward confirmation.
 - Buy&hold strongly positive in this earlier window while all strategies were flat/negative net of costs suggests long-flat timing on daily bars is not capturing the dominant drift. A controlled next hypothesis should model exposure differently rather than tune the same grids again.
 
+## ETH out-of-time holdout (exp-10..13)
+
+Pre-registered at `2026-11-27T05:20:14Z`, before the first ETH holdout report at `2026-11-27T05:21:11Z`. Fixture: 634 ETHUSDT daily bars `2024-03-03..2025-11-26`, disjoint from the original ETH window, SHA-256 `8f13ac0588a4b5eb6b8934ad01a218e7ccfb28a9ec9165fcf858093718662495`. Buy&hold net -13.48%; no-trade 0%.
+
+| Exp / strategy | Selected | Trades | Gross % | Net % | Max DD % | PF | Expect % | Sharpe / Sortino | Expos % / Turnover | PF(v) | OOS net/DD/tr | WF +/total | Status |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| exp-10 SMA crossover | 10/30 | 4 | -24.86 | -25.31 | 30.27 | 0.247 | -0.0382 | -1.175 / -0.191 | 4.73 / 7 | 3.998 | 152.26 / 25.79 / 5 | 4/12 | REJECT |
+| exp-11 trend momentum | t100/m20 | 10 | -21.62 | -22.79 | 30.65 | 0.554 | -0.0250 | -0.305 / -0.107 | 9.31 / 19 | 0.476 | 117.99 / 21.70 / 9 | 4/12 | REJECT |
+| exp-12 mean reversion | z20 -1.5/0 | 9 | 3.25 | 1.87 | 32.82 | 0.928 | -0.0024 | 0.160 / 0.047 | 10.57 / 17 | 0.583 | -11.25 / 34.26 / 8 | 5/12 | REJECT |
+| exp-13 regime aware | t100 rsi14 40/65 | 3 | -31.25 | -31.55 | 33.95 | 0.000 | -0.0817 | -1.569 / -0.222 | 3.00 / 5 | 0.000 | 158.09 / 10.38 / 5 | 4/12 | REJECT |
+
+Three ETH runs show very large OOS returns (118–158%) while full-sample returns were negative and walk-forward remained 4/12. This is a strong warning about split instability and a few high-impact trades in the final OOS window, **not** evidence of a profitable strategy. Every run is rejected by the unchanged criteria; no promotion is made. Independent QA passed 4/4 on these reports too.
+
 ## Verification
 
-`python3 -m unittest discover -s research/python -p 'test_*.py'`: 25/25 OK. `verify_report.py` on all four holdout reports: 4/4 passed. Artifacts: `research/python/fixtures/holdout/`, `research/python/output/holdout/`. No live orders, paper ledger, worker, paid service or parameter relaxation.
+`python3 -m unittest discover -s research/python -p 'test_*.py'`: 25/25 OK. `verify_report.py` on all eight holdout reports (BTC + ETH): 8/8 passed. Artifacts: `research/python/fixtures/holdout/`, `research/python/output/holdout/`, `research/python/output/holdout_eth/`. No live orders, paper ledger, worker, paid service or parameter relaxation.
