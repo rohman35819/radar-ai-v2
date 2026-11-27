@@ -60,3 +60,11 @@
 - Migration is NOT executed or PostgreSQL-validated; no API server, runtime persistence, worker, scheduler, or offline automation is active. No Hostless Build/LIVE verification.
 - Exact-head checks on prior PR head `75f1c0e4b14aa2673c284279ae4846aafa8434b2`: test run 45989230338 success; security run 45989230225 success. Existing PostgreSQL steps did not include the new NEXUS migration. PR currently open; no reviews recorded at last check. Recheck exact head after each commit.
 - Next: implement dedicated disposable PostgreSQL migration test (apply/reapply/rollback, schema/constraints, default-deny access) and OpenAPI schema validation; then rerun exact-head CI/security. Never apply SQL to BOS project without separate approval.
+
+
+## NEXUS control-plane clarification (27 Nov 2026)
+- BOS clarified: NEXUS must be part of RADAR AI V2 and fully controlled by RADAR; only storage is separate.
+- RADAR AI V2 is the sole product/control plane. NEXUS is an internal subsystem and cannot self-authorize permissions, policies, budgets, autonomy or production/financial actions.
+- Separate Supabase projects are storage isolation only; cross-system communication uses authenticated, versioned, least-privilege APIs with audit/provenance/freshness. No direct database sharing or shared credentials.
+- This clarification does not authorize applying SQL, production integration, worker/scheduler activation or paid resources.
+- Next: update the NEXUS API and Agent Platform contracts to express RADAR-owned authority and fail-closed behavior; continue PR #165 validation.
