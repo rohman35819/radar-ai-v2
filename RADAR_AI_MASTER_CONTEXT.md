@@ -3386,3 +3386,13 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Pengujian: `node --check public/app.js` lulus; `node --test test/top5-runtime.test.js` 3/3 pass; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
 - Status: perbaikan pada branch `fix/top5-price-label` dari `develop` `8ac4642`; perlu PR ke `develop` lalu rilis ke `main`. Hostless LIVE untuk perbaikan ini belum diverifikasi.
 - NEXT TASK: setelah deploy, ulangi reproduksi terhadap aset LIVE dan pastikan `renderAction()` menghasilkan kartu; lanjutkan QA klik browser nyata.
+
+
+## 2026-11-27 — NEXUS dashboard chat pilot
+
+- Added a standalone NEXUS chat page at `/nexus.html` and a navigation entry on the main dashboard. The page uses the NEXUS Supabase project URL and asks the owner for its public publishable/anon key; it never accepts or embeds service_role/provider secrets.
+- Authentication uses Supabase Auth email/password; signup, login, logout and authenticated POST to the existing `nexus-chat` Edge Function are wired in the browser. Public key is held in sessionStorage for the current browser session only.
+- This is a **pilot UI**, not verified end-to-end. Provider configuration, Auth user setup, Edge Function response contract, and actual Hostless deployment remain unverified. Chat history listing is not implemented; each page session starts a new conversation unless a conversation ID is returned during that session.
+- Files: `public/nexus.html`, `public/index.html`. Commits: `f870e65`, `1868a11`.
+- Tests: not run (GitHub file API only; no checkout/runtime available in this session). Deployment: not verified. No Supabase function or production configuration was changed.
+- NEXT: verify response shape against deployed `nexus-chat`, add history endpoint with strict owner scoping, add NEXUS CLI with the same Supabase Auth and conversation contract, run browser/HTTP E2E and existing npm test suite, then open/validate PR.
