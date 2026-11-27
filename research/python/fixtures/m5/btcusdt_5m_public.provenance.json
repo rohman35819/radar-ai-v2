@@ -1,0 +1,14 @@
+{
+  "checksum_sha256": "38fb4834944bab43a94d9e91363f601b03e661846f8cfd2424efb456b473c012",
+  "data_kind": "public_api",
+  "end": "2026-11-27T06:40:00Z",
+  "interval": "5m",
+  "pages": 10,
+  "retrieved_at": "2026-11-27T06:49:52.302514Z",
+  "rows": 9999,
+  "schema_version": "1.0.0",
+  "skipped_open_candles": 1,
+  "source": "https://data-api.binance.vision/api/v3/klines",
+  "start": "2026-10-23T13:30:00Z",
+  "symbol": "BTCUSDT"
+}
