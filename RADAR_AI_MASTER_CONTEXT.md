@@ -3666,39 +3666,33 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - QA independen `verify_report.py` pada `public_report.json`: **12/12 check passed**. Tes lokal: Python **24/24**, npm **237/237**, strict TS exit 0. CI exact-head untuk commit terbaru wajib diverifikasi ulang; PR #156 diperbarui, tidak ada PR baru.
 - **Keputusan yang dibutuhkan BOS:** validasi belum lolos, sehingga paper ledger/reconciliation tetap **NEXT TASK yang diblokir** menunggu (1) evaluasi apakah riset strategi dilanjutkan atau dihentikan, dan (2) persetujuan eksplisit BOS. Worker OFF, live trading OFF, withdrawal OFF, Rp0. Tidak ada perubahan route/menu/Hostless/produksi.
 
-### 148.7 Otonom: eksperimen strategi terdaftar dan diagnosis — 27 November 2026
-- BOS memerintahkan lanjut otonom tanpa laporan rutin. NEXT TASK yang dipilih: selesaikan bug correctness/provenance PR #156, diagnosis kegagalan SMA, lalu eksperimen strategi kecil yang terdaftar.
-- **Bug correctness ditemukan dan diperbaiki:** kill-switch mengubah equity setelah `equity_curve` ditulis sehingga QA hitung ulang max drawdown gagal pada exp-03 BTC. `backtest_engine.py` kini menerapkan kill-switch **sebelum** bar dicatat, sehingga equity curve, bar returns, dan drawdown konsisten. Regression test ditambahkan.
-- `strategy.py` digeneralisasi untuk empat strategi yang dijelaskan: `sma_crossover`, `trend_momentum`, `mean_reversion`, `regime_aware`, semuanya dengan sinyal dari informasi `i-1` dan warm-up eksplisit. `validation.py` menerima grid parameter bernama; setiap kandidat menghasilkan stream sinyalnya sendiri; kriteria `validation-v1` **tidak diubah**.
-- **Pre-registrasi:** `research/python/experiments/registry.json` (hypothesis, grid, biaya, kriteria, decision rule) ditulis dan di-commit lebih dulu (`8791a68f...`) sebelum eksperimen dijalankan. Runner: `research/python/run_experiments.py`.
-- **Data:** BTC dan ETH masing-masing 364 candle harian 2025-11-27→2026-11-25 dari endpoint gratis `data-api.binance.vision`, tanpa API key. SOL tidak diambil karena gate BTC/ETH belum lolos.
-- **Delapan eksperimen (4 strategi × 2 aset), semua DITOLAK:** exp-01 SMA (BTC OOS −16,23%, WF 2/6; ETH OOS −35,78%, DD breach, WF 2/6), exp-02 trend+momentum (BTC OOS −13,43%, WF 1/6; ETH OOS −25,06%, DD breach, WF 2/6), exp-03 mean reversion (BTC OOS −21,04%, DD breach, WF 3/6; ETH OOS −24,67%, DD breach + selection rejected, WF 3/6), exp-04 regime aware (BTC OOS +2,82% tetapi too few trades + WF 3/6; ETH OOS +6,60% tetapi selection rejected + WF 1/6). Full-sample positif pada exp-02 BTC (+5,70%) dan exp-04 BTC (+10,49%) **tidak dipromosikan** karena OOS/walk-forward gagal.
-- Diagnosis: tidak ada konfigurasi dengan mayoritas fold walk-forward positif (terbaik 3/6); selection pada validation tidak stabil antar jendela; mean reversion melanggar batas drawdown; hasil full-sample positif merupakan bias seleksi bila dipakai sendiri. Tidak ada kriteria yang dilonggarkan, tidak ada parameter yang diubah setelah melihat hasil.
-- QA independen `verify_report.py`: **8/8** eksperimen lolos setelah perbaikan kill-switch. Tes lokal: Python **25/25**, npm **237/237**, strict TS exit 0. Artifact lengkap: `research/python/output/experiments/`; ringkasan dan kegagalan: `docs/quant-strategy-experiments.md`.
-- **NEXT TASK:** evaluasi independen PR #153 sebagai Chief Strategy Advisor (tanpa merge), lalu perbarui handoff. Paper ledger tetap terkunci; worker/live/withdrawal OFF; Rp0.
+### 148.7 Quant-first execution, experiment results and drawdown correctness — 27 November 2026
+- BOS menetapkan prioritas utama: satu vertical slice BTC/USDT → data tervalidasi → sinyal → backtest → OOS → laporan. Pekerjaan platform/divisi yang tidak mempercepat bukti Quant ditunda. Riset rutin tetap diotorisasi.
+- `strategy.py` menghasilkan sinyal dari informasi `i-1` saja untuk empat strategi (`sma_crossover`, `trend_momentum`, `mean_reversion`, `regime_aware`). `validation.py` menerima grid bernama; setiap kandidat menghasilkan stream sinyalnya sendiri untuk selection, OOS, dan setiap fold walk-forward. Kriteria `validation-v1` tidak diubah.
+- **Pre-registrasi dan provenance:** `research/python/experiments/registry.json` di-commit pada `8791a68` pukul `2026-11-26T19:28:03Z` sebelum laporan pertama `2026-11-26T19:31:56Z`. Nilai `registered_at` di dalam file ternyata ditulis future-dated `2026-11-27T00:00:00Z`; PR #157 mengoreksinya ke waktu commit sebenarnya. `exp-05` didaftarkan `2026-11-26T19:38:43Z` sebelum dijalankan `19:39:31Z`.
+- **Bug correctness:** kill-switch mengubah equity setelah `equity_curve` ditulis sehingga QA hitung ulang drawdown gagal (exp-03 BTC 31,385% vs 29,586%). PR #156 menerapkan exit sebelum bar dicatat; PR #157 menambah recompute metrik path-dependent dari final equity curve. Keduanya digabungkan pada branch #157 setelah sinkronisasi dengan `develop`. Regression test menuntut drawdown = recompute (places=6) dan net return = equity akhir.
+- **Data:** BTCUSDT dan ETHUSDT, masing-masing 364 candle harian 2025-11-27→2026-11-25 dari endpoint gratis `data-api.binance.vision`, tanpa API key; checksum dan `retrieved_at` tersimpan di sidecar. Biaya 7,5 bps fee + 7,5 bps slippage per sisi, funding 0, stop 10%, drawdown stop 30%. SOL ditunda.
+- **Hasil (4 strategi × BTC/ETH + exp-05, semua REJECT):** tidak ada yang mencapai mayoritas fold walk-forward positif (terbaik 3/6). SMA gagal drawdown OOS ETH; mean reversion melanggar batas drawdown; regime-aware BTC OOS +2,82% tetapi too few trades. exp-05 (`regime-aware-fast`, pra-registrasi) OOS +6,86%, full +13,90%, tetapi too few trades dan WF 2/6. Full-sample positif (exp-02 BTC +5,70%, exp-04 BTC +10,49%, exp-05 +13,90%) tidak dipromosikan karena OOS/walk-forward gagal. Buy&hold -34,00% BTC, -44,03% ETH; no-trade 0%. Tidak ada klaim profitable. Tabel lengkap: `docs/quant-first-validation-results.md`.
+- Diagnosis: selection tidak stabil antar jendela, drawdown melanggar batas pada strategi mean-reverting, dan tidak ada kombinasi yang robust. Melanjutkan tuning pada 364 bar yang sama akan menjadi data snooping.
+- QA: `verify_report.py` **8/8** pada eksperimen terdaftar + exp-05; Python **25/25**. PR #156 exact-head `57d30af` lulus CI test #1354/security #701 dan telah di-merge ke `develop` sebagai `cc16628`. PR #157 (`fix/quant-drawdown-validation`) adalah follow-up kecil (koreksi timestamp, tabel hasil, exp-05, recompute drawdown), menunggu exact-head CI setelah sinkronisasi.
+- **NEXT TASK:** siapkan holdout/OOS periode baru atau hipotesis berbeda dengan pra-registrasi sebelum melihat hasil; jangan turunkan kriteria, jangan promosikan strategi, jangan aktifkan paper ledger/worker/live trading/withdrawal. PR #153 sudah direkomendasikan Advisor untuk merge tetapi ditunda demi integrasi Quant; PR #115/#105 tetap dipertahankan untuk triase.
 
 ---
 
-## 149. QUANTUM ACCELERATION: PR AUDITS & SHADOW READINESS — 27 NOVEMBER 2026
+## 149. SHADOW READINESS & PR QUEUE RESOLUTION — 27 NOVEMBER 2026
 
-### 149.1 Status antrean terverifikasi
-- PR **#156** sudah **di-merge** ke `develop` sebagai `cc16628d553521964e85e7c799f9bd64cb5be7e5` (merge dari `57d30af`). `main` tetap `f38d25a`.
-- PR **#157** (`fix/quant-drawdown-validation` → `develop`, head `2c52d558c85dd91ae1e40ab6f27c696cd83fe7bb`) diaudit: CI test `45943947775` dan security `45943947751` sukses. Fix drawdown dari final equity curve benar dan regression test diperkuat; eksperimen ke-5 `exp-05-regime-aware-fast` benar-benar praregistrasi dan **ditolak** (`oos_too_few_trades` dengan 1 trade, `walk_forward_not_majority_positive` 2/6, OOS net 6,86% dengan profit factor null). Kriteria tidak diubah. **Cacat ditemukan:** 14 file `*_summary.json` memuat `report_path` absolut ke direktori temp (`/data/data/com.termux/files/usr/tmp/opencode/quant157/...`), bukan path relatif repository. Review COMMENT diposting; PR **tidak di-merge** sampai cacat portabilitas diperbaiki dan CI exact-head dijalankan ulang. Tidak ada branch agent lain yang diubah.
-- PR **#153** review Advisor sudah diposting sebelumnya; tetap terbuka, tidak di-merge hanya untuk mengosongkan antrean.
-- WIP: PR non-draft ke `develop` = #157, #153, #115, #105 (4). PR shadow-readiness baru didokumentasikan sebagai **pengecualian P0** dengan justifikasi di body; tidak ada PR lain yang dibuka setelahnya.
+### 149.1 Audit PR #157 dan integrasi
+- PR #157 (`fix/quant-drawdown-validation`) telah **di-merge** ke `develop` sebagai `e5fc21487ea34606cb61d16d486e4c26adcb2b7f` (merge dari branchyang telah diperbaiki pemiliknya). Review audit saya tercatat: recompute drawdown dari final equity curve benar, `exp-05` benar-benar praregistrasi dan ditolak dengan kriteria tidak diubah, dan cacat `report_path` absolut telah diperbaiki sebelum merge.
+- PR #156 telah di-merge lebih awal sebagai `cc16628d`. PR #153 tetap terbuka dengan rekomendasi Advisor, tidak di-merge hanya untuk mengosongkan antrean.
+- WIP ke `develop` mencapai 4 non-draft (#157 saat itu, #153, #115, #105); PR #158 didokumentasikan sebagai **pengecualian P0** dengan justifikasi di body, dan tidak ada PR lain dibuka setelahnya.
 
-### 149.2 Implementasi shadow readiness (branch `feat/quant-shadow-readiness`)
-- `src/quant/risk-budget.mts`: position sizing = `risk_fraction_per_trade / stop_loss_pct`, dibatasi sisa exposure; circuit breaker kill switch, daily loss limit, loss streak, exposure limit; fail-closed pada input cacat.
-- `src/quant/audit.mts`: event id deterministik FNV-1a, deduplikasi, batas 1000 entri, penolakan secret-like/unknown action; **in-memory only**, tanpa persistensi/transport.
-- `src/quant/reconciliation.mts`: `reconcileFills()` membandingkan expected vs observed menjadi matched/missing/unexpected/mismatched + `balanced`; dibatasi 200 record; **design-only**, bukan paper ledger aktif.
-- `test/quant-readiness.test.js`: 4 tes deterministik termasuk pemindaian sumber untuk memastikan tidak ada `fetch`/HTTP/order path.
-- Dokumentasi: `docs/quant-shadow-readiness.md` dengan status OFF, gate aktivasi, dan larangan.
-- Tidak ada route, menu, Hostless, credential, produksi DB, worker, live order, withdrawal, atau dana yang disentuh. Rp0.
+### 149.2 Shadow readiness (branch `feat/quant-shadow-readiness`, PR #158)
+- `src/quant/risk-budget.mts`: sizing berdasarkan risk budget ÷ stop distance, dibatasi sisa exposure; circuit breaker kill switch, daily loss, loss streak, exposure; fail-closed.
+- `src/quant/audit.mts`: event id deterministik FNV-1a, idempotent, bounded, menolak secret/unknown action; in-memory only.
+- `src/quant/reconciliation.mts`: perbandingan expected vs observed terbatas 200 record → matched/missing/unexpected/mismatched + `balanced`; **design-only**, bukan paper ledger aktif.
+- `test/quant-readiness.test.js`: 4 tes, termasuk pemindaian sumber untuk membuktikan tidak ada `fetch`/HTTP/order path.
+- `docs/quant-shadow-readiness.md`: status OFF dan gate aktivasi. Tidak ada route/menu/Hostless/credential/produksi/worker/order/withdrawal yang diubah. Rp0.
+- Verifikasi lokal: `npm test` **241 pass, 0 fail**; strict `tsc --noEmit` exit 0. Konflik dokumentasi dengan `develop` diselesaikan melalui merge; fakta PR #157 diperbarui menjadi sudah ter-merge.
 
-### 149.3 Verifikasi
-- `npm test`: **241 pass, 0 fail** (237 + 4 baru).
-- Strict TypeScript `tsc --noEmit`: exit 0.
-- CI/security exact-head untuk branch ini wajib diverifikasi setelah push; tidak ada klaim sebelum hasil dibaca.
-
-### 149.4 NEXT TASK
-Perbaiki `report_path` absolut di PR #157 oleh pemilik branch, lalu evaluasi ulang. Paper ledger/reconciliation tetap **terkunci** sampai strategi lolos `validation-v1` **dan** BOS menyetujui tahap tersebut. Worker, scheduler, live trading, withdrawal tetap OFF. Eksperimen baru hanya dengan pre-registrasi grid dan kriteria yang sama.
+### 149.3 NEXT TASK
+Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat hasil (menghindari data snooping pada 364 bar yang sama). Paper ledger/reconciliation tetap terkunci sampai strategi lolos `validation-v1` dan BOS menyetujui. Worker, live trading, withdrawal OFF; Rp0.

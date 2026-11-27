@@ -728,7 +728,7 @@
   "run": {
     "code_version": "quant-mvp-1.0.0",
     "command": "python3 research/python/run_experiments.py --registry registry.json",
-    "generated_at": "2026-11-26T19:31:57.604258Z",
+    "generated_at": "2026-11-27T05:10:51.169040Z",
     "python_version": "3.14.10"
   },
   "signals": [
