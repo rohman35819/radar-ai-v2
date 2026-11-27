@@ -3724,3 +3724,27 @@ Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat ha
 
 ### NEXT TASK
 Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy model; Divisi 04/05 establish frozen capability benchmark and regression criteria. Reuse current queue/migration work after auditing PR #149/#153/#160; do not duplicate schema or provision infrastructure.
+
+---
+
+## 153. NEXUS Core Brain — Knowledge & Skill Learning slice — 27 November 2026
+
+### 153.1 Mandat dan posisi
+- Mandat BOS dibaca dari `NEXUS_GROK_MANDATE.md` pada branch `docs/radar-nexus-separated-storage-decision` (PR #165). Hierarchy: BOS → RADAR policy plane → NEXUS runtime. NEXUS adalah otak internal RADAR, bukan produk/otoritas terpisah; penyimpanan terpisah tidak berarti komando terpisah.
+- N0 gap map: sudah ada `lib/knowledge/memory.js` (provenance-first, proposal-only), `lib/ai/*` provider adapters, migration `db/001–003` dan `supabase/20261124_*`, context budget 6.000 token di branch `feat/nexus-cli`. **Belum ada** typed learning contracts, provider deterministik, pipeline evaluasi, versioned knowledge store, atau RADAR capability contract.
+- Antrean live: 8 PR open, 5 non-draft → develop (#115, #153, #159, #160, #165). PR NEXUS duplikat tidak dibuka; #165 tidak disentuh.
+
+### 153.2 Implementasi (branch `feat/nexus-core-brain-learning`, dari `develop` `411e7b7`)
+- `src/nexus/core/contracts.mts` — tipe + validator untuk task, model response, provenance, evidence, evaluation, knowledge/skill, retrieval query dan capability grant; self-issued grant dan provenance tidak lengkap ditolak.
+- `src/nexus/core/provider.mjs` — mock provider deterministik (tanpa jaringan/API key/biaya) dan disabled provider yang fail-closed.
+- `src/nexus/core/learning.mjs` — ingest output eksternal sebagai data tidak tepercaya; deteksi prompt injection/secret-like, redaksi, provenance wajib; evaluator deterministik lima dimensi; kurasi deny-by-default; pipeline lengkap dengan capability checks.
+- `src/nexus/core/store.mjs` — dedup SHA-256, supersession dengan ID versi baru, `listVersions`, retrieval berscope/terbatas, `exportState`/`importState` (simulasi reload, **bukan** durable DB).
+- `src/nexus/core/capability.mjs` — issuer wajib RADAR, subject bukan RADAR, expiry, policy revision, action/resource wildcard, autonomy stage, approvalRequired, correlation ID, traversal ditolak, audit teredaksi.
+- `test/nexus-core-learning.test.mjs` (10 tes) dan `docs/nexus-core-brain-learning.md`. `package.json` test script menyertakan `test/*.test.mjs`.
+
+### 153.3 Bukti
+- `node --test test/nexus-core-learning.test.mjs`: **10/10 pass**. `npm test`: **251/251 pass**, 0 fail. Strict TypeScript `tsc --noEmit -p tsconfig.json` dengan typescript 5.9.3: **exit 0** (dijalankan lewat `node node_modules/typescript/bin/tsc` karena shebang `/usr/bin/env` tidak ada di Termux; node_modules dihapus setelahnya). `git diff --check` clean; secret scan file baru bersih.
+- Commit: `4a7c5dd233a5d0ecc6395877813a734389c580be`. Belum di-PR (WIP 5 > 3), belum exact-head CI/Hostless/LIVE. Tidak ada provider eksternal, worker, scheduler, order, withdrawal, atau secret yang dipanggil/diaktifkan.
+
+### 153.4 Batas & NEXT TASK
+Slice ini **tidak** membuktikan NEXUS belajar persisten: store hanya in-memory dengan snapshot reload deterministik. Tidak ada klaim DeepSeek parity, agent aktif, atau offline autonomy. NEXT: N2 capability-based development workflow (change proposal → branch terisolasi → test/security → diff artifact → approval), lalu N3 control center, N4 provider critic/benchmark, N5 persistence setelah BOS menyetujui MCP/storage dan PR queue sehat.
