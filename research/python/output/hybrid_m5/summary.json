@@ -1,0 +1,91 @@
+{
+  "registry_version": "m5-hybrid-v1",
+  "results": [
+    {
+      "accepted": false,
+      "id": "m5-01-hybrid-spot",
+      "instrument": "SPOT",
+      "oos_dd_pct": 0.0,
+      "oos_net_pct": 0.0,
+      "reasons": [
+        "too_few_trades",
+        "undefined_profit_factor",
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "/data/data/com.termux/files/usr/tmp/opencode/m5-quant/research/python/output/hybrid_m5/m5-01-hybrid-spot_report.json",
+      "selected_mode": "HYBRID",
+      "walk_forward": "0/15"
+    },
+    {
+      "accepted": false,
+      "id": "m5-02-hybrid-futures",
+      "instrument": "FUTURES",
+      "oos_dd_pct": 2.805065,
+      "oos_net_pct": -2.805065,
+      "reasons": [
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "/data/data/com.termux/files/usr/tmp/opencode/m5-quant/research/python/output/hybrid_m5/m5-02-hybrid-futures_report.json",
+      "selected_mode": "HYBRID",
+      "walk_forward": "1/15"
+    },
+    {
+      "accepted": false,
+      "id": "m5-03-scalp-spot",
+      "instrument": "SPOT",
+      "oos_dd_pct": 25.662201,
+      "oos_net_pct": -25.529454,
+      "reasons": [
+        "drawdown_limit",
+        "validation_selection_rejected",
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "/data/data/com.termux/files/usr/tmp/opencode/m5-quant/research/python/output/hybrid_m5/m5-03-scalp-spot_report.json",
+      "selected_mode": "SCALP",
+      "walk_forward": "0/15"
+    },
+    {
+      "accepted": false,
+      "id": "m5-04-scalp-futures",
+      "instrument": "FUTURES",
+      "oos_dd_pct": 36.815096,
+      "oos_net_pct": -35.334312,
+      "reasons": [
+        "drawdown_limit",
+        "validation_selection_rejected",
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "/data/data/com.termux/files/usr/tmp/opencode/m5-quant/research/python/output/hybrid_m5/m5-04-scalp-futures_report.json",
+      "selected_mode": "SCALP",
+      "walk_forward": "0/15"
+    },
+    {
+      "accepted": false,
+      "id": "m5-05-momentum-spot",
+      "instrument": "SPOT",
+      "oos_dd_pct": 0.0,
+      "oos_net_pct": 0.0,
+      "reasons": [
+        "too_few_trades",
+        "undefined_profit_factor",
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "/data/data/com.termux/files/usr/tmp/opencode/m5-quant/research/python/output/hybrid_m5/m5-05-momentum-spot_report.json",
+      "selected_mode": "MOMENTUM",
+      "walk_forward": "0/15"
+    },
+    {
+      "accepted": false,
+      "id": "m5-06-momentum-futures",
+      "instrument": "FUTURES",
+      "oos_dd_pct": 2.805065,
+      "oos_net_pct": -2.805065,
+      "reasons": [
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "/data/data/com.termux/files/usr/tmp/opencode/m5-quant/research/python/output/hybrid_m5/m5-06-momentum-futures_report.json",
+      "selected_mode": "MOMENTUM",
+      "walk_forward": "1/15"
+    }
+  ]
+}

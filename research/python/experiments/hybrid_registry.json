@@ -1,0 +1,80 @@
+{
+  "registry_version": "m5-hybrid-v1",
+  "registered_at": "2026-11-27T06:59:49Z",
+  "owner": "BOS",
+  "lead": "Divisi 04 / Quantum Research",
+  "purpose": "Pre-registered M5 BTCUSDT experiments for hybrid, scalping and momentum on SPOT and FUTURES. Results are fixed before observation; criteria are never relaxed.",
+  "criteria_version": "validation-v1",
+  "criteria": {
+    "min_trades": 2,
+    "max_drawdown_pct": 25.0,
+    "walk_forward_positive_majority": true,
+    "fee_bps_per_side": 7.5,
+    "slippage_bps_per_side": 7.5,
+    "spread_bps": 2.0,
+    "funding_bps_per_day_futures": 0.0,
+    "leverage": 1.0
+  },
+  "data": {
+    "symbol": "BTCUSDT",
+    "interval": "5m",
+    "artifact": "research/python/fixtures/m5/btcusdt_5m_public.csv",
+    "checksum_sha256": "38fb4834944bab43a94d9e91363f601b03e661846f8cfd2424efb456b473c012"
+  },
+  "experiments": [
+    {
+      "id": "m5-01-hybrid-spot",
+      "instrument": "SPOT",
+      "hypothesis": "Regime-aware hybrid selection gives better OOS robustness than individual modes on M5 BTC spot.",
+      "configs": [
+        {"mode": "HYBRID", "ema_fast": 9, "ema_slow": 21, "rsi_period": 14, "atr_period": 14, "vwap_period": 48, "breakout_lookback": 24},
+        {"mode": "HYBRID", "ema_fast": 12, "ema_slow": 30, "rsi_period": 18, "atr_period": 18, "vwap_period": 60, "breakout_lookback": 36}
+      ]
+    },
+    {
+      "id": "m5-02-hybrid-futures",
+      "instrument": "FUTURES",
+      "hypothesis": "Regime-aware hybrid with long/short and 1x futures risk is robust on M5 BTC.",
+      "configs": [
+        {"mode": "HYBRID", "ema_fast": 9, "ema_slow": 21, "rsi_period": 14, "atr_period": 14, "vwap_period": 48, "breakout_lookback": 24},
+        {"mode": "HYBRID", "ema_fast": 12, "ema_slow": 30, "rsi_period": 18, "atr_period": 18, "vwap_period": 60, "breakout_lookback": 36}
+      ]
+    },
+    {
+      "id": "m5-03-scalp-spot",
+      "instrument": "SPOT",
+      "hypothesis": "VWAP/RSI mean-reversion scalping only is not sufficient on M5 BTC spot.",
+      "configs": [
+        {"mode": "SCALP", "rsi_period": 14, "rsi_oversold": 32.0, "rsi_overbought": 68.0, "vwap_period": 48, "atr_period": 14, "scalp_atr_mult": 1.2},
+        {"mode": "SCALP", "rsi_period": 18, "rsi_oversold": 35.0, "rsi_overbought": 65.0, "vwap_period": 60, "atr_period": 18, "scalp_atr_mult": 1.5}
+      ]
+    },
+    {
+      "id": "m5-04-scalp-futures",
+      "instrument": "FUTURES",
+      "hypothesis": "VWAP/RSI mean-reversion scalping with long/short futures is not sufficient on M5 BTC.",
+      "configs": [
+        {"mode": "SCALP", "rsi_period": 14, "rsi_oversold": 32.0, "rsi_overbought": 68.0, "vwap_period": 48, "atr_period": 14, "scalp_atr_mult": 1.2},
+        {"mode": "SCALP", "rsi_period": 18, "rsi_oversold": 35.0, "rsi_overbought": 65.0, "vwap_period": 60, "atr_period": 18, "scalp_atr_mult": 1.5}
+      ]
+    },
+    {
+      "id": "m5-05-momentum-spot",
+      "instrument": "SPOT",
+      "hypothesis": "EMA trend plus volatility breakout momentum only is not sufficient on M5 BTC spot.",
+      "configs": [
+        {"mode": "MOMENTUM", "ema_fast": 9, "ema_slow": 21, "breakout_lookback": 24, "atr_period": 14, "momentum_atr_mult": 1.8},
+        {"mode": "MOMENTUM", "ema_fast": 12, "ema_slow": 30, "breakout_lookback": 36, "atr_period": 18, "momentum_atr_mult": 2.0}
+      ]
+    },
+    {
+      "id": "m5-06-momentum-futures",
+      "instrument": "FUTURES",
+      "hypothesis": "EMA trend plus volatility breakout with long/short futures is not sufficient on M5 BTC.",
+      "configs": [
+        {"mode": "MOMENTUM", "ema_fast": 9, "ema_slow": 21, "breakout_lookback": 24, "atr_period": 14, "momentum_atr_mult": 1.8},
+        {"mode": "MOMENTUM", "ema_fast": 12, "ema_slow": 30, "breakout_lookback": 36, "atr_period": 18, "momentum_atr_mult": 2.0}
+      ]
+    }
+  ]
+}

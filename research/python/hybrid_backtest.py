@@ -138,7 +138,7 @@ def run_hybrid_backtest(
         if signal.target != 0 and signal.strategy in ('MOMENTUM', 'SCALP'):
             active_target = signal.target
             active_expiry = signal.expires_at
-        target = active_target if index <= active_expiry else 0
+        target = active_target if signal.bar_index <= active_expiry else 0
         if instrument == 'SPOT' and target == -1:
             target = 0
         if kill_active and target != 0:

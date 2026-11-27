@@ -3696,3 +3696,14 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### 149.3 NEXT TASK
 Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat hasil (menghindari data snooping pada 364 bar yang sama). Paper ledger/reconciliation tetap terkunci sampai strategi lolos `validation-v1` dan BOS menyetujui. Worker, live trading, withdrawal OFF; Rp0.
+
+### 150. QUANTUM M5 HYBRID ENGINE — 27 NOVEMBER 2026
+- Mandat BOS: SPOT + FUTURES, timeframe M5, scalping + momentum, hybrid/regime-aware, BTC/USDT lalu ETH/USDT, SOL setelah admission lolos; Python + TypeScript; Rp0; live trading OFF.
+- Audit PR #156 (`cc16628`) dan #157 (`e5fc214`) pada `develop` `6b278cc`: leluhur terkonfirmasi; sinyal per-kandidat, biaya, equity/drawdown final, OOS/walk-forward, dan provenance sudah valid. Tidak ada penulisan ulang.
+- Branch kerja `feat/quantum-m5-engine` dari `develop` `6b278cc`; worktree terpisah dari DeepSeek (`fix/quant-equity-reconciliation` tidak disentuh).
+- Commit: `299383e` (M5 data engine + artefak), `643cdb6` (hybrid strategy/backtest/validation engine).
+- Data: 9.999 candle M5 BTCUSDT tertutup, 2026-10-23→2026-11-27, source publik gratis tanpa API key, checksum `38fb4834944bab43a94d9e91363f601b03e661846f8cfd2424efb456b473c012`; 1 candle open dilewati. Quality 0 duplicate/0 gap/0 violation. `m5_data.py` menolak timestamp naif, duplikat, gap, OHLCV invalid, checksum mismatch, dan data basi >3 bar.
+- Engine: EMA/RSI/VWAP/ATR/breakout; regime UP/DOWN/FLAT × LOW/NORMAL/HIGH; selector SCALP/MOMENTUM/HOLD/NO_TRADE; eksekusi bar open berikutnya; SPOT long-only; FUTURES long/short leverage 1x; fee 7,5 + slippage 7,5 + spread 2 bps/sisi; funding 0; stop/TP ATR; liquidation isolated disederhanakan; kill switch; drawdown dihitung ulang dari equity final. Bug expiry relatif-vs-global ditemukan dan diperbaiki sebelum results dipakai.
+- Validasi: train 60% / validation 20% / OOS 20%; walk-forward 2000/500/step 500; kriteria tidak dilonggarkan. Enam eksperimen pra-registrasi `06:59:49Z` sebelum laporan: hybrid/scalp/momentum × SPOT/FUTURES, **semua REJECT**, tidak ada klaim profitable. Detail `docs/quantum-m5-results.md`.
+- Tes: seluruh `research/python/test_*.py` lulus (M5 5, hybrid 7, backtest 6, validation 3 + suite lama). `git diff --check` bersih.
+- NEXT TASK: TypeScript typed contract untuk M5 data/signal/entry-exit/risk/provenance/execution + idempotency/audit; lalu eksperimen M5 berikutnya dengan pra-registrasi. Paper ledger, worker, live order/withdrawal tetap OFF; Rp0.
