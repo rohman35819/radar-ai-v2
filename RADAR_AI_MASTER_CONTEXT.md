@@ -3753,3 +3753,15 @@ Slice ini **tidak** membuktikan NEXUS belajar persisten: store hanya in-memory d
 - `src/nexus/core/development.mjs`: `createChangeProposal`, `buildPreview`, `submitProposal`. Pemeriksaan `repo.read` saat membuat proposal; `repo.patch.propose` + `approvalRequired` + `approved=true` + correlation ID saat submit. Path terlindungi/traversal, secret pada goal, perintah shell di luar allowlist ditolak. Preview tekstual deterministik; tanpa tulisan file/eksekusi/jaringan.
 - `test/nexus-core-development.test.mjs`: 4/4 pass. `npm test`: **255/255 pass**, 0 fail; strict `tsc` exit 0; `git diff --check` clean.
 - Tetap tidak ada merge/deploy, worker, scheduler, trading, withdrawal, atau secret. Ini hanya artifact proposal + approval gate, bukan eksekusi perubahan.
+
+---
+
+## 154. Kurikulum NEXUS — Pelajaran 01 (Grok sebagai guru pertama) — 27 November 2026
+
+- BOS menugaskan Grok sebagai **Guru AI Pertama** untuk mendidik NEXUS secara bertahap: arsitektur, Python/TypeScript/engineering, agent & orkestrasi, knowledge/memory, kuantum trading, keamanan/operasional. Setiap pelajaran wajib memuat materi, contoh, latihan, ujian, evaluasi, dan koreksi; tidak boleh mengubah kebijakan atau melewati kewenangan BOS.
+- `src/nexus/curriculum/lesson-01.mjs` — artefak terstruktur `radar-nexus-lesson.v1`: 6 bagian materi dengan `source_refs`, 5 objective, contoh benar/salah, 3 latihan, 5 pertanyaan ujian dengan `required` concepts dan `forbidden` claims, grader deterministik `gradeExam`, dan `correctionFor`.
+- `docs/nexus-curriculum/lesson-01.md` (tampilan manusia) dan `docs/nexus-curriculum/README.md` (metode siklus pelajaran + indeks lesson-01..06). Materi bersumber dari repo dan mandat BOS, bukan doktrin baru.
+- `LESSON_01_FIXTURE`, `LESSON_01_TASK`, `LESSON_01_FACTS` memungkinkan pelajaran dijalankan lewat pipeline `runLearningPipeline`: ingest → provenance → evaluate → approve/reject → versioned store → retrieve. Ujian gagal menghasilkan `remediation_required`; materi **tidak dipromosikan** menjadi approved knowledge sebelum ujian lulus; koreksi menjadi versi baru dengan `supersedes`.
+- `test/nexus-lesson-01.test.mjs`: **5/5 pass** (struktur, ingest ke memory + reload, ujian benar/salah + koreksi, failed lesson tidak otoritatif, tanpa secret/klaim berbayar). `npm test`: **260/260 pass**, 0 fail; strict `tsc` exit 0; `git diff --check` clean.
+- Commit: `00ce72b43baa6f72a76397d1221fb0fd0dda953c`. Branch `feat/nexus-core-brain-learning` sudah di-push; **PR tidak dibuka** (5 non-draft → develop > WIP 3). Tidak ada perubahan kebijakan, izin baru, provider eksternal, worker, trading, atau klaim NEXUS belajar mandiri/always-on.
+- NEXT: lesson-02 (Python, TypeScript, software engineering & debugging) dengan pola artefak + fixture + ujian + koreksi yang sama; lanjut sesuai antrean kurikulum setelah PR queue sehat.
