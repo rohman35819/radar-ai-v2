@@ -1,0 +1,45 @@
+{
+  "registry_version": "microstructure-1.0",
+  "registered_at": "2026-11-27T13:20:00Z",
+  "owner": "BOS",
+  "lead": "Grok / Divisi 04",
+  "status": "pre-registered-before-results",
+  "data": {
+    "source": "committed public Binance daily OHLCV fixtures (BTCUSDT, ETHUSDT)",
+    "period": "2025-11-27 to 2026-11-25",
+    "split": "chronological: first 60% research/in-sample, remaining 40% out-of-sample",
+    "walk_forward": "rolling scan at indices 250,270,290,310,330 with forward simulation from that bar open",
+    "note": "No new dataset fetched for these hypotheses; no order book or options data exists in artifacts."
+  },
+  "criteria": {
+    "validation_v1_unchanged": true,
+    "min_oos_trades": 2,
+    "max_oos_drawdown_pct": 25.0,
+    "costs_bps_per_side": 15,
+    "funding_bps_per_day": 0,
+    "benchmarks": ["no_trade_0_pct", "prior_cross_asset_scan"],
+    "promotion": "only if OOS net > no-trade and walk-forward majority positive; no relaxation"
+  },
+  "hypotheses": [
+    {
+      "id": "H1-liquidity-filter",
+      "theory": "Filtering cross-asset trend confirmation by a widening-spread/poor-volume proxy removes low-quality entries where 15 bps/side costs dominate.",
+      "feature": "microstructure.liquidity_state == OK and spread_state != WIDENING",
+      "baseline": "prior cross-asset scan without microstructure filter",
+      "falsification": "reject if OOS trades <2, OOS drawdown >25%, OOS net <= baseline, or walk-forward not majority positive",
+      "status": "registered"
+    },
+    {
+      "id": "H2-low-vol-relative",
+      "theory": "Among cross-asset confirmed candidates, selecting the asset with lower realized-vol percentile improves risk-adjusted net return versus selecting by trend score.",
+      "feature": "volatility.percentile ranking among confirmed assets",
+      "baseline": "selection by trend score only (prior scan)",
+      "falsification": "reject if OOS trades <2, OOS drawdown >25%, OOS net <= baseline, or walk-forward not majority positive",
+      "status": "registered"
+    }
+  ],
+  "deferred": [
+    {"feature": "actual bid/ask spread and order-book depth", "reason": "no public historical order-book artifact; proxy only"},
+    {"feature": "options delta/gamma/theta/vega and implied volatility", "reason": "no valid options dataset; invented Greeks prohibited"}
+  ]
+}
