@@ -81,6 +81,15 @@ Shared information is exchanged as API payloads or explicitly published snapshot
 - Monitor quota/usage and API reliability.
 - Reassess dedicated infrastructure only when justified by measured load and BOS approval.
 
+## Provisioning status — 2026-11-27 (BOS dashboard evidence)
+
+- The separate Supabase organization `RADAR NEXUS` and project `radar-nexus-core` have now been created by BOS on the Free plan.
+- NEXUS project reference: `zhvznjcsxrtybqcpbryu`.
+- NEXUS Project URL: `https://zhvznjcsxrtybqcpbryu.supabase.co`.
+- Dashboard snapshot reports Status `Healthy`, Compute `nano`, branch `main`, no GitHub repository connected, no migrations, no backups, and zero requests/warnings/errors in the displayed last-60-minute window.
+- This is provisioning evidence only. It does not prove schema, RLS/grants, API integration, backup/restore, or runtime persistence are implemented or tested.
+- Database password and API keys are intentionally not recorded here. GitHub connection remains optional and is not required for the initial schema design.
+
 ## Existing state and migration warning
 
 The currently known RADAR Supabase project is `gjchftphwexpjpvdpqoj` at `https://gjchftphwexpjpvdpqoj.supabase.co`. A dashboard snapshot supplied on 2026-11-27 showed the project healthy, with no migrations and no backups listed at that time. This does not establish current status; recheck before any migration.
