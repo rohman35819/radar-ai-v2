@@ -227,3 +227,34 @@ BOS clarified on 2026-11-27 that NEXUS is intended to be RADAR AI V2's core inte
 6. Operate: monitor, rollback and record outcomes; no unbounded self-modification.
 
 None of these capabilities should be described as continuously learning, managing, editing, or deploying until the corresponding runtime, permissions, tests and operational evidence exist.
+
+
+## 15. BOS decision — NEXUS trading authority; withdrawal reserved to BOS
+
+Decision recorded 2026-11-27 (Asia/Jakarta), superseding any conflicting v1 statements in Sections 2, 7, 9, 10, 13 and 14 about NEXUS being categorically barred from exchange operations or live trading.
+
+### Granted product capability (target state; not yet implemented or activated)
+- NEXUS is authorized by BOS, as a product requirement, to read RADAR operational/market/portfolio data and to perform exchange trading and transaction operations within capabilities and risk limits issued by RADAR.
+- Trading operations may include placing, modifying and cancelling orders; buying/selling assets; opening, managing and closing positions; and running an approved automated strategy.
+- NEXUS may use private exchange account capabilities required for balances, positions and trading, but only through a RADAR-controlled execution gateway and dedicated credentials.
+- Autonomous trading is permitted only inside an explicit BOS-approved strategy mandate: exchange/account, allowed instruments, allowed order types, maximum order/notional/exposure, loss and drawdown limits, rate limits, session/expiry, and stop conditions. Missing or exceeded limits must deny execution and trigger a safe stop.
+- RADAR policy remains the enforcement point. NEXUS cannot grant itself trading scopes, increase limits, change the approved strategy mandate, disable risk controls, or bypass audit/kill switch.
+
+### Absolute withdrawal prohibition
+- Withdrawal of any asset or funds to an external wallet, bank account, address, or destination is **BOS-only**. NEXUS, its agents, workers, service identities and API credentials must never have withdrawal permission.
+- Exchange API keys used by NEXUS must have withdrawal/transfer-out permissions disabled at the exchange level, not merely blocked by a prompt or application policy. Use separate credentials where supported, IP restrictions, secret vaulting and key rotation.
+- The RADAR execution gateway must explicitly deny withdrawal endpoints and equivalent asset-egress operations. Tests must prove denial even if NEXUS requests it, an external model suggests it, or a task payload attempts prompt/policy injection.
+- Only BOS-controlled authenticated workflow may initiate a withdrawal, with independent confirmation and an auditable record. NEXUS may prepare information for BOS but may not submit, sign, approve or execute the withdrawal.
+- Internal transfers between exchange accounts/subaccounts are not automatically granted by this decision; treat them as separately scoped fund-movement operations requiring explicit BOS policy.
+
+### Mandatory controls before any live transaction
+1. Start with exchange sandbox/testnet and paper execution; verify order lifecycle, idempotency, reconciliation, duplicate prevention, partial fills, timeouts and cancel/replace behavior.
+2. Live trading remains OFF until BOS separately approves the named exchange/account, credential scope, strategy, capital ceiling, risk limits and go-live checklist.
+3. Never store exchange secrets in NEXUS memory, prompts, logs, browser or repository. Credentials remain server-side in a secret manager and are never exposed to model context.
+4. Enforce pre-trade risk checks, price/quantity precision, min-notional, stale-market-data rejection, slippage bounds, exposure limits, daily loss/drawdown stops, rate limits, and emergency kill switch.
+5. Every decision and order must carry actor/agent identity, mandate revision, capability scope, idempotency key, correlation ID, market-data provenance/freshness, risk-check result and exchange order identifiers.
+6. Reconcile exchange fills, fees, balances and positions against RADAR's ledger; alert and halt on unexplained divergence.
+7. Withdrawal denial must be covered by unit, integration and negative authorization tests against the actual gateway/credential configuration before any live trading is enabled.
+
+### Authority clarification
+This decision grants NEXUS the intended ability to trade; it does not grant unlimited capital, unrestricted account administration, withdrawal, or permission to activate live trading immediately. BOS remains the sole authority for withdrawal and the final authority for enabling live trading mandates. This architecture decision does not itself connect an exchange, create credentials, place an order, or activate a worker.
