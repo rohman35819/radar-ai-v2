@@ -44,3 +44,13 @@ Pipeline deterministik `ingest → provenance → evaluate → approve/reject �
 ## NEXT TASK
 
 Lanjut N2: capability-based development workflow dengan change proposal dan artifact diff, tetap deny-by-default dan tanpa PR duplikat. Setelah antrean PR ≤2, baru buka PR untuk slice ini dan verifikasi exact-head CI + security.
+
+## N2 — capability-based development workflow (slice)
+
+`src/nexus/core/development.mjs` menambah `createChangeProposal` → `buildPreview` → `submitProposal`:
+
+- Proposal divalidasi dengan grant `repo.read`; file ditolak jika traversal, absolut, `.env`/secret/`node_modules`/`.git`, atau lebih dari 20 file.
+- `acceptanceTests` hanya allowlist (`npm test`, `npm run typecheck`, `node --test test/…`, `python3 -m unittest`); meta-shell ditolak.
+- `buildPreview` hanya teks deterministik — tidak membaca repository, tidak menjalankan perintah, tidak menulis file.
+- `submitProposal` memerlukan action `repo.patch.propose`, `approvalRequired=true`, `approved=true`, correlation ID yang cocok, dan grant belum kedaluwarsa. Tanpa itu hasil `denied`; tidak ada patch yang diterapkan.
+- Tes: `test/nexus-core-development.test.mjs` 4/4 pass; `npm test` 255/255; strict tsc exit 0.

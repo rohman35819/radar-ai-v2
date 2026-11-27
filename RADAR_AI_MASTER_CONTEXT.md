@@ -3748,3 +3748,8 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 
 ### 153.4 Batas & NEXT TASK
 Slice ini **tidak** membuktikan NEXUS belajar persisten: store hanya in-memory dengan snapshot reload deterministik. Tidak ada klaim DeepSeek parity, agent aktif, atau offline autonomy. NEXT: N2 capability-based development workflow (change proposal → branch terisolasi → test/security → diff artifact → approval), lalu N3 control center, N4 provider critic/benchmark, N5 persistence setelah BOS menyetujui MCP/storage dan PR queue sehat.
+
+### 153.5 N2 — workflow pengembangan berbasis capability
+- `src/nexus/core/development.mjs`: `createChangeProposal`, `buildPreview`, `submitProposal`. Pemeriksaan `repo.read` saat membuat proposal; `repo.patch.propose` + `approvalRequired` + `approved=true` + correlation ID saat submit. Path terlindungi/traversal, secret pada goal, perintah shell di luar allowlist ditolak. Preview tekstual deterministik; tanpa tulisan file/eksekusi/jaringan.
+- `test/nexus-core-development.test.mjs`: 4/4 pass. `npm test`: **255/255 pass**, 0 fail; strict `tsc` exit 0; `git diff --check` clean.
+- Tetap tidak ada merge/deploy, worker, scheduler, trading, withdrawal, atau secret. Ini hanya artifact proposal + approval gate, bukan eksekusi perubahan.
