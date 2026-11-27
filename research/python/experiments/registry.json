@@ -1,6 +1,6 @@
 {
   "registry_version": "1.0.0",
-  "registered_at": "2026-11-27T00:00:00Z",
+  "registered_at": "2026-11-26T19:28:03Z",
   "owner": "BOS",
   "lead": "Grok / Divisi 04",
   "purpose": "Pre-registered quant experiments. Hypotheses, grids and decision rules are fixed BEFORE results are observed. Failed experiments are retained and never rewritten to pass.",
