@@ -1,0 +1,137 @@
+{
+  "criteria": {
+    "costs_bps_per_side": 15,
+    "funding_bps_per_day": 0,
+    "max_drawdown_stop_pct": 0.3,
+    "max_out_of_sample_drawdown_pct": 25.0,
+    "min_out_of_sample_trades": 2,
+    "position_fraction": 1.0,
+    "stop_loss_pct": 0.1,
+    "validation_selection_must_be_accepted": true,
+    "walk_forward_positive_folds_must_be_majority": true
+  },
+  "criteria_version": "validation-v1",
+  "data": {
+    "end": "2025-11-26T00:00:00Z",
+    "interval": "1d",
+    "note": "Out-of-time window disjoint from the original 2025-11-27..2026-11-25 experiments.",
+    "rows": 634,
+    "source": "https://data-api.binance.vision/api/v3/klines",
+    "start": "2024-03-03T00:00:00Z",
+    "symbol": "BTCUSDT"
+  },
+  "decision_rule": "promote_candidate only if accepted_for_paper_candidate is true; even then paper ledger requires separate BOS approval. No criterion may be weakened after seeing results.",
+  "experiments": [
+    {
+      "grid": [
+        {
+          "fast": 3,
+          "slow": 8
+        },
+        {
+          "fast": 5,
+          "slow": 20
+        },
+        {
+          "fast": 10,
+          "slow": 30
+        }
+      ],
+      "hypothesis": "Out-of-time replication on 634 BTCUSDT daily bars (2024-03-03 to 2025-11-26), disjoint from the original 364-bar window. Unchanged validation-v1 criteria and costs; no parameter is tuned on this holdout.",
+      "id": "exp-06-sma-holdout",
+      "registered_at": "2026-11-27T05:14:32Z",
+      "status": "registered",
+      "strategy": "sma_crossover",
+      "symbols": [
+        "BTCUSDT"
+      ]
+    },
+    {
+      "grid": [
+        {
+          "momentum_period": 5,
+          "trend_period": 20
+        },
+        {
+          "momentum_period": 10,
+          "trend_period": 50
+        },
+        {
+          "momentum_period": 20,
+          "trend_period": 100
+        }
+      ],
+      "hypothesis": "Out-of-time replication of trend+momentum on the disjoint BTCUSDT holdout window with unchanged criteria and costs.",
+      "id": "exp-07-momentum-holdout",
+      "registered_at": "2026-11-27T05:14:32Z",
+      "status": "registered",
+      "strategy": "trend_momentum",
+      "symbols": [
+        "BTCUSDT"
+      ]
+    },
+    {
+      "grid": [
+        {
+          "entry_z": -1.0,
+          "exit_z": 0.0,
+          "zscore_period": 10
+        },
+        {
+          "entry_z": -1.5,
+          "exit_z": 0.0,
+          "zscore_period": 20
+        },
+        {
+          "entry_z": -2.0,
+          "exit_z": 0.5,
+          "zscore_period": 30
+        }
+      ],
+      "hypothesis": "Out-of-time replication of mean reversion on the disjoint BTCUSDT holdout window with unchanged criteria and costs.",
+      "id": "exp-08-mean-reversion-holdout",
+      "registered_at": "2026-11-27T05:14:32Z",
+      "status": "registered",
+      "strategy": "mean_reversion",
+      "symbols": [
+        "BTCUSDT"
+      ]
+    },
+    {
+      "grid": [
+        {
+          "rsi_entry": 35.0,
+          "rsi_exit": 55.0,
+          "rsi_period": 7,
+          "trend_period": 20
+        },
+        {
+          "rsi_entry": 30.0,
+          "rsi_exit": 60.0,
+          "rsi_period": 14,
+          "trend_period": 50
+        },
+        {
+          "rsi_entry": 40.0,
+          "rsi_exit": 65.0,
+          "rsi_period": 14,
+          "trend_period": 100
+        }
+      ],
+      "hypothesis": "Out-of-time replication of regime-aware pullback entries on the disjoint BTCUSDT holdout window with unchanged criteria and costs.",
+      "id": "exp-09-regime-aware-holdout",
+      "registered_at": "2026-11-27T05:14:32Z",
+      "status": "registered",
+      "strategy": "regime_aware",
+      "symbols": [
+        "BTCUSDT"
+      ]
+    }
+  ],
+  "id": "holdout-registry-v1",
+  "lead": "Grok / Divisi 04",
+  "owner": "BOS",
+  "purpose": "Pre-registered quant experiments. Hypotheses, grids and decision rules are fixed BEFORE results are observed. Failed experiments are retained and never rewritten to pass.",
+  "registered_at": "2026-11-26T19:28:03Z",
+  "registry_version": "1.0.0"
+}

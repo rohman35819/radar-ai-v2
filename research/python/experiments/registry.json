@@ -85,6 +85,42 @@
       ],
       "symbols": ["BTCUSDT"],
       "status": "registered"
+    },
+    {
+      "id": "exp-06-sma-holdout",
+      "strategy": "sma_crossover",
+      "registered_at": "2026-11-27T05:14:32Z",
+      "hypothesis": "Out-of-time replication on 634 BTCUSDT daily bars (2024-03-03 to 2025-11-26), disjoint from the original 364-bar window. Unchanged validation-v1 criteria and costs; no parameter is tuned on this holdout.",
+      "grid": [{"fast": 3, "slow": 8}, {"fast": 5, "slow": 20}, {"fast": 10, "slow": 30}],
+      "symbols": ["BTCUSDT"],
+      "status": "registered"
+    },
+    {
+      "id": "exp-07-momentum-holdout",
+      "strategy": "trend_momentum",
+      "registered_at": "2026-11-27T05:14:32Z",
+      "hypothesis": "Out-of-time replication of trend+momentum on the disjoint BTCUSDT holdout window with unchanged criteria and costs.",
+      "grid": [{"trend_period": 20, "momentum_period": 5}, {"trend_period": 50, "momentum_period": 10}, {"trend_period": 100, "momentum_period": 20}],
+      "symbols": ["BTCUSDT"],
+      "status": "registered"
+    },
+    {
+      "id": "exp-08-mean-reversion-holdout",
+      "strategy": "mean_reversion",
+      "registered_at": "2026-11-27T05:14:32Z",
+      "hypothesis": "Out-of-time replication of mean reversion on the disjoint BTCUSDT holdout window with unchanged criteria and costs.",
+      "grid": [{"zscore_period": 10, "entry_z": -1.0, "exit_z": 0.0}, {"zscore_period": 20, "entry_z": -1.5, "exit_z": 0.0}, {"zscore_period": 30, "entry_z": -2.0, "exit_z": 0.5}],
+      "symbols": ["BTCUSDT"],
+      "status": "registered"
+    },
+    {
+      "id": "exp-09-regime-aware-holdout",
+      "strategy": "regime_aware",
+      "registered_at": "2026-11-27T05:14:32Z",
+      "hypothesis": "Out-of-time replication of regime-aware pullback entries on the disjoint BTCUSDT holdout window with unchanged criteria and costs.",
+      "grid": [{"trend_period": 20, "rsi_period": 7, "rsi_entry": 35.0, "rsi_exit": 55.0}, {"trend_period": 50, "rsi_period": 14, "rsi_entry": 30.0, "rsi_exit": 60.0}, {"trend_period": 100, "rsi_period": 14, "rsi_entry": 40.0, "rsi_exit": 65.0}],
+      "symbols": ["BTCUSDT"],
+      "status": "registered"
     }
   ]
 }
