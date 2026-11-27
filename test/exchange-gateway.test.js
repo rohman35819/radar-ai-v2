@@ -190,6 +190,11 @@ test('checksum binds the full payload, not only timestamps', async () => {
   const second = await gatewayFor(99999).getMarketObservation('binance', 'BTCUSDT');
   assert.notEqual(first.checksum, second.checksum);
   assert.equal(first.provenance_ref, first.checksum);
+  const { hasValidObservationChecksum } = await import('../src/exchange/observation.mts');
+  assert.equal(hasValidObservationChecksum(first), true);
+  assert.equal(hasValidObservationChecksum(second), true);
+  assert.throws(() => createExchangeGateway({ role: 'quantum-research', exchangeService: base, maxAgeMs: 1e12 }),
+    (error) => error.code === 'GATEWAY_INVALID_AGE_LIMIT');
 });
 
 test('upstream errors are sanitized to codes only', async () => {

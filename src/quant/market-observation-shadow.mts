@@ -8,7 +8,7 @@
  * other than the injected `now`.
  */
 
-import { hasValidMarketInputChecksum } from '../exchange/observation.mts';
+import { hasValidMarketInputChecksum, observationChecksum } from '../exchange/observation.mts';
 import {
   isMarketObservationInputV1,
   RESEARCH_ALLOWED_SYMBOLS,
@@ -69,9 +69,18 @@ function iso(value: unknown): value is string {
   return Number.isFinite(Date.parse(value));
 }
 
-/** Stable replay key derived only from immutable provenance fields. */
-export function shadowDedupeKey(input: MarketObservationInputV1): string {
-  return [input.provenance_ref, input.observed_at, input.checksum].join(':');
+/**
+ * Replay key derived by the consumer from immutable market content, NOT from
+ * caller-supplied provenance fields. Changing harmless metadata such as
+ * limitations cannot create a new replay identity.
+ */
+export function shadowDedupeKey(input: unknown): string {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new ShadowInputError('SCHEMA_INVALID');
+  const record = input as Record<string, unknown>;
+  const fields = ['source', 'symbol', 'interval', 'observed_at', 'received_at', 'payload'];
+  const signed: Record<string, unknown> = {};
+  for (const field of fields) if (record[field] !== undefined) signed[field] = record[field];
+  return observationChecksum(signed);
 }
 
 /** One entry point. Throws ShadowInputError with a stable code on rejection. */

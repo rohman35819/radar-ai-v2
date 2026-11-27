@@ -3740,3 +3740,28 @@ Verifikasi CI/security exact-head PR gateway; lanjut E3 extension (observation �
 - Reviewer AI Divisi 01 (sesi terpisah, read-only, **bukan** human sign-off) menemukan P1: `canonical()` gateway memakai replacer-array sehingga nested payload gugur dari digest; `provenance_ref`/`checksum` tidak pernah dihitung ulang, dapat dipalsukan (data poisoning). P2: replay dedupe dapat dilewati dengan mengganti checksum. P3: `now`/`maxAgeMs` caller-controlled, label akun bisa membocorkan UID, `scrub()` tanpa depth/cycle bound, dan downstream tidak mewajibkan kedua leg.
 - Perbaikan: canonical JSON rekursif terurut diterapkan di gateway; `observationChecksum()` + `hasValidObservationChecksum()` dan `hasValidMarketInputChecksum()` ditambahkan; adapter memverifikasi digest observasi lalu **menandatangani ulang** research input tersanitasi; shadow consumer memverifikasi ulang digest input; dedupe key berasal dari digest terverifikasi. `allowedSymbols` caller dihapus; `maxAgeMs` dibatasi ≤24 jam; label UID disaring; `scrub()` dibatasi depth 6 / 50 key / 4096 char + cycle guard; kedua leg wajib di adapter.
 - Test baru: mutasi `last_price` mengubah checksum; hex arbitrer ditolak; replay dengan checksum palsu ditolak; allowlist bypass ditolak. `npm test` **268/268**, Python **25/25**, strict TS exit 0, `git diff --check` bersih. Human Divisi 01 tetap pending.
+## RADAR NEXUS — Official AI Architecture (27 November 2026)
+
+**BOS decision:** RADAR NEXUS is the official identity for RADAR AI V2's personal AI system. Target capability is expert-assisted reasoning, tool use, durable approved knowledge, specialist agents and validated learning. DeepSeek-class performance is a benchmark target, not a claim of current parity.
+
+- Architecture specification: `docs/radar-nexus-core-architecture.md`.
+- Divisi 06 charter: `DIVISION_06_AGENT_PLATFORM.md`.
+- Divisi 07 charter: `DIVISION_07_KNOWLEDGE_MEMORY.md`.
+- NEXUS Core, Reasoning, Memory, Orchestrator, Agents, Model Engine, Learning & Evaluation are planned architectural boundaries; they are not all implemented or active.
+- Divisi 06 owns registry, queue, orchestration, scheduler, worker runtime, tool permissions, isolation, audit and recovery.
+- Divisi 07 owns knowledge taxonomy, decision/skill/task/evaluation records, provenance, curation, retrieval, lifecycle and retention.
+- Divisi 04 owns model/provider adapters and model/reasoning evaluation; Divisi 05 independently validates quality; Divisi 01 owns security review; Executive Office coordinates.
+- External models may propose/critique/teach, but their output is not canonical until provenance, deterministic checks and domain review pass. RAG/memory/skills are not model-weight training.
+- N0–N5 roadmap is defined in the architecture and division charters. First work is contracts, threat model, taxonomy and frozen benchmarks; do not activate workers as part of documentation.
+- **Rp0 only:** no paid provider/resource, new DB/vector service or cloud provisioning. Workers/scheduler OFF; live trading/orders/withdrawals OFF.
+- No proprietary foundation model is trained or deployed. Model ownership research is a future gated feasibility study.
+
+### NEXUS acceptance principles
+1. Every agent/task/tool has a versioned contract and least-privilege scope.
+2. Invalid transitions, unknown tools, missing provenance, stale records and unauthorized retrieval fail closed.
+3. Every task and promoted knowledge item is traceable to artifacts, source revision, tests and reviewer.
+4. Capability claims require frozen benchmark results; no DeepSeek parity claim without comparable evidence.
+5. Background autonomy requires deployed scheduler, durable queue/state, worker runtime, permission gateway, audit, budget, approvals, kill switch and recovery tests.
+
+### NEXT TASK
+Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy model; Divisi 04/05 establish frozen capability benchmark and regression criteria. Reuse current queue/migration work after auditing PR #149/#153/#160; do not duplicate schema or provision infrastructure.

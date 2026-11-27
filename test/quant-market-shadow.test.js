@@ -108,6 +108,8 @@ test('duplicate provenance is rejected deterministically', async () => {
   await rejectsWith(Promise.resolve().then(() => shadow.consumeShadowObservation(input, { now: NOW, seen: [key] })), 'DUPLICATE_OBSERVATION');
   const other = await validInput({ observed_at: '2026-11-27T09:09:30.000Z', received_at: '2026-11-27T09:09:30.500Z' });
   assert.notEqual(shadow.shadowDedupeKey(other), key);
+  const metadataOnly = { ...input, limitations: ['different but harmless'] };
+  assert.equal(shadow.shadowDedupeKey(metadataOnly), key);
   const forged = { ...input, provenance_ref: 'b'.repeat(64), checksum: 'b'.repeat(64) };
   await rejectsWith(Promise.resolve().then(() => shadow.consumeShadowObservation(forged, { now: NOW, seen: [key] })), 'CHECKSUM_INVALID');
 });
