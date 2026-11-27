@@ -3386,3 +3386,15 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Pengujian: `node --check public/app.js` lulus; `node --test test/top5-runtime.test.js` 3/3 pass; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
 - Status: perbaikan pada branch `fix/top5-price-label` dari `develop` `8ac4642`; perlu PR ke `develop` lalu rilis ke `main`. Hostless LIVE untuk perbaikan ini belum diverifikasi.
 - NEXT TASK: setelah deploy, ulangi reproduksi terhadap aset LIVE dan pastikan `renderAction()` menghasilkan kartu; lanjutkan QA klik browser nyata.
+
+
+## 138. RADAR NEXUS FOUNDATION — DRAFT SQL + API CONTRACT — 27 NOVEMBER 2026
+
+- BOS approved a bounded PR WIP exception for the NEXUS foundation; work remains on `docs/radar-nexus-separated-storage-decision`, PR #165 to `develop`. No additional PR opened.
+- Draft migration: `supabase/nexus-migrations/20261127_0001_nexus_private_foundation.sql`. It defines 10 NEXUS-owned tables, constraints/indexes, private `nexus` schema, RLS enabled+forced, and no broad grants or policies (default-deny). This is a review artifact, not a Supabase CLI migration path.
+- API contract: `docs/api/radar-nexus-v1-openapi.yaml`, OpenAPI 3.1 draft. It defines read-only RADAR market-context retrieval and bounded NEXUS analysis request/status endpoints, service bearer auth, idempotency/correlation headers, provenance/freshness metadata, explicit errors and allowlisted payload shapes. Server URL is deliberately a non-routable placeholder; no API is deployed.
+- Database validation limitation: this environment has no `psql`, Docker, or disposable PostgreSQL endpoint available. The NEXUS migration has NOT been applied or validated in PostgreSQL. Existing CI's PostgreSQL smoke steps cover other existing migrations, not this new NEXUS migration; do not conflate them.
+- Exact-head GitHub Actions for PR #165 head `75f1c0e4b14aa2673c284279ae4846aafa8434b2`: tests workflow run `45989230338` succeeded; security workflow run `45989230225` succeeded. Test job included npm tests, strict TypeScript, Python offline tests, existing Agent Platform/queue/memory/market-data disposable PostgreSQL smoke steps; NEXUS migration was not included. Security included Gitleaks and Trivy filesystem scan. No PR reviews recorded at time of check.
+- PR #165 remains open, mergeable=true, not merged. Do not merge this high-risk schema/identity foundation until NEXUS migration gets dedicated disposable PostgreSQL apply/rollback + negative-access tests and contract validation. No Hostless build/LIVE evidence.
+- No SQL applied to BOS's Supabase NEXUS project; no credentials recorded; no RADAR data copied; no API bridge, runtime persistence, worker, scheduler, or autonomous agent activated. Rp0/free-only remains in force.
+- NEXT TASK: add a dedicated disposable PostgreSQL workflow step for the NEXUS migration, including role setup, schema/constraint checks, default-deny negative access, and rollback/reapply. Then validate the OpenAPI contract and rerun exact-head checks.
