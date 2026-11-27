@@ -1,0 +1,79 @@
+{
+  "registry_version": "3.0.0-window3-vol-breakout",
+  "registered_at": "2026-11-27T05:39:57Z",
+  "owner": "BOS",
+  "lead": "Grok / Divisi 04",
+  "research_only": true,
+  "purpose": "One substantive, pre-registered hypothesis on a third non-overlapping BTC/USDT window. Registered before fetching the 2022 window or observing any 2022 result. No grid search, no parameter tuning, no reuse of earlier results to choose parameters.",
+  "prior_windows_for_non_overlap_proof": [
+    {"id": "v1", "start": "2025-11-27T00:00:00Z", "end": "2026-11-25T00:00:00Z"},
+    {"id": "v2", "start": "2024-01-01T00:00:00Z", "end": "2024-12-30T00:00:00Z"}
+  ],
+  "data": {
+    "source": "https://data-api.binance.vision/api/v3/klines",
+    "api_key": "none (free public market-data endpoint)",
+    "symbol": "BTCUSDT",
+    "interval": "1d",
+    "start_time": "2022-01-01T00:00:00Z",
+    "start_time_ms": 1640995200000,
+    "limit": 365,
+    "expected_end": "2022-12-31T00:00:00Z",
+    "file_suffix": "_1d_window3_2022",
+    "non_overlap": "2022-12-31 < 2024-01-01 (v2) < 2025-11-27 (v1); no shared bar with any prior experiment",
+    "integrity_checks": ["timezone-aware ISO timestamps", "strictly increasing time", "no duplicates", "no missing daily bars", "OHLC invariants", "finite positive prices", "non-negative volume", "checksum sha256"],
+    "freshness_rule": "Report retrieved_at, dataset_end and age at evaluation. Historical research windows are intentionally old; freshness is recorded as provenance, not used to claim live readiness. If integrity checks fail, STOP."
+  },
+  "criteria_version": "validation-v1",
+  "criteria": {
+    "min_out_of_sample_trades": 2,
+    "max_out_of_sample_drawdown_pct": 25.0,
+    "validation_selection_must_be_accepted": true,
+    "walk_forward_positive_folds_must_be_majority": true,
+    "train_validation_oos_split": [0.5, 0.25, 0.25],
+    "walk_forward_train_bars": 120,
+    "walk_forward_test_bars": 40,
+    "walk_forward_step_bars": 40,
+    "benchmarks": ["buy_and_hold_net", "no_trade_0_pct"],
+    "note": "Identical to all prior registries; no threshold is changed."
+  },
+  "cost_assumptions": {
+    "fee_bps_per_side": 5.0,
+    "slippage_bps_per_side": 5.0,
+    "spread_bps_per_side": 5.0,
+    "total_bps_per_side": 15.0,
+    "funding_bps_per_day": 0.0,
+    "equivalence": "15 bps per side equals validation-v1's 7.5 fee + 7.5 slippage; spread is now explicit without changing effective cost or criteria",
+    "position_fraction": 1.0,
+    "stop_loss_pct": 0.10,
+    "max_drawdown_stop_pct": 0.30
+  },
+  "hypothesis": {
+    "id": "exp-08-volatility-breakout-window3",
+    "registered_at": "2026-11-27T05:39:57Z",
+    "name": "Volatility-expansion Donchian breakout with ATR trailing stop and time exit",
+    "market_rationale": "Daily BTC trend legs often begin with a volatility expansion beyond a prior range. A channel breakout uses high/low and true range rather than close-only moving averages or oscillators, so it is substantively different from exp-01 SMA cross, exp-02 price-above-SMA plus ROC, exp-03 z-score reversion, exp-04 trend-plus-RSI and exp-05 shorter RSI grid. A volatility-scaled trailing stop plus a maximum holding period directly addresses the earlier diagnosis of unstable signals and dead exposure.",
+    "indicators": ["prior N-bar Donchian high from high prices", "Average True Range over atr_period", "highest close since entry for trailing stop"],
+    "entry_rule": "At bar i, using only bars up to i-1: enter at bar i open if close[i-1] > max(high[i-lookback:i]) and warm-up is complete.",
+    "exit_rule": "While long, at bar i use close[i-1]: exit at bar i open if close[i-1] < (highest close since entry - atr_multiple * ATR[i-1]) or bars_held >= max_hold_bars. Inherited 10% stop loss and 30% drawdown kill switch remain active in the engine.",
+    "holding_period": "maximum 10 daily bars per position",
+    "risk_management": "ATR-multiple trailing stop, fixed 10% hard stop, 30% portfolio drawdown kill switch, position fraction 1.0, costs on every position change",
+    "fixed_parameters": {
+      "lookback_period": 20,
+      "atr_period": 14,
+      "atr_multiple": 2.0,
+      "max_hold_bars": 10
+    },
+    "parameter_origin": "Standard channel/ATR conventions chosen a priori before any 2022 data was fetched; NOT derived from exp-01..exp-07 results. Exactly one configuration; NO grid search and NO curve fitting.",
+    "symbols": ["BTCUSDT"],
+    "status": "registered"
+  },
+  "execution_procedure": [
+    "Fetch 365 daily BTCUSDT bars with startTime=1640995200000 and verify integrity/freshness report",
+    "Run one fixed configuration through unchanged validation.py (train/validation/OOS + walk-forward)",
+    "Generate quant-report.v1 with provenance, costs, metrics and limitations",
+    "Run independent verify_report.py and repeat the run to confirm deterministic metrics",
+    "Record result as REJECTED or VALIDATION CANDIDATE under unchanged criteria"
+  ],
+  "decision_rule": "promote_candidate only if accepted_for_paper_candidate is true AND buy-and-hold comparison is reported honestly. Even then, paper ledger requires separate BOS approval. If rejected, record failure and evidence-based cause; do not relax criteria or re-run with different parameters.",
+  "non_goals": ["no live order", "no withdrawal", "no worker/scheduler", "no paper ledger activation", "no paid service", "no secret", "no production change", "no dashboard work"]
+}
