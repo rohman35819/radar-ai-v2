@@ -1,0 +1,90 @@
+{
+  "registry_version": "5.0.0-window5-volume-strength",
+  "registered_at": "2026-11-27T06:56:04Z",
+  "owner": "BOS",
+  "lead": "Grok / Divisi 04",
+  "research_only": true,
+  "purpose": "Fifth non-overlapping BTC/USDT experiment using a data dimension never used before: traded volume. Registered before fetching any 2018 data or observing any 2018 result. No grid search, no parameters derived from windows 1-4.",
+  "prior_windows_for_non_overlap_proof": [
+    {"id": "v1", "start": "2025-11-27T00:00:00Z", "end": "2026-11-25T00:00:00Z"},
+    {"id": "v2", "start": "2024-01-01T00:00:00Z", "end": "2024-12-30T00:00:00Z"},
+    {"id": "v3", "start": "2022-01-01T00:00:00Z", "end": "2022-12-31T00:00:00Z"},
+    {"id": "v4", "start": "2020-01-01T00:00:00Z", "end": "2020-12-30T00:00:00Z"}
+  ],
+  "data": {
+    "source": "https://data-api.binance.vision/api/v3/klines",
+    "api_key": "none (free public market-data endpoint)",
+    "symbol": "BTCUSDT",
+    "interval": "1d",
+    "start_time": "2018-01-01T00:00:00Z",
+    "start_time_ms": 1514764800000,
+    "limit": 365,
+    "expected_end": "2018-12-31T00:00:00Z",
+    "file_suffix": "_1d_window5_2018",
+    "non_overlap": "2018-12-31 < 2020-01-01 (v4) < 2022-01-01 (v3) < 2024-01-01 (v2) < 2025-11-27 (v1); zero shared bars",
+    "integrity_checks": ["timezone-aware ISO timestamps", "strictly increasing time", "no duplicates", "no missing daily bars", "OHLC invariants", "finite positive prices", "non-negative volume", "checksum sha256"],
+    "freshness_rule": "Report retrieved_at, dataset_end and age at evaluation. Historical windows are intentionally old; freshness is provenance, not a live-data claim. If integrity checks fail, STOP."
+  },
+  "criteria_version": "validation-v1",
+  "criteria": {
+    "min_out_of_sample_trades": 2,
+    "max_out_of_sample_drawdown_pct": 25.0,
+    "validation_selection_must_be_accepted": true,
+    "walk_forward_positive_folds_must_be_majority": true,
+    "train_validation_oos_split": [0.5, 0.25, 0.25],
+    "walk_forward_train_bars": 120,
+    "walk_forward_test_bars": 40,
+    "walk_forward_step_bars": 40,
+    "benchmarks": ["buy_and_hold_net", "no_trade_0_pct"],
+    "note": "Identical to registries v1-v4; no threshold is changed."
+  },
+  "cost_assumptions": {
+    "fee_bps_per_side": 5.0,
+    "slippage_bps_per_side": 5.0,
+    "spread_bps_per_side": 5.0,
+    "total_bps_per_side": 15.0,
+    "funding_bps_per_day": 0.0,
+    "position_fraction": 1.0,
+    "stop_loss_pct": 0.10,
+    "max_drawdown_stop_pct": 0.30,
+    "note": "Same effective cost as validation-v1's 7.5 fee + 7.5 slippage; spread explicit."
+  },
+  "hypothesis": {
+    "id": "exp-10-volume-close-strength-window5",
+    "registered_at": "2026-11-27T06:56:04Z",
+    "name": "Volume-confirmed closing strength with three-bar time exit",
+    "strategy": "volume_close_strength",
+    "grid": [
+      {
+        "close_position_min": 0.8,
+        "volume_ratio_min": 1.5,
+        "volume_lookback": 20,
+        "max_hold_bars": 3
+      }
+    ],
+    "market_rationale": "No prior experiment used traded volume. A close in the upper fifth of the daily range accompanied by at least 1.5x the 20-bar average volume can reflect informed accumulation at the close. A three-bar maximum holding period bounds exposure. This mechanism uses volume and the close's position within the bar range, not moving averages, oscillators, z-scores, high/low channel breakouts or opening gaps.",
+    "indicators": ["close position within (low, high)", "volume divided by 20-bar average volume", "bars held counter"],
+    "entry_rule": "At bar i, using only bars up to i-1: if close_position[i-1] >= 0.8 and volume[i-1] >= 1.5 * mean(volume[i-20:i]), enter at bar i open.",
+    "exit_rule": "While long, evaluate at bar i-1: exit at bar i open if close_position[i-1] < 0.5 or bars_held >= 3. Inherited 10% hard stop and 30% drawdown kill switch remain active.",
+    "holding_period": "maximum 3 daily bars per position",
+    "risk_management": "three-bar time exit, weak-close exit, 10% hard stop, 30% drawdown kill switch, position fraction 1.0, costs on every position change",
+    "fixed_parameters": {
+      "close_position_min": 0.8,
+      "volume_ratio_min": 1.5,
+      "volume_lookback": 20,
+      "max_hold_bars": 3
+    },
+    "parameter_origin": "0.8 close position, 1.5x volume and 20-bar average are conventional, conservative thresholds chosen a priori before any 2018 data was fetched; NOT derived from exp-01..exp-09. Exactly one configuration; NO grid search and NO curve fitting.",
+    "symbols": ["BTCUSDT"],
+    "status": "registered"
+  },
+  "execution_procedure": [
+    "Fetch 365 daily BTCUSDT bars with startTime=1514764800000 and verify integrity/freshness report",
+    "Run one fixed configuration through unchanged validation.py (train/validation/OOS + walk-forward)",
+    "Generate quant-report.v1 with provenance, costs, metrics and limitations",
+    "Run independent verify_report.py and repeat the run to confirm deterministic metrics",
+    "Record result as REJECTED or VALIDATION CANDIDATE under unchanged criteria"
+  ],
+  "decision_rule": "promote_candidate only if accepted_for_paper_candidate is true AND benchmarks are reported honestly. Even then, paper ledger requires separate BOS approval. If rejected, record failure and evidence-based cause; do not relax criteria or re-run with different parameters.",
+  "non_goals": ["no live order", "no withdrawal", "no worker/scheduler", "no paper ledger activation", "no paid service", "no secret", "no production change", "no dashboard work"]
+}
