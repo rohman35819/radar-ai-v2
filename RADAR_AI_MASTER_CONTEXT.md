@@ -3724,3 +3724,23 @@ Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat ha
 
 ### NEXT TASK
 Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy model; Divisi 04/05 establish frozen capability benchmark and regression criteria. Reuse current queue/migration work after auditing PR #149/#153/#160; do not duplicate schema or provision infrastructure.
+
+---
+
+## 152. COMMAND 10 — REVIEW BLOCKER, INTEGRATION CONTRACT & DIVISI 06/07 N0 — 27 NOVEMBER 2026
+
+### 152.1 PR #160 human review blocker (terverifikasi)
+- PR #160 tetap open, head `c2b03f2`, `mergeable=true`, **tidak di-merge**. CI exact-head test `45987117987` dan security `45987115287` sukses; `npm test` 268/268, Python 25/25, strict TS exit 0.
+- Tidak ada `.github/CODEOWNERS`. GitHub API menunjukkan satu-satunya collaborator = `rohman35819` (author PR sendiri); teams endpoint HTTP 403 dan owner bertipe `User`. Tidak ada identitas reviewer manusia Divisi 01 yang dapat diverifikasi; **tidak ada review request yang diajukan dan tidak ada identitas yang direkayasa**. Blocker memerlukan penunjukan eksplisit BOS/Direktur Utama.
+- Paket review: `docs/pr160-review-package.md` (threat model, file/line kritis, temuan AI + perbaikan, residual, tes, rollback). Review AI bukan human sign-off.
+
+### 152.2 Audit replay & kontrak integrasi
+- `market-observation-shadow.v1` memakai `ShadowOptions.seen` berupa array **dari pemanggil**, in-memory, tidak durable. Dedupe key sudah berasal dari konten sehingga metadata jinak tidak mengubah identitas, tetapi replay protection belum tahan restart. Ini dinyatakan sebagai batas, bukan klaim durability.
+- `docs/agent-platform-integration-contract-v1.md` mendefinisikan `agent-task-envelope.v1`, `event_id`, `idempotency_key`, schema_version, provenance, validasi input/freshness, receipt `OBSERVE_ONLY`, `agent-audit-event.v1`, rejection reason, retry/replay policy, dan approval boundary. Hanya kontrak; tidak ada runtime.
+- `docs/adr/ADR-002-agent-platform-observe-only.md` merancang durable queue/state, lease/heartbeat/reclaim, worker lifecycle/recovery, permission scope, Rp0 budget/quota, audit persistence, kill switch, recovery drill, dan gate aktivasi. Status PROPOSED; scheduler/worker/queue tetap OFF.
+
+### 152.3 Divisi 06/07
+`docs/division-06-operational-charter.md` dan `docs/division-07-operational-charter.md` mendefinisikan mandat, tanggung jawab, input/output, kontrak antar-divisi, KPI, risiko, dan roadmap N0–N5. Keduanya **desain operasional**, bukan tim/worker aktif. Rp0; tidak ada provisioning.
+
+### 152.4 Status & NEXT TASK
+Pekerjaan dokumentasi pada branch `docs/nexus-agent-platform-contract` dari `develop` `411e7b7`, tanpa PR baru (WIP non-draft ke develop = 5 termasuk exception #160), tanpa merge. Tidak ada perubahan kode produksi; test suite lokal dijalankan untuk memastikan tidak ada regresi. NEXT TASK: penunjukan reviewer manusia oleh BOS/Direktur Utama untuk PR #160, lalu review N0 ADR/kontrak oleh Divisi 01/05; tidak ada aktivasi worker/ledger/trading/withdrawal.
