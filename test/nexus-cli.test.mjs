@@ -11,6 +11,7 @@ const { createNexusClient } = await import('../src/nexus/client.mts');
 const { createSessionStore, redact } = await import('../src/nexus/session.mjs');
 const { createRepoContext } = await import('../src/nexus/repo.mjs');
 const { createPolicyGateway } = await import('../src/nexus/policy.mjs');
+const { compactHandoff } = await import('../src/nexus/handoff.mjs');
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 test('NEXUS contract validates instruction, command id and secret-like text', () => {
@@ -104,7 +105,14 @@ test('CLI smoke: identity, help and honest provider status in non-interactive ru
   });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /RADAR NEXUS/);
+  assert.match(result.stdout, /BOS Besar/);
   assert.match(result.stdout, /\/help/);
   assert.match(result.stdout, /Provider: unavailable/);
   assert.doesNotMatch(result.stdout, /test-token|api_key=/);
+});
+
+test('NEXUS handoff addresses BOS Besar (NEXUS-only salutation exception)', () => {
+  const text = compactHandoff({ status: { identity: 'RADAR NEXUS', provider_state: 'unavailable', provider_detail: 'uji' } });
+  assert.match(text, /Penerima: BOS Besar/);
+  assert.match(text, /Batas tetap: Rp0/);
 });

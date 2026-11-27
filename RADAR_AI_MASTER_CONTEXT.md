@@ -3737,3 +3737,10 @@ Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat ha
 - **Tidak ada PR untuk perubahan ini** (WIP 4 > 3). Push exact-head `f3ae2cc403c97838406b02321c096e266b6cbcd0`: job `test` run `45983711930` **success** (npm test 258/258, strict TypeScript, Python, migrasi/smoke PostgreSQL sekali pakai). Job security tidak berjalan pada event push (workflow hanya untuk PR), sehingga hanya secret scan lokal yang tersedia; branch-source policy `skipped` sesuai desain workflow. Hostless Build/LIVE, verifikasi interaktif Termux oleh BOS, dan fallback aktif **tidak diklaim**.
 - Commit: `8acfdfda2459c217b4b881aaa93fdb882dfee12b`.
 - **NEXT TASK:** tunggu slot WIP (maksimal 3) — #160/#159 perlu pembaruan branch, #153 perlu rebase ke develop; setelah ≤2, buka PR `feat/nexus-cli` → `develop`, verifikasi exact-head test/typecheck/security, lalu selaraskan dashboard NEXUS Chat issue #162 dengan kontrak `/api/ai/command` yang sama.
+
+---
+
+## 153. Sapaan NEXUS — pengecualian terbatas “BOS Besar” — 27 November 2026
+- BOS memutuskan: hanya **NEXUS** yang menyapa pemilik sebagai **BOS Besar**; semua agen, divisi, dan asisten lain tetap memakai sapaan persis **BOS**.
+- Diimplementasikan pada branch `feat/nexus-cli`: greeting `src/nexus/cli.mjs` dan baris `Penerima: BOS Besar` pada `src/nexus/handoff.mjs`; dokumentasi `docs/nexus-cli-termux.md`.
+- `AGENTS.md` mencatat pengecualian ini sebagai owner-approved scoped exception dan menandanya sebagai supersession semi-batas atas aturan sapaan umum hanya untuk output yang dihasilkan NEXUS. Tidak ada perubahan kebijakan keamanan, izin, provider, worker, trading, atau withdrawal.

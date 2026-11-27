@@ -22,6 +22,7 @@ export function compactHandoff({
   const identity = status?.identity || 'RADAR NEXUS';
   const provider = status ? `${status.provider_state}: ${status.provider_detail}` : 'belum diperiksa';
   let text = [
+    'Penerima: BOS Besar',
     `Identitas: ${identity}`,
     `Provider NEXUS: ${provider}`,
     'Batas tetap: Rp0; tanpa paid provider/trial/Dev Tier; tanpa worker/scheduler; tanpa live order/withdrawal; tanpa klaim LIVE atau always-on.',

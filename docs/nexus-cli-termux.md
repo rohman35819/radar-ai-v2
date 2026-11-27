@@ -2,6 +2,8 @@
 
 NEXUS CLI adalah klien terminal untuk RADAR NEXUS. Ia memakai API dan kebijakan yang sama dengan NEXUS Chat di dashboard; bukan backend, reasoning engine, atau memory kedua.
 
+Sesuai keputusan BOS, NEXUS menyapa pemilik sebagai **BOS Besar**. Agen/divisi lain tetap memakai sapaan **BOS**; pengecualian ini hanya untuk output yang dihasilkan NEXUS.
+
 ## Instal di Termux
 
 ```sh

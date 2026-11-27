@@ -54,7 +54,7 @@ export async function main(argv = []) {
   let session = await sessions.create();
 
   const say = (text) => console.log(redact(String(text ?? '')));
-  say('RADAR NEXUS — terminal workspace. Default read-only. /help untuk perintah.');
+  say('BOS Besar, RADAR NEXUS — terminal workspace. Default read-only. /help untuk perintah.');
   const status = await client.status();
   say(`Provider: ${status.provider_state} — ${status.provider_detail}`);
   say(`Sesi aktif: ${session.id}`);
