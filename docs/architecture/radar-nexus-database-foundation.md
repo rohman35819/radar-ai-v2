@@ -199,3 +199,31 @@ BOS clarified on 2026-11-27 that NEXUS must live within the RADAR AI V2 product 
 - Product navigation, user-facing configuration and BOS administration should present NEXUS as an integrated RADAR subsystem, not as a separately governed product.
 
 This clarification supersedes any interpretation of the separate NEXUS Supabase organization/project as independent organizational or operational ownership. It does not authorize SQL deployment, production integration, workers, schedulers, or paid resources.
+
+
+## 14. NEXUS as the core intelligence and RADAR system operator
+
+BOS clarified on 2026-11-27 that NEXUS is intended to be RADAR AI V2's core intelligence/brain. NEXUS should continuously improve its usable capabilities by learning from and collaborating with other AI systems, and should be able to manage and evolve RADAR AI V2, including dashboard presentation and functionality. This is a product objective and staged architecture target, not a claim that these capabilities are currently active.
+
+### Intelligence and learning
+- NEXUS is the central reasoning, memory, knowledge, agent-coordination and evaluation layer for RADAR AI V2.
+- It may consult external AI systems (including Grok, DeepSeek and other approved providers) as teachers, critics, researchers or specialist agents. Provider choice remains configurable and provider-neutral; no paid provider or resource is enabled without BOS approval.
+- External outputs are untrusted proposals/evidence, not authoritative instructions. NEXUS must capture source/model/version, timestamp, task/prompt revision where appropriate, evidence references and evaluation results; compare independent answers, run tests and retain only validated knowledge/skills with provenance and version history.
+- Distinguish learning (curated knowledge, memory, reusable skills, tool procedures and evaluation feedback) from training/fine-tuning model weights. No model-weight training or autonomous provider billing is implied.
+
+### RADAR management and dashboard evolution
+- NEXUS may inspect RADAR's permitted repository, architecture, tests, telemetry and dashboard components; diagnose issues; propose and implement scoped changes to UI, dashboard layout, features and internal functions.
+- All changes must be made in isolated workspaces/branches with bounded file/resource scope, tests, secret scanning, diff review, preview/build evidence and rollback path. Preserve existing dashboard behavior unless a change is explicitly intended and validated.
+- Low-risk reversible changes may be prepared autonomously in a sandbox/branch under a RADAR-issued capability token. Merging, production deployment, permission/security changes, schema/data migrations, exchange operations, live trading and withdrawals remain approval-gated according to risk and BOS policy.
+- NEXUS cannot grant itself repository permissions, widen its own scope, bypass CI/review, disable safeguards, or deploy directly to production. RADAR's policy/approval gateway remains the authority; BOS has final override and kill-switch control.
+- The dashboard should expose NEXUS status, approved model/provider roster, agent/task activity, knowledge/evaluation health, proposed changes, diffs/previews, approvals, audit history and pause/kill controls. NEXUS is surfaced as the integrated core brain inside RADAR, not as a separately controlled product.
+
+### Capability rollout gates
+1. Observe: read approved repository/dashboard context and produce grounded analysis.
+2. Propose: create design and change proposals with impact/risk/test/rollback plans.
+3. Build: implement in isolated branch/workspace and run automated tests/security checks.
+4. Validate: preview and regression checks; independent control for high-risk changes.
+5. Integrate: merge/deploy only through RADAR policy gates and required BOS approval.
+6. Operate: monitor, rollback and record outcomes; no unbounded self-modification.
+
+None of these capabilities should be described as continuously learning, managing, editing, or deploying until the corresponding runtime, permissions, tests and operational evidence exist.
