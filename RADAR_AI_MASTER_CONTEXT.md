@@ -3696,3 +3696,26 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ### 149.3 NEXT TASK
 Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat hasil (menghindari data snooping pada 364 bar yang sama). Paper ledger/reconciliation tetap terkunci sampai strategi lolos `validation-v1` dan BOS menyetujui. Worker, live trading, withdrawal OFF; Rp0.
+
+---
+
+## 150. INTERNAL EXCHANGE GATEWAY — E1/E2/E3 — 27 NOVEMBER 2026
+
+### 150.1 Mandat dan wewenang
+- Issue #154 (comment 07:43Z) menetapkan Exchange Gateway sebagai tugas P0 segera; BOS memberi **WIP exception tambahan** untuk pekerjaan ini (comment 07:43Z) karena antrean non-draft ke develop penuh (#159, #153, #115, #105). Pengecualian #159 tetap tercatat terpisah. Tidak ada penulisan ke `main`; tidak ada merge.
+- Grok adalah pelaksana utama Quantum; DeepSeek pendamping bila kuota tersedia. File DeepSeek (`feat/quantum-m5-engine`) tidak diubah.
+
+### 150.2 Implementasi (branch `feat/exchange-gateway`)
+- `lib/exchange-gateway.js`: factory in-process dengan role allowlist (`quantum-research`: status + market observation; `risk-engine`: + account/permission read; `system-health`: status only). `status()`, `getMarketObservation()`, `getAccountSnapshot()`, `getPermissionStatus()` saja; objek dibekukan; **tidak ada** order/cancel/transfer/withdraw/leverage/margin/signing method. Tidak menerima `EXCHANGE_ACCESS_TOKEN`; tidak menambah route HTTP. Error upstream menjadi kode `GatewayError` tanpa pesan/secret mentah.
+- `src/exchange/observation.mts`: kontrak `market-observation.v1` dengan source, symbol, interval, observed_at, received_at, is_complete, freshness, provenance_ref, checksum, payload; guard menolak data cacat/stale/incomplete/secret-bearing dan field privat.
+- `test/exchange-gateway.test.js`: 6 tes — role denial, capability allowlist, tanpa token dashboard, tanpa order path, secret redaction, venue/symbol invalid, incomplete payload, stale observation, error sanitization.
+- `docs/exchange-gateway-internal-interface.md`: batas E1/E2/E3, verifikasi, keterbatasan E4.
+
+### 150.3 Verifikasi dan batas
+- `npm test` **249/249** (241 + 8), termasuk tes existing bahwa route dashboard tetap 401 tanpa token; strict TS exit 0; `git diff --check` bersih; secret scan tanpa temuan nyata.
+- Reviewer independen gratis: Nemotron 3.5 Lightning Free (tidak menemukan isu material) dan Flint 40B Free (P1 fail-open `checked_at`, P2 futures null, checksum, sanitasi, mapping Bybit). Semua temuan Flint diperbaiki dengan regression test sebelum PR; kedua model berstatus active dengan biaya 0, kuota tidak dijamin.
+- Route `GET /api/exchanges/:exchange/account` tidak diubah. Kredensial Binance tetap di environment server. Tidak ada private account data di artifact riset. Tidak ada worker/scheduler, paper ledger, live order, withdrawal atau dana yang digerakkan; Rp0.
+- E4 (verifikasi Hostless) **tidak dapat dilakukan** tanpa akses deployment; hanya status sanitized yang boleh diperiksa. Tidak ada klaim koneksi Binance aktif.
+
+### 150.4 NEXT TASK
+Verifikasi CI/security exact-head PR gateway; lanjut E3 extension (observation → input riset TS dengan freshness guard), lalu E4 bila akses Hostless tersedia. Paper ledger tetap terkunci sampai `validation-v1` lolos + persetujuan BOS.
