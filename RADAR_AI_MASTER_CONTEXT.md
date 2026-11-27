@@ -3417,3 +3417,12 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Capability stages: observe → propose → isolated build → validate → policy-gated integrate → monitor/rollback. No claim of continuous learning, autonomous dashboard management, or deployment until runtime and tests prove it.
 - No paid provider/resource is enabled. No production capability is activated by this strategic decision alone.
 - Next: evolve Agent Platform contracts to issue scoped capabilities from RADAR and add change-proposal/preview/approval/audit workflow; define model-learning evaluation pipeline.
+
+
+## 141. Dedicated Grok NEXUS engineering assignment — 27 Nov 2026
+- Created `NEXUS_GROK_MANDATE.md` as Grok's dedicated implementation charter for NEXUS core brain, curated learning from external AIs, Agent Platform, and controlled RADAR dashboard/code evolution.
+- First required deliverable: tested deterministic Knowledge & Skill Learning vertical slice (ingest → provenance → evaluate → approve/reject → versioned store → retrieve) plus RADAR-issued scoped capability contract. Use fixtures first; no live NEXUS writes before schema/security approval.
+- TypeScript for contracts/API/UI/orchestration; Python for quant/data/research/evaluation. Free-only / Rp0. External model providers OFF until verified and approved. Curated learning is not model-weight training.
+- NEXUS can prepare isolated code/UI changes but cannot self-grant permissions, merge/deploy, change security, migrate production data or perform financial actions. RADAR policy gateway and BOS remain authoritative.
+- This mandate is an instruction/backlog, not proof that learning, autonomous editing, workers, scheduler, cloud persistence or deployment is active.
+- Next: Grok should inspect latest main and existing queue, map reusable components, then implement the first tested vertical slice without creating duplicate NEXUS PRs.
