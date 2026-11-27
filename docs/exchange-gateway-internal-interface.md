@@ -32,12 +32,29 @@
 - `git diff --check`: clean; secret scan on added lines found only intentional synthetic test strings.
 - Exact-head CI/security: to be recorded on the PR after push; no claim before inspection.
 
-## 4. Limitations / blockers
+## 4. E3 — observation → quant research input
 
-- **E4 not done:** no evidence that Hostless has working Binance credentials. This branch does not verify deployment or account connection; only sanitized status can be checked when access exists.
-- No consumer yet: the gateway is available for in-process composition but has no production caller; this is not an active autonomous worker.
-- Observation `interval` for ticker reads is `24h`; OHLCV/M5 candles remain a separate data pipeline (DeepSeek M5 branch). No claim that this gateway supplies candles.
-- Manual Divisi 01 security review not yet performed; self-review + exact-head CI is the current evidence under the temporary QA override.
+- `src/quant/market-observation-input.mts` is the **single entry point** from `market-observation.v1` into research. It emits `market-observation-input.v1` with source, symbol, interval, observed_at, received_at, accepted_at, provenance_ref, checksum, `kind='market_ticker'`, `is_ohlcv=false`, normalized public payload and limitations.
+- Freshness is fail-closed with injectable `now`: malformed/no-timezone timestamps, future timestamps, reversed timestamp order, age above an explicit `maxAgeMs`, `freshness=unknown|stale`, and `is_complete=false` are all rejected with stable `QuantInputError` codes. `received_at` is never rewritten to make stale data look fresh.
+- Symbol allowlist is explicit: **BTCUSDT and ETHUSDT only**, because those are the symbols actually used by registries v1–v5. SOL and other assets are not admitted merely because the gateway can fetch a ticker. Normalization is uppercase in gateway, TypeScript adapter and Python registries.
+- Payload secret/private-account keys and values are rejected independently of the gateway; provenance/checksum must be 64-hex and equal. Strategies never receive gateway access or account snapshots.
+- **Ticker is not OHLCV:** output is explicitly `market_ticker` with `is_ohlcv=false`; no candle object, no `open/high/low/close` candle fields, no Python backtest import. The existing Python OHLCV pipeline is untouched and historical reports unchanged.
+- Regression tests (`test/quant-market-input.test.js`, 9 cases) cover acceptance, stale/future/malformed/unknown/stale/incomplete rejection, symbol allowlist/format, provenance/checksum, secret/private payload, ticker-not-candle, no order path, and stale-data non-mutation.
+
+## 5. E4 — Hostless status (verified 2026-11-27T09:30:49Z)
+
+Public sanitized probes returned HTTP 200:
+- `GET /api/exchanges/status` → `status=success`, `binance.configured=true`, `mode=read-only`, products `spot` and `usd-m-futures`; `bybit.configured=false`; `access_configured=true`.
+- `GET /api/ready` → `status=ready`, `storage.status=ok`, `code=null`.
+
+No credential value, balance, position, private account payload or raw provider response was requested, displayed or stored. Configuration presence is **not** proof of a successful account connection; no private account read was performed.
+
+## 6. Limitations / blockers
+
+- Gateway/adapter have no production caller; this is not an active autonomous worker.
+- OHLCV/M5 candles remain a separate data pipeline (DeepSeek M5 branch); this gateway supplies 24h ticker observations only.
+- Manual Divisi 01 security review not yet performed; self-review, two free-model reviews, exact-head CI and sanitized public status are the current evidence.
+- `npm run typecheck` cannot resolve `tsc` via `npx` in this Termux session; the pinned TypeScript 5.9.3 compiler was executed directly from the local cache with exit 0, and CI runs the same pinned version.
 
 ## 5. Next steps
 
