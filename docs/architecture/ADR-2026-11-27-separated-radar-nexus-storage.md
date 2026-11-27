@@ -96,7 +96,7 @@ The currently known RADAR Supabase project is `gjchftphwexpjpvdpqoj` at `https:/
 
 An earlier NEXUS proposal migration `supabase/migrations/20261127_nexus_cloud_storage.sql` was drafted for tables under `public.*` in a shared project. It is **not approved for application** under this decision. Rework it for a separate NEXUS project and review authentication, ownership, RLS, grants, retention, and restore before use.
 
-No new NEXUS Supabase project has been provisioned by this decision. No SQL has been applied, no data moved, no API bridge deployed, and no automation activated.
+The separate NEXUS Supabase Free project has now been provisioned (see dashboard evidence above). No SQL has been applied, no data moved, no API bridge deployed, and no automation activated.
 
 ## Acceptance criteria
 
