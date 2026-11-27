@@ -3398,3 +3398,12 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - PR #165 remains open, mergeable=true, not merged. Do not merge this high-risk schema/identity foundation until NEXUS migration gets dedicated disposable PostgreSQL apply/rollback + negative-access tests and contract validation. No Hostless build/LIVE evidence.
 - No SQL applied to BOS's Supabase NEXUS project; no credentials recorded; no RADAR data copied; no API bridge, runtime persistence, worker, scheduler, or autonomous agent activated. Rp0/free-only remains in force.
 - NEXT TASK: add a dedicated disposable PostgreSQL workflow step for the NEXUS migration, including role setup, schema/constraint checks, default-deny negative access, and rollback/reapply. Then validate the OpenAPI contract and rerun exact-head checks.
+
+
+## 139. NEXUS ownership clarification — 27 Nov 2026
+- BOS decision: NEXUS is an internal subsystem within RADAR AI V2, under RADAR AI V2's full control; only its persistent storage is separate.
+- RADAR AI V2 is the sole product/control plane. BOS remains ultimate authority. NEXUS cannot self-authorize permissions, autonomy, budgets, policy changes, production actions or financial actions.
+- NEXUS database remains separate from RADAR database. Interoperation is through authenticated, versioned, least-privilege APIs with provenance/freshness, idempotency and audit; no direct cross-database access or shared credentials.
+- The separate Supabase organization/project is an infrastructure/storage boundary, not a separate command hierarchy or independently governed product.
+- This is an architecture/governance decision only. No SQL deployment, API bridge, worker, scheduler, production integration or paid resource is authorized by this clarification.
+- Recorded in PR #165 design branch; exact commit to be recorded after this update. Next: align API/control-plane contracts and UI/admin representation to RADAR-owned control plane.
