@@ -184,3 +184,18 @@ Initial bridge should be read-only and versioned:
 3. Division 06 reviews task lifecycle, idempotency, lease and API bridge contracts.
 4. Division 05 prepares a disposable PostgreSQL test matrix; do not target the NEXUS project yet.
 5. Review and validate the draft migration on a disposable PostgreSQL database. Applying SQL to the BOS NEXUS project remains a separate explicit approval gate.
+
+
+## 13. RADAR is the sole control plane; NEXUS is an internal subsystem
+
+BOS clarified on 2026-11-27 that NEXUS must live within the RADAR AI V2 product and remain under RADAR AI V2's full operational control. The separate Supabase project/database is a storage-isolation boundary only; it does not create a separate product owner, command hierarchy, or independent governance domain.
+
+- RADAR AI V2 is the single product/control plane and BOS is the ultimate authority.
+- RADAR-owned control services govern NEXUS configuration, agent/skill registry activation, model/provider policy, task priorities, permission profiles, budgets, approval gates, pause/kill switch, audit and release lifecycle.
+- NEXUS is an internal capability subsystem providing AI reasoning interfaces, conversations, memory/knowledge retrieval, agent orchestration and task-state persistence as approved by RADAR.
+- NEXUS may execute only within capabilities and scopes issued by RADAR. It cannot grant itself permissions, change autonomy/budget policy, bypass approval, or initiate production/financial actions.
+- NEXUS data remains in its separate NEXUS database; RADAR operational data remains in RADAR storage. Cross-boundary access uses authenticated, versioned, least-privilege APIs with provenance, freshness, idempotency, correlation IDs and audit.
+- RADAR's control plane must remain authoritative even if NEXUS storage/API is unavailable; fail closed for NEXUS-dependent operations and preserve core RADAR functionality where possible. No silent database fallback or shared database credentials.
+- Product navigation, user-facing configuration and BOS administration should present NEXUS as an integrated RADAR subsystem, not as a separately governed product.
+
+This clarification supersedes any interpretation of the separate NEXUS Supabase organization/project as independent organizational or operational ownership. It does not authorize SQL deployment, production integration, workers, schedulers, or paid resources.
