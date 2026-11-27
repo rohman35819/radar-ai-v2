@@ -243,6 +243,31 @@ class QuantMvpTests(unittest.TestCase):
         self.assertNotEqual([s.target_position for s in first],
                             [s.target_position for s in breakout])
 
+    def test_volume_close_strength_uses_volume_and_is_causal(self):
+        config = StrategyConfig(strategy_id='volume_close_strength', close_position_min=0.8,
+                                weak_close_max=0.5, volume_ratio_min=1.5,
+                                volume_lookback=20, max_hold_bars=3)
+        source = load_ohlcv(
+            Path(__file__).parent / 'fixtures' / 'btcusdt_1d_public.csv',
+            source='test-fixture', symbol='BTCUSDT', interval='1d', data_kind='public_api')
+        candles = source.candles
+        first = generate_signals(candles, config)
+        self.assertEqual(first, generate_signals(candles, config))
+        extended = generate_signals(list(candles) + list(candles[-10:]), config)
+        self.assertEqual(first, extended[:len(first)])
+        self.assertTrue(any(signal.target_position == 1 for signal in first))
+        self.assertTrue(all(
+            signal.computed_from is None or signal.computed_from <= candles[index].timestamp
+            for index, signal in enumerate(first)
+        ))
+        held = 0
+        for signal in first:
+            held = held + 1 if signal.target_position == 1 else 0
+            self.assertLessEqual(held, config.max_hold_bars)
+        gap_signals = generate_signals(candles, StrategyConfig(strategy_id='gap_continuation'))
+        self.assertNotEqual([s.target_position for s in first],
+                            [s.target_position for s in gap_signals])
+
     def test_spread_cost_is_charged_without_changing_other_config(self):
         signals = generate_signals(self.dataset.candles, self.config)
         free = run_backtest(self.dataset, StrategyConfig(fast=5, slow=20, spread_bps=0), signals)

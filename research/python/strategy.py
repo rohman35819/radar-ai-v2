@@ -12,7 +12,7 @@ from typing import Sequence
 from quant_data import Candle
 
 STRATEGIES = ('sma_crossover', 'trend_momentum', 'mean_reversion', 'regime_aware',
-              'volatility_breakout', 'gap_continuation')
+              'volatility_breakout', 'gap_continuation', 'volume_close_strength')
 
 
 @dataclass(frozen=True)
@@ -40,6 +40,10 @@ class StrategyConfig:
     max_hold_bars: int = 10
     spread_bps: float = 0.0
     gap_threshold_pct: float = 0.005
+    close_position_min: float = 0.8
+    weak_close_max: float = 0.5
+    volume_ratio_min: float = 1.5
+    volume_lookback: int = 20
 
     def validate(self) -> None:
         if self.strategy_id not in STRATEGIES:
@@ -69,6 +73,14 @@ class StrategyConfig:
             raise ValueError("spread_bps wajib 0..10000")
         if not math.isfinite(self.gap_threshold_pct) or not 0 < self.gap_threshold_pct < 0.10:
             raise ValueError("gap_threshold_pct wajib (0, 0.10)")
+        if not math.isfinite(self.close_position_min) or not 0 <= self.close_position_min <= 1:
+            raise ValueError("close_position_min wajib 0..1")
+        if not math.isfinite(self.weak_close_max) or not 0 <= self.weak_close_max < self.close_position_min:
+            raise ValueError("weak_close_max wajib < close_position_min")
+        if not math.isfinite(self.volume_ratio_min) or self.volume_ratio_min <= 0:
+            raise ValueError("volume_ratio_min wajib > 0")
+        if not isinstance(self.volume_lookback, int) or isinstance(self.volume_lookback, bool) or self.volume_lookback < 2:
+            raise ValueError("volume_lookback wajib integer >= 2")
         if not math.isfinite(self.entry_z) or not math.isfinite(self.exit_z) or self.entry_z >= self.exit_z:
             raise ValueError("entry_z harus lebih kecil dari exit_z")
         if not 0 < self.rsi_entry < self.rsi_exit < 100:
@@ -99,6 +111,10 @@ class StrategyConfig:
             'max_hold_bars': self.max_hold_bars,
             'spread_bps': self.spread_bps,
             'gap_threshold_pct': self.gap_threshold_pct,
+            'close_position_min': self.close_position_min,
+            'weak_close_max': self.weak_close_max,
+            'volume_ratio_min': self.volume_ratio_min,
+            'volume_lookback': self.volume_lookback,
         }
 
 
@@ -189,6 +205,17 @@ def atr_series(candles: Sequence[Candle], period: int) -> list[float | None]:
     return result
 
 
+def volume_ratio_series(candles: Sequence[Candle], period: int) -> list[float | None]:
+    """Volume divided by its trailing period-bar mean; None during warm-up."""
+    result: list[float | None] = [None] * len(candles)
+    for index in range(period - 1, len(candles)):
+        window = [candle.volume for candle in candles[index - period + 1:index + 1]]
+        mean = math.fsum(window) / period
+        if mean > 0:
+            result[index] = candles[index].volume / mean
+    return result
+
+
 def _warmup(index: int, required: int) -> bool:
     return index >= required
 
@@ -200,6 +227,8 @@ def generate_signals(candles: Sequence[Candle], config: StrategyConfig) -> list[
     output: list[Signal] = []
     position = 0
     atrs = atr_series(candles, config.atr_period) if config.strategy_id == 'volatility_breakout' else []
+    volume_ratios = (volume_ratio_series(candles, config.volume_lookback)
+                     if config.strategy_id == 'volume_close_strength' else [])
     entry_index = -1
     highest_close = 0.0
     for index, candle in enumerate(candles):
@@ -285,6 +314,24 @@ def generate_signals(candles: Sequence[Candle], config: StrategyConfig) -> list[
                             entry_index = -1
                         else:
                             target = 1
+            elif config.strategy_id == 'volume_close_strength':
+                if _warmup(previous, config.volume_lookback - 1):
+                    bar = candles[previous]
+                    span = bar.high - bar.low
+                    close_position = (bar.close - bar.low) / span if span > 0 else 0.0
+                    ratio = volume_ratios[previous]
+                    if ratio is not None:
+                        if position == 0:
+                            if close_position >= config.close_position_min and ratio >= config.volume_ratio_min:
+                                target = 1
+                                entry_index = previous
+                        else:
+                            held_bars = previous - entry_index + 1
+                            if close_position < config.weak_close_max or held_bars >= config.max_hold_bars:
+                                target = 0
+                                entry_index = -1
+                            else:
+                                target = 1
         position = target
         output.append(Signal(
             timestamp=candle.timestamp,
