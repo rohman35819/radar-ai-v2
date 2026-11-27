@@ -51,6 +51,15 @@
     "id": "exp-08-volatility-breakout-window3",
     "registered_at": "2026-11-27T05:39:57Z",
     "name": "Volatility-expansion Donchian breakout with ATR trailing stop and time exit",
+    "strategy": "volatility_breakout",
+    "grid": [
+      {
+        "lookback_period": 20,
+        "atr_period": 14,
+        "atr_multiple": 2.0,
+        "max_hold_bars": 10
+      }
+    ],
     "market_rationale": "Daily BTC trend legs often begin with a volatility expansion beyond a prior range. A channel breakout uses high/low and true range rather than close-only moving averages or oscillators, so it is substantively different from exp-01 SMA cross, exp-02 price-above-SMA plus ROC, exp-03 z-score reversion, exp-04 trend-plus-RSI and exp-05 shorter RSI grid. A volatility-scaled trailing stop plus a maximum holding period directly addresses the earlier diagnosis of unstable signals and dead exposure.",
     "indicators": ["prior N-bar Donchian high from high prices", "Average True Range over atr_period", "highest close since entry for trailing stop"],
     "entry_rule": "At bar i, using only bars up to i-1: enter at bar i open if close[i-1] > max(high[i-lookback:i]) and warm-up is complete.",
