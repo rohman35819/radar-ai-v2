@@ -129,3 +129,8 @@ Address the owner as **BOS** in reports.
 Do not reply with a generic greeting or ask “what should I do?”. First perform the mandatory startup checks above, then provide a concise verified snapshot and immediately begin the highest-priority safe NEXT TASK. Continue through the task loop for as long as the active session/runtime permits.
 
 **Success means tested, traceable improvements to RADAR AI V2—not long plans, repeated status messages, or claims of imaginary always-on work.**
+
+
+## Dedicated NEXUS workstream
+
+For all NEXUS core-brain, model-learning, memory/knowledge, Agent Platform, and RADAR dashboard-development tasks, read and follow `NEXUS_GROK_MANDATE.md` in full. It is the task-specific implementation mandate and does not override `AGENTS.md`, BOS approval gates, or repository security policies.
