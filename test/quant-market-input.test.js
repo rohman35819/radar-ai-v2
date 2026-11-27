@@ -3,18 +3,32 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
+const { createHash } = require('node:crypto');
 const { join } = require('node:path');
 
 const SOURCE_PATH = join(__dirname, '..', 'src', 'quant', 'market-observation-input.mts');
 const NOW = '2026-11-27T09:00:00.000Z';
-const HASH = 'a'.repeat(64);
+
+// Mirrors the gateway/adapter canonical digest so fixtures carry a real attestation.
+function digest(value) {
+  const sort = (item) => {
+    if (Array.isArray(item)) return item.map(sort);
+    if (item && typeof item === 'object') {
+      const out = {};
+      for (const key of Object.keys(item).sort()) if (item[key] !== undefined) out[key] = sort(item[key]);
+      return out;
+    }
+    return item;
+  };
+  return createHash('sha256').update(JSON.stringify(sort(value))).digest('hex');
+}
 
 async function adapter() {
   return import('../src/quant/market-observation-input.mts');
 }
 
 function observation(overrides = {}) {
-  return {
+  const base = {
     schema_version: 'market-observation.v1',
     source: 'binance:ticker',
     symbol: 'BTCUSDT',
@@ -23,8 +37,6 @@ function observation(overrides = {}) {
     received_at: '2026-11-27T08:59:00.500Z',
     is_complete: true,
     freshness: 'fresh',
-    provenance_ref: HASH,
-    checksum: HASH,
     payload: {
       exchange: 'binance',
       symbol: 'BTCUSDT',
@@ -33,6 +45,12 @@ function observation(overrides = {}) {
     },
     ...overrides,
   };
+  const { checksum, provenance_ref, ...signed } = base;
+  void checksum; void provenance_ref;
+  const value = digest(signed);
+  if (!('provenance_ref' in overrides)) base.provenance_ref = value;
+  if (!('checksum' in overrides)) base.checksum = value;
+  return base;
 }
 
 function rejectsWith(promise, code) {
@@ -45,15 +63,16 @@ function rejectsWith(promise, code) {
 
 test('valid market observation is accepted with explicit provenance and injected now', async () => {
   const { createQuantMarketInput, isMarketObservationInputV1 } = await adapter();
-  const input = createQuantMarketInput(observation(), { now: NOW });
+  const source = observation();
+  const input = createQuantMarketInput(source, { now: NOW });
   assert.equal(isMarketObservationInputV1(input), true);
   assert.equal(input.schema_version, 'market-observation-input.v1');
   assert.equal(input.symbol, 'BTCUSDT');
   assert.equal(input.observed_at, '2026-11-27T08:59:00.000Z');
   assert.equal(input.received_at, '2026-11-27T08:59:00.500Z');
   assert.equal(input.accepted_at, NOW);
-  assert.equal(input.provenance_ref, HASH);
-  assert.equal(input.checksum, HASH);
+  assert.equal(input.provenance_ref, input.checksum);
+  assert.match(input.checksum, /^[a-f0-9]{64}$/);
   assert.equal(Object.isFrozen(input), true);
 });
 
@@ -84,6 +103,9 @@ test('symbol allowlist and symbol format are enforced explicitly', async () => {
   await rejectsWith(Promise.resolve().then(() => createQuantMarketInput(observation({ symbol: 'BTC' }), { now: NOW })), 'SYMBOL_INVALID');
   const eth = createQuantMarketInput(observation({ symbol: 'ethusdt' }), { now: NOW });
   assert.equal(eth.symbol, 'ETHUSDT');
+  const callerAttempt = /** @type {any} */ ({ now: NOW, allowedSymbols: ['SOLUSDT'] });
+  await rejectsWith(Promise.resolve().then(() => createQuantMarketInput(observation({ symbol: 'SOLUSDT' }), callerAttempt)), 'SYMBOL_NOT_ALLOWED');
+  assert.deepEqual([...RESEARCH_ALLOWED_SYMBOLS], ['BTCUSDT', 'ETHUSDT']);
 });
 
 test('provenance, checksum, source and interval are fail-closed', async () => {
@@ -91,6 +113,8 @@ test('provenance, checksum, source and interval are fail-closed', async () => {
   await rejectsWith(Promise.resolve().then(() => createQuantMarketInput(observation({ provenance_ref: 'bad' }), { now: NOW })), 'PROVENANCE_INVALID');
   await rejectsWith(Promise.resolve().then(() => createQuantMarketInput(observation({ checksum: 'bad' }), { now: NOW })), 'CHECKSUM_INVALID');
   await rejectsWith(Promise.resolve().then(() => createQuantMarketInput(observation({ checksum: 'b'.repeat(64) }), { now: NOW })), 'PROVENANCE_INVALID');
+  const forged = { ...observation(), provenance_ref: 'f'.repeat(64), checksum: 'f'.repeat(64) };
+  await rejectsWith(Promise.resolve().then(() => createQuantMarketInput(forged, { now: NOW })), 'CHECKSUM_INVALID');
   await rejectsWith(Promise.resolve().then(() => createQuantMarketInput(observation({ source: 'unknown:api' }), { now: NOW })), 'SOURCE_NOT_ALLOWED');
   await rejectsWith(Promise.resolve().then(() => createQuantMarketInput(observation({ interval: '1m' }), { now: NOW })), 'INTERVAL_UNSUPPORTED');
 });

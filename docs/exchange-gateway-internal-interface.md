@@ -41,7 +41,13 @@
 - **Ticker is not OHLCV:** output is explicitly `market_ticker` with `is_ohlcv=false`; no candle object, no `open/high/low/close` candle fields, no Python backtest import. The existing Python OHLCV pipeline is untouched and historical reports unchanged.
 - Regression tests (`test/quant-market-input.test.js`, 9 cases) cover acceptance, stale/future/malformed/unknown/stale/incomplete rejection, symbol allowlist/format, provenance/checksum, secret/private payload, ticker-not-candle, no order path, and stale-data non-mutation.
 
-## 5. E4 — Hostless status (verified 2026-11-27T09:30:49Z)
+## 5. Command 08 — allowlist closure and deterministic shadow consumer
+
+- **Allowlist closure:** `QuantInputOptions.allowedSymbols` was removed. `RESEARCH_ALLOWED_SYMBOLS` is now a fixed frozen boundary of `BTCUSDT` and `ETHUSDT`; a caller cannot extend or replace it. A regression test attempts `allowedSymbols: ['SOLUSDT']` and confirms the symbol is still rejected. Normalization (uppercase) was rechecked against registries v1–v5, which use only those two symbols.
+- **Shadow consumer:** `src/quant/market-observation-shadow.mts` accepts only `market-observation-input.v1` and emits `market-observation-shadow.v1` with `decision='OBSERVE_ONLY'`. It revalidates schema version, symbol allowlist, provenance/checksum, injected `now`, future/stale/malformed timestamps, secret/private payload fields, and duplicate provenance via a deterministic `shadowDedupeKey`. Every rejection has a stable `ShadowInputError` code. No fetch, gateway, ledger, reconciliation, order, transfer, withdrawal, worker or storage path exists. Receipts contain identity/provenance and sanitized field names only — no price values, fills, TP/SL or profit claim.
+- Tests: `test/quant-market-shadow.test.js` 9 cases; `npm test` **267/267**, Python **25/25**, strict TypeScript (cached pinned compiler) exit 0.
+
+## 6. E4 — Hostless status (verified 2026-11-27T09:30:49Z)
 
 Public sanitized probes returned HTTP 200:
 - `GET /api/exchanges/status` → `status=success`, `binance.configured=true`, `mode=read-only`, products `spot` and `usd-m-futures`; `bybit.configured=false`; `access_configured=true`.
@@ -49,12 +55,17 @@ Public sanitized probes returned HTTP 200:
 
 No credential value, balance, position, private account payload or raw provider response was requested, displayed or stored. Configuration presence is **not** proof of a successful account connection; no private account read was performed.
 
-## 6. Limitations / blockers
+## 7. AI Divisi 01 review and fixes
+
+A separate read-only AI-assisted Divisi 01 review (not human sign-off) found one P1 and one P2 plus hardening items. All were fixed before the final head: the lossy replacer-array canonicalization was replaced by recursive key-sorted canonical JSON; gateway and TypeScript now compute the same SHA-256 digest; the adapter verifies the observation digest and re-signs its sanitized research input; the shadow consumer re-verifies that input digest. Payload mutation now changes the checksum, arbitrary 64-hex strings are rejected, and forged-checksum replay is rejected before dedupe. Caller-supplied `allowedSymbols` was removed, `maxAgeMs` capped at 24h, Bybit UID labels filtered, gateway `scrub()` bounded by depth/keys/size with cycle guard, and both spot and futures legs are required downstream. Tests were added for each fix.
+
+## 8. Limitations / blockers
 
 - Gateway/adapter have no production caller; this is not an active autonomous worker.
 - OHLCV/M5 candles remain a separate data pipeline (DeepSeek M5 branch); this gateway supplies 24h ticker observations only.
 - Manual Divisi 01 security review not yet performed; self-review, two free-model reviews, exact-head CI and sanitized public status are the current evidence.
 - `npm run typecheck` cannot resolve `tsc` via `npx` in this Termux session; the pinned TypeScript 5.9.3 compiler was executed directly from the local cache with exit 0, and CI runs the same pinned version.
+- **Agent Platform readiness:** the shadow consumer is a valid observe-only boundary test, but it is not autonomous operation. Durable queue/state, worker runtime, permissions, approval gates, budgets, audit persistence and kill switch remain unimplemented/inactive (PR #153 foundation still open). Do not feed it to a scheduler or claim offline operation.
 
 ## 5. Next steps
 

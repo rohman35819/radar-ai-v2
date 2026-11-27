@@ -6,6 +6,8 @@
  * Runtime guards reject malformed, stale, incomplete or secret-bearing values.
  */
 
+import { createHash } from 'node:crypto';
+
 export type ObservationSchema = 'market-observation.v1';
 export type Freshness = 'fresh' | 'stale' | 'unknown';
 
@@ -67,6 +69,54 @@ function safePayload(value: unknown): value is Record<string, unknown> {
   const serialized = JSON.stringify(value);
   if (serialized.length > 4096 || SECRET_RE.test(serialized)) return false;
   return safePayloadValue(value, 0);
+}
+
+/** Recursive key-sorted canonicalization shared with the JS gateway. */
+export function canonicalJson(value: unknown): string {
+  const canonical = (item: unknown): unknown => {
+    if (Array.isArray(item)) return item.map(canonical);
+    if (item && typeof item === 'object') {
+      const record = item as Record<string, unknown>;
+      const sorted: Record<string, unknown> = {};
+      for (const key of Object.keys(record).sort()) {
+        if (record[key] !== undefined) sorted[key] = canonical(record[key]);
+      }
+      return sorted;
+    }
+    return item;
+  };
+  return JSON.stringify(canonical(value));
+}
+
+/** SHA-256 over canonical JSON; identical to the internal gateway digest. */
+export function observationChecksum(value: unknown): string {
+  return createHash('sha256').update(canonicalJson(value)).digest('hex');
+}
+
+/** Recompute integrity from the canonical observation fields; never trust a self-asserted digest. */
+export function hasValidObservationChecksum(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  if (record.schema_version !== 'market-observation.v1') return false;
+  if (typeof record.checksum !== 'string' || !HEX64.test(record.checksum)) return false;
+  if (record.provenance_ref !== record.checksum) return false;
+  const fields = ['schema_version', 'source', 'symbol', 'interval', 'observed_at',
+    'received_at', 'is_complete', 'freshness', 'payload'];
+  const signed: Record<string, unknown> = {};
+  for (const field of fields) if (record[field] !== undefined) signed[field] = record[field];
+  return observationChecksum(signed) === record.checksum;
+}
+
+/** Verify the re-signed digest of `market-observation-input.v1` at downstream boundaries. */
+export function hasValidMarketInputChecksum(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  if (record.schema_version !== 'market-observation-input.v1') return false;
+  if (typeof record.checksum !== 'string' || !HEX64.test(record.checksum)) return false;
+  if (record.provenance_ref !== record.checksum) return false;
+  const { checksum, provenance_ref, ...signed } = record;
+  void checksum; void provenance_ref;
+  return observationChecksum(signed) === record.checksum;
 }
 
 export function isMarketObservationV1(value: unknown): value is MarketObservationV1 {

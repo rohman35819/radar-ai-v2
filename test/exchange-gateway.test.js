@@ -174,6 +174,24 @@ test('gateway redacts bare secrets and compound forbidden keys, and binds checks
   assert.equal(observation.checksum, observation.provenance_ref);
 });
 
+test('checksum binds the full payload, not only timestamps', async () => {
+  const base = fakeService();
+  const gatewayFor = (price) => createExchangeGateway({
+    role: 'quantum-research', now: () => Date.parse('2026-11-27T08:00:00Z'),
+    exchangeService: {
+      ...base,
+      market: async (exchange, symbol) => {
+        const market = await base.market(exchange, symbol);
+        return { ...market, spot: { ...market.spot, last_price: price } };
+      },
+    },
+  });
+  const first = await gatewayFor(61000).getMarketObservation('binance', 'BTCUSDT');
+  const second = await gatewayFor(99999).getMarketObservation('binance', 'BTCUSDT');
+  assert.notEqual(first.checksum, second.checksum);
+  assert.equal(first.provenance_ref, first.checksum);
+});
+
 test('upstream errors are sanitized to codes only', async () => {
   const gateway = createExchangeGateway({
     role: 'quantum-research',

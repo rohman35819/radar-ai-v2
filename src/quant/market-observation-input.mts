@@ -7,7 +7,7 @@
  * no OHLCV candle construction from a 24h ticker.
  */
 
-import { isMarketObservationV1, type MarketObservationV1 } from '../exchange/observation.mts';
+import { hasValidObservationChecksum, isMarketObservationV1, observationChecksum, type MarketObservationV1 } from '../exchange/observation.mts';
 
 export type QuantInputSchema = 'market-observation-input.v1';
 
@@ -31,7 +31,6 @@ export interface MarketObservationInputV1 {
 export interface QuantInputOptions {
   readonly now?: string;
   readonly maxAgeMs?: number;
-  readonly allowedSymbols?: readonly string[];
 }
 
 export class QuantInputError extends Error {
@@ -97,13 +96,15 @@ function checkPayload(payload: unknown): Record<string, unknown> {
     if (spot[field] !== undefined) clean[field] = spot[field];
   }
   const futures = source.futures as Record<string, unknown> | null | undefined;
-  if (futures && typeof futures === 'object') {
-    const cleanFutures: Record<string, unknown> = {};
-    for (const field of TICKER_FIELDS) {
-      if (futures[field] !== undefined) cleanFutures[field] = futures[field];
-    }
-    clean.futures = cleanFutures;
+  if (!futures || typeof futures !== 'object' || Array.isArray(futures)
+    || typeof futures.last_price !== 'number' || !Number.isFinite(futures.last_price) || futures.last_price <= 0) {
+    throw new QuantInputError('SCHEMA_INVALID');
   }
+  const cleanFutures: Record<string, unknown> = {};
+  for (const field of TICKER_FIELDS) {
+    if (futures[field] !== undefined) cleanFutures[field] = futures[field];
+  }
+  clean.futures = cleanFutures;
   return clean;
 }
 
@@ -118,8 +119,8 @@ export function createQuantMarketInput(observation: unknown, options: QuantInput
 
   const pair = typeof raw.symbol === 'string' ? raw.symbol.trim().toUpperCase() : '';
   if (!SYMBOL_RE.test(pair)) throw new QuantInputError('SYMBOL_INVALID');
-  const allowed = options.allowedSymbols ?? RESEARCH_ALLOWED_SYMBOLS;
-  if (!Array.isArray(allowed) || !allowed.includes(pair)) throw new QuantInputError('SYMBOL_NOT_ALLOWED');
+  // Fixed boundary: callers cannot extend or replace the official allowlist.
+  if (!RESEARCH_ALLOWED_SYMBOLS.includes(pair)) throw new QuantInputError('SYMBOL_NOT_ALLOWED');
 
   if (typeof raw.interval !== 'string' || !TICKER_INTERVALS.has(raw.interval)) {
     throw new QuantInputError('INTERVAL_UNSUPPORTED');
@@ -133,7 +134,9 @@ export function createQuantMarketInput(observation: unknown, options: QuantInput
   if (observedMs > nowMs || receivedMs > nowMs) throw new QuantInputError('FUTURE_TIMESTAMP');
   if (receivedMs < observedMs) throw new QuantInputError('TIMESTAMP_ORDER');
   const maxAgeMs = options.maxAgeMs === undefined ? 300000 : options.maxAgeMs;
-  if (!Number.isFinite(maxAgeMs) || maxAgeMs < 0) throw new QuantInputError('INVALID_AGE_LIMIT');
+  if (!Number.isFinite(maxAgeMs) || maxAgeMs < 0 || maxAgeMs > 86400000) {
+    throw new QuantInputError('INVALID_AGE_LIMIT');
+  }
   if (nowMs - observedMs > maxAgeMs) throw new QuantInputError('STALE_OBSERVATION');
 
   if (raw.freshness === 'unknown') throw new QuantInputError('FRESHNESS_UNKNOWN');
@@ -146,12 +149,14 @@ export function createQuantMarketInput(observation: unknown, options: QuantInput
   }
   if (typeof raw.checksum !== 'string' || !HEX64.test(raw.checksum)) throw new QuantInputError('CHECKSUM_INVALID');
   if (raw.provenance_ref !== raw.checksum) throw new QuantInputError('PROVENANCE_INVALID');
+  if (!hasValidObservationChecksum(raw)) throw new QuantInputError('CHECKSUM_INVALID');
 
   const payload = checkPayload(raw.payload);
   // Normalization is applied consistently across gateway, TypeScript and Python.
   if (!isMarketObservationV1({ ...raw, symbol: pair })) throw new QuantInputError('SCHEMA_INVALID');
 
-  return Object.freeze({
+  type WritableInput = { -readonly [K in keyof MarketObservationInputV1]: MarketObservationInputV1[K] };
+  const result: WritableInput = {
     schema_version: 'market-observation-input.v1',
     source: raw.source,
     symbol: pair,
@@ -159,18 +164,25 @@ export function createQuantMarketInput(observation: unknown, options: QuantInput
     observed_at: raw.observed_at,
     received_at: raw.received_at,
     accepted_at: now,
-    provenance_ref: raw.provenance_ref,
-    checksum: raw.checksum,
+    provenance_ref: '',
+    checksum: '',
     kind: 'market_ticker',
     is_ohlcv: false,
     freshness: 'fresh',
-    payload: Object.freeze(payload),
+    payload,
     limitations: Object.freeze([
       '24h ticker statistics are NOT OHLCV candles; do not use for candle-based indicators.',
       'No private account data is part of this research input.',
       'Historical backtests are unchanged; this input is for live/shadow observation only.',
     ]),
-  });
+  };
+  // Re-sign the sanitized research input so downstream consumers can verify it.
+  const { provenance_ref, checksum, ...unsigned } = result;
+  void provenance_ref; void checksum;
+  const signed = observationChecksum(unsigned);
+  result.provenance_ref = signed;
+  result.checksum = signed;
+  return Object.freeze({ ...result, payload: Object.freeze(payload) });
 }
 
 export function isMarketObservationInputV1(value: unknown): value is MarketObservationInputV1 {
