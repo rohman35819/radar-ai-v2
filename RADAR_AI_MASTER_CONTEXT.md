@@ -3676,3 +3676,29 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Diagnosis: tidak ada konfigurasi dengan mayoritas fold walk-forward positif (terbaik 3/6); selection pada validation tidak stabil antar jendela; mean reversion melanggar batas drawdown; hasil full-sample positif merupakan bias seleksi bila dipakai sendiri. Tidak ada kriteria yang dilonggarkan, tidak ada parameter yang diubah setelah melihat hasil.
 - QA independen `verify_report.py`: **8/8** eksperimen lolos setelah perbaikan kill-switch. Tes lokal: Python **25/25**, npm **237/237**, strict TS exit 0. Artifact lengkap: `research/python/output/experiments/`; ringkasan dan kegagalan: `docs/quant-strategy-experiments.md`.
 - **NEXT TASK:** evaluasi independen PR #153 sebagai Chief Strategy Advisor (tanpa merge), lalu perbarui handoff. Paper ledger tetap terkunci; worker/live/withdrawal OFF; Rp0.
+
+---
+
+## 149. QUANTUM ACCELERATION: PR AUDITS & SHADOW READINESS — 27 NOVEMBER 2026
+
+### 149.1 Status antrean terverifikasi
+- PR **#156** sudah **di-merge** ke `develop` sebagai `cc16628d553521964e85e7c799f9bd64cb5be7e5` (merge dari `57d30af`). `main` tetap `f38d25a`.
+- PR **#157** (`fix/quant-drawdown-validation` → `develop`, head `2c52d558c85dd91ae1e40ab6f27c696cd83fe7bb`) diaudit: CI test `45943947775` dan security `45943947751` sukses. Fix drawdown dari final equity curve benar dan regression test diperkuat; eksperimen ke-5 `exp-05-regime-aware-fast` benar-benar praregistrasi dan **ditolak** (`oos_too_few_trades` dengan 1 trade, `walk_forward_not_majority_positive` 2/6, OOS net 6,86% dengan profit factor null). Kriteria tidak diubah. **Cacat ditemukan:** 14 file `*_summary.json` memuat `report_path` absolut ke direktori temp (`/data/data/com.termux/files/usr/tmp/opencode/quant157/...`), bukan path relatif repository. Review COMMENT diposting; PR **tidak di-merge** sampai cacat portabilitas diperbaiki dan CI exact-head dijalankan ulang. Tidak ada branch agent lain yang diubah.
+- PR **#153** review Advisor sudah diposting sebelumnya; tetap terbuka, tidak di-merge hanya untuk mengosongkan antrean.
+- WIP: PR non-draft ke `develop` = #157, #153, #115, #105 (4). PR shadow-readiness baru didokumentasikan sebagai **pengecualian P0** dengan justifikasi di body; tidak ada PR lain yang dibuka setelahnya.
+
+### 149.2 Implementasi shadow readiness (branch `feat/quant-shadow-readiness`)
+- `src/quant/risk-budget.mts`: position sizing = `risk_fraction_per_trade / stop_loss_pct`, dibatasi sisa exposure; circuit breaker kill switch, daily loss limit, loss streak, exposure limit; fail-closed pada input cacat.
+- `src/quant/audit.mts`: event id deterministik FNV-1a, deduplikasi, batas 1000 entri, penolakan secret-like/unknown action; **in-memory only**, tanpa persistensi/transport.
+- `src/quant/reconciliation.mts`: `reconcileFills()` membandingkan expected vs observed menjadi matched/missing/unexpected/mismatched + `balanced`; dibatasi 200 record; **design-only**, bukan paper ledger aktif.
+- `test/quant-readiness.test.js`: 4 tes deterministik termasuk pemindaian sumber untuk memastikan tidak ada `fetch`/HTTP/order path.
+- Dokumentasi: `docs/quant-shadow-readiness.md` dengan status OFF, gate aktivasi, dan larangan.
+- Tidak ada route, menu, Hostless, credential, produksi DB, worker, live order, withdrawal, atau dana yang disentuh. Rp0.
+
+### 149.3 Verifikasi
+- `npm test`: **241 pass, 0 fail** (237 + 4 baru).
+- Strict TypeScript `tsc --noEmit`: exit 0.
+- CI/security exact-head untuk branch ini wajib diverifikasi setelah push; tidak ada klaim sebelum hasil dibaca.
+
+### 149.4 NEXT TASK
+Perbaiki `report_path` absolut di PR #157 oleh pemilik branch, lalu evaluasi ulang. Paper ledger/reconciliation tetap **terkunci** sampai strategi lolos `validation-v1` **dan** BOS menyetujui tahap tersebut. Worker, scheduler, live trading, withdrawal tetap OFF. Eksperimen baru hanya dengan pre-registrasi grid dan kriteria yang sama.
