@@ -87,7 +87,7 @@ def run_one(
         'id': experiment['id'],
         'strategy': experiment['strategy'],
         'symbol': symbol,
-        'hypothesis': experiment['hypothesis'],
+        'hypothesis': experiment.get('hypothesis', experiment.get('name', '')),
         'criteria_version': registry['criteria_version'],
         'criteria': criteria,
         'provenance': dataset.provenance,
@@ -133,7 +133,8 @@ def main(argv: list[str] | None = None) -> int:
     data_dir, out_dir = Path(args.data_dir), Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     summaries: list[dict[str, Any]] = []
-    for experiment in registry['experiments']:
+    experiments = registry.get('experiments') or [registry['hypothesis']]
+    for experiment in experiments:
         for symbol in experiment['symbols']:
             summary = run_one(experiment, symbol, registry, data_dir, out_dir)
             summaries.append(summary)

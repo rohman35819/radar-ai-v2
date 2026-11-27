@@ -11,7 +11,8 @@ from typing import Sequence
 
 from quant_data import Candle
 
-STRATEGIES = ('sma_crossover', 'trend_momentum', 'mean_reversion', 'regime_aware', 'volatility_breakout')
+STRATEGIES = ('sma_crossover', 'trend_momentum', 'mean_reversion', 'regime_aware',
+              'volatility_breakout', 'gap_continuation')
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,7 @@ class StrategyConfig:
     atr_multiple: float = 2.0
     max_hold_bars: int = 10
     spread_bps: float = 0.0
+    gap_threshold_pct: float = 0.005
 
     def validate(self) -> None:
         if self.strategy_id not in STRATEGIES:
@@ -65,6 +67,8 @@ class StrategyConfig:
             raise ValueError("atr_multiple wajib (0, 10]")
         if not math.isfinite(self.spread_bps) or self.spread_bps < 0 or self.spread_bps > 10000:
             raise ValueError("spread_bps wajib 0..10000")
+        if not math.isfinite(self.gap_threshold_pct) or not 0 < self.gap_threshold_pct < 0.10:
+            raise ValueError("gap_threshold_pct wajib (0, 0.10)")
         if not math.isfinite(self.entry_z) or not math.isfinite(self.exit_z) or self.entry_z >= self.exit_z:
             raise ValueError("entry_z harus lebih kecil dari exit_z")
         if not 0 < self.rsi_entry < self.rsi_exit < 100:
@@ -94,6 +98,7 @@ class StrategyConfig:
             'atr_multiple': self.atr_multiple,
             'max_hold_bars': self.max_hold_bars,
             'spread_bps': self.spread_bps,
+            'gap_threshold_pct': self.gap_threshold_pct,
         }
 
 
@@ -261,6 +266,25 @@ def generate_signals(candles: Sequence[Candle], config: StrategyConfig) -> list[
                                 highest_close = 0.0
                             else:
                                 target = 1
+            elif config.strategy_id == 'gap_continuation':
+                # Uses the 00:00 UTC opening print relative to the prior close
+                # plus same-bar bullish/bearish confirmation. Only bars up to
+                # i-1 are read; execution happens at bar i open.
+                if previous >= 1:
+                    opening_move = candles[previous].open / closes[previous - 1] - 1.0
+                    bullish = closes[previous] > candles[previous].open
+                    if position == 0:
+                        if opening_move >= config.gap_threshold_pct and bullish:
+                            target = 1
+                            entry_index = previous
+                    else:
+                        bearish = closes[previous] < candles[previous].open
+                        held_bars = previous - entry_index + 1
+                        if bearish or held_bars >= config.max_hold_bars:
+                            target = 0
+                            entry_index = -1
+                        else:
+                            target = 1
         position = target
         output.append(Signal(
             timestamp=candle.timestamp,
