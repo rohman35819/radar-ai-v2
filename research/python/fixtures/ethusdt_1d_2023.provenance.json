@@ -1,0 +1,13 @@
+{
+  "checksum_sha256": "eb3ac5686f44039de3fb6db0c27a28410658e9826b79501dfad6322f1bcfb8f2",
+  "data_kind": "public_api",
+  "end": "2023-12-31T00:00:00Z",
+  "interval": "1d",
+  "output": "research/python/fixtures/ethusdt_1d_2023.csv",
+  "retrieved_at": "2026-11-27T14:04:45.006789Z",
+  "rows": 365,
+  "schema_version": "1.0.0",
+  "source": "https://data-api.binance.vision/api/v3/klines?symbol=ETHUSDT&interval=1d&limit=365&startTime=1672531200000",
+  "start": "2023-01-01T00:00:00Z",
+  "symbol": "ETHUSDT"
+}

@@ -3764,3 +3764,19 @@ Dua hipotesis dicatat di `research/python/experiments/microstructure_registry.js
 
 ### 155.3 Deferred dan NEXT TASK
 Deferred: actual bid/ask + order-book depth (tanpa artifact publik), options Greeks/IV (tanpa data opsi valid), ML training (belum ada candidate layak). WIP non-draft ke develop = 5, sehingga tanpa PR baru; branch `exp/market-microstructure` didorong untuk CI. Worker/paper ledger/live/withdrawal OFF; Rp0. NEXT: desain source order-book gratis yang benar-benar publik dengan provenance, atau ML feature study dengan walk-forward + no-trade baseline tanpa mengulang grid lama.
+
+---
+
+## 156. COMMAND 19 — ORDER BOOK AUDIT & 2023 FEATURE RESEARCH — 27 NOVEMBER 2026
+
+### 156.1 Jalur A — sumber order book publik
+`docs/order-book-source-audit.md` mencatat probe: Binance `data-api.binance.vision/api/v3/depth` HTTP 200 (snapshot L2 sesaat dengan `lastUpdateId`, bids/asks), Binance/Bybit/Coinbase utama timeout dari sesi ini, path historis depth Binance Vision HTTP 404 / tidak tersedia di listing. Kesimpulan: **snapshot real-time ≠ historical dataset**; tidak ada order book historis reproduktif Rp0. Fitur depth/imbalance aktual tetap **DEFERRED**; proxy OHLCV tidak di klaim tervalidasi.
+
+### 156.2 Jalur B — pra-registrasi dan dataset baru
+`research/python/experiments/feature_research_registry.json` di-commit **`fe46c45b49a88a1b49c545225bef8d83e5ffec15`** pukul `2026-11-27T14:03:40Z` **sebelum** data 2023 diambil (`retrieved_at` 14:04:43/45Z). Dataset BTCUSDT+ETHUSDT 1d 2023-01-01→2023-12-31, 365 bar, checksum di sidecar; jendela ini non-overlap dengan 2025-26/2024/2022/2020/2018. Dua hipotesis tetap: F1 volatility-conditioned mean reversion (z10 ≤ −1.2, vol LOW/NORMAL, exit z ≥ −0.2, 3 bar), F2 volume-regime transition (volume z20 ≥ 2 + close naik, exit z ≤ 0, 3 bar). Tanpa grid search; kriteria `validation-v1` tidak diubah.
+
+### 156.3 Hasil chronological split + walk-forward
+In-sample 60%, OOS 40%; 4 fold × 2 aset; biaya 15 bps/sisi. F1: net **−2,598%**, 16 trade, DD 15,46%, 2/8 fold positif, **DITOLAK**. F2: net **−0,354%**, 4 trade, DD 3,14%, 1/8 fold positif, **DITOLAK**. Baseline: no-trade 0%; buy-and-hold BTC +44,32%, ETH +24,38%. Tidak ada fitur yang meningkatkan hasil OOS di atas baseline; tidak ada promosi atau klaim profit. QA hitung ulang summary cocok. Artifact `research/python/output/feature_research/report.json` memuat provenance.
+
+### 156.4 Dampak scanner dan NEXT TASK
+Fitur baru hanya menambah bukti penolakan pada scanner: `NO_TRADE` tetap dipertahankan bila likuiditas/volatilitas buruk. Jalur C tidak mengubah output dashboard dengan angka tak berdasar. Branch `exp/quant-feature-research`, WIP 5 → tanpa PR/merge. Python **46/46**, npm **241/241**, strict TS exit 0. NEXT: hipotesis mekanisme baru dengan data yang benar-benar berbeda (misalnya konfirmasi multi-venue atau struktur intraday yang tersedia gratis), atau evaluasi ML ringan hanya jika ada kandidat dengan sinyal OOS positif; Rp0, worker/ledger/live/withdrawal OFF.

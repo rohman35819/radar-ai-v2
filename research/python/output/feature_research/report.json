@@ -1,0 +1,357 @@
+{
+  "baselines": {
+    "BTCUSDT": {
+      "buy_hold": {
+        "net_return_pct": 44.318348
+      },
+      "no_trade_net_pct": 0.0
+    },
+    "ETHUSDT": {
+      "buy_hold": {
+        "net_return_pct": 24.380003
+      },
+      "no_trade_net_pct": 0.0
+    }
+  },
+  "criteria": {
+    "benchmarks": [
+      "no_trade_0_pct",
+      "buy_and_hold_net",
+      "prior_scan_by_trend_score"
+    ],
+    "chronological_split": [
+      0.6,
+      0.4
+    ],
+    "costs_bps_per_side": 15,
+    "funding_bps_per_day": 0,
+    "max_oos_drawdown_pct": 25.0,
+    "min_oos_trades": 2,
+    "no_grid_search": true,
+    "promotion": "only if OOS net > no-trade AND walk-forward majority positive; no threshold relaxation",
+    "validation_v1_unchanged": true,
+    "walk_forward": "rolling evaluation on later 40% with fixed parameters"
+  },
+  "data_provenance": {
+    "BTCUSDT": {
+      "checksum_sha256": "75ef4bd092c9191c0739c1052c407f905181009cb29ab50a8e4b64c136d5560d",
+      "data_kind": "public_api",
+      "end": "2023-12-31T00:00:00Z",
+      "interval": "1d",
+      "retrieved_at": null,
+      "rows": 365,
+      "schema_version": "1.0.0",
+      "source": "public",
+      "start": "2023-01-01T00:00:00Z",
+      "symbol": "BTCUSDT"
+    },
+    "ETHUSDT": {
+      "checksum_sha256": "eb3ac5686f44039de3fb6db0c27a28410658e9826b79501dfad6322f1bcfb8f2",
+      "data_kind": "public_api",
+      "end": "2023-12-31T00:00:00Z",
+      "interval": "1d",
+      "retrieved_at": null,
+      "rows": 365,
+      "schema_version": "1.0.0",
+      "source": "public",
+      "start": "2023-01-01T00:00:00Z",
+      "symbol": "ETHUSDT"
+    }
+  },
+  "folds": [
+    {
+      "end_index": 260,
+      "start_index": 220,
+      "symbols": {
+        "BTCUSDT": {
+          "F1": {
+            "end": "2023-09-17T00:00:00Z",
+            "expectancy_pct": -2.139446,
+            "exposure_pct": 15.0,
+            "gross_return_pct": -6.418339,
+            "max_drawdown_pct": 10.026265,
+            "net_return_pct": -6.688588,
+            "profit_factor": 0.319218,
+            "start": "2023-08-09T00:00:00Z",
+            "strategy": "F1",
+            "trades": 3,
+            "turnover_events": 6,
+            "win_rate_pct": 66.666667
+          },
+          "F2": {
+            "end": "2023-09-17T00:00:00Z",
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "start": "2023-08-09T00:00:00Z",
+            "strategy": "F2",
+            "trades": 0,
+            "turnover_events": 0,
+            "win_rate_pct": 0.0
+          }
+        },
+        "ETHUSDT": {
+          "F1": {
+            "end": "2023-09-17T00:00:00Z",
+            "expectancy_pct": -3.2282,
+            "exposure_pct": 20.0,
+            "gross_return_pct": -12.9128,
+            "max_drawdown_pct": 15.464378,
+            "net_return_pct": -12.558262,
+            "profit_factor": 0.0,
+            "start": "2023-08-09T00:00:00Z",
+            "strategy": "F1",
+            "trades": 4,
+            "turnover_events": 8,
+            "win_rate_pct": 0.0
+          },
+          "F2": {
+            "end": "2023-09-17T00:00:00Z",
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "start": "2023-08-09T00:00:00Z",
+            "strategy": "F2",
+            "trades": 0,
+            "turnover_events": 0,
+            "win_rate_pct": 0.0
+          }
+        }
+      }
+    },
+    {
+      "end_index": 290,
+      "start_index": 250,
+      "symbols": {
+        "BTCUSDT": {
+          "F1": {
+            "end": "2023-10-17T00:00:00Z",
+            "expectancy_pct": 0.112334,
+            "exposure_pct": 15.0,
+            "gross_return_pct": 0.337003,
+            "max_drawdown_pct": 2.594507,
+            "net_return_pct": 0.284198,
+            "profit_factor": 1.151672,
+            "start": "2023-09-08T00:00:00Z",
+            "strategy": "F1",
+            "trades": 3,
+            "turnover_events": 6,
+            "win_rate_pct": 66.666667
+          },
+          "F2": {
+            "end": "2023-10-17T00:00:00Z",
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "start": "2023-09-08T00:00:00Z",
+            "strategy": "F2",
+            "trades": 0,
+            "turnover_events": 0,
+            "win_rate_pct": 0.0
+          }
+        },
+        "ETHUSDT": {
+          "F1": {
+            "end": "2023-10-17T00:00:00Z",
+            "expectancy_pct": -0.896641,
+            "exposure_pct": 15.0,
+            "gross_return_pct": -2.689922,
+            "max_drawdown_pct": 4.197691,
+            "net_return_pct": -2.667383,
+            "profit_factor": 0.0,
+            "start": "2023-09-08T00:00:00Z",
+            "strategy": "F1",
+            "trades": 3,
+            "turnover_events": 6,
+            "win_rate_pct": 0.0
+          },
+          "F2": {
+            "end": "2023-10-17T00:00:00Z",
+            "expectancy_pct": -2.443901,
+            "exposure_pct": 2.5,
+            "gross_return_pct": -2.443901,
+            "max_drawdown_pct": 2.297347,
+            "net_return_pct": -2.443901,
+            "profit_factor": 0.0,
+            "start": "2023-09-08T00:00:00Z",
+            "strategy": "F2",
+            "trades": 1,
+            "turnover_events": 1,
+            "win_rate_pct": 0.0
+          }
+        }
+      }
+    },
+    {
+      "end_index": 320,
+      "start_index": 280,
+      "symbols": {
+        "BTCUSDT": {
+          "F1": {
+            "end": "2023-11-16T00:00:00Z",
+            "expectancy_pct": -2.221915,
+            "exposure_pct": 5.0,
+            "gross_return_pct": -2.221915,
+            "max_drawdown_pct": 2.448216,
+            "net_return_pct": -2.221915,
+            "profit_factor": 0.0,
+            "start": "2023-10-08T00:00:00Z",
+            "strategy": "F1",
+            "trades": 1,
+            "turnover_events": 2,
+            "win_rate_pct": 0.0
+          },
+          "F2": {
+            "end": "2023-11-16T00:00:00Z",
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "start": "2023-10-08T00:00:00Z",
+            "strategy": "F2",
+            "trades": 0,
+            "turnover_events": 0,
+            "win_rate_pct": 0.0
+          }
+        },
+        "ETHUSDT": {
+          "F1": {
+            "end": "2023-11-16T00:00:00Z",
+            "expectancy_pct": -1.282805,
+            "exposure_pct": 5.0,
+            "gross_return_pct": -1.282805,
+            "max_drawdown_pct": 1.933884,
+            "net_return_pct": -1.282805,
+            "profit_factor": 0.0,
+            "start": "2023-10-08T00:00:00Z",
+            "strategy": "F1",
+            "trades": 1,
+            "turnover_events": 2,
+            "win_rate_pct": 0.0
+          },
+          "F2": {
+            "end": "2023-11-16T00:00:00Z",
+            "expectancy_pct": -1.575905,
+            "exposure_pct": 10.0,
+            "gross_return_pct": -3.151809,
+            "max_drawdown_pct": 3.136291,
+            "net_return_pct": -3.136291,
+            "profit_factor": 0.0,
+            "start": "2023-10-08T00:00:00Z",
+            "strategy": "F2",
+            "trades": 2,
+            "turnover_events": 4,
+            "win_rate_pct": 0.0
+          }
+        }
+      }
+    },
+    {
+      "end_index": 350,
+      "start_index": 310,
+      "symbols": {
+        "BTCUSDT": {
+          "F1": {
+            "end": "2023-12-16T00:00:00Z",
+            "expectancy_pct": 4.349668,
+            "exposure_pct": 5.0,
+            "gross_return_pct": 4.349668,
+            "max_drawdown_pct": 0.149973,
+            "net_return_pct": 4.349668,
+            "profit_factor": null,
+            "start": "2023-11-07T00:00:00Z",
+            "strategy": "F1",
+            "trades": 1,
+            "turnover_events": 2,
+            "win_rate_pct": 100.0
+          },
+          "F2": {
+            "end": "2023-12-16T00:00:00Z",
+            "expectancy_pct": 2.744451,
+            "exposure_pct": 5.0,
+            "gross_return_pct": 2.744451,
+            "max_drawdown_pct": 1.96282,
+            "net_return_pct": 2.744451,
+            "profit_factor": null,
+            "start": "2023-11-07T00:00:00Z",
+            "strategy": "F2",
+            "trades": 1,
+            "turnover_events": 2,
+            "win_rate_pct": 100.0
+          }
+        },
+        "ETHUSDT": {
+          "F1": {
+            "end": "2023-12-16T00:00:00Z",
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "start": "2023-11-07T00:00:00Z",
+            "strategy": "F1",
+            "trades": 0,
+            "turnover_events": 0,
+            "win_rate_pct": 0.0
+          },
+          "F2": {
+            "end": "2023-12-16T00:00:00Z",
+            "expectancy_pct": 0.0,
+            "exposure_pct": 0.0,
+            "gross_return_pct": 0.0,
+            "max_drawdown_pct": 0.0,
+            "net_return_pct": 0.0,
+            "profit_factor": null,
+            "start": "2023-11-07T00:00:00Z",
+            "strategy": "F2",
+            "trades": 0,
+            "turnover_events": 0,
+            "win_rate_pct": 0.0
+          }
+        }
+      }
+    }
+  ],
+  "generated_at": "2026-11-27T14:05:28.994545Z",
+  "limitations": [
+    "Order-book depth/actual spread unavailable; liquidity is an OHLCV proxy.",
+    "No options data; no Greeks or implied volatility used.",
+    "No live order, ledger, reconciliation or worker; results are historical simulations."
+  ],
+  "registry_version": "feature-research-1.0",
+  "schema_version": "feature-research.v1",
+  "split": {
+    "in_sample_bars": 219,
+    "oos_bars": 146
+  },
+  "summary": {
+    "F1": {
+      "accepted": false,
+      "max_drawdown_pct": 15.464378,
+      "oos_net_pct": -2.598136,
+      "oos_trades": 16,
+      "positive_folds": 2,
+      "total_folds": 8
+    },
+    "F2": {
+      "accepted": false,
+      "max_drawdown_pct": 3.136291,
+      "oos_net_pct": -0.354468,
+      "oos_trades": 4,
+      "positive_folds": 1,
+      "total_folds": 8
+    }
+  }
+}
