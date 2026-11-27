@@ -3676,3 +3676,23 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Diagnosis: selection tidak stabil antar jendela, drawdown melanggar batas pada strategi mean-reverting, dan tidak ada kombinasi yang robust. Melanjutkan tuning pada 364 bar yang sama akan menjadi data snooping.
 - QA: `verify_report.py` **8/8** pada eksperimen terdaftar + exp-05; Python **25/25**. PR #156 exact-head `57d30af` lulus CI test #1354/security #701 dan telah di-merge ke `develop` sebagai `cc16628`. PR #157 (`fix/quant-drawdown-validation`) adalah follow-up kecil (koreksi timestamp, tabel hasil, exp-05, recompute drawdown), menunggu exact-head CI setelah sinkronisasi.
 - **NEXT TASK:** siapkan holdout/OOS periode baru atau hipotesis berbeda dengan pra-registrasi sebelum melihat hasil; jangan turunkan kriteria, jangan promosikan strategi, jangan aktifkan paper ledger/worker/live trading/withdrawal. PR #153 sudah direkomendasikan Advisor untuk merge tetapi ditunda demi integrasi Quant; PR #115/#105 tetap dipertahankan untuk triase.
+
+---
+
+## 149. SHADOW READINESS & PR QUEUE RESOLUTION — 27 NOVEMBER 2026
+
+### 149.1 Audit PR #157 dan integrasi
+- PR #157 (`fix/quant-drawdown-validation`) telah **di-merge** ke `develop` sebagai `e5fc21487ea34606cb61d16d486e4c26adcb2b7f` (merge dari branchyang telah diperbaiki pemiliknya). Review audit saya tercatat: recompute drawdown dari final equity curve benar, `exp-05` benar-benar praregistrasi dan ditolak dengan kriteria tidak diubah, dan cacat `report_path` absolut telah diperbaiki sebelum merge.
+- PR #156 telah di-merge lebih awal sebagai `cc16628d`. PR #153 tetap terbuka dengan rekomendasi Advisor, tidak di-merge hanya untuk mengosongkan antrean.
+- WIP ke `develop` mencapai 4 non-draft (#157 saat itu, #153, #115, #105); PR #158 didokumentasikan sebagai **pengecualian P0** dengan justifikasi di body, dan tidak ada PR lain dibuka setelahnya.
+
+### 149.2 Shadow readiness (branch `feat/quant-shadow-readiness`, PR #158)
+- `src/quant/risk-budget.mts`: sizing berdasarkan risk budget ÷ stop distance, dibatasi sisa exposure; circuit breaker kill switch, daily loss, loss streak, exposure; fail-closed.
+- `src/quant/audit.mts`: event id deterministik FNV-1a, idempotent, bounded, menolak secret/unknown action; in-memory only.
+- `src/quant/reconciliation.mts`: perbandingan expected vs observed terbatas 200 record → matched/missing/unexpected/mismatched + `balanced`; **design-only**, bukan paper ledger aktif.
+- `test/quant-readiness.test.js`: 4 tes, termasuk pemindaian sumber untuk membuktikan tidak ada `fetch`/HTTP/order path.
+- `docs/quant-shadow-readiness.md`: status OFF dan gate aktivasi. Tidak ada route/menu/Hostless/credential/produksi/worker/order/withdrawal yang diubah. Rp0.
+- Verifikasi lokal: `npm test` **241 pass, 0 fail**; strict `tsc --noEmit` exit 0. Konflik dokumentasi dengan `develop` diselesaikan melalui merge; fakta PR #157 diperbarui menjadi sudah ter-merge.
+
+### 149.3 NEXT TASK
+Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat hasil (menghindari data snooping pada 364 bar yang sama). Paper ledger/reconciliation tetap terkunci sampai strategi lolos `validation-v1` dan BOS menyetujui. Worker, live trading, withdrawal OFF; Rp0.
