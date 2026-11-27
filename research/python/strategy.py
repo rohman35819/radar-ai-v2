@@ -11,7 +11,7 @@ from typing import Sequence
 
 from quant_data import Candle
 
-STRATEGIES = ('sma_crossover', 'trend_momentum', 'mean_reversion', 'regime_aware')
+STRATEGIES = ('sma_crossover', 'trend_momentum', 'mean_reversion', 'regime_aware', 'volatility_breakout')
 
 
 @dataclass(frozen=True)
@@ -33,6 +33,11 @@ class StrategyConfig:
     rsi_period: int = 14
     rsi_entry: float = 35.0
     rsi_exit: float = 55.0
+    lookback_period: int = 20
+    atr_period: int = 14
+    atr_multiple: float = 2.0
+    max_hold_bars: int = 10
+    spread_bps: float = 0.0
 
     def validate(self) -> None:
         if self.strategy_id not in STRATEGIES:
@@ -49,10 +54,17 @@ class StrategyConfig:
             raise ValueError("stop_loss_pct wajib (0, 1)")
         if not 0 < self.max_drawdown_stop_pct <= 1:
             raise ValueError("max_drawdown_stop_pct wajib (0, 1]")
-        for name in ('trend_period', 'momentum_period', 'zscore_period', 'rsi_period'):
+        for name in ('trend_period', 'momentum_period', 'zscore_period', 'rsi_period',
+                     'lookback_period', 'atr_period'):
             value = getattr(self, name)
             if not isinstance(value, int) or isinstance(value, bool) or value < 2:
                 raise ValueError(f"{name} wajib integer >= 2")
+        if not isinstance(self.max_hold_bars, int) or isinstance(self.max_hold_bars, bool) or not 1 <= self.max_hold_bars <= 60:
+            raise ValueError("max_hold_bars wajib integer 1..60")
+        if not math.isfinite(self.atr_multiple) or not 0 < self.atr_multiple <= 10:
+            raise ValueError("atr_multiple wajib (0, 10]")
+        if not math.isfinite(self.spread_bps) or self.spread_bps < 0 or self.spread_bps > 10000:
+            raise ValueError("spread_bps wajib 0..10000")
         if not math.isfinite(self.entry_z) or not math.isfinite(self.exit_z) or self.entry_z >= self.exit_z:
             raise ValueError("entry_z harus lebih kecil dari exit_z")
         if not 0 < self.rsi_entry < self.rsi_exit < 100:
@@ -77,6 +89,11 @@ class StrategyConfig:
             'rsi_period': self.rsi_period,
             'rsi_entry': self.rsi_entry,
             'rsi_exit': self.rsi_exit,
+            'lookback_period': self.lookback_period,
+            'atr_period': self.atr_period,
+            'atr_multiple': self.atr_multiple,
+            'max_hold_bars': self.max_hold_bars,
+            'spread_bps': self.spread_bps,
         }
 
 
@@ -148,6 +165,25 @@ def rsi_series(values: Sequence[float], period: int) -> list[float | None]:
     return result
 
 
+def atr_series(candles: Sequence[Candle], period: int) -> list[float | None]:
+    """Rolling average true range; value at index i uses bars i-period+1..i."""
+    result: list[float | None] = [None] * len(candles)
+    for index in range(len(candles)):
+        if index < period - 1:
+            continue
+        true_ranges: list[float] = []
+        for offset in range(index - period + 1, index + 1):
+            current = candles[offset]
+            previous_close = candles[offset - 1].close if offset > 0 else current.open
+            true_ranges.append(max(
+                current.high - current.low,
+                abs(current.high - previous_close),
+                abs(current.low - previous_close),
+            ))
+        result[index] = math.fsum(true_ranges) / period
+    return result
+
+
 def _warmup(index: int, required: int) -> bool:
     return index >= required
 
@@ -158,6 +194,9 @@ def generate_signals(candles: Sequence[Candle], config: StrategyConfig) -> list[
     closes = [candle.close for candle in candles]
     output: list[Signal] = []
     position = 0
+    atrs = atr_series(candles, config.atr_period) if config.strategy_id == 'volatility_breakout' else []
+    entry_index = -1
+    highest_close = 0.0
     for index, candle in enumerate(candles):
         target = 0
         previous = index - 1
@@ -197,6 +236,31 @@ def generate_signals(candles: Sequence[Candle], config: StrategyConfig) -> list[
                             target = 0
                         else:
                             target = position
+            elif config.strategy_id == 'volatility_breakout':
+                # The channel must exclude the signal bar itself: its high is
+                # always >= its close, so including it would make a breakout
+                # impossible and would also use information from the past bar.
+                needed = max(config.lookback_period, config.atr_period - 1)
+                if _warmup(previous, needed):
+                    window = candles[previous - config.lookback_period:previous]
+                    prior_high = max(candle.high for candle in window)
+                    atr = atrs[previous]
+                    if atr is not None and atr > 0:
+                        if position == 0:
+                            if closes[previous] > prior_high:
+                                target = 1
+                                entry_index = previous
+                                highest_close = closes[previous]
+                        else:
+                            highest_close = max(highest_close, closes[previous])
+                            trailing_stop = highest_close - config.atr_multiple * atr
+                            held_bars = previous - entry_index + 1
+                            if closes[previous] < trailing_stop or held_bars >= config.max_hold_bars:
+                                target = 0
+                                entry_index = -1
+                                highest_close = 0.0
+                            else:
+                                target = 1
         position = target
         output.append(Signal(
             timestamp=candle.timestamp,

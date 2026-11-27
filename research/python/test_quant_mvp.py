@@ -13,7 +13,7 @@ from backtest_engine import run_backtest
 from fetch_ohlcv import build_url, drop_incomplete, parse_klines
 from make_fixture import generate
 from quant_cli import main as cli_main
-from quant_data import DataQualityError, load_ohlcv, slice_dataset
+from quant_data import DataQualityError, freshness_report, load_ohlcv, slice_dataset
 from report import REPORT_SCHEMA, RunMeta, build_report, write_report
 from strategy import StrategyConfig, generate_signals
 from validation import (
@@ -193,6 +193,45 @@ class QuantMvpTests(unittest.TestCase):
             ))
             self.assertTrue(any(signal.target_position == 1 for signal in first))
             self.assertTrue(any(signal.target_position == 0 for signal in first))
+
+    def test_volatility_breakout_is_causal_deterministic_and_time_bounded(self):
+        config = StrategyConfig(strategy_id='volatility_breakout', lookback_period=10,
+                                atr_period=7, atr_multiple=2.0, max_hold_bars=5)
+        # The synthetic fixture inflates highs, so use committed real public
+        # candles for a causal breakout test (still offline and deterministic).
+        breakout_dataset = load_ohlcv(
+            Path(__file__).parent / 'fixtures' / 'btcusdt_1d_public.csv',
+            source='test-fixture', symbol='BTCUSDT', interval='1d', data_kind='public_api')
+        candles = breakout_dataset.candles
+        first = generate_signals(candles, config)
+        self.assertEqual(first, generate_signals(candles, config))
+        extended = generate_signals(list(candles) + list(candles[-10:]), config)
+        self.assertEqual(first, extended[:len(first)])
+        self.assertTrue(any(signal.target_position == 1 for signal in first))
+        self.assertTrue(any(signal.target_position == 0 for signal in first))
+        self.assertTrue(all(
+            signal.computed_from is None or signal.computed_from <= candles[index].timestamp
+            for index, signal in enumerate(first)
+        ))
+        held = 0
+        for signal in first:
+            held = held + 1 if signal.target_position == 1 else 0
+            self.assertLessEqual(held, config.max_hold_bars)
+
+    def test_spread_cost_is_charged_without_changing_other_config(self):
+        signals = generate_signals(self.dataset.candles, self.config)
+        free = run_backtest(self.dataset, StrategyConfig(fast=5, slow=20, spread_bps=0), signals)
+        with_spread = run_backtest(self.dataset, StrategyConfig(fast=5, slow=20, spread_bps=10), signals)
+        self.assertLess(with_spread.metrics['net_return_pct'], free.metrics['net_return_pct'])
+        self.assertEqual(with_spread.metrics['cost_bps_per_turn'], 25)
+
+    def test_freshness_report_records_age_without_claiming_live_data(self):
+        report = freshness_report(self.dataset, '2026-11-27T00:00:00Z')
+        self.assertEqual(report['live_ready'], False)
+        self.assertEqual(report['historical_research_only'], True)
+        self.assertEqual(report['integrity_accepted'], True)
+        self.assertGreater(report['retrieval_after_end_hours'], 0)
+        self.assertGreater(report['age_hours_at_evaluation'], 0)
 
     def test_splits_and_walk_forward_are_contiguous_and_disjoint(self):
         train, validation, oos = split_three(self.dataset)

@@ -92,7 +92,7 @@ def run_backtest(dataset: Dataset, config: StrategyConfig, signals: Sequence[Sig
     step_seconds = INTERVAL_SECONDS[interval]
     bars_per_year = (365 * 24 * 3600) / step_seconds
 
-    fee = config.fee_bps / 10000.0
+    fee = (config.fee_bps + config.spread_bps) / 10000.0
     slip = config.slippage_bps / 10000.0
     funding_per_bar = config.funding_bps_per_day / 10000.0 * (step_seconds / 86400.0)
     fraction = config.position_fraction
@@ -238,6 +238,6 @@ def run_backtest(dataset: Dataset, config: StrategyConfig, signals: Sequence[Sig
         "position_fraction": fraction,
         "stop_loss_pct": config.stop_loss_pct,
         "max_drawdown_stop_pct": config.max_drawdown_stop_pct,
-        "cost_bps_per_turn": config.fee_bps + config.slippage_bps,
+        "cost_bps_per_turn": config.fee_bps + config.slippage_bps + config.spread_bps,
     }
     return BacktestResult(config=config, metrics=metrics, trades=tuple(trades), equity_curve=tuple(equity_curve))
