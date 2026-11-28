@@ -3724,3 +3724,13 @@ Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat ha
 
 ### NEXT TASK
 Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy model; Divisi 04/05 establish frozen capability benchmark and regression criteria. Reuse current queue/migration work after auditing PR #149/#153/#160; do not duplicate schema or provision infrastructure.
+
+
+## 2026-11-28 — NEXUS chat backend integration audit and dashboard client
+
+- Live Supabase account inspection confirms project `radar-nexus-core` is `ACTIVE_HEALTHY` on the Free plan. Edge Functions `nexus-chat` and `nexus-agent-runtime` are `ACTIVE` with `verify_jwt=true`.
+- Read-only database introspection confirms the NEXUS schema includes conversations, messages, memory_records, knowledge_documents, skills, agents, tasks, task_dependencies, evaluations and audit_events; migration history lists three NEXUS migrations. This supersedes older handoff text that said no tables/migrations were active.
+- Inspected deployed `nexus-chat` source: it authenticates the caller with Supabase Auth, scopes conversation access to the authenticated subject, stores messages, retrieves approved shared knowledge and returns `answer` + `conversation_id`. Provider configuration is server-side; missing provider key returns 503.
+- Found and fixed a dashboard integration defect: the pilot client did not read the backend's canonical `answer` field. New client reads `body.answer` first and has a regression test for the response contract, JWT use, no embedded privileged/provider secrets and fail-closed malformed responses.
+- Implementation branch: `feat/nexus-chat-pilot-current-develop` (from current `develop`); page and navigation are not deployed. Authenticated E2E, provider configuration, browser QA, CI and Hostless LIVE verification remain outstanding. No paid service or provider secret was activated.
+- NEXUS agent runtime function is deployed but not proven to be running continuously. Its `worker_tick` action is privileged and must not be exposed to ordinary users or scheduled until queue, audit, kill-switch and operational safeguards are independently tested.
