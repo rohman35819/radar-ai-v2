@@ -26,9 +26,24 @@ Deno.serve(async(req:Request)=>{
  const userClient=createClient(url,anonKey,{global:{headers:{Authorization:auth}},auth:{persistSession:false}});
  const {data:userData,error:authError}=await userClient.auth.getUser();if(authError||!userData.user)return reply({error:"invalid_session"},401);
  let body:Record<string,unknown>;try{body=await req.json();}catch{return reply({error:"invalid_json"},400);}
+ const owner=userData.user.id;
+ const action=typeof body.action==="string"?body.action:"chat";
+ if(action==="list_conversations"){
+  const {data,error}=await db.rpc("nexus_list_conversations",{p_owner_subject:owner,p_limit:typeof body.limit==="number"?body.limit:20});
+  if(error)return reply({error:"conversation_list_failed"},500);
+  return reply({conversations:data??[]});
+ }
+ if(action==="history"){
+  const conversationId=typeof body.conversation_id==="string"?body.conversation_id:"";
+  if(!conversationId)return reply({error:"conversation_id_required"},400);
+  const {data,error}=await db.rpc("nexus_list_messages",{p_owner_subject:owner,p_conversation_id:conversationId,p_limit:typeof body.limit==="number"?body.limit:100});
+  if(error)return reply({error:"conversation_history_failed"},404);
+  return reply({conversation_id:conversationId,messages:data??[]});
+ }
+ if(action!=="chat")return reply({error:"unsupported_action"},400);
  const content=typeof body.message==="string"?body.message.trim():"";if(!content||content.length>12000)return reply({error:"message_required_or_too_long"},400);
  const provider=typeof body.provider==="string"?body.provider:"openai";if(!providerConfig(provider))return reply({error:"unsupported_provider",supported:["openai","grok","gemini","claude"]},400);
- const owner=userData.user.id;const requestedId=typeof body.conversation_id==="string"?body.conversation_id:null;
+ const requestedId=typeof body.conversation_id==="string"?body.conversation_id:null;
  const {data:prepared,error:prepareError}=await db.rpc("nexus_prepare_chat",{p_owner_subject:owner,p_conversation_id:requestedId,p_title:content.slice(0,80),p_message:content});
  if(prepareError)return reply({error:"conversation_prepare_failed"},500);
  const row=Array.isArray(prepared)?prepared[0]:prepared;if(!row?.conversation_id||!Number.isSafeInteger(Number(row.user_sequence_no)))return reply({error:"conversation_prepare_invalid_response"},500);
