@@ -147,3 +147,13 @@ Do not implement a per-trade approval queue as the normal operating path. Do not
 NEXUS may not withdraw or transfer assets out. Withdrawal and equivalent external asset-egress must be denied at exchange credential and RADAR gateway layers for every NEXUS identity. BOS alone controls withdrawal.
 
 This is a target-state instruction, not evidence of a connected exchange, active worker, live order or profit. Live execution remains unavailable until the required technical integration and validation exist.
+
+
+## 12. Runtime controls and memory security — 28 November 2026
+- NEXUS chat must use only the server-pinned OpenRouter Free model `openrouter/free`. Ignore client provider/model fields. Never add paid-provider keys, endpoints or fallback paths without a new explicit BOS budget decision.
+- Agent runtime cannot approve its own knowledge or memory. The autonomous worker allowlist is Stage 0 `system.healthcheck` and Stage 1 proposal-only `knowledge.ingest`; approval is a separate operator action.
+- Worker controls must default to `worker_enabled=false`, `paused=true`, `kill_switch=true`, `daily_budget_usd=0`, `max_concurrency=1`, `autonomy_stage=0`. Do not schedule or enable a worker until runtime_controls is deployed, tested and BOS authorizes a specific stage.
+- Memory is owner- and scope-bound. Retrieve only approved, current, unexpired records. Project memory is separate from user memory; confidential user memory may be retrieved only for the authenticated owner after JWT validation.
+- Every memory proposal needs source_ref, source_revision and provenance. Reject secret-bearing content/provenance; never store API keys, tokens, passwords, private keys, seed phrases or credentials. Approval must record an operator and audit event; agents/workers cannot approve.
+- Current retrieval is PostgreSQL simple full-text token search with a partial GIN index, not vector/embedding semantic search. Do not claim embeddings or semantic memory are active.
+- Keep all services Rp0/free-tier. No live trading, order placement, transfer or withdrawal through NEXUS agents.
