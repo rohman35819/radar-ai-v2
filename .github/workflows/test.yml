@@ -106,6 +106,10 @@ jobs:
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/20261128_0005_nexus_worker_token_validation.sql
       - name: Verify NEXUS scheduled worker token authentication
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/tests/20261128_0005_nexus_worker_token_validation_smoke.sql
+      - name: Apply NEXUS deterministic SQL worker
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/20261128_0006_nexus_sql_worker_tick.sql
+      - name: Verify NEXUS SQL worker stage and approval policy
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/tests/20261128_0006_nexus_sql_worker_tick_smoke.sql
       - name: Apply market-data storage schema (disposable PostgreSQL only)
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < db/migrations/003_market_data.sql
       - name: Verify market-data provenance, idempotency, RLS and OHLCV partitions
