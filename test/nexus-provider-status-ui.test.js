@@ -10,3 +10,9 @@ test('NEXUS displays the explicit free-quota exhaustion message and sanitized at
  assert.match(source,/a\.provider\+': '\+\(a\.code\|\|a\.status\|\|'failed'\)/);
  assert.doesNotMatch(source,/OPENROUTER_API_KEY belum tersedia/);
 });
+
+test('NEXUS reports all free quotas exhausted only when every configured provider returns quota exhaustion',()=>{
+ assert.match(source,/quotaOnly=attempts\.length>0&&attempts\.every/);
+ assert.match(source,/\['http_429','http_402'\]/);
+ assert.match(source,/Semua kuota free sudah habis/);
+});
