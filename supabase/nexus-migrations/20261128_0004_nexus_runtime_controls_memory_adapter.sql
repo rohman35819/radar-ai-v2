@@ -47,6 +47,9 @@ create index if not exists memory_retention_idx
   where retention_until is not null;
 create index if not exists memory_source_revision_idx
   on nexus.memory_records(source_ref,source_revision);
+create index if not exists memory_content_fts_idx
+  on nexus.memory_records using gin (to_tsvector('simple',content))
+  where approval_status='approved';
 
 create or replace function public.nexus_claim_task(p_worker text,p_lease_seconds integer default 60)
 returns setof nexus.tasks
@@ -251,6 +254,22 @@ stable
 security definer
 set search_path=pg_catalog,nexus
 as $function$
+  with query_terms as (
+    select string_agg(plainto_tsquery('simple',token)::text,' | ') as tsquery
+      from (
+        select distinct token
+          from regexp_split_to_table(lower(coalesce(p_query,'')),'[^[:alnum:]]+') as split(token)
+         where length(token)>=3
+           and token <> all(array[
+             'what','when','where','which','who','whom','why','how','did','does','the','and','for','with','from','about',
+             'our','your','you','we','they','them','this','that','these','those','are','was','were','is','be','been',
+             'have','has','had','can','could','would','should','will','shall','not','but','if','or','as','at','by',
+             'in','into','of','on','to','an','its','their','there','then','than','did','does','what','when','where',
+             'yang','untuk','dengan','apa','bagaimana','kapan','dimana','kenapa','mengapa','dari','dan','atau',
+             'saya','kamu','sudah','belum','ini','itu','dalam','pada','bisa','tidak','ada','kita'
+           ]::text[])
+      ) terms
+  )
   select m.id,m.memory_type,m.content,m.scope,m.scope_id,m.sensitivity,m.source_ref,m.source_revision,
          m.verified_at,m.confidence,m.provenance
     from nexus.memory_records m
@@ -263,7 +282,11 @@ as $function$
      and (m.valid_until is null or m.valid_until>now())
      and (m.retention_until is null or m.retention_until>now())
      and (m.sensitivity in ('public','internal') or (p_include_confidential and p_scope='user' and m.sensitivity='confidential'))
-     and (coalesce(p_query,'')='' or position(lower(p_query) in lower(m.content))>0)
+     and (
+       coalesce(p_query,'')=''
+       or ((select tsquery from query_terms) is not null
+           and to_tsvector('simple',m.content) @@ ((select tsquery from query_terms)::tsquery))
+     )
    order by m.verified_at desc nulls last,m.confidence desc nulls last,m.updated_at desc
    limit greatest(1,least(coalesce(p_limit,5),20))
 $function$;
