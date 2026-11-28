@@ -3412,3 +3412,22 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 
 ## Security remediation — 28 November 2026
 - Revoked EXECUTE on public.rls_auto_enable() from PUBLIC, anon and authenticated. Verified both roles cannot execute it and event trigger ensure_rls remains intact. Security Advisor now reports only intentional RLS-enabled/default-deny private nexus tables; four missing FK indexes remain a performance follow-up.
+
+
+---
+
+## 160. POST-MERGE NEXUS / DIVISION STATUS — 28 NOVEMBER 2026
+
+- Main HEAD: a6fdbfb483e818ad6e3db7658c12eba5834bd010; PR #172 merged the authenticated NEXUS chat page, same-origin JS/CSS, sidebar link and page-scoped CSP. Exact-head npm test, Gitleaks, Trivy and branch-source policy passed. Hostless LIVE deployment and authenticated browser E2E are not verified; /nexus.html is in main, not yet certified live.
+- Develop HEAD: 87acee23c9849f3a6d0bc7055fed41be37a1ef79. PR #173 merged Division 06/07 charters and P1 fail-closed TypeScript foundation; PR #174 merged P2 market-observation.v1 and Binance-only read-only gateway. Bybit excluded from dashboard/gateway initial allowlists.
+- NEXUS Supabase radar-nexus-core is ACTIVE_HEALTHY. nexus-chat v4 and nexus-agent-runtime v1 remain the live versions at this timestamp. Six shared knowledge documents are approved; RPC retrieval for Divisi 06, Divisi 07 and NEXUS UI release status was verified. Conversation/message/task counts remain zero; no user-authenticated chat E2E has been executed.
+- Critical hardening finding: live nexus-chat v4 still accepts client-selected provider and contains paid OpenAI/Grok/Gemini/Claude provider configs, defaulting to OpenAI. Live nexus-agent-runtime v1 exposes knowledge approval via service-role worker. Fix PR #175 pins OpenRouter Free only and removes agent self-approval; do not schedule or rely on runtime until deployed.
+- Security hardening: EXECUTE on public.rls_auto_enable() revoked from PUBLIC/anon/authenticated; verified denied and event trigger ensure_rls intact. NEXUS private-schema RLS without direct policies is intentional default-deny. Four FK indexes remain a performance follow-up.
+- Worker is OFF/unscheduled. No global NEXUS runtime_controls row yet; current claim RPC can claim queued tasks without a pause/kill-switch gate. Add default-disabled runtime controls and integration tests before any scheduler activation.
+- Rp0 hard budget remains; no paid services, live trading, order placement, transfer or withdrawal.
+
+### NEXT TASK
+1. Merge PR #175 only after exact-head tests/security pass; deploy nexus-chat v5 and nexus-agent-runtime v2 with verify_jwt=true; verify versions and confirm no paid provider configuration remains in source.
+2. Add NEXUS runtime_controls default-disabled/paused/kill-switch/budget gate and restrict claim RPC to healthcheck + proposal-only knowledge.ingest.
+3. Add memory_records scope/retention/provenance adapter and connect authenticated chat retrieval after disposable PostgreSQL tests.
+4. Verify Hostless /nexus.html deployment, login/signup, chat response, persistence/history and owner isolation in a real browser. Provider key presence remains unverified until a real authenticated request.
