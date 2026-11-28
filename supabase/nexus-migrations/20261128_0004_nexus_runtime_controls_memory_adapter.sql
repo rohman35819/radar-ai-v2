@@ -289,7 +289,9 @@ as $function$
        or ((select tsquery from query_terms) is not null
            and to_tsvector('simple',m.content) @@ ((select tsquery from query_terms)::tsquery))
      )
-   order by m.verified_at desc nulls last,m.confidence desc nulls last,m.updated_at desc
+   order by case when (select tsquery from query_terms) is null then 0.0
+                 else ts_rank(to_tsvector('simple',m.content),(select tsquery::tsquery from query_terms)) end desc,
+            m.verified_at desc nulls last,m.confidence desc nulls last,m.updated_at desc
    limit greatest(1,least(coalesce(p_limit,5),20))
 $function$;
 revoke all on function public.nexus_retrieve_memory(text,text,text,text,integer,boolean) from public,anon,authenticated;
