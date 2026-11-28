@@ -188,8 +188,8 @@ begin
      or p_source_ref is null or length(trim(p_source_ref)) not between 1 and 2048
      or (p_source_revision is not null and length(p_source_revision)>128)
      or jsonb_typeof(coalesce(p_provenance,'{}'::jsonb)) <> 'object'
-     or p_content ~* '(api[_ -]?key\\s*[:=]\\s*\\S+|password\\s*[:=]\\s*\\S+|secret\\s*[:=]\\s*\\S+|authorization\\s*[:=]\\s*bearer\\s+\\S+|private[_ -]?key\\s*[:=]\\s*\\S+|mnemonic\\s*[:=]\\s*\\S+|seed phrase\\s*[:=]\\s*\\S+)'
-     or coalesce(p_provenance::text,'') ~* '"(api[_-]?key|password|secret|token|private[_-]?key|mnemonic|seed|authorization|cookie|credential)"\\s*:'
+     or p_content ~* '(api[_ -]?key\s*[:=]\s*\S+|password\s*[:=]\s*\S+|secret\s*[:=]\s*\S+|authorization\s*[:=]\s*bearer\s+\S+|private[_ -]?key\s*[:=]\s*\S+|mnemonic\s*[:=]\s*\S+|seed phrase\s*[:=]\s*\S+)'
+     or coalesce(p_provenance::text,'') ~* '"(api[_-]?key|password|secret|token|private[_-]?key|mnemonic|seed|authorization|cookie|credential)"\s*:'
      or (p_valid_until is not null and p_valid_until<=v_valid_from)
      or (p_retention_until is not null and p_retention_until<=now())
      or (p_confidence is not null and p_confidence not between 0 and 1) then
