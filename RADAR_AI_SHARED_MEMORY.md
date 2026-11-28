@@ -55,3 +55,5 @@ Immediate next actions
 3. Verify Hostless deployment and authenticated browser E2E for the main NEXUS chat UI.
 4. Verify OpenRouter Free secret presence without revealing its value; seed only source-backed approved project knowledge.
 5. Keep NEXUS worker unscheduled until D06 control row, lease/fencing, budget, audit, pause/kill-switch, restart recovery and Rp0 acceptance tests pass.
+
+- Governance: Grok and future AI agents have equal project-level contributor rights subject to actual permissions; one writer per branch/worktree. Grok has dashboard creative autonomy within preserved-feature/security/QA gates. Rp0/free-only is mandatory until BOS explicitly approves paid spend; see AGENTS.md.
