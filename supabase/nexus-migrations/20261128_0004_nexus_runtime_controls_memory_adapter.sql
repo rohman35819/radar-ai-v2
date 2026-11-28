@@ -127,8 +127,8 @@ as $function$
 begin
   if p_worker_enabled is null or p_paused is null or p_kill_switch is null
      or p_daily_budget_usd is distinct from 0::numeric
-     or p_autonomy_stage not in (0,1)
-     or p_max_concurrency not between 0 and 1
+     or p_autonomy_stage is null or p_autonomy_stage not in (0,1)
+     or p_max_concurrency is null or p_max_concurrency not between 0 and 1
      or p_actor is null or length(trim(p_actor))=0
      or p_reason is null or length(trim(p_reason))=0 then
     raise exception 'invalid runtime control request';
@@ -179,9 +179,9 @@ begin
   if p_owner_subject is null or length(trim(p_owner_subject)) not between 1 and 256
      or p_memory_type is null or length(trim(p_memory_type)) not between 1 and 64
      or p_content is null or length(trim(p_content)) not between 1 and 8000
-     or p_scope not in ('user','project','division','agent','task')
+     or p_scope is null or p_scope not in ('user','project','division','agent','task')
      or p_scope_id is null or length(trim(p_scope_id)) not between 1 and 128
-     or p_sensitivity not in ('public','internal','confidential')
+     or p_sensitivity is null or p_sensitivity not in ('public','internal','confidential')
      or p_source_ref is null or length(trim(p_source_ref)) not between 1 and 2048
      or (p_source_revision is not null and length(p_source_revision)>128)
      or jsonb_typeof(coalesce(p_provenance,'{}'::jsonb)) <> 'object'
