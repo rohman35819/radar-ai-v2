@@ -3734,3 +3734,11 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 - Found and fixed a dashboard integration defect: the pilot client did not read the backend's canonical `answer` field. New client reads `body.answer` first and has a regression test for the response contract, JWT use, no embedded privileged/provider secrets and fail-closed malformed responses.
 - Implementation branch: `feat/nexus-chat-pilot-current-develop` (from current `develop`); page and navigation are not deployed. Authenticated E2E, provider configuration, browser QA, CI and Hostless LIVE verification remain outstanding. No paid service or provider secret was activated.
 - NEXUS agent runtime function is deployed but not proven to be running continuously. Its `worker_tick` action is privileged and must not be exposed to ordinary users or scheduled until queue, audit, kill-switch and operational safeguards are independently tested.
+
+
+## 2026-11-28 — NEXUS private-storage chat activation
+
+- Root cause confirmed by live DB introspection: all NEXUS application tables are in private schema `nexus`; `anon`, `authenticated` and `service_role` have no direct table grants. The original `nexus-chat` Edge Function used default-schema PostgREST table calls, so conversation persistence could not work.
+- Added and applied migration `20261128002708 / nexus_chat_storage_rpc_v1`: owner-scoped `public.nexus_prepare_chat` and `public.nexus_complete_chat` SECURITY DEFINER RPCs, fixed search_path, execute only by service_role, denied to PUBLIC/anon/authenticated. No direct table grants or schema exposure added.
+- Deployed `nexus-chat` Edge Function v2, still `verify_jwt=true`, using those RPCs. Live transactional smoke passed create/read-context/write assistant/owner-isolation/privilege-denial checks; rolled back with zero conversation/message rows left.
+- Dashboard chat UI and matching source/test are in PR #169; Hostless page deployment and authenticated provider E2E remain unverified. Do not claim a user can already chat on the public dashboard. Provider key presence was not inspected; no provider call was made and no paid spend was triggered.
