@@ -36,21 +36,21 @@ test("NVIDIA quota failure automatically falls through to Gemini free tier", asy
   assert.equal(result.attempts[1].status, "success");
 });
 
-test("network failure falls through to Groq without exposing credentials", async () => {
+test("network failure falls through to OpenRouter Free without exposing credentials", async () => {
   const calls = [];
   const result = await askWithFreeProviderFallback(messages, {
-    getEnv: envFor({ NVIDIA_API_KEY: "secret-nvidia", GROQ_API_KEY: "secret-groq" }),
+    getEnv: envFor({ NVIDIA_API_KEY: "secret-nvidia", OPENROUTER_API_KEY: "secret-openrouter" }),
     fetchImpl: async (url, init) => {
       calls.push(String(url));
       if (String(url).includes("integrate.api.nvidia.com")) throw new TypeError("network unavailable");
-      assert.equal(init.headers.Authorization, "Bearer secret-groq");
+      assert.equal(init.headers.Authorization, "Bearer secret-openrouter");
       return new Response(JSON.stringify({
-        choices: [{ message: { content: "NEXUS aktif melalui Groq." } }],
+        choices: [{ message: { content: "NEXUS aktif melalui OpenRouter Free." } }],
       }), { status: 200 });
     },
   });
-  assert.equal(result.provider, "groq");
-  assert.match(result.answer, /Groq/);
+  assert.equal(result.provider, "openrouter");
+  assert.match(result.answer, /OpenRouter Free/);
   assert.equal(calls.length, 2);
   assert.equal(JSON.stringify(result.attempts).includes("secret"), false);
 });
@@ -61,27 +61,27 @@ test("OpenRouter Free is last fallback and sends only openrouter/free", async ()
     getEnv: envFor({
       NVIDIA_API_KEY: "n",
       GEMINI_API_KEY: "g",
-      GROQ_API_KEY: "q",
       OPENROUTER_API_KEY: "o",
     }),
     fetchImpl: async (url, init) => {
       calls.push({ url: String(url), body: JSON.parse(init.body) });
-      if (calls.length < 4) return new Response("unavailable", { status: 503 });
+      if (calls.length < 3) return new Response("unavailable", { status: 503 });
       return new Response(JSON.stringify({
         choices: [{ message: { content: "Jawaban dari OpenRouter Free." } }],
       }), { status: 200 });
     },
   });
   assert.equal(result.provider, "openrouter");
-  assert.equal(calls[3].body.model, "openrouter/free");
-  assert.equal(calls.length, 4);
-  assert.deepEqual(FREE_PROVIDER_ORDER, ["nvidia", "gemini", "groq", "openrouter"]);
+  assert.equal(calls[2].body.model, "openrouter/free");
+  assert.equal(calls.length, 3);
+  assert.deepEqual(FREE_PROVIDER_ORDER, ["nvidia", "gemini", "openrouter"]);
 });
 
-test("Mistral and Cloudflare credentials are deliberately not used by free-only chain", async () => {
+test("Groq, Mistral and Cloudflare credentials are deliberately not used by strict Rp0 chain", async () => {
   let calls = 0;
   const result = await askWithFreeProviderFallback(messages, {
     getEnv: envFor({
+      GROQ_API_KEY: "must-not-be-used",
       MISTRAL_API_KEY: "must-not-be-used",
       CLOUDFLARE_API_TOKEN: "must-not-be-used",
       CLOUDFLARE_ACCOUNT_ID: "account",

@@ -337,3 +337,11 @@ Do not report offline autonomy until scheduler, durable queue/state, worker runt
 - The migration schedules every five minutes only when pg_cron exists. CI disposable Postgres may skip schedule creation if pg_cron is unavailable; SQL worker smoke still tests Stage 0/1, task finalization and approval exclusion.
 - This SQL worker performs no model calls, external network or paid compute. The custom-token Edge Function proxy is reserved for a later model-backed worker.
 - No production migration or worker activation until PR exact-head CI passes.
+
+
+## 23. NEXUS strict Rp0 provider allowlist — 28 November 2026
+
+- Audit found deployed NEXUS provider chain includes Groq GPT-OSS 20B, but the Edge Function cannot verify the account's billing tier. A configured key does not prove Free eligibility; this is not strong enough for BOS's strict Rp0 requirement.
+- Branch `fix/nexus-strict-free-provider-allowlist-20261128` removes Groq from the runtime order and ignores `GROQ_API_KEY`. Candidate chain: NVIDIA → Gemini → OpenRouter Free. Mistral/Cloudflare remain excluded.
+- Updated tests and provider docs. Exact-head CI/security and deployment are pending. Current Supabase nexus-chat v19 still runs the old Groq-inclusive chain until the patch is merged and redeployed; Supabase connector access was not available during this audit, so no deployment was attempted.
+- No paid fallback, no worker/scheduler activation, no trading/order/transfer/withdrawal. Next: exact-head CI, merge to develop, authorized Edge Function deployment, then one authenticated provider smoke test with sanitized provider/model evidence.
