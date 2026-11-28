@@ -7,16 +7,17 @@ const db=createClient(url,serviceKey,{auth:{persistSession:false}});
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Content-Type":"application/json"};
 const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:cors});
 function providerConfig(provider:string){const configs:Record<string,{key:string;endpoint:string;model:string}>={
+ openrouter:{key:"OPENROUTER_API_KEY",endpoint:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"},
  openai:{key:"OPENAI_API_KEY",endpoint:"https://api.openai.com/v1/chat/completions",model:"gpt-4o-mini"},
  grok:{key:"XAI_API_KEY",endpoint:"https://api.x.ai/v1/chat/completions",model:"grok-3-mini"},
  gemini:{key:"GEMINI_API_KEY",endpoint:"https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",model:"gemini-2.0-flash"},
  claude:{key:"ANTHROPIC_API_KEY",endpoint:"https://api.anthropic.com/v1/messages",model:"claude-3-5-haiku-latest"}};return configs[provider];}
 async function askProvider(provider:string,messages:Array<{role:string;content:string}>,requestedModel?:string){
  const cfg=providerConfig(provider);if(!cfg)throw new Error("unsupported_provider");
- const key=Deno.env.get(cfg.key);if(!key)throw new Error("provider_not_configured:"+provider);const model=requestedModel||cfg.model;
+ const key=Deno.env.get(cfg.key);if(!key)throw new Error("provider_not_configured:"+provider);const model=provider==="openrouter"?"openrouter/free":(requestedModel||cfg.model);
  if(provider==="claude"){const system=messages.filter(m=>m.role==="system").map(m=>m.content).join("\n\n");const history=messages.filter(m=>m.role!=="system").map(m=>({role:m.role==="assistant"?"assistant":"user",content:m.content}));
   const r=await fetch(cfg.endpoint,{method:"POST",headers:{"x-api-key":key,"anthropic-version":"2023-06-01","content-type":"application/json"},body:JSON.stringify({model,max_tokens:1200,system,messages:history})});const j=await r.json();if(!r.ok)throw new Error("provider_error:"+r.status+":"+JSON.stringify(j).slice(0,300));return (j.content??[]).map((x:{text?:string})=>x.text??"").join("");}
- const r=await fetch(cfg.endpoint,{method:"POST",headers:{Authorization:"Bearer "+key,"Content-Type":"application/json"},body:JSON.stringify({model,messages,temperature:0.2})});const j=await r.json();if(!r.ok)throw new Error("provider_error:"+r.status+":"+JSON.stringify(j).slice(0,300));return j.choices?.[0]?.message?.content??"";
+ const headers:Record<string,string>={Authorization:"Bearer "+key,"Content-Type":"application/json"};if(provider==="openrouter"){headers["HTTP-Referer"]="https://radar-ai-v2.hostless.app";headers["X-Title"]="RADAR AI V2 NEXUS";}const r=await fetch(cfg.endpoint,{method:"POST",headers,body:JSON.stringify({model,messages,temperature:0.2})});const j=await r.json();if(!r.ok)throw new Error("provider_error:"+r.status+":"+JSON.stringify(j).slice(0,300));return j.choices?.[0]?.message?.content??"";
 }
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
@@ -42,7 +43,7 @@ Deno.serve(async(req:Request)=>{
  }
  if(action!=="chat")return reply({error:"unsupported_action"},400);
  const content=typeof body.message==="string"?body.message.trim():"";if(!content||content.length>12000)return reply({error:"message_required_or_too_long"},400);
- const provider=typeof body.provider==="string"?body.provider:"openai";if(!providerConfig(provider))return reply({error:"unsupported_provider",supported:["openai","grok","gemini","claude"]},400);
+ const provider=typeof body.provider==="string"?body.provider:"openai";if(!providerConfig(provider))return reply({error:"unsupported_provider",supported:["openrouter","openai","grok","gemini","claude"]},400);
  const requestedId=typeof body.conversation_id==="string"?body.conversation_id:null;
  const {data:prepared,error:prepareError}=await db.rpc("nexus_prepare_chat",{p_owner_subject:owner,p_conversation_id:requestedId,p_title:content.slice(0,80),p_message:content});
  if(prepareError)return reply({error:"conversation_prepare_failed"},500);
