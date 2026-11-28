@@ -57,3 +57,5 @@ Immediate next actions
 5. Keep NEXUS worker unscheduled until D06 control row, lease/fencing, budget, audit, pause/kill-switch, restart recovery and Rp0 acceptance tests pass.
 
 - Governance: Grok and future AI agents have equal project-level contributor rights subject to actual permissions; one writer per branch/worktree. Grok has dashboard creative autonomy within preserved-feature/security/QA gates. Rp0/free-only is mandatory until BOS explicitly approves paid spend; see AGENTS.md.
+
+- NEXUS scheduled-worker transport candidate: custom 256-bit token validated against private SHA-256 hash, cron proxy forwards only worker_tick; pg_cron/pg_net + Vault provisioning remains post-merge, no schedule active yet.
