@@ -235,3 +235,12 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - PR disposition: (1) merge only when relevant, based on latest main, exact-head checks pass, required independent reviews pass, and rollback/impact are understood; (2) close stale, duplicate, superseded, abandoned, irreparably conflicting, or low-value PRs after preserving any unique useful work; (3) keep blocked PRs only when a named dependency, owner, and next review condition are recorded. Closing a PR removes it from the active queue; it does not delete its GitHub history or automatically delete its branch.
 - Before opening a new PR, inspect the existing queue and reuse/update an appropriate active PR when scope and ownership match. Prefer one PR per coherent feature/owner; avoid stacking unrelated changes and multiple PRs editing the same files.
 - Every new RADAR conversation must read this policy from the latest main AGENTS.md and RADAR_AI_MASTER_CONTEXT.md, inspect current open PRs, and continue the existing queue. Do not rely on chat memory or old PR counts. Report the current active count, any exception and its reason, and the next actionable PR.
+
+
+## 15. NEXUS Chat / Agent Runtime Status — 28 November 2026
+- Supabase project radar-nexus-core (ref zhvznjcsxrtybqcpbryu) ACTIVE_HEALTHY, ap-south-1.
+- nexus-chat v4 and nexus-agent-runtime v1 ACTIVE, verify_jwt=true. Private nexus schema tables exist with RLS enabled; chat/memory row counts zero at audit.
+- PR #169 merged into develop, not main. Do not bulk-merge develop to main.
+- Main release branch feat/nexus-chat-main-release-20261128 adds same-origin chat page, auth REST client, scoped CSP and tests. Candidate only until exact-head CI, Hostless deploy and browser E2E pass.
+- Provider secret presence unknown; do not expose/request its value. Edge Function ACTIVE does not mean scheduled worker runs. Keep autonomy worker OFF until queue, lease, budget, audit, recovery and approval gates pass.
+- NEXT: CI/security → main release → Hostless/browser E2E → provider free-tier verification → security advisor remediation → Stage 0/1 worker pilot.
