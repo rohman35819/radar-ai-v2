@@ -299,3 +299,11 @@ Do not report offline autonomy until scheduler, durable queue/state, worker runt
 3. Verify browser signup/login, free-provider response, conversation list/history after reload, owner isolation and zero secret exposure. Confirm `OPENROUTER_API_KEY` exists without exposing its value; if absent, report configuration requirement rather than falling back to a paid model.
 4. Add a small NEXUS CLI using the same API contract.
 5. Continue Division 06/07 N0 artifacts and independent Division 01/04/05 reviews. Keep autonomous workers disabled until safety gates are tested.
+
+
+## 16. P2 Observation Contract — 28 November 2026
+- Branch feat/nexus-observation-contract-p2 carries the reviewed read-only ExchangeGateway and market-observation.v1 → market-observation-input.v1 → OBSERVE_ONLY shadow pipeline, reconstructed on current develop.
+- Binance only per BOS direction; Bybit is excluded from venue/source allowlists. Research symbols BTCUSDT and ETHUSDT only. 24h ticker remains market_ticker, never OHLCV/candles or trade instruction.
+- Runtime guards cover freshness, timestamp order, max age, complete spot/futures, checksum/provenance, recursive payload validation, secret/private-field rejection, and content-derived replay identity. No production caller/scheduler; exact-head CI/security pending.
+- PR #173 merged P1 Divisi 06/07 to develop as e841ac38. PR #172 merged NEXUS UI to main as a6fdbfb; Hostless deploy and authenticated browser E2E still unverified. NEXUS has 6 approved shared knowledge documents; chat retrieval uses keyword knowledge_documents, not memory_records.
+- Security: public.rls_auto_enable() EXECUTE revoked from PUBLIC/anon/authenticated; event trigger ensure_rls verified intact. NEXUS private-schema RLS no-policy is intentional default deny.
