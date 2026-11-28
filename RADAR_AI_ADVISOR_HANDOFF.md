@@ -241,6 +241,6 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Supabase project radar-nexus-core (ref zhvznjcsxrtybqcpbryu) ACTIVE_HEALTHY, ap-south-1.
 - nexus-chat v4 and nexus-agent-runtime v1 ACTIVE, verify_jwt=true. Private nexus schema tables exist with RLS enabled; chat/memory row counts zero at audit.
 - PR #169 merged into develop, not main. Do not bulk-merge develop to main.
-- Main release branch feat/nexus-chat-main-release-20261128 adds same-origin chat page, auth REST client, scoped CSP and tests. Candidate only until exact-head CI, Hostless deploy and browser E2E pass.
+- Main release branch hotfix/nexus-chat-main-release-20261128 adds same-origin chat page, auth REST client, scoped CSP and tests. Candidate only until exact-head CI, Hostless deploy and browser E2E pass.
 - Provider secret presence unknown; do not expose/request its value. Edge Function ACTIVE does not mean scheduled worker runs. Keep autonomy worker OFF until queue, lease, budget, audit, recovery and approval gates pass.
 - NEXT: CI/security → main release → Hostless/browser E2E → provider free-tier verification → security advisor remediation → Stage 0/1 worker pilot.
