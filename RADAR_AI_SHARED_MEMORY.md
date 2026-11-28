@@ -38,14 +38,16 @@
 - NEXUS Edge Functions nexus-chat v4 and nexus-agent-runtime v1 ACTIVE, verify_jwt=true. Ten private nexus.* tables exist with RLS enabled. Conversation/message/task/memory rows were zero at audit; no authenticated provider E2E verified.
 - NEXUS chat retrieves approved knowledge_documents using keyword search; it does not yet retrieve memory_records. OPENROUTER_API_KEY presence unverified; missing key returns 503. No model request made in audit.
 - nexus-agent-runtime is an active function, not a scheduled worker. No scheduler/continuous worker verified. Its current queue RPC lacks a global pause/kill-switch control row; keep it OFF until D06 adds and tests that gate.
-- PR #169 merged NEXUS chat backend/schema into develop as 313dc358. Main dashboard UI release is tracked separately in PR #172; exact-head CI/security, Hostless deployment and browser E2E must be checked before calling it LIVE.
-- P1 pure Divisi 06/07 modules passed exact-head tests/security on old head 959ff80, but that branch was 24 commits behind develop. Replacement work is on feat/agent-platform-divisions-06-07; PR #173 will carry updated code plus division charters.
+- PR #169 merged NEXUS chat backend/schema into develop as 313dc358. Main dashboard UI PR #172 merged to main as `a6fdbfb`; exact-head CI/security passed. Hostless deployment, public route and authenticated browser E2E remain unverified.
+- P1 pure Divisi 06/07 modules and division charters merged to develop as `e841ac38` via PR #173; exact-head npm 248/248, strict TypeScript, Python, disposable PostgreSQL, branch policy, Gitleaks and Trivy passed.
 - Supabase Security Advisor warning public.rls_auto_enable() was fixed by revoking EXECUTE from PUBLIC/anon/authenticated; event trigger ensure_rls remains intact. RLS-enabled private nexus.* tables without direct policies are intentional default-deny. Four FK indexes remain a performance follow-up.
 - Main release PR #172 is a narrow NEXUS UI release, not a bulk develop merge. No Hostless deployment or browser E2E claimed.
 
+- P2 observation contract candidate is on feat/nexus-observation-contract-p2; Binance-only market-observation.v1 → market-observation-input.v1 → OBSERVE_ONLY shadow pipeline. No production caller or scheduler; exact-head CI/security pending.
+
 ## Immediate next actions
-1. Complete exact-head CI/security and merge the replacement Divisi 06/07 P1 PR into develop.
-2. Complete P2: observation/provenance freshness contract, NEXUS memory schema adapter, and default-paused/kill-switch runtime controls with disposable PostgreSQL tests.
-3. Complete PR #172 CI/security; release isolated NEXUS chat UI only after gates, then verify Hostless and authenticated browser E2E.
+1. Complete exact-head CI/security and merge P2 Binance-only observation contract into develop.
+2. Add NEXUS memory schema adapter and default-paused/kill-switch runtime controls with disposable PostgreSQL tests.
+3. Verify Hostless deployment and authenticated browser E2E for the main NEXUS chat UI.
 4. Verify OpenRouter Free secret presence without revealing its value; seed only source-backed approved project knowledge.
 5. Keep NEXUS worker unscheduled until D06 control row, lease/fencing, budget, audit, pause/kill-switch, restart recovery and Rp0 acceptance tests pass.

@@ -78,6 +78,8 @@ No agent may approve its own output, alter its own permission profile, change bu
 - If no safe Rp0 scheduler/secret path is verified, keep the queue durable and worker disabled. Do not simulate always-on operation with an unreliable phone process.
 
 ## 8. Current implementation boundary
+
+- P2 observation contract candidate is implemented on branch feat/nexus-observation-contract-p2: market-observation.v1, market-observation-input.v1 and OBSERVE_ONLY shadow receipt. This is pure/read-only code with deterministic freshness, timestamp, checksum, provenance and payload guards. Initial source and venue allowlist is Binance only; Bybit is excluded by BOS direction. No production caller or scheduler.
 - P1 pure TypeScript modules: src/platform/agent-roles.mts, src/platform/task-policy.mts, src/platform/audit-event.mts; tests in test/quant-foundation.test.js.
 - Divisi 07 pure retrieval helper: src/memory/retrieval.mts. It filters scope, sensitivity, approval, validity and retention before ranking.
 - These are library contracts only. They have no production caller, scheduler, persistent worker, credentials or live task execution.
