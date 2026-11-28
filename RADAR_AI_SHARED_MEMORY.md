@@ -61,3 +61,5 @@ Immediate next actions
 - NEXUS scheduled-worker transport candidate: custom 256-bit token validated against private SHA-256 hash, cron proxy forwards only worker_tick; pg_cron/pg_net + Vault provisioning remains post-merge, no schedule active yet.
 
 - NEXUS SQL worker candidate: cron-only deterministic tick every 5 minutes when pg_cron exists; Stage 0 healthcheck, Stage 1 proposal-only knowledge ingest; no LLM, external calls or approval. Exact-head CI and production activation pending.
+
+- 28 Nov: NEXUS provider fallback PR #181 merged to develop as 0f53c2dc0273504a8351b461418eeb09f9469653 and deployed to radar-nexus-core nexus-chat v19 (ACTIVE/JWT). Free-only order NVIDIA Gemma 4 → Gemini 3.8 Flash → Groq GPT-OSS 20B → OpenRouter Free; skips missing keys and falls through on quota/auth/network/5xx/empty failures. Mistral and Cloudflare intentionally excluded for Rp0 uncertainty. CI/security passed; real authenticated provider response still needs BOS chat test. See master context §165 and docs/nexus-free-provider-fallback.md.
