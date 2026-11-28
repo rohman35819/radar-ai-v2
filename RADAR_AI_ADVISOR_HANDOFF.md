@@ -321,3 +321,5 @@ Do not report offline autonomy until scheduler, durable queue/state, worker runt
 - Memory schema adds scope_id, retention_until, verified_at, confidence, provenance, approved_by/approved_at and service-role-only propose/approve/retrieve RPCs. Retrieval filters owner/scope/sensitivity/approval/validity/retention before ranking.
 - Candidate chat v6 retrieves project memory and authenticated owner-scoped user memory after JWT validation, with provenance in prompt context. It depends on migration 0004 and is not deployed.
 - Exact-head CI and disposable PostgreSQL smoke pending. No migration applied to live Supabase, no worker/scheduler activated. Next: pass CI, merge, apply migration, seed source-backed project memory, verify retrieval, deploy chat v6.
+
+- Memory retrieval matching is intentionally keyword-based using PostgreSQL simple full-text token OR + partial GIN index; do not describe it as semantic/vector memory. Embeddings remain out of scope under Rp0.
