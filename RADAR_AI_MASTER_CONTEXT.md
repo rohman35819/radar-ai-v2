@@ -3803,3 +3803,14 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 - Extends nexus.memory_records with scope_id, retention_until, verified_at, confidence, provenance, approved_by and approved_at; adds proposal, approval and scope-first retrieval RPCs. Retrieval filters owner/scope/sensitivity/approval/validity/retention before ranking and uses PostgreSQL simple full-text token OR matching with a partial GIN index (no embeddings).
 - Candidate NEXUS chat v6 calls project memory for project:radar-ai-v2 and user memory bound to the authenticated user ID after JWT validation. Project memory excludes confidential; user memory can include only that owner's confidential records. Source provenance is included in prompt context.
 - All changes are code-only pending exact-head CI, disposable PostgreSQL smoke, PR review and migration deployment. No scheduler/worker activation; defaults remain paused/kill-switched. After migration, seed only source-backed project memory and verify retrieval before deploying chat v6.
+
+
+---
+
+## 162. EQUAL AI CONTRIBUTOR RIGHTS + ZERO-COST GOVERNANCE — 28 NOVEMBER 2026
+
+- BOS grants Grok and future AI agents equal project-level engineering contributor authority, including initiative on safe reversible engineering, independent research, implementation, testing and PR creation when the agent's actual GitHub connection has the required scopes. This does not grant GitHub permissions or bypass branch protection.
+- One writer per branch/worktree remains mandatory. Different agents may work in parallel on isolated branches and collaborate through PRs, commits, reviews and documented handoffs.
+- Grok has broad dashboard creative autonomy within preserved-feature, responsive/accessibility, provenance/freshness, security, QA and release controls.
+- Rp0 is a hard project-wide constraint until BOS explicitly approves a specific paid resource. No paid services, overage, payment method or paid fallback. Provider labelled free is not sufficient; verify billing/quota behavior.
+- AGENTS.md is the authoritative source for these policies; shared memory contains a compact pointer, not duplicate full policy text.
