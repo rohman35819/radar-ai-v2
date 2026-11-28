@@ -14,5 +14,5 @@ test('memory context preserves provenance and is bounded before entering the pro
  assert.match(source,/m\.source_ref/);
  assert.match(source,/m\.source_revision/);
  assert.match(source,/m\.content\.slice\(0,3000\)/);
- assert.match(source,/approval_status/).toBeUndefined?.();
+ assert.doesNotMatch(source,/approval_status/);
 });
