@@ -5,7 +5,7 @@ test('NEXUS chat displays the actual provider and model returned by the server',
  assert.match(source,/data\.provider\+' · Model: '\+\(data\.model\|\|'tidak dilaporkan'\)/);
 });
 test('NEXUS displays the explicit free-quota exhaustion message and sanitized attempts',()=>{
- assert.match(source,/Semua kuota free sudah habis atau provider gratis sedang tidak tersedia/);
+ assert.match(source,/Semua kuota free sudah habis\. Seluruh provider gratis yang dikonfigurasi mencapai batas kuota/);
  assert.match(source,/provider_attempts/);
  assert.match(source,/a\.provider\+': '\+\(a\.code\|\|a\.status\|\|'failed'\)/);
  assert.doesNotMatch(source,/OPENROUTER_API_KEY belum tersedia/);
