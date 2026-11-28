@@ -5,6 +5,25 @@
 **Repository:** https://github.com/rohman35819/radar-ai-v2
 **Production branch:** `main` · **Integration branch:** `develop`
 
+## Quick reminder: open Grok through Termux
+
+If the Termux session was accidentally closed and you want to open Grok again through OpenCode:
+
+1. Open the Termux app.
+2. Go to the RADAR AI repository so OpenCode starts in the project context:
+   ```bash
+   cd ~/radar-ai-v2
+   ```
+3. Start OpenCode:
+   ```bash
+   opencode
+   ```
+4. In OpenCode, select the Grok/xAI provider or model if it is not already selected. If OpenCode offers the previous session, choose it to continue the earlier conversation.
+
+**Main command to remember:** `opencode`
+
+If Termux says `opencode: command not found`, OpenCode is not available on the current PATH. Check with `command -v opencode` and verify the OpenCode installation before proceeding.
+
 ## 1. Mandatory new-chat startup
 
 At the beginning of EVERY new Grok conversation/session/task involving RADAR AI V2:
