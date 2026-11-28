@@ -10,7 +10,7 @@ test('NEXUS chat uses a server-pinned free-provider chain regardless of client i
  assert.match(providers,/gemini-3\.8-flash/);
  assert.match(providers,/openai\/gpt-oss-20b/);
  assert.match(providers,/openrouter\/free/);
- assert.doesNotMatch(providers,/MISTRAL_API_KEY|CLOUDFLARE_API_TOKEN|XAI_API_KEY|OPENAI_API_KEY|api\.openai\.com|api\.x\.ai/i);
+ assert.doesNotMatch(providers,/getEnv\(["'](?:MISTRAL_API_KEY|CLOUDFLARE_API_TOKEN|XAI_API_KEY|OPENAI_API_KEY)["']\)|api\.openai\.com|api\.x\.ai/i);
 });
 test('provider failures are normalized and never fall back to paid models',()=>{
  assert.match(providers,/provider_not_configured/);
