@@ -21,7 +21,7 @@ begin
   select * into t from public.nexus_claim_task('smoke-disabled',60);
   if found then raise exception 'disabled worker claimed a task'; end if;
 
-  perform public.nexus_set_runtime_controls(true,false,false,0,1,0,'smoke-operator','stage 0 smoke');
+  perform public.nexus_set_runtime_controls(true,false,false,0::smallint,1::smallint,0::numeric,'smoke-operator','stage 0 smoke');
   select * into t from public.nexus_claim_task('smoke-stage0',60);
   if not found or t.task_type<>'system.healthcheck' then raise exception 'stage 0 must claim healthcheck only'; end if;
   select count(*) into n from public.nexus_claim_task('smoke-concurrency',60);
@@ -31,14 +31,14 @@ begin
   select * into t from public.nexus_claim_task('smoke-stage0-after',60);
   if found then raise exception 'stage 0 claimed ingest or approval task'; end if;
 
-  perform public.nexus_set_runtime_controls(true,false,false,1,1,0,'smoke-operator','stage 1 smoke');
+  perform public.nexus_set_runtime_controls(true,false,false,1::smallint,1::smallint,0::numeric,'smoke-operator','stage 1 smoke');
   select * into t from public.nexus_claim_task('smoke-stage1',60);
   if not found or t.task_type<>'knowledge.ingest' then raise exception 'stage 1 must claim proposal-only ingest'; end if;
   perform public.nexus_finish_task(t.id,'smoke-stage1',t.fencing_token,true,'proposed:smoke',null);
   select * into t from public.nexus_claim_task('smoke-no-approval',60);
   if found then raise exception 'worker claimed knowledge approval task'; end if;
 
-  perform public.nexus_set_runtime_controls(false,true,true,0,1,0,'smoke-operator','restore fail-closed defaults');
+  perform public.nexus_set_runtime_controls(false,true,true,0::smallint,1::smallint,0::numeric,'smoke-operator','restore fail-closed defaults');
   select count(*) into n from public.nexus_claim_task('smoke-killswitch',60);
   if n<>0 then raise exception 'kill switch failed to deny task claims'; end if;
 
