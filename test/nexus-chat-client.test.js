@@ -19,5 +19,5 @@ test('NEXUS browser client uses a user JWT and contains no privileged/provider s
 
 test('NEXUS does not fabricate replies on failed or malformed API responses', () => {
   assert.match(page, /if\(!res\.ok\)throw Error/);
-  assert.match(page, /if\(!reply\)throw Error/);
+  assert.match(page, /if\(!body\.answer\)throw Error/);
 });
