@@ -3744,3 +3744,9 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 - Dashboard chat UI and matching source/test are in PR #169; Hostless page deployment and authenticated provider E2E remain unverified. Do not claim a user can already chat on the public dashboard. Provider key presence was not inspected; no provider call was made and no paid spend was triggered.
 
 - Repository reproducibility follow-up: PR #169 now includes the four NEXUS migration sources (private foundation, knowledge, queue, chat RPC), disposable PostgreSQL smoke SQL for each, and test-workflow steps to apply/test them. Workflow changes are committed; exact-head Actions run is not visible yet.
+
+## Cross-session history activation — 28 November 2026
+- Added private-schema RPCs `nexus_list_conversations` and `nexus_list_messages`, both SECURITY DEFINER with fixed search_path and EXECUTE only for service_role. They enforce owner scope and bounded result limits.
+- Applied `nexus_chat_history_rpc_v1` and deployed `nexus-chat` Edge Function v3 (`verify_jwt=true`). API actions now include `list_conversations` and `history` in addition to authenticated chat.
+- Dashboard client now lists recent conversations, restores the selected conversation ID from sessionStorage, loads prior messages after login/reload, and supports starting a new conversation. The server remains canonical; sessionStorage contains only the selected conversation ID and public key, never message content or provider secrets.
+- Live SQL smoke passed conversation list, history retrieval, wrong-owner rejection and role privilege denial; transaction rolled back and live conversation/message counts remain zero. Migration apply was invoked twice; Supabase records two version rows with the same migration name, but CREATE OR REPLACE is idempotent and verified schema/function state is correct. Do not delete migration history rows.
