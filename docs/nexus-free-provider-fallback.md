@@ -20,7 +20,7 @@ For each chat request, the server tries the providers in this order. Missing key
 ## Cost guardrails
 
 - This code selects free-tier models only and never requests a paid model.
-- Free-tier use is not an absolute zero-cost guarantee if an account is upgraded or billing is enabled. Keep Google AI Studio on Free, Groq on Free, NVIDIA on the Free Endpoint allowance, and do not enable provider billing or upgrades.
+- Free-tier use is not an absolute zero-cost guarantee if an account is upgraded or billing is enabled. Keep Google AI Studio on Free and NVIDIA on the Free Endpoint allowance, and do not enable provider billing or upgrades.
 - OpenRouter requests use only `openrouter/free`; never add paid models to a fallback array.
 - A quota exhaustion or outage results in failover. If all free providers fail, NEXUS returns an explicit unavailable response and does not fabricate an answer or fall back to paid inference.
 - Keys remain server-side Supabase Edge Function Secrets.
