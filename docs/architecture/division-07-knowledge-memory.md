@@ -46,7 +46,7 @@ Important gaps and mismatches:
 1. Current chat Edge Function calls nexus_retrieve_knowledge against approved knowledge_documents in the shared namespace. It does not yet retrieve memory_records.
 2. Current knowledge retrieval is PostgreSQL ILIKE over title/body, not semantic/vector retrieval. This is acceptable for a free-tier pilot but must be reported accurately.
 3. The pure TypeScript helper src/memory/retrieval.mts models radar_memory_records with scope_type, scope_id, retention_until, created_at, source_ref and source_revision. It is not an adapter for the live NEXUS nexus.memory_records schema. Do not connect it directly or assume column compatibility.
-4. Live NEXUS memory_records lacks explicit scope_id, retention_until, confidence, verified_at and structured supersession metadata. A reviewed additive migration and adapter are needed before full memory retrieval.
+4. P2 migration candidate 20261128_0004 adds scope_id, retention_until, verified_at, confidence, provenance, approved_by and approved_at, plus a service-role-only proposal/approval/retrieval RPC set. It is not deployed yet; full memory activation requires the migration, smoke tests, source-backed seed and chat v6 deployment.
 5. Private-schema RLS with no direct anon/authenticated policies is default-deny by design. Server-side SECURITY DEFINER RPCs must keep fixed search_path, owner checks and EXECUTE limited to service_role.
 
 ## 5. Memory lifecycle and retrieval contract
@@ -85,9 +85,9 @@ Retrieval must never let similarity, ranking or model preference override access
 |---|---|---|---|
 | D07-001 | P1 | Memory/knowledge taxonomy and privacy contract | Approved schema spec, examples and forbidden-data list |
 | D07-002 | P1 | Source-backed project knowledge bootstrap | Curated units have source URI, immutable revision, approval and owner |
-| D07-003 | P2 | NEXUS memory schema adapter | Disposable PostgreSQL tests prove scope/retention/version mapping |
-| D07-004 | P2 | Additive memory metadata migration | scope_id, retention, verification metadata and indexes; no destructive rewrite |
-| D07-005 | P3 | Scope-first memory service/RPC | Owner/scope/sensitivity/approval/validity tests before ranking |
+| D07-003 | P2 | NEXUS memory schema adapter | Candidate in 20261128_0004; disposable PostgreSQL tests prove scope/retention/version mapping |
+| D07-004 | P2 | Additive memory metadata migration | Candidate in 20261128_0004; scope_id, retention, verification metadata and indexes; no destructive rewrite |
+| D07-005 | P2 | Scope-first memory service/RPC | Candidate in 20261128_0004; owner/scope/sensitivity/approval/validity tests before ranking |
 | D07-006 | P3 | Connect chat to approved memory | Authenticated chat retrieves only authorized, current records with provenance |
 | D07-007 | P4 | Curation and approval workflow | Proposal cannot self-approve; approval actor and audit evidence recorded |
 | D07-008 | P4 | Conflict, supersession and expiry | Deterministic conflict tests and old-version preservation |
