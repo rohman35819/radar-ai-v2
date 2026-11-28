@@ -307,3 +307,10 @@ Do not report offline autonomy until scheduler, durable queue/state, worker runt
 - Runtime guards cover freshness, timestamp order, max age, complete spot/futures, checksum/provenance, recursive payload validation, secret/private-field rejection, and content-derived replay identity. No production caller/scheduler; exact-head CI/security pending.
 - PR #173 merged P1 Divisi 06/07 to develop as e841ac38. PR #172 merged NEXUS UI to main as a6fdbfb; Hostless deploy and authenticated browser E2E still unverified. NEXUS has 6 approved shared knowledge documents; chat retrieval uses keyword knowledge_documents, not memory_records.
 - Security: public.rls_auto_enable() EXECUTE revoked from PUBLIC/anon/authenticated; event trigger ensure_rls verified intact. NEXUS private-schema RLS no-policy is intentional default deny.
+
+
+## 17. NEXUS Provider / Approval Security Finding — 28 November 2026
+- Deployed nexus-chat v4 accepted body.provider and defaulted to OpenAI; providerConfig included paid OpenAI/Grok/Gemini/Claude credentials/endpoints. This conflicts with BOS Rp0 policy. UI provider field is not a security boundary.
+- Deployed nexus-agent-runtime v1 exposed an approve action and worker task knowledge.approve using service_role; agents could self-approve knowledge proposals if given service-role access.
+- Fix branch fix/nexus-free-only-provider-approval-gate pins OpenRouter Free on server, ignores body.provider/model, removes paid configs and provider detail leaks, removes approve action and limits worker to healthcheck + proposal-only knowledge.ingest.
+- Do not schedule or invoke worker until runtime_controls default pause/kill-switch/budget migration is deployed and verified. Current live function versions remain chat v4 / agent-runtime v1 until Supabase deployment confirmation.
