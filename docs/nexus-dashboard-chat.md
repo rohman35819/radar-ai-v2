@@ -21,6 +21,9 @@ Status: implementation branch; not deployed or end-to-end verified.
 - Deployed `nexus-chat` Edge Function version 2 with `verify_jwt=true`. It now uses `nexus_prepare_chat` and `nexus_complete_chat` RPCs for owner-scoped, transactional message persistence rather than direct PostgREST access to private tables.
 - Disposable-in-transaction smoke test on the live project passed as `service_role`: create conversation, append user message, append assistant message, reject a different owner, and verify anon/authenticated cannot execute the RPCs. Transaction rolled back; live conversation/message counts remain zero.
 
+
+- Repository source of truth now includes the private foundation, learning/knowledge RPCs, bounded agent queue RPCs and chat storage RPC migration files plus disposable PostgreSQL smoke tests. The test workflow applies these four migrations and runs their smoke tests in order. This CI path is configured but has not yet produced an exact-head run in GitHub Actions.
+
 ## Remaining operational truth
 - No authenticated end-to-end message was sent during this implementation; provider-secret presence and account-level Auth settings were not inspected.
 - The page and navigation are code on this branch only. GitHub merge, Hostless deploy and public LIVE availability are separate gates.
