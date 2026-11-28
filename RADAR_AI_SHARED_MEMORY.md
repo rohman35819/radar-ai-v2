@@ -47,9 +47,11 @@
 
 - 28 Nov security audit: live nexus-chat v4 still accepted client-selected paid providers (default OpenAI) despite UI sending OpenRouter Free; nexus-agent-runtime v1 allowed knowledge.approve via worker. Branch fix/nexus-free-only-provider-approval-gate pins OpenRouter Free only and removes worker approval. Until deployment verified, live versions remain v4/v1; no paid provider should be used.
 
-## Immediate next actions
+## P2 candidate branch feat/nexus-runtime-controls-memory-adapter adds NEXUS default-disabled runtime controls, a claim guard, memory schema adapter and chat v6 scoped retrieval. Migration is not deployed; worker remains OFF.
+
+Immediate next actions
 1. Complete exact-head CI/security and deploy NEXUS free-only provider / no-self-approval hardening.
-2. Add NEXUS memory schema adapter and default-paused/kill-switch runtime controls with disposable PostgreSQL tests.
+2. Run exact-head CI and disposable PostgreSQL smoke for NEXUS runtime_controls + memory adapter; apply migration only after pass, seed source-backed project memories, then deploy chat v6.
 3. Verify Hostless deployment and authenticated browser E2E for the main NEXUS chat UI.
 4. Verify OpenRouter Free secret presence without revealing its value; seed only source-backed approved project knowledge.
 5. Keep NEXUS worker unscheduled until D06 control row, lease/fencing, budget, audit, pause/kill-switch, restart recovery and Rp0 acceptance tests pass.

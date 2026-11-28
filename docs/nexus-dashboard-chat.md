@@ -46,3 +46,10 @@ Status: implementation branch; not deployed or end-to-end verified.
 - Provider errors are normalized; provider response bodies/details are not returned to clients. Missing OPENROUTER_API_KEY returns 503 provider_not_configured.
 - nexus-agent-runtime may ingest proposals and retrieve approved knowledge, but it cannot approve knowledge. Worker allowlist is system.healthcheck and knowledge.ingest only; knowledge.approve is not an autonomous task.
 - This is a hardening deployment candidate; deployed version and exact E2E evidence must be recorded separately.
+
+
+## 10. Scoped memory retrieval in NEXUS chat — P2 candidate
+- Candidate chat v6 calls nexus_retrieve_memory twice after validating the Supabase Auth JWT: project scope for project:radar-ai-v2 and user scope bound to the authenticated owner ID.
+- Project retrieval excludes confidential records; user retrieval may include confidential records only for the authenticated user's owner_subject/scope_id. Both RPC calls are service-role-only and filter approval, validity and retention before ranking.
+- Prompt context includes source_ref, source_revision and verified_at; memory item count is returned separately from shared knowledge count.
+- The code depends on migration 20261128_0004 and its disposable PostgreSQL smoke test. It is not deployed until the migration and exact-head CI pass.

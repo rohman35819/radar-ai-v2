@@ -314,3 +314,12 @@ Do not report offline autonomy until scheduler, durable queue/state, worker runt
 - Deployed nexus-agent-runtime v1 exposed an approve action and worker task knowledge.approve using service_role; agents could self-approve knowledge proposals if given service-role access.
 - Fix branch fix/nexus-free-only-provider-approval-gate pins OpenRouter Free on server, ignores body.provider/model, removes paid configs and provider detail leaks, removes approve action and limits worker to healthcheck + proposal-only knowledge.ingest.
 - Do not schedule or invoke worker until runtime_controls default pause/kill-switch/budget migration is deployed and verified. Current live function versions remain chat v4 / agent-runtime v1 until Supabase deployment confirmation.
+
+
+## 20. NEXUS Runtime Controls + Memory Adapter — 28 November 2026
+- Branch feat/nexus-runtime-controls-memory-adapter contains migration 20261128_0004: default disabled/paused/kill-switch true, hard Rp0, max concurrency 1, autonomy 0–1; claim RPC only permits Stage 0 healthcheck and Stage 1 proposal-only knowledge.ingest; no knowledge.approve.
+- Memory schema adds scope_id, retention_until, verified_at, confidence, provenance, approved_by/approved_at and service-role-only propose/approve/retrieve RPCs. Retrieval filters owner/scope/sensitivity/approval/validity/retention before ranking.
+- Candidate chat v6 retrieves project memory and authenticated owner-scoped user memory after JWT validation, with provenance in prompt context. It depends on migration 0004 and is not deployed.
+- Exact-head CI and disposable PostgreSQL smoke pending. No migration applied to live Supabase, no worker/scheduler activated. Next: pass CI, merge, apply migration, seed source-backed project memory, verify retrieval, deploy chat v6.
+
+- Memory retrieval matching is intentionally keyword-based using PostgreSQL simple full-text token OR + partial GIN index; do not describe it as semantic/vector memory. Embeddings remain out of scope under Rp0.

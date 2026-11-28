@@ -60,7 +60,7 @@ All controls are fail-closed and enforced server-side, not merely in prompts or 
 | task timeout | bounded per type | Never unbounded execution |
 | tool grants | explicit allowlist | No privilege inheritance or self-escalation |
 
-The current NEXUS queue migration has transactional claim/finish RPCs and fencing, but lacks the global runtime-control row used by the RADAR Agent Platform policy. Add that control table and an integration test before enabling any NEXUS scheduler/worker. Never infer NEXUS controls from the separate RADAR database.
+The live NEXUS queue originally lacked a global runtime-control row. P2 migration candidate 20261128_0004 adds a private singleton control row, a service-role-only setter with audit, and a claim RPC that returns no work unless enabled, unpaused, kill switch off, Rp0, concurrency 1 and autonomy stage 0–1. Stage 0 admits healthcheck only; Stage 1 adds proposal-only knowledge.ingest. The migration is not deployed yet. Never infer NEXUS controls from the separate RADAR database.
 
 ## 6. Autonomy stages
 - Stage 0 — Observe: read approved data, produce diagnostics and audit events; no external mutation.
@@ -92,7 +92,7 @@ No agent may approve its own output, alter its own permission profile, change bu
 | D06-001 | P1 | Pure role/capability registry and deep-freeze | Tests reject forged roles and privilege escalation |
 | D06-002 | P1 | Fail-closed admission policy | Tests cover disabled, pause, kill switch, concurrency, Rp0 and autonomy 0–1 |
 | D06-003 | P2 | market-observation.v1 input contract | Reject malformed, stale, future, unknown-freshness and secret-bearing observations |
-| D06-004 | P2 | NEXUS runtime-control schema + RPC guard | Disposable PostgreSQL proves default pause/kill switch denies claims |
+| D06-004 | P2 | NEXUS runtime-control schema + RPC guard | Candidate in 20261128_0004; disposable PostgreSQL proves default pause/kill switch denies claims |
 | D06-005 | P3 | Queue adapter with idempotency, leases, fencing and bounded retry | Concurrent-claim, duplicate, lease-expiry and stale-worker tests |
 | D06-006 | P3 | Isolated worker for allowlisted non-mutating tasks | One task/run, timeout, schema validation, audit and recovery |
 | D06-007 | P4 | Bounded periodic scheduler | Verified schedule run, no secrets in logs, concurrency cap, pause/kill switch honored |
