@@ -99,3 +99,6 @@ Memory is active only when schema compatibility is proven, provenance is preserv
 
 ## 10. Explicit exclusions
 No raw transcript ingestion into shared memory, hidden chain-of-thought storage, secret storage, direct browser access to private tables, paid embeddings, vector database, cross-project direct DB access or self-approval by agents.
+
+
+- Retrieval matching uses PostgreSQL simple full-text token OR queries with a partial GIN index on approved memory. This is deterministic keyword retrieval, not vector/embedding semantic search; embedding infrastructure remains intentionally absent under Rp0.
