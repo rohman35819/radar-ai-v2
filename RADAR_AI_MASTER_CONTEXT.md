@@ -3724,3 +3724,24 @@ Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat ha
 
 ### NEXT TASK
 Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy model; Divisi 04/05 establish frozen capability benchmark and regression criteria. Reuse current queue/migration work after auditing PR #149/#153/#160; do not duplicate schema or provision infrastructure.
+
+---
+
+## 158. COMMAND 21 — QUANTUM TRADING M5-FIRST / AUDIT DOKUMENTASI — 28 NOVEMBER 2026
+
+### 158.1 Rekonsiliasi dan ruang lingkup
+Branch dokumentasi ini berbasis `origin/develop` `411e7b7`. Bagian bernomor pada file ini berakhir di §149, diikuti bagian RADAR NEXUS; §150 (mesin M5) berada di `feat/quantum-m5-engine`, sedangkan §154–157 (Command 17–20) berada di `exp/binance-quant-intraday`. **Bagian-bagian tersebut tidak disalin, ditimpa, atau dinomori ulang** — §158 dipilih agar tidak bertabrakan dengan penomoran develop maupun cabang terisolasi.
+
+Auditor mengecek `origin/main` `f38d25a`, `origin/develop` `411e7b7`, `feat/quantum-m5-engine` `34752b7`, `m5-engine-p0` `4780fa9` (sudah di-push, **tanpa PR/merge**), `test/quantum-m5-data-risk` `03eea31`, dan `exp/binance-quant-intraday` `55aaa07`. Rekam audit lengkap, sumber, bukti, label status, risiko, dan tindak lanjut ada di `docs/quantum-m5-results.md` (file baru pada branch ini).
+
+### 158.2 Temuan utama dan status
+- **Verified:** defek P0 akuntansi backtest — mark-to-market + return penuh saat exit menggandakan return holding. A/B identik: engine lama `+0,679808 %` vs return trade sebenarnya `+0,178914 %` (phantom `+0,500894 pp`); engine terkoreksi `+0,178657 %` dengan invarians `equity_akhir = Π(1 + net_pct_trade)` tepat. Unit expectancy, re-entry signal, kill switch, daily-loss, gap fill, likuidasi 1x, O(n²) → O(n), dan kontrak keselamatan artefak juga **Verified** lewat tes deterministik.
+- **Verified:** enam eksperimen pra-registrasi tetap **DITOLAK** dengan kriteria `validation-v1` tidak berubah; tidak ada promosi/klaim profit. Artefak pra-koreksi dipertahankan, artefak terkoreksi di `output/hybrid_m5_corrected/` pada branch `m5-engine-p0`.
+- **Partial:** kualitas dataset terverifikasi pada level artefak (checksum, 0 duplikat/gap/violasi); sumber Binance live tidak di-fetch ulang pada sesi dokumentasi ini. Gate eksekusi diperiksa pada level modul riset, bukan audit runtime seluruh repositori.
+- **Not tested / Blocked locally:** dashboard TypeScript, funding/OI dan order-book, CI exact-head, Hostless build/LIVE, QA browser; `tsc` tidak tersedia di Termux.
+
+### 158.3 Pengujian dan batasan
+Pada `m5-engine-p0` `4780fa9`: Python **100/100** tes, enam laporan terkoreksi **30/30** pemeriksaan `verify_report.py`, `git diff --check` bersih, tidak ada kredensial pada file berubah. Ini bukan hasil GitHub Actions dan bukan bukti deployment. Branch dokumentasi ini hanya mengubah dokumentasi; tidak ada kode produksi, worker, paper trading runtime, live order, transfer/withdrawal, atau layanan berbayar yang diaktifkan. WIP PR penuh → tidak ada PR/merge baru.
+
+### 158.4 NEXT TASK Quantum M5
+Pra-registrasi **maksimal dua** hipotesis M5 baru yang benar-benar berbeda dengan timestamp sebelum pengambilan data: (A) volatility expansion + volume confirmation, (B) mekanisme struktur harga yang berbeda dari grid SMA/RSI/z-score/breakout lama. Parameter tunggal tetap, tanpa grid search, kriteria `validation-v1` tidak dilonggarkan. Data M5 Binance baru, non-overlap dengan jendela `2026-10-23`→`2026-11-27`, BTCUSDT/ETHUSDT diprioritaskan, admission/data-quality untuk aset lain. Chronological split + walk-forward + baseline no-trade + biaya 17,5 bps/sisi. Paper ledger/worker/live/withdrawal tetap OFF sampai validasi lolos dan BOS menyetujui.
