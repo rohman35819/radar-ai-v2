@@ -45,8 +45,10 @@
 
 - P2 observation contract candidate is on feat/nexus-observation-contract-p2; Binance-only market-observation.v1 → market-observation-input.v1 → OBSERVE_ONLY shadow pipeline. No production caller or scheduler; exact-head CI/security pending.
 
+- 28 Nov security audit: live nexus-chat v4 still accepted client-selected paid providers (default OpenAI) despite UI sending OpenRouter Free; nexus-agent-runtime v1 allowed knowledge.approve via worker. Branch fix/nexus-free-only-provider-approval-gate pins OpenRouter Free only and removes worker approval. Until deployment verified, live versions remain v4/v1; no paid provider should be used.
+
 ## Immediate next actions
-1. Complete exact-head CI/security and merge P2 Binance-only observation contract into develop.
+1. Complete exact-head CI/security and deploy NEXUS free-only provider / no-self-approval hardening.
 2. Add NEXUS memory schema adapter and default-paused/kill-switch runtime controls with disposable PostgreSQL tests.
 3. Verify Hostless deployment and authenticated browser E2E for the main NEXUS chat UI.
 4. Verify OpenRouter Free secret presence without revealing its value; seed only source-backed approved project knowledge.
