@@ -3847,3 +3847,14 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 - Rp0 guardrail: no paid model is requested and OpenRouter uses only `openrouter/free`; provider accounts must remain on their Free/Free Endpoint tiers with no billing/upgrade. Model choice alone cannot prevent billing if an account has been upgraded.
 - Live authenticated provider response has NOT yet been verified: API key values cannot be read from Supabase secret metadata, and no BOS-authenticated chat invocation was available during deployment. Mock tests validate fallback behavior, not the real keys or quotas. No intentional quota-burning test was performed.
 - NEXT: BOS sends one test message through the NEXUS chat UI; capture returned provider/model from response or function logs, confirm actual key and free-tier account. If all fail, inspect sanitized `provider_attempts`. Do not enable Cloudflare/Mistral until cost eligibility is confirmed. No worker scheduler, trading, order, transfer or withdrawal was activated by this change.
+
+
+## 166. NEXUS Strict Rp0 Provider Allowlist — 28 November 2026
+
+- Follow-up audit of PR #181 / deployed `nexus-chat` v19 found that Groq was in the provider chain even though the Edge Function cannot verify the account billing tier or enforce a zero-cost cap. A Groq API key alone is not evidence that the account is on a Free plan.
+- New branch `fix/nexus-strict-free-provider-allowlist-20261128` removes Groq from the active chain and ignores `GROQ_API_KEY` until the account's Free status and fail-closed over-quota behavior are independently verified.
+- Candidate order after this hardening: NVIDIA NIM → Gemini Developer API → OpenRouter Free. Missing keys are skipped; provider quota/rate-limit, auth, network/timeout, 5xx and invalid/empty response continue to the next configured provider. If all fail, backend returns sanitized provider attempts and an unavailable error; UI copy is handled by PR #186.
+- Updated mocked tests assert NVIDIA→Gemini failover, final OpenRouter Free fallback, all-provider failure, and that Groq/Mistral/Cloudflare credentials are not used. Exact-head CI/security and Supabase deployment for this strict allowlist are pending.
+- **Important deployment distinction:** current Supabase `nexus-chat` v19 remains the previously deployed PR #181 version until this candidate is merged and redeployed. Do not claim Groq is already disabled in the live function.
+- Rp0 remains binding. No paid fallback, account upgrade, secret exposure, worker/scheduler activation, trading, order, transfer or withdrawal.
+- NEXT TASK: run exact-head CI/security, review the focused diff, merge to develop only after checks pass, then deploy the Edge Function using authorized Supabase access and verify its source/version. Perform one authenticated chat only after provider secret presence/tier is confirmed without exposing secret values.
