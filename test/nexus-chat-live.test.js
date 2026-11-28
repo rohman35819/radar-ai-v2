@@ -1,0 +1,10 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const html=fs.readFileSync(require.resolve('../public/nexus.html'),'utf8');
+const js=fs.readFileSync(require.resolve('../public/nexus.js'),'utf8');
+const css=fs.readFileSync(require.resolve('../public/nexus.css'),'utf8');
+const server=fs.readFileSync(require.resolve('../server.js'),'utf8');
+test('NEXUS uses same-origin assets and no inline/CDN executable code',()=>{assert.match(html,/href="\/nexus\.css\?v=1"/);assert.match(html,/src="\/nexus\.js\?v=1" defer/);assert.doesNotMatch(html,/<script(?![^>]*src=)/i);assert.doesNotMatch(html,/<style\b|cdn\.jsdelivr|unpkg\.com/i);assert.match(css,/\.nx-messages/);});
+test('browser client uses public key and authenticated JWT only',()=>{assert.match(js,/sb_publishable_/);assert.match(js,/auth\/v1\/token\?grant_type=password/);assert.match(js,/functions\/v1\/nexus-chat/);assert.match(js,/Bearer '\+token/);assert.match(js,/sessionStorage/);assert.doesNotMatch(js,/service_role|sb_secret_|OPENROUTER_API_KEY|OPENAI_API_KEY|XAI_API_KEY|GEMINI_API_KEY|ANTHROPIC_API_KEY/i);});
+test('provider errors are truthful and only verified answer is rendered',()=>{assert.match(js,/typeof data\.answer!=='string'/);assert.match(js,/provider_not_configured/);assert.match(js,/Tidak ada balasan palsu/);});
+test('NEXUS page alone gets a scoped Supabase connect-src CSP allowance',()=>{assert.match(server,/rel === '\/nexus\.html'/);assert.match(server,/connect-src 'self' https:\/\/zhvznjcsxrtybqcpbryu\.supabase\.co/);});
