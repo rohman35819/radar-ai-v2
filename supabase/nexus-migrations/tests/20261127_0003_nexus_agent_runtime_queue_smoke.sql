@@ -1,7 +1,7 @@
 begin;
 set local role service_role;
 do $$
-declare v_id uuid; v_claim nexus.tasks; ok boolean;
+declare v_id uuid; v_claim record; ok boolean;
 begin
  v_id:=public.nexus_enqueue_task('system.healthcheck','ci-smoke','nexus-ci-smoke',null,0::smallint);
  if v_id is distinct from public.nexus_enqueue_task('system.healthcheck','ci-smoke','nexus-ci-smoke',null,0::smallint) then raise exception 'idempotency failed'; end if;
