@@ -6,13 +6,13 @@ Status: implementation candidate on `feat/nexus-free-provider-fallback-20261128`
 
 1. NVIDIA NIM — `google/gemma-4-31b-it` (NVIDIA catalog currently marks its Free Endpoint available).
 2. Gemini Developer API — `gemini-3.8-flash` (use only while the Google project remains on its Free tier).
-3. GroqCloud — `openai/gpt-oss-20b` (use only on Groq Free plan; do not upgrade to Developer).
-4. OpenRouter — `openrouter/free` (router is restricted to free models; no paid model fallback list is sent).
+3. OpenRouter — `openrouter/free` (router is restricted to free models; no paid model fallback list is sent).
 
 For each chat request, the server tries the providers in this order. Missing keys are skipped. HTTP quota errors (including 429/402), auth errors, 5xx, timeouts, network errors and invalid/empty responses move to the next configured provider. No provider error body or credential is returned to the browser. The response records the provider/model that actually answered and a sanitized attempt summary.
 
 ## Deliberately excluded
 
+- Groq: the currently documented GPT-OSS production model is token-priced. Since runtime cannot verify account tier or enforce a zero-spend cap, `GROQ_API_KEY` is deliberately excluded from this strict Rp0 chain.
 - Mistral: official API quickstart says payment activation is required to use API keys; therefore `MISTRAL_API_KEY` is not read by this Rp0 chain.
 - Cloudflare Workers AI: its free allocation is 10,000 Neurons/day on Workers Free, but overage behavior depends on whether the account is on Workers Free or Workers Paid. Keep excluded until BOS verifies the account is on the Free plan and over-quota requests fail closed.
 - No xAI Grok endpoint is configured; Groq is a different provider.
