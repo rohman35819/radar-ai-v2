@@ -111,3 +111,10 @@ No paid resource, arbitrary shell, secret extraction, repository permission chan
 - The proxy forwards only the fixed `worker_tick` action to `nexus-agent-runtime` using the server-side service-role key. It does not accept arbitrary task actions or return secrets. The existing `nexus-agent-runtime` remains JWT-verified and service-role protected.
 - Post-merge activation plan: store plaintext token, project URL and publishable key in Supabase Vault; enable existing `pg_cron` and `pg_net` extensions; schedule a five-minute HTTP tick; enable only Stage 1 proposal-only task execution after verifying the kill switch and Rp0 controls.
 - Migration 0005 and proxy code are candidates only. No token, extension, cron job or worker schedule has been provisioned yet.
+
+
+## 10. Deterministic SQL worker — P2 candidate
+- Migration 0006 adds `nexus_sql_worker_tick()`, a cron-only SECURITY DEFINER function owned by postgres. It processes one task per tick and only supports `system.healthcheck` and proposal-only `knowledge.ingest`; it never approves knowledge or memory.
+- Runtime controls remain the hard gate: Stage 0 healthcheck only; Stage 1 healthcheck + proposal ingestion; disabled/paused/kill-switch blocks claims; Rp0 and concurrency 1 remain mandatory.
+- If pg_cron is installed, migration 0006 creates a five-minute cron job. The CI disposable database skips schedule creation when pg_cron is absent but tests the worker function and stage policy.
+- The Edge Function custom-token proxy remains a future route for model-backed agent tasks; the SQL worker makes no external API/model calls.
