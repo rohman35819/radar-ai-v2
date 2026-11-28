@@ -3697,15 +3697,45 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 ### 149.3 NEXT TASK
 Siapkan holdout/OOS baru atau hipotesis dengan pra-registrasi sebelum melihat hasil (menghindari data snooping pada 364 bar yang sama). Paper ledger/reconciliation tetap terkunci sampai strategi lolos `validation-v1` dan BOS menyetujui. Worker, live trading, withdrawal OFF; Rp0.
 
+---
+
+## RADAR NEXUS — Official AI Architecture (27 November 2026)
+
+**BOS decision:** RADAR NEXUS is the official identity for RADAR AI V2's personal AI system. Target capability is expert-assisted reasoning, tool use, durable approved knowledge, specialist agents and validated learning. DeepSeek-class performance is a benchmark target, not a claim of current parity.
+
+- Architecture specification: `docs/radar-nexus-core-architecture.md`.
+- Divisi 06 charter: `DIVISION_06_AGENT_PLATFORM.md`.
+- Divisi 07 charter: `DIVISION_07_KNOWLEDGE_MEMORY.md`.
+- NEXUS Core, Reasoning, Memory, Orchestrator, Agents, Model Engine, Learning & Evaluation are planned architectural boundaries; they are not all implemented or active.
+- Divisi 06 owns registry, queue, orchestration, scheduler, worker runtime, tool permissions, isolation, audit and recovery.
+- Divisi 07 owns knowledge taxonomy, decision/skill/task/evaluation records, provenance, curation, retrieval, lifecycle and retention.
+- Divisi 04 owns model/provider adapters and model/reasoning evaluation; Divisi 05 independently validates quality; Divisi 01 owns security review; Executive Office coordinates.
+- External models may propose/critique/teach, but their output is not canonical until provenance, deterministic checks and domain review pass. RAG/memory/skills are not model-weight training.
+- N0–N5 roadmap is defined in the architecture and division charters. First work is contracts, threat model, taxonomy and frozen benchmarks; do not activate workers as part of documentation.
+- **Rp0 only:** no paid provider/resource, new DB/vector service or cloud provisioning. Workers/scheduler OFF; live trading/orders/withdrawals OFF.
+- No proprietary foundation model is trained or deployed. Model ownership research is a future gated feasibility study.
+
+### NEXUS acceptance principles
+1. Every agent/task/tool has a versioned contract and least-privilege scope.
+2. Invalid transitions, unknown tools, missing provenance, stale records and unauthorized retrieval fail closed.
+3. Every task and promoted knowledge item is traceable to artifacts, source revision, tests and reviewer.
+4. Capability claims require frozen benchmark results; no DeepSeek parity claim without comparable evidence.
+5. Background autonomy requires deployed scheduler, durable queue/state, worker runtime, permission gateway, audit, budget, approvals, kill switch and recovery tests.
+
+### NEXT TASK
+Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy model; Divisi 04/05 establish frozen capability benchmark and regression criteria. Reuse current queue/migration work after auditing PR #149/#153/#160; do not duplicate schema or provision infrastructure.
+
+---
+
 ### 151. RADAR NEXUS CLI — 27 NOVEMBER 2026
 - Mandat BOS (issue #163): `nexus` di Termux harus setara pengalaman kerja OpenCode, bukan terminal chatbot/wrapper provider. Nama resmi RADAR NEXUS berasal dari PR #161 (tidak diubah).
-- Branch `feat/nexus-cli` dari `develop` `6b278cc`, worktree terpisah. Dokumen `docs/radar-nexus-core-architecture.md` belum ada di repository dan dibuat sebagai catatan batas implementasi, bukan klaim backend baru.
+- Branch `feat/nexus-cli` dari `develop` `6b278cc`, worktree terpisah. Arsitektur target resmi ada di `docs/radar-nexus-core-architecture.md` (PR #161); CLI hanya mendokumentasikan batas implementasinya, bukan backend baru.
 - Implementasi: `src/nexus/contracts.mts` + `client.mts` (tipe/validator, API client ke `/api/ai/command`, `/api/ai/workspace`, `/api/ai/usage`, `/api/health`), `cli.mjs` (REPL identitas RADAR NEXUS, `/help`, `/status`, `/memory`, `/sessions`, `/new`, `/resume`, `/clear`, `/structure`, `/files`, `/read`, `/search`, `/edit`, `/run`, `/exit`), `repo.mjs` (read-only bounded), `session.mjs` (sesi lokal `~/.radar-nexus`, redaksi secret), `policy.mjs` (default read-only, diff + approval, allowlist perintah audit).
 - Launcher `bin/nexus`, script `npm run nexus`, panduan `docs/nexus-cli-termux.md` (symlink ke `$PREFIX/bin/nexus`, env `NEXUS_BASE_URL`/`NEXUS_ADMIN_TOKEN`/`NEXUS_PARTICIPANTS`).
 - Tidak ada backend/model/memory kedua. Tidak ada provider berbayar, secret di kode/log, arbitrary shell, worker, scheduler, deploy, order, withdrawal, trading, paper ledger, atau perubahan konfigurasi Railway.
 - Verifikasi: `npm test` **247/247** termasuk 6 test NEXUS (contract, client injected-fetch, session redaction, repo traversal, policy denial/approval, CLI smoke). `tsc` lokal tidak tersedia (`tsc: not found`); exact-head CI wajib memverifikasi strict typecheck. `git diff --check` bersih.
 - Commit `14b2a57df65b187225f11f091e023952ed48bf2f`, branch sudah **di-push** ke origin. CI push `#1399` exact-head `14b2a57`: `npm test`, **Strict TypeScript type check**, dan job `test` **success**.
-- PR **tidak dibuka**: antrean 9 PR open dengan 6 non-draft menuju `develop` (#161, #160, #159, #153, #115, #105), jauh melebihi WIP 3. NEXT TASK: triase WIP, buka PR, verifikasi CI, lalu selaraskan NEXUS Chat dashboard (#162) ke kontrak API yang sama.
+- PR **tidak dibuka**: antrean PR menuju `develop` melebihi WIP 3 (#160, #159, #153, #115 pada saat itu). NEXT TASK: triase WIP, buka PR, verifikasi CI, lalu selaraskan NEXUS Chat dashboard (#162) ke kontrak API yang sama.
 
 ---
 

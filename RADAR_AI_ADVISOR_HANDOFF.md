@@ -235,3 +235,36 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - PR disposition: (1) merge only when relevant, based on latest main, exact-head checks pass, required independent reviews pass, and rollback/impact are understood; (2) close stale, duplicate, superseded, abandoned, irreparably conflicting, or low-value PRs after preserving any unique useful work; (3) keep blocked PRs only when a named dependency, owner, and next review condition are recorded. Closing a PR removes it from the active queue; it does not delete its GitHub history or automatically delete its branch.
 - Before opening a new PR, inspect the existing queue and reuse/update an appropriate active PR when scope and ownership match. Prefer one PR per coherent feature/owner; avoid stacking unrelated changes and multiple PRs editing the same files.
 - Every new RADAR conversation must read this policy from the latest main AGENTS.md and RADAR_AI_MASTER_CONTEXT.md, inspect current open PRs, and continue the existing queue. Do not rely on chat memory or old PR counts. Report the current active count, any exception and its reason, and the next actionable PR.
+
+---
+
+## 15. RADAR NEXUS — BOS decision and active strategic mandate (27 November 2026)
+
+BOS approved **RADAR NEXUS** as the official identity for RADAR AI V2's personal AI system. The goal is an expert-assisted system with reliable reasoning, tools, durable knowledge, specialist agents, evaluated learning and eventually bounded operation while BOS is offline. DeepSeek-class capability is a target to measure, not a current parity claim.
+
+Read these implementation specifications:
+- `docs/radar-nexus-core-architecture.md`
+- `DIVISION_06_AGENT_PLATFORM.md`
+- `DIVISION_07_KNOWLEDGE_MEMORY.md`
+
+### Ownership
+- Divisi 06: Agent Platform, agent registry, queue, orchestrator, runtime, scheduler, tool gateway, isolation, audit and recovery.
+- Divisi 07: knowledge/memory schemas, provenance, curation, retrieval, lifecycle, versioning and retention.
+- Divisi 04: model/provider adapters and reasoning/model quality evaluation.
+- Divisi 05: independent QA and benchmark/regression gate.
+- Divisi 01: security, privacy, identity and threat model.
+- Executive Office coordinates delivery; BOS retains reserved approvals.
+
+### Immediate N0 tasks
+1. D06: task/agent/tool contracts, state machine and capability matrix.
+2. D07: canonical Decision/Knowledge/Skill/TaskOutcome/Evaluation schema and lifecycle.
+3. D01: threat model, scope isolation, secret and retrieval boundaries.
+4. D04/D05: frozen benchmark cases for coding, repo reasoning, quant, security, data analysis, tool success and continuity.
+5. Reuse and audit current Agent Platform migrations/PRs before creating any duplicate schema.
+
+### Hard constraints
+Rp0 only. No paid provider, new database/vector service or infrastructure provisioning. Scheduler/workers OFF. No live trading, orders or withdrawals. External model output is a proposal until independently checked and approved. RAG, retrieval, memory and skills do not mean that RADAR has trained its own model weights. No model training/fine-tuning is authorized by this decision.
+
+Do not report offline autonomy until scheduler, durable queue/state, worker runtime, least-privilege gateway, audit/observability, budgets, approval queue, kill switch and recovery are deployed and tested. Do not claim DeepSeek parity until frozen comparable benchmarks support it.
+
+**NEXT TASK:** execute N0 architecture artifacts and independent reviews; then implement only the smallest contract/schema test slice on an isolated branch.
