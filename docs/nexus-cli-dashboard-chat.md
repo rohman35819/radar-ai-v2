@@ -57,7 +57,7 @@ Acceptance: E2E test evidence using a test user/project, ownership isolation, no
 - RADAR dashboard main page is `public/index.html` + `public/app.js`; primary overview renders inside `#view`.
 - Existing dashboard uses vanilla JS and no npm runtime dependencies; Node >=20.
 - NEXUS Supabase project previously verified ACTIVE_HEALTHY; `nexus-chat` Edge Function was listed ACTIVE with `verify_jwt=true`. This does not prove HTTP/E2E conversation works.
-- Provider key presence, exact Edge Function payload contract, frontend Supabase Auth integration, and cross-client E2E are not yet verified.
+- The deployed `nexus-chat` contract accepts `{ message, provider, conversation_id? }` and returns `{ conversation_id, provider, answer, knowledge_items_used }`. The dashboard now reads the canonical `answer` field first; a regression test covers this response contract and checks that no privileged/provider secrets are embedded in the browser. Provider key presence, frontend Supabase Auth integration, and cross-client E2E remain unverified.
 - Do not claim the CLI or dashboard chat is operational until M3 passes.
 
 ## Next action
