@@ -1,17 +1,15 @@
 // Free-tier-only NEXUS provider chain. Never add a paid model or provider here without BOS approval.
-export const FREE_PROVIDER_ORDER = Object.freeze(["nvidia", "gemini", "groq", "openrouter"]);
+export const FREE_PROVIDER_ORDER = Object.freeze(["nvidia", "gemini", "openrouter"]);
 
 export const FREE_PROVIDER_MODELS = Object.freeze({
   nvidia: "google/gemma-4-31b-it",
   gemini: "gemini-3.8-flash",
-  groq: "openai/gpt-oss-20b",
   openrouter: "openrouter/free",
 });
 
 const PROVIDER_KEYS = Object.freeze({
   nvidia: "NVIDIA_API_KEY",
   gemini: "GEMINI_API_KEY",
-  groq: "GROQ_API_KEY",
   openrouter: "OPENROUTER_API_KEY",
 });
 const TIMEOUT_MS = 15000;
@@ -62,7 +60,6 @@ async function askOpenAICompatible(provider, key, messages, fetchImpl) {
   const model = FREE_PROVIDER_MODELS[provider];
   const endpoint = {
     nvidia: "https://integrate.api.nvidia.com/v1/chat/completions",
-    groq: "https://api.groq.com/openai/v1/chat/completions",
     openrouter: "https://openrouter.ai/api/v1/chat/completions",
   }[provider];
   const headers = provider === "openrouter"
@@ -122,7 +119,7 @@ async function askProvider(provider, key, messages, fetchImpl) {
 
 /**
  * Tries only explicitly selected free-tier models in deterministic order.
- * It never reads MISTRAL_API_KEY or Cloudflare credentials: Mistral API requires
+ * It never reads GROQ_API_KEY, MISTRAL_API_KEY or Cloudflare credentials: Mistral API requires
  * payment activation, and Cloudflare's over-quota behavior depends on account plan.
  */
 export async function askWithFreeProviderFallback(
