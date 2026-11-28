@@ -3840,9 +3840,9 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 
 ## 165. NEXUS FREE-PROVIDER FAILOVER — 28 NOVEMBER 2026
 
-- Candidate branch `feat/nexus-free-provider-fallback-20261128` adds deterministic free-tier failover for authenticated NEXUS chat: NVIDIA `google/gemma-4-31b-it` → Gemini `gemini-3.8-flash` → Groq `openai/gpt-oss-20b` → OpenRouter `openrouter/free`.
+- Candidate branch `feat/nexus-free-provider-fallback-20261128` adds deterministic free-tier failover for authenticated NEXUS chat: NVIDIA `google/gemma-4-31b-it` → Gemini `gemini-3.8-flash` → OpenRouter `openrouter/free`.
 - Quota/rate-limit responses (including 429/402), auth failures, network/timeouts, 5xx and empty responses advance to the next configured provider. Missing secrets are skipped. Only sanitized provider names/codes are returned; credentials and raw provider error bodies are never returned.
-- Mistral is intentionally excluded because its official API quickstart requires payment activation. Cloudflare is intentionally excluded until BOS confirms the account is Workers Free: free allocation is 10,000 Neurons/day, but Workers Paid can bill beyond the free allocation. No xAI Grok integration; Groq and Grok are distinct.
+- Groq is intentionally excluded because its documented GPT-OSS production model is token-priced and runtime cannot verify account tier or enforce zero spend. Mistral is excluded because its API requires payment activation. Cloudflare is excluded until BOS confirms Workers Free and fail-closed over-quota behavior. No xAI Grok integration; Groq and Grok are distinct.
 - Free model selection alone cannot guarantee Rp0 if an account is upgraded or billing is enabled. Google AI Studio, Groq and NVIDIA accounts must remain on their Free/Free Endpoint tiers; no paid fallback is implemented.
 - Unit tests are mocked and do not prove live secrets. This branch is not yet merged/deployed; production NEXUS remains on its previously verified single-provider version until exact-head CI, review, merge and deployment verification.
 - NEXT: pass provider-manager tests/CI, merge to develop, deploy updated `nexus-chat` with verify_jwt=true, then perform one authenticated live chat and record actual provider/model. Do not deliberately consume real quotas for failover testing.
