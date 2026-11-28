@@ -1,7 +1,7 @@
 # RADAR AI — MASTER PROJECT CONTEXT
 
 > Dokumen pegangan utama proyek. Baca dokumen ini sebelum menjawab atau mengubah kode.
-> Terakhir diperbarui: 22 November 2026 (Asia/Jakarta) — ditambah mandat Chief Strategy Advisor dan roadmap otonomi offline.
+> Terakhir diperbarui: 28 November 2026 (Asia/Jakarta) — rancangan organisasi Divisi 06/07 dan P1 Agent Platform.
 > Repository: https://github.com/rohman35819/radar-ai-v2
 > Aplikasi: https://radar-ai-v2.hostless.app/
 
@@ -3754,3 +3754,18 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 ## Cost guardrail — 28 November 2026
 - Dashboard and Edge Function default provider is now OpenRouter's `openrouter/free` route. Server forcibly pins that model for provider `openrouter`, ignoring any client-supplied model override; this prevents an ordinary dashboard request from silently selecting a paid OpenRouter model.
 - Provider secret `OPENROUTER_API_KEY` must exist in Supabase Function secrets for replies to work. Its presence was not inspected and no provider call was made. If absent, API returns `provider_not_configured` (503); it does not fall back to paid OpenAI/Grok/Claude.
+
+
+---
+
+## 157. DESAIN DIVISI 06/07 DAN FONDASI AGENT PLATFORM — 28 NOVEMBER 2026
+
+- Desain organisasi dan backlog rinci: docs/architecture/division-06-agent-platform.md dan docs/architecture/division-07-knowledge-memory.md.
+- Divisi 06 memiliki mandat atas registry, capability manifest, task admission, queue, orchestrator, worker, scheduler, permission, audit, budget, pause dan kill switch. Divisi 07 memiliki mandat atas taxonomy memory/knowledge, provenance, curation, approval, retrieval, conflict/supersession, retention dan deletion.
+- P1 pure foundation: src/platform/agent-roles.mts, src/platform/task-policy.mts, src/platform/audit-event.mts, src/memory/retrieval.mts dan test/quant-foundation.test.js. Exact-head CI/security sebelumnya pass pada 959ff80; branch lama tertinggal 24 commits dari develop sehingga direkonstruksi pada branch baru dari develop terbaru.
+- Agent roles deep-frozen; privileged capabilities write_code/read_private_account/approve/execute_trade/withdraw false. Admission policy default deny, requires worker enabled, valid control, not paused, kill switch off, concurrency <=1, daily_budget_usd exactly 0 and autonomy stage 0–1. Audit builder rejects malformed/secret-bearing events.
+- Memory helper is pure and scope-first, but its radar_memory_records contract is not the live NEXUS nexus.memory_records schema. Do not wire it directly; D07-003/004 require adapter + additive migration and disposable PostgreSQL tests.
+- NEXUS chat v4 currently retrieves approved nexus.knowledge_documents via keyword ILIKE in shared namespace; it does not yet retrieve nexus.memory_records. Tables existing ≠ full memory activation.
+- NEXUS nexus-agent-runtime Edge Function v1 ACTIVE but no scheduler verified. Current NEXUS claim/finish RPC lacks a global runtime-control row; add pause/kill-switch/budget gate before any worker scheduling. Keep worker OFF, max concurrency 1, Rp0, stage 0/1 only.
+- Roadmap: P1 pure policy/contracts → P2 observation/provenance + schema adapter → P3 guarded queue/worker integration → P4 bounded periodic scheduler → P5 controlled division integrations. No continuous 24/7 claim.
+- No paid services, production financial execution, trading, withdrawal, unrestricted shell, autonomous merge/deploy or secret exposure.
