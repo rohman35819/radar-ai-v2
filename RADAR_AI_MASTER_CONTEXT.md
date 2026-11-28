@@ -3791,3 +3791,15 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 - Branch fix/nexus-free-only-provider-approval-gate pins server provider/model to OpenRouter Free (openrouter/free), ignores client provider/model, removes paid provider configs, normalizes errors without returning provider response bodies, removes approve action and restricts worker allowlist to system.healthcheck + knowledge.ingest (proposal only).
 - Tests assert no paid provider key/endpoint, no client provider/model selection, no knowledge.approve or self-approval route. Exact-head CI/security and Supabase deployment are separate gates.
 - Until deploy is verified, live function versions remain nexus-chat v4 and nexus-agent-runtime v1. No claim of hardening deployment yet.
+
+
+---
+
+## 161. NEXUS P2 RUNTIME CONTROLS + MEMORY ADAPTER — 28 NOVEMBER 2026
+
+- Branch feat/nexus-runtime-controls-memory-adapter carries migration 20261128_0004_nexus_runtime_controls_memory_adapter.sql and disposable smoke test. It adds nexus.runtime_controls default worker_enabled=false, paused=true, kill_switch=true, daily_budget_usd=0, max_concurrency=1, autonomy_stage=0; RLS forced, no browser grants.
+- Replaces nexus_claim_task with fail-closed control check, serializes claims through singleton row, enforces max concurrency, recovers expired leases and only allows Stage 0 system.healthcheck / Stage 1 system.healthcheck + proposal-only knowledge.ingest. knowledge.approve is never claimable.
+- Adds service-role-only nexus_set_runtime_controls with operator audit; worker cannot call it. Budget constraint is hard-zero and autonomy stage limited to 0–1.
+- Extends nexus.memory_records with scope_id, retention_until, verified_at, confidence, provenance, approved_by and approved_at; adds proposal, approval and scope-first retrieval RPCs. Retrieval filters owner/scope/sensitivity/approval/validity/retention before ranking.
+- Candidate NEXUS chat v6 calls project memory for project:radar-ai-v2 and user memory bound to the authenticated user ID after JWT validation. Project memory excludes confidential; user memory can include only that owner's confidential records. Source provenance is included in prompt context.
+- All changes are code-only pending exact-head CI, disposable PostgreSQL smoke, PR review and migration deployment. No scheduler/worker activation; defaults remain paused/kill-switched. After migration, seed only source-backed project memory and verify retrieval before deploying chat v6.
