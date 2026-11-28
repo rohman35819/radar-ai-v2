@@ -7,6 +7,9 @@ const page = fs.readFileSync(require.resolve('../public/nexus.html'), 'utf8');
 test('NEXUS dashboard reads the canonical answer field returned by nexus-chat', () => {
   assert.match(page, /body\.answer\s*\|\|/);
   assert.match(page, /body\.conversation_id/);
+  assert.match(page, /action:'list_conversations'/);
+  assert.match(page, /action:'history'/);
+  assert.match(page, /nexus-conversation-id/);
 });
 
 test('NEXUS browser client uses a user JWT and contains no privileged/provider secret', () => {
