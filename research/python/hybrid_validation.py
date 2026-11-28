@@ -90,6 +90,7 @@ def run_validation(
     selected_config = configs[selected_index]
     selected_signals = signals_by_config[selected_index]
     oos = _evaluate(rows, selected_signals, selected_config, instrument, validation_end, total)
+    full_sample = _evaluate(rows, selected_signals, selected_config, instrument, 0, total)
     oos_reasons = _accepted(oos)
 
     folds = []
@@ -109,6 +110,8 @@ def run_validation(
             'test_start': train_stop, 'test_end': test_stop,
             'net_pct': fold_result['net_return_pct'],
             'max_drawdown_pct': fold_result['max_drawdown_pct'],
+            'expectancy_pct_per_trade': fold_result['expectancy_pct_per_trade'],
+            'kill_switch_triggered': fold_result['kill_switch_triggered'],
             'total_trades': fold_result['total_trades'],
         })
     positive = sum(1 for fold in folds if fold['net_pct'] > 0)
@@ -124,6 +127,7 @@ def run_validation(
         'selection_score': chosen['score'],
         'validation_results': validation_results,
         'out_of_sample_metrics': oos,
+        'full_sample_metrics': full_sample,
         'walk_forward_folds': folds,
         'walk_forward_positive': positive,
         'walk_forward_total': len(folds),

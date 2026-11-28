@@ -58,7 +58,7 @@ class HybridBacktestTests(unittest.TestCase):
         result = run_hybrid_backtest(rows, signals(12, 1, 1), HybridConfig(), instrument='FUTURES')
         self.assertGreater(result['net_return_pct'], 0)
         entry = result['trades'][0]
-        self.assertAlmostEqual(entry.entry_price, rows[1].open * (1 + 0.00075 + 0.00075 + 0.0001), places=6)
+        self.assertAlmostEqual(entry.entry_price, rows[1].open / (1 - 0.00075 - 0.00075 - 0.0001), places=6)
 
     def test_costs_reduce_net_return(self):
         rows = candles(20, drift=1.0)

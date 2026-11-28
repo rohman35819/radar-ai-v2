@@ -66,6 +66,12 @@ def main(argv: list[str] | None = None) -> int:
             strategy_counts[signal.strategy] = strategy_counts.get(signal.strategy, 0) + 1
         report = {
             'experiment_schema': 'm5-hybrid-experiment.v1',
+            # Explicit safety contract: these are research-only reports. No
+            # order, ledger, worker or withdrawal capability is implied.
+            'paper_only': True,
+            'live_trading': False,
+            'withdrawal': False,
+            'profit_claim': False,
             'id': experiment['id'],
             'instrument': experiment['instrument'],
             'hypothesis': experiment['hypothesis'],

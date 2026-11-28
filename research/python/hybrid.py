@@ -32,6 +32,7 @@ class HybridConfig:
     risk_per_trade: float = 0.005
     max_position: float = 1.0
     max_daily_loss_pct: float = 3.0
+    max_drawdown_stop_pct: float = 0.30
     signal_expiry_bars: int = 6
     cooldown_bars: int = 2
     fee_bps_per_side: float = 7.5
@@ -56,6 +57,8 @@ class HybridConfig:
             raise ValueError('risk/position di luar batas')
         if not 0.1 <= self.max_daily_loss_pct <= 10:
             raise ValueError('max_daily_loss_pct wajib 0.1..10')
+        if not 0.0 < self.max_drawdown_stop_pct <= 1.0:
+            raise ValueError('max_drawdown_stop_pct wajib (0, 1]')
         if not 1 <= self.signal_expiry_bars <= 100 or not 0 <= self.cooldown_bars <= 20:
             raise ValueError('expiry/cooldout di luar batas')
         for name in ('fee_bps_per_side', 'slippage_bps_per_side', 'spread_bps', 'funding_bps_per_day'):

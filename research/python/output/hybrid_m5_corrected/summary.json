@@ -1,0 +1,89 @@
+{
+  "registry_version": "m5-hybrid-v1",
+  "results": [
+    {
+      "accepted": false,
+      "id": "m5-01-hybrid-spot",
+      "instrument": "SPOT",
+      "oos_dd_pct": 0.0,
+      "oos_net_pct": 0.0,
+      "reasons": [
+        "too_few_trades",
+        "undefined_profit_factor",
+        "validation_selection_rejected",
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "research/python/output/hybrid_m5_corrected/m5-01-hybrid-spot_report.json",
+      "selected_mode": "HYBRID",
+      "walk_forward": "0/15"
+    },
+    {
+      "accepted": false,
+      "id": "m5-02-hybrid-futures",
+      "instrument": "FUTURES",
+      "oos_dd_pct": 1.240758,
+      "oos_net_pct": -1.240758,
+      "reasons": [
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "research/python/output/hybrid_m5_corrected/m5-02-hybrid-futures_report.json",
+      "selected_mode": "HYBRID",
+      "walk_forward": "1/15"
+    },
+    {
+      "accepted": false,
+      "id": "m5-03-scalp-spot",
+      "instrument": "SPOT",
+      "oos_dd_pct": 16.176774,
+      "oos_net_pct": -15.551365,
+      "reasons": [
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "research/python/output/hybrid_m5_corrected/m5-03-scalp-spot_report.json",
+      "selected_mode": "SCALP",
+      "walk_forward": "0/15"
+    },
+    {
+      "accepted": false,
+      "id": "m5-04-scalp-futures",
+      "instrument": "FUTURES",
+      "oos_dd_pct": 17.546737,
+      "oos_net_pct": -16.706203,
+      "reasons": [
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "research/python/output/hybrid_m5_corrected/m5-04-scalp-futures_report.json",
+      "selected_mode": "SCALP",
+      "walk_forward": "0/15"
+    },
+    {
+      "accepted": false,
+      "id": "m5-05-momentum-spot",
+      "instrument": "SPOT",
+      "oos_dd_pct": 0.0,
+      "oos_net_pct": 0.0,
+      "reasons": [
+        "too_few_trades",
+        "undefined_profit_factor",
+        "validation_selection_rejected",
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "research/python/output/hybrid_m5_corrected/m5-05-momentum-spot_report.json",
+      "selected_mode": "MOMENTUM",
+      "walk_forward": "0/15"
+    },
+    {
+      "accepted": false,
+      "id": "m5-06-momentum-futures",
+      "instrument": "FUTURES",
+      "oos_dd_pct": 1.240758,
+      "oos_net_pct": -1.240758,
+      "reasons": [
+        "walk_forward_not_majority_positive"
+      ],
+      "report": "research/python/output/hybrid_m5_corrected/m5-06-momentum-futures_report.json",
+      "selected_mode": "MOMENTUM",
+      "walk_forward": "1/15"
+    }
+  ]
+}

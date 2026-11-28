@@ -124,7 +124,8 @@ def run_backtest(dataset: Dataset, config: StrategyConfig, signals: Sequence[Sig
                 fill = min(candle.open, stop_price) * (1.0 - slip - fee)
                 net = fill / entry_price - 1.0
                 gross = min(candle.open, stop_price) / entry_price - 1.0
-                trades.append(Trade(entry_time, candle.timestamp, entry_price, fill, gross, net, trade_funding,
+                trades.append(Trade(entry_time, candle.timestamp, entry_price, fill,
+                                    gross * 100.0, net * 100.0, trade_funding * 100.0,
                                     index - entry_index, "stop_loss"))
                 equity *= 1.0 + net * fraction
                 gross_equity *= 1.0 + gross * fraction
@@ -146,7 +147,8 @@ def run_backtest(dataset: Dataset, config: StrategyConfig, signals: Sequence[Sig
                 fill = candle.open * (1.0 - slip - fee)
                 net = fill / entry_price - 1.0
                 gross = candle.open / entry_price - 1.0
-                trades.append(Trade(entry_time, candle.timestamp, entry_price, fill, gross, net, trade_funding,
+                trades.append(Trade(entry_time, candle.timestamp, entry_price, fill,
+                                    gross * 100.0, net * 100.0, trade_funding * 100.0,
                                     index - entry_index, "signal_exit"))
                 equity *= 1.0 + net * fraction
                 gross_equity *= 1.0 + gross * fraction
@@ -172,16 +174,21 @@ def run_backtest(dataset: Dataset, config: StrategyConfig, signals: Sequence[Sig
 
         # Apply the kill switch BEFORE recording this bar, so the equity curve,
         # per-bar returns and reported drawdown describe the same final equity.
-        if kill_active is False and drawdown > config.max_drawdown_stop_pct and position == 1:
-            fill = candle.close * (1.0 - slip - fee)
-            net = fill / entry_price - 1.0
-            gross = candle.close / entry_price - 1.0
-            trades.append(Trade(entry_time, candle.timestamp, entry_price, fill, gross, net, trade_funding,
-                                index - entry_index + 1, "drawdown_stop"))
-            equity *= 1.0 + net * fraction
-            gross_equity *= 1.0 + gross * fraction
-            position = 0
-            mark_price = None
+        # The switch must arm even when the breach was realised by a signal exit
+        # or stop-loss while flat; otherwise a flat strategy can re-enter after
+        # its drawdown limit has already been breached.
+        if kill_active is False and drawdown > config.max_drawdown_stop_pct:
+            if position == 1:
+                fill = candle.close * (1.0 - slip - fee)
+                net = fill / entry_price - 1.0
+                gross = candle.close / entry_price - 1.0
+                trades.append(Trade(entry_time, candle.timestamp, entry_price, fill,
+                                    gross * 100.0, net * 100.0, trade_funding * 100.0,
+                                    index - entry_index + 1, "drawdown_stop"))
+                equity *= 1.0 + net * fraction
+                gross_equity *= 1.0 + gross * fraction
+                position = 0
+                mark_price = None
             kill_active = True
             peak = max(peak, equity)
             drawdown = (peak - equity) / peak

@@ -153,30 +153,53 @@ def _warmup(index: int, required: int) -> bool:
 
 
 def generate_signals(candles: Sequence[Candle], config: StrategyConfig) -> list[Signal]:
-    """Deterministic target positions; bar i reads only information at i-1."""
+    """Deterministic target positions; bar i reads only information at i-1.
+
+    Indicator series are built once per call (linear in the number of bars).
+    The previous version rebuilt the full series inside the bar loop, which was
+    O(n^2) and made an M5 parameter sweep impractical.
+    """
     config.validate()
     closes = [candle.close for candle in candles]
+    strategy_id = config.strategy_id
+    fast_series: list[float | None] | None = None
+    slow_series: list[float | None] | None = None
+    trend_series: list[float | None] | None = None
+    roc_values: list[float | None] | None = None
+    z_values: list[float | None] | None = None
+    rsi_values: list[float | None] | None = None
+    if strategy_id == 'sma_crossover':
+        fast_series = sma_series(closes, config.fast)
+        slow_series = sma_series(closes, config.slow)
+    elif strategy_id == 'trend_momentum':
+        trend_series = sma_series(closes, config.trend_period)
+        roc_values = roc_series(closes, config.momentum_period)
+    elif strategy_id == 'mean_reversion':
+        z_values = zscore_series(closes, config.zscore_period)
+    elif strategy_id == 'regime_aware':
+        trend_series = sma_series(closes, config.trend_period)
+        rsi_values = rsi_series(closes, config.rsi_period)
     output: list[Signal] = []
     position = 0
     for index, candle in enumerate(candles):
         target = 0
         previous = index - 1
         if index > 0:
-            if config.strategy_id == 'sma_crossover':
+            if strategy_id == 'sma_crossover':
                 if _warmup(previous, config.slow - 1):
-                    fast = sma_series(closes, config.fast)[previous]
-                    slow = sma_series(closes, config.slow)[previous]
+                    fast = fast_series[previous]  # type: ignore[index]
+                    slow = slow_series[previous]  # type: ignore[index]
                     if fast is not None and slow is not None:
                         target = 1 if fast > slow else 0
-            elif config.strategy_id == 'trend_momentum':
+            elif strategy_id == 'trend_momentum':
                 if _warmup(previous, max(config.trend_period, config.momentum_period + 1) - 1):
-                    trend = sma_series(closes, config.trend_period)[previous]
-                    roc = roc_series(closes, config.momentum_period)[previous]
+                    trend = trend_series[previous]  # type: ignore[index]
+                    roc = roc_values[previous]  # type: ignore[index]
                     if trend is not None and roc is not None:
                         target = 1 if closes[previous] > trend and roc > 0 else 0
-            elif config.strategy_id == 'mean_reversion':
+            elif strategy_id == 'mean_reversion':
                 if _warmup(previous, config.zscore_period - 1):
-                    z = zscore_series(closes, config.zscore_period)[previous]
+                    z = z_values[previous]  # type: ignore[index]
                     if z is not None:
                         if position == 0 and z <= config.entry_z:
                             target = 1
@@ -184,11 +207,11 @@ def generate_signals(candles: Sequence[Candle], config: StrategyConfig) -> list[
                             target = 0
                         else:
                             target = position
-            elif config.strategy_id == 'regime_aware':
+            elif strategy_id == 'regime_aware':
                 needed = max(config.trend_period, config.rsi_period + 1)
                 if _warmup(previous, needed - 1):
-                    trend = sma_series(closes, config.trend_period)[previous]
-                    rsi = rsi_series(closes, config.rsi_period)[previous]
+                    trend = trend_series[previous]  # type: ignore[index]
+                    rsi = rsi_values[previous]  # type: ignore[index]
                     if trend is not None and rsi is not None:
                         in_trend = closes[previous] > trend
                         if position == 0 and in_trend and rsi <= config.rsi_entry:
