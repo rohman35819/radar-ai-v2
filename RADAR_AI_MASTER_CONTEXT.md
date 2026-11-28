@@ -3824,3 +3824,13 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 - New `nexus-scheduled-worker` Edge Function is a custom-token-authenticated proxy. Its `verify_jwt=false` is intentional and limited to this function; it validates the 64-character random token against a SHA-256 hash in private schema, then forwards only fixed `worker_tick` to JWT-verified `nexus-agent-runtime` using the server-side service-role key.
 - Planned free-tier scheduler: Supabase Vault stores the plaintext worker token, project URL and publishable key; pg_cron schedules pg_net POST every five minutes. Runtime controls still gate all claims and hard-enforce Rp0, concurrency 1, Stage 0/1 allowlist.
 - This is code-only pending exact-head CI, merge and post-merge provisioning. No worker token, pg_cron/pg_net extension, cron schedule or background worker has been activated yet.
+
+
+---
+
+## 164. NEXUS DETERMINISTIC SQL WORKER — 28 NOVEMBER 2026
+
+- Branch feat/nexus-sql-worker-tick-20261128 adds migration 0006 with cron-only `nexus_sql_worker_tick()`. It processes one task per tick and supports only `system.healthcheck` plus proposal-only `knowledge.ingest`; no approval, external network, LLM or paid provider.
+- When pg_cron is installed, the migration creates a five-minute job. CI tests the worker behavior and Stage 0/1 gates; CI skips cron creation when pg_cron is absent.
+- The scheduled Edge Function proxy from migration 0005 remains custom-token authenticated and is reserved for future model-backed worker execution. It is not the current SQL scheduler.
+- Runtime controls remain disabled by default until migration merge and post-merge Stage 0/1 live verification. Rp0, max concurrency 1 and no self-approval remain hard controls.
