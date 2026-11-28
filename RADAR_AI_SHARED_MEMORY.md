@@ -54,3 +54,5 @@
 - Second proven bug (26 Nov): `renderAction()` threw `ReferenceError: priceLabel is not defined`, leaving Top 5 page empty even after CDN fix. Added the helper in `public/app.js` and a runtime regression test (`test/top5-runtime.test.js`, 3 tests) that actually executes action/intel renderers. 213/213 tests pass. Needs release + LIVE re-verification.
 
 - 28 Nov: radar-nexus-core Supabase ACTIVE_HEALTHY; nexus-chat v4 + nexus-agent-runtime v1 ACTIVE/JWT. Ten private nexus tables RLS-enabled; zero chat/memory rows. PR #169 merged to develop only; main release isolated in hotfix/nexus-chat-main-release-20261128. Provider key and Hostless LIVE unverified. Edge Function active ≠ scheduled worker; offline autonomy OFF.
+
+- 28 Nov live-function audit found nexus-chat v4 still supports paid providers and defaults to OpenAI; nexus-agent-runtime v1 allows knowledge.approve. PR #175 hardens to OpenRouter Free only and proposal-only worker; until deployed, live versions remain v4/v1. Six approved shared knowledge docs are stored and retrieval-tested. Worker remains unscheduled pending runtime_controls gate.

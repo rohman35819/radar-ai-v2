@@ -244,3 +244,20 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - Main release branch hotfix/nexus-chat-main-release-20261128 adds same-origin chat page, auth REST client, scoped CSP and tests. Candidate only until exact-head CI, Hostless deploy and browser E2E pass.
 - Provider secret presence unknown; do not expose/request its value. Edge Function ACTIVE does not mean scheduled worker runs. Keep autonomy worker OFF until queue, lease, budget, audit, recovery and approval gates pass.
 - NEXT: CI/security → main release → Hostless/browser E2E → provider free-tier verification → security advisor remediation → Stage 0/1 worker pilot.
+
+
+## 18. Post-merge NEXUS Status — 28 November 2026
+- PR #172 merged NEXUS chat UI to main (a6fdbfb); Hostless deploy and browser E2E unverified.
+- PR #173 merged Divisi 06/07 design + P1 foundation to develop (e841ac38). PR #174 merged Binance-only observation contract to develop (87acee23); Bybit excluded.
+- NEXUS DB has six approved shared knowledge documents; retrieval for Divisi 06/07 and UI status verified. Chat/user rows remain zero.
+- Live functions still nexus-chat v4 and nexus-agent-runtime v1. Security audit found client-selectable paid providers/default OpenAI and agent knowledge.approve action. PR #175 hardens both; deploy only after exact-head CI/security.
+- No scheduler, worker, runtime_controls, live trading or withdrawal. Build default-disabled/paused/kill-switch/budget gate and memory adapter next.
+
+
+## 19. NEXUS Hardening Deployed — 28 November 2026
+- PR #175 merged to develop as 3c630650. Supabase deployment verified: nexus-chat v5 and nexus-agent-runtime v2 ACTIVE, verify_jwt=true.
+- Chat provider pinned server-side to OpenRouter Free model openrouter/free; client provider/model ignored; no paid provider keys/endpoints or fallback in deployed source. Missing OPENROUTER_API_KEY returns provider_not_configured.
+- Agent runtime approval action and knowledge.approve task path removed. Worker allowlist is system.healthcheck and proposal-only knowledge.ingest. No scheduler is configured; worker remains OFF.
+- NEXUS shared knowledge: five active approved docs; two stale v4/v1 status docs expired; retrieval for Divisi 06 and latest runtime status verified.
+- Provider secret presence, authenticated chat E2E, Hostless /nexus.html deployment and browser owner-isolation tests remain unverified.
+- Next: deploy default-disabled runtime_controls migration + claim guard, add memory_records adapter/retrieval, verify Hostless and real user chat.
