@@ -51,6 +51,15 @@ begin
     if sqlerrm <> 'invalid memory proposal' then raise; end if;
   end;
 
+  begin
+    perform public.nexus_propose_memory('project:radar-ai-v2','secret_provenance_test',
+      'Safe-looking content','project','radar-ai-v2','internal',
+      'https://example.invalid/provenance-test','smoke-secret-provenance','{"api_key":"EXAMPLE_DO_NOT_STORE"}'::jsonb,now(),null,null,0.5);
+    raise exception 'secret-bearing provenance was accepted';
+  exception when raise_exception then
+    if sqlerrm <> 'invalid memory proposal' then raise; end if;
+  end;
+
   v_id := public.nexus_propose_memory('project:radar-ai-v2','project_policy',
     'Divisi 06 policy: RADAR AI V2 uses free-tier services only with a hard Rp0 budget.','project','radar-ai-v2','internal',
     'https://github.com/rohman35819/radar-ai-v2/blob/main/AGENTS.md','smoke-r1',
