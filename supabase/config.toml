@@ -1,0 +1,2 @@
+[functions.nexus-scheduled-worker]
+verify_jwt = false
