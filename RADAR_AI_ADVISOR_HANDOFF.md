@@ -330,3 +330,10 @@ Do not report offline autonomy until scheduler, durable queue/state, worker runt
 - The proxy is the only Edge Function with `verify_jwt=false`; it validates the custom Vault token, then forwards only fixed worker_tick to JWT-verified nexus-agent-runtime with server-side service-role key. No arbitrary action or secret is accepted/returned.
 - After merge: apply migration, generate 256-bit token, store token/project URL/publishable key in Vault, install pg_cron and pg_net, schedule 5-minute tick, enable Stage 1 only after end-to-end auth and kill-switch tests.
 - No worker token or cron schedule is active yet. Existing runtime_controls remains disabled/paused/kill-switched until explicit post-merge activation and verification.
+
+
+## 22. NEXUS Deterministic SQL Worker — 28 November 2026
+- Candidate branch feat/nexus-sql-worker-tick-20261128 adds migration 0006: cron-only `nexus_sql_worker_tick()`, one task per tick, healthcheck + proposal-only knowledge.ingest only, no knowledge.approve.
+- The migration schedules every five minutes only when pg_cron exists. CI disposable Postgres may skip schedule creation if pg_cron is unavailable; SQL worker smoke still tests Stage 0/1, task finalization and approval exclusion.
+- This SQL worker performs no model calls, external network or paid compute. The custom-token Edge Function proxy is reserved for a later model-backed worker.
+- No production migration or worker activation until PR exact-head CI passes.
