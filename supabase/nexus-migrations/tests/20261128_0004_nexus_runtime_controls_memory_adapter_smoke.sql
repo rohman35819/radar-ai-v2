@@ -49,7 +49,7 @@ begin
   select count(*) into n from public.nexus_retrieve_memory('project:radar-ai-v2','project','radar-ai-v2','what did we decide about Divisi 06',5,false);
   if n<>0 then raise exception 'proposed memory must not be retrievable'; end if;
   if not public.nexus_approve_memory(v_id,'chief-strategy-advisor') then raise exception 'memory approval failed'; end if;
-  select count(*) into n from public.nexus_retrieve_memory('project:radar-ai-v2','project','radar-ai-v2','Rp0',5,false);
+  select count(*) into n from public.nexus_retrieve_memory('project:radar-ai-v2','project','radar-ai-v2','what did we decide about Divisi 06',5,false);
   if n<>1 then raise exception 'approved project memory not retrievable by natural-language keywords'; end if;
   select count(*) into n from public.nexus_retrieve_memory('project:radar-ai-v2','project','radar-ai-v2','Mars colony',5,false);
   if n<>0 then raise exception 'unrelated query returned project memory'; end if;
