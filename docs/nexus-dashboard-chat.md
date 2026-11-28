@@ -29,3 +29,9 @@ Status: implementation branch; not deployed or end-to-end verified.
 - The page and navigation are code on this branch only. GitHub merge, Hostless deploy and public LIVE availability are separate gates.
 - Chat history listing across sessions, NEXUS CLI, background workers, autonomous division execution and tool permissions are not activated by this client.
 - Do not enable paid provider usage, live trading, withdrawals, arbitrary shell execution or production mutations as part of chat activation.
+
+## Cross-session history activation — 28 November 2026
+- Added private-schema RPCs `nexus_list_conversations` and `nexus_list_messages`, both SECURITY DEFINER with fixed search_path and EXECUTE only for service_role. They enforce owner scope and bounded result limits.
+- Applied `nexus_chat_history_rpc_v1` and deployed `nexus-chat` Edge Function v3 (`verify_jwt=true`). API actions now include `list_conversations` and `history` in addition to authenticated chat.
+- Dashboard client now lists recent conversations, restores the selected conversation ID from sessionStorage, loads prior messages after login/reload, and supports starting a new conversation. The server remains canonical; sessionStorage contains only the selected conversation ID and public key, never message content or provider secrets.
+- Live SQL smoke passed conversation list, history retrieval, wrong-owner rejection and role privilege denial; transaction rolled back and live conversation/message counts remain zero. Migration apply was invoked twice; Supabase records two version rows with the same migration name, but CREATE OR REPLACE is idempotent and verified schema/function state is correct. Do not delete migration history rows.
