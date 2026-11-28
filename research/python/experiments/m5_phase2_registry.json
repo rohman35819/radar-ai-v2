@@ -1,0 +1,140 @@
+{
+  "registry_version": "m5-phase2-v1",
+  "registered_at": "2026-11-28T00:39:08Z",
+  "owner": "BOS",
+  "lead": "Quantum Research (role-based)",
+  "status": "PRE_REGISTERED_NO_EXPERIMENT_DATA_FETCHED",
+  "criteria_version": "validation-v1",
+  "purpose": "Exactly two genuinely different, fixed-parameter Binance M5 hypotheses on fresh non-overlapping data. Results are fixed before observation; criteria are never relaxed and no grid search is permitted.",
+  "pre_registration_integrity": {
+    "connectivity_probe_only": "A 2-candle public klines probe returned HTTP 200 at approximately 2026-11-28T00:32Z. It was used only to check reachability; no dataset was built, inspected, or used to choose a parameter.",
+    "retrieval_after_registration": true,
+    "no_grid_search": true,
+    "no_parameter_change_after_holdout": true,
+    "max_hypotheses": 2,
+    "unchanged_criteria_source": "research/python/experiments/hybrid_registry.json (m5-hybrid-v1)"
+  },
+  "criteria": {
+    "min_trades": 2,
+    "max_drawdown_pct": 25.0,
+    "walk_forward_positive_majority": true,
+    "walk_forward_majority_min_folds": 8,
+    "net_return_positive_oos": true,
+    "fee_bps_per_side": 7.5,
+    "slippage_bps_per_side": 7.5,
+    "spread_bps": 2.0,
+    "funding_bps_per_day_futures": 0.0,
+    "leverage": 1.0
+  },
+  "data_plan": {
+    "exchange": "binance",
+    "endpoint": "https://data-api.binance.vision/api/v3/klines",
+    "interval": "5m",
+    "symbols_in_priority_order": ["BTCUSDT", "ETHUSDT"],
+    "planned_window_utc": {
+      "start": "2025-06-01T00:00:00Z",
+      "end": "2025-06-15T00:00:00Z"
+    },
+    "excluded_windows": [
+      "2026-10-23T13:30Z..2026-11-27T06:40Z (prior M5 BTCUSDT experiment artifact)",
+      "2024-01 7-day BTCUSDT (independent data-quality/risk/gate verification fixture)"
+    ],
+    "admission": "BTCUSDT first. ETHUSDT only after BTCUSDT passes provenance and quality gates. Any other asset requires explicit admission plus data-quality checks before use.",
+    "quality_gates": [
+      "5-minute UTC grid, chronological ascending",
+      "zero duplicate timestamps",
+      "zero missing intervals",
+      "valid OHLCV, positive volume",
+      "still-open final candle skipped",
+      "checksum SHA-256 recorded in provenance sidecar",
+      "stale data rejected relative to retrieval time"
+    ],
+    "provenance_fields": ["source", "symbol", "interval", "retrieved_at", "data_kind", "start", "end", "rows", "checksum_sha256"]
+  },
+  "shared_features": {
+    "log_return": "ln(close_t / close_t-1)",
+    "realized_vol_20": "standard deviation of the last 20 log returns",
+    "vol_percentile_100": "percentile rank of realized_vol_20 within the last 100 bars",
+    "volume_z24": "(volume_t - mean(volume, 24)) / stdev(volume, 24)",
+    "atr14": "14-bar average true range",
+    "ema50": "50-bar exponential moving average of close",
+    "prior_high_24": "max(high, 24 bars before entry signal bar)",
+    "prior_low_24": "min(low, 24 bars before entry signal bar)",
+    "body_range_ratio": "abs(close - open) / (high - low), 0 when high == low"
+  },
+  "hypotheses": [
+    {
+      "id": "m5-p2-01-vol-expansion-volume",
+      "hypothesis": "After a realized-volatility contraction, a 5-minute breakout confirmed by abnormal volume and a strong candle body has positive out-of-sample expectancy after costs on BTCUSDT M5 spot.",
+      "direction": "long-only SPOT",
+      "mechanism": "Contraction (vol_percentile_100 <= 0.30 at least once in the prior 12 bars) followed by expansion (vol_percentile_100 >= 0.70 now); close breaks prior_high_24; volume_z24 >= 1.5; body_range_ratio >= 0.5.",
+      "fixed_parameters": {
+        "vol_lookback": 20,
+        "vol_percentile_window": 100,
+        "contraction_percentile": 0.30,
+        "contraction_lookback_bars": 12,
+        "expansion_percentile": 0.70,
+        "breakout_lookback": 24,
+        "volume_z_threshold": 1.5,
+        "min_body_range_ratio": 0.5,
+        "ema_trend_period": 50,
+        "stop_atr_mult": 1.5,
+        "take_profit_r": 2.0,
+        "max_hold_bars": 12,
+        "signal_expiry_bars": 6,
+        "cooldown_bars": 3
+      },
+      "execution": "signal computed from closed bar t-1; entry at open of bar t; stop and TP from ATR14 at entry; one position per signal; exit on stop, TP, expiry or max hold."
+    },
+    {
+      "id": "m5-p2-02-failed-breakout-reversal",
+      "hypothesis": "A failed downward thrust (close below prior_low_24 with abnormal volume, followed by a close back above that low within two bars) has positive out-of-sample expectancy after costs on BTCUSDT M5 spot. This is a price-action reversal mechanism, distinct from volatility-breakout momentum and from RSI/VWAP mean reversion.",
+      "direction": "long-only SPOT",
+      "mechanism": "Bar t-3 closes below prior_low_24 with volume_z24 >= 1.5; within the next 2 closed bars a close returns above prior_low_24; enter long at the next bar open. Proxy for a liquidity-grab reversal only: no claim about market-maker identity or position.",
+      "fixed_parameters": {
+        "breakout_lookback": 24,
+        "confirmation_bars": 2,
+        "volume_z_threshold": 1.5,
+        "stop_atr_mult": 1.5,
+        "take_profit_r": 2.0,
+        "max_hold_bars": 12,
+        "signal_expiry_bars": 6,
+        "cooldown_bars": 3
+      },
+      "execution": "signal computed only from closed bars; entry at next bar open; one position per signal; exit on stop, TP, expiry or max hold."
+    }
+  ],
+  "evaluation": {
+    "split": "chronological train 60% / validation 20% / out-of-sample 20%",
+    "selection": "config and hypothesis selection on validation only, out-of-sample evaluated once",
+    "walk_forward": {
+      "train_bars": 2000,
+      "test_bars": 500,
+      "step_bars": 500,
+      "folds_per_symbol": 15
+    },
+    "baselines": ["no_trade_return_pct = 0", "buy_and_hold_net_pct"],
+    "costs_per_side_bps": 17.5,
+    "required_fold_metrics": [
+      "net_return_pct",
+      "max_drawdown_pct",
+      "profit_factor",
+      "expectancy_pct_per_trade",
+      "total_trades",
+      "win_rate_pct",
+      "exposure_pct",
+      "turnover_events"
+    ],
+    "data_checks": ["duplicate bars", "missing bars", "timestamp order", "checksum", "freshness", "data leakage from future bars"],
+    "decision_rule": "A hypothesis is promoted only if it passes every criterion on out-of-sample data AND a majority of walk-forward folds. If both hypotheses fail, record the cause and stop; do not tune parameters, do not rerun a grid, and do not relax criteria."
+  },
+  "safety": {
+    "live_trading": false,
+    "order_submission": false,
+    "withdrawal": false,
+    "production_worker": false,
+    "paper_trading_runtime": false,
+    "paid_resources": false,
+    "private_api_key_required": false
+  }
+}
