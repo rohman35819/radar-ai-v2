@@ -163,3 +163,9 @@ This is a target-state instruction, not evidence of a connected exchange, active
 - The scheduled proxy may use `verify_jwt=false` only when its custom token validation is active. The plaintext token belongs only in Supabase Vault; the database stores only a SHA-256 hash in the private `nexus.worker_tokens` table.
 - The proxy must forward only the fixed `worker_tick` action to the existing JWT-verified `nexus-agent-runtime` using its server-side service-role key. Never accept caller-selected actions, worker IDs, task types or provider/model overrides.
 - pg_cron/pg_net schedule must be low-frequency (initially every five minutes), free-tier only, and gated by runtime_controls. Stage 1 may only create proposals; no agent self-approval.
+
+
+## 14. Deterministic SQL worker policy
+- The first scheduled SQL worker is intentionally deterministic: one task per five-minute tick; only system.healthcheck and proposal-only knowledge.ingest. No model calls, external network, approvals, trading or transfers.
+- Runtime controls remain fail-closed by default. Stage 0 permits healthcheck; Stage 1 adds proposal-only ingest. Never enable a higher stage or add a task type without CI, a bounded smoke test and BOS authorization.
+- The custom-token scheduled Edge Function proxy is reserved for a future model-backed worker. It must not be treated as the SQL worker or bypass the queue/runtime_controls.
