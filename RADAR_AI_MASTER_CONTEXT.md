@@ -3430,3 +3430,14 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 1. Add NEXUS runtime_controls default-disabled/paused/kill-switch/Rp0 gate and restrict claim RPC to healthcheck + proposal-only knowledge.ingest.
 2. Add memory_records scope/retention/provenance adapter and connect authenticated chat retrieval after disposable PostgreSQL tests.
 3. Verify Hostless /nexus.html deployment, login/signup, chat response, persistence/history and owner isolation in a real browser. Provider key presence remains unverified until a real authenticated request.
+
+
+## 20. NEXUS Free-Provider Failover — 28 November 2026
+
+- Provider failover backend telah digabung ke `develop` melalui PR #181, commit `0f53c2dc0273504a8351b461418eeb09f9469653`, dan deployment Supabase `nexus-chat` ACTIVE v19 dengan `verify_jwt=true` telah diverifikasi menurut handoff `develop` §165.
+- Urutan provider: NVIDIA NIM (Gemma 4 31B) → Gemini 3.8 Flash → Groq GPT-OSS 20B → OpenRouter Free. Key yang tidak tersedia dilewati; kuota/rate limit (429/402), auth, network/timeout, 5xx, dan respons kosong memicu failover. Groq hanya boleh digunakan selama akun tetap pada Free; tidak boleh upgrade/billing. Mistral dan Cloudflare tetap dikecualikan sampai jaminan Rp0 dapat diverifikasi.
+- Mock tests dan CI/security exact-head PR #181 dilaporkan lulus pada handoff develop; respons provider sungguhan melalui akun BOS belum diverifikasi. Jangan menyamakan status function ACTIVE dengan bukti API key/kuota valid.
+- Main UI hotfix branch `hotfix/nexus-free-quota-exhausted-message-20261128` mengubah pesan ketika semua provider gagal menjadi: **“Semua kuota free sudah habis atau provider gratis sedang tidak tersedia.”** Pesan menampilkan daftar percobaan yang disanitasi dan tidak mengungkap secret. Untuk provider belum dikonfigurasi, UI menjelaskan kondisi itu terpisah.
+- File UI/test berubah pada branch hotfix; CI exact-head, Hostless Build dan LIVE belum diverifikasi.
+- Tidak ada scheduler/worker Nexus yang diaktifkan oleh perubahan ini. Tidak ada paid fallback, live trading, order, transfer, atau withdrawal.
+- NEXT TASK: jalankan exact-head CI/security pada hotfix UI; setelah lulus, merge PR dan verifikasi Hostless/browser E2E. BOS kemudian mengirim satu pesan uji NEXUS untuk memastikan provider/model aktual dan fallback dapat digunakan tanpa sengaja menghabiskan kuota.

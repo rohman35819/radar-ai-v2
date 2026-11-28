@@ -4,8 +4,15 @@ const source=fs.readFileSync(require.resolve('../public/nexus.js'),'utf8');
 test('NEXUS chat displays the actual provider and model returned by the server',()=>{
  assert.match(source,/data\.provider\+' · Model: '\+\(data\.model\|\|'tidak dilaporkan'\)/);
 });
-test('NEXUS displays sanitized provider failover reasons when every free provider fails',()=>{
+test('NEXUS displays the explicit free-quota exhaustion message and sanitized attempts',()=>{
+ assert.match(source,/Semua kuota free sudah habis\. Seluruh provider gratis yang dikonfigurasi mencapai batas kuota/);
  assert.match(source,/provider_attempts/);
  assert.match(source,/a\.provider\+': '\+\(a\.code\|\|a\.status\|\|'failed'\)/);
  assert.doesNotMatch(source,/OPENROUTER_API_KEY belum tersedia/);
+});
+
+test('NEXUS reports all free quotas exhausted only when every configured provider returns quota exhaustion',()=>{
+ assert.match(source,/quotaOnly=attempts\.length>0&&attempts\.every/);
+ assert.match(source,/\['http_429','http_402'\]/);
+ assert.match(source,/Semua kuota free sudah habis/);
 });

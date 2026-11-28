@@ -1,6 +1,6 @@
 # RADAR AI Shared Project Memory
 
-> Compact, curated handoff for every AI agent. This is the **only shared cross-agent memory**; it is not a chat archive. Last verified: 25 November 2026.
+> Compact, curated handoff for every AI agent. This is the **only shared cross-agent memory**; it is not a chat archive. Last verified: 28 November 2026.
 
 ## Project identity
 - Product: RADAR AI V2; repository: https://github.com/rohman35819/radar-ai-v2
@@ -56,3 +56,7 @@
 - 28 Nov: radar-nexus-core Supabase ACTIVE_HEALTHY; nexus-chat v4 + nexus-agent-runtime v1 ACTIVE/JWT. Ten private nexus tables RLS-enabled; zero chat/memory rows. PR #169 merged to develop only; main release isolated in hotfix/nexus-chat-main-release-20261128. Provider key and Hostless LIVE unverified. Edge Function active ≠ scheduled worker; offline autonomy OFF.
 
 - 28 Nov live-function audit found nexus-chat v4 still supports paid providers and defaults to OpenAI; nexus-agent-runtime v1 allows knowledge.approve. PR #175 hardens to OpenRouter Free only and proposal-only worker; until deployed, live versions remain v4/v1. Six approved shared knowledge docs are stored and retrieval-tested. Worker remains unscheduled pending runtime_controls gate.
+
+
+- 28 Nov NEXUS provider failover backend merged to develop via PR #181 (0f53c2dc) and deployed as nexus-chat v19/JWT. Order: NVIDIA → Gemini → Groq (only verified Free account) → OpenRouter Free. Missing keys skipped; quota/auth/network/timeout/5xx/empty response falls through. Mistral/Cloudflare excluded pending strict Rp0 proof. Real authenticated provider E2E still pending.
+- Main UI hotfix branch hotfix/nexus-free-quota-exhausted-message-20261128 updates final error copy to “Semua kuota free sudah habis atau provider gratis sedang tidak tersedia.” CI/Hostless/browser verification pending.

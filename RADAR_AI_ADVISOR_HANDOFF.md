@@ -261,3 +261,11 @@ Snapshot yang diverifikasi pada 22 November 2026:
 - NEXUS shared knowledge: five active approved docs; two stale v4/v1 status docs expired; retrieval for Divisi 06 and latest runtime status verified.
 - Provider secret presence, authenticated chat E2E, Hostless /nexus.html deployment and browser owner-isolation tests remain unverified.
 - Next: deploy default-disabled runtime_controls migration + claim guard, add memory_records adapter/retrieval, verify Hostless and real user chat.
+
+
+## 15. NEXUS free-provider failover — 28 November 2026
+
+- Backend failover is already merged to `develop` in PR #181 and deployed to Supabase as `nexus-chat` v19 with JWT verification, per the latest develop master handoff. Order: NVIDIA → Gemini → Groq (only if account is verified Free) → OpenRouter Free. Missing keys are skipped; quota/rate-limit, auth, timeout/network, 5xx and empty responses advance to the next provider.
+- Real authenticated provider/model response from BOS's account remains unverified. Mock tests/CI prove routing behavior, not real provider quota or account billing status. No intentional quota-burning test.
+- Main UI hotfix PR #186 changes final failure copy to “Semua kuota free sudah habis atau provider gratis sedang tidak tersedia.” and keeps sanitized attempt details. PR #186 exact-head CI/security, Hostless Build/LIVE and browser E2E are pending.
+- Rp0 is binding: no paid fallback, no provider account upgrades, and no Cloudflare/Mistral until free-tier overage behavior is verified. Worker/scheduler remain OFF; no trading/order/withdrawal.
