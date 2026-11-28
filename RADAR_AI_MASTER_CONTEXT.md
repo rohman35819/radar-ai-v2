@@ -3780,3 +3780,14 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 - Guards validate source, symbol, interval, completeness, spot/futures legs, timestamps, freshness, max age, recursive canonical SHA-256 provenance/checksum, payload shape and secret/private-field rejection. Shadow consumer emits OBSERVE_ONLY receipt with content-derived dedupe key; no order, ledger, reconciliation or profit result.
 - Code is pure/in-process and has no production caller, scheduler or credential path. Private account snapshot is read-only and risk-engine role only; no order/transfer/withdraw capability exists. Keep worker OFF.
 - PR #160 branch was 2 commits behind develop and contained Bybit source allowlists; P2 work is reconstructed on current develop with Binance-only admission. Exact-head CI/security pending for new branch.
+
+
+---
+
+## 159. NEXUS FREE-ONLY PROVIDER AND NO-SELF-APPROVAL HARDENING — 28 NOVEMBER 2026
+
+- Audit of deployed nexus-chat v4 found provider selected from client body and server configuration included OpenAI, Grok, Gemini and Claude keys/endpoints; default provider was OpenAI. This violated the Rp0/free-only policy even though the dashboard sent openrouter.
+- Audit of nexus-agent-runtime v1 found action=approve and worker task knowledge.approve could invoke nexus_approve_knowledge using service_role. This allowed a service worker to self-approve proposed knowledge if given service-role access.
+- Branch fix/nexus-free-only-provider-approval-gate pins server provider/model to OpenRouter Free (openrouter/free), ignores client provider/model, removes paid provider configs, normalizes errors without returning provider response bodies, removes approve action and restricts worker allowlist to system.healthcheck + knowledge.ingest (proposal only).
+- Tests assert no paid provider key/endpoint, no client provider/model selection, no knowledge.approve or self-approval route. Exact-head CI/security and Supabase deployment are separate gates.
+- Until deploy is verified, live function versions remain nexus-chat v4 and nexus-agent-runtime v1. No claim of hardening deployment yet.
