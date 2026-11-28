@@ -78,6 +78,26 @@ jobs:
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/migrations/20261124_radar_memory.sql
       - name: Verify memory RLS, privileges, provenance and proposal-only lifecycle
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/tests/20261124_radar_memory_smoke.sql
+      - name: Apply NEXUS private foundation (disposable PostgreSQL only)
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/20261127_0001_nexus_private_foundation.sql
+      - name: Verify NEXUS private schema and forced RLS
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/tests/20261127_0001_nexus_private_foundation_smoke.sql
+      - name: Apply NEXUS provenance-first learning functions
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/20261127_0002_nexus_learning_engine_v1.sql
+      - name: Verify NEXUS approval-gated knowledge retrieval
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/tests/20261127_0002_nexus_learning_engine_smoke.sql
+      - name: Apply NEXUS bounded agent queue functions
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/20261127_0003_nexus_agent_runtime_queue_v1.sql
+      - name: Verify NEXUS idempotency, lease fencing and queue authorization
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/tests/20261127_0003_nexus_agent_runtime_queue_smoke.sql
+      - name: Apply NEXUS private chat storage RPCs
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/20261128_0002_nexus_chat_rpc.sql
+      - name: Verify NEXUS chat history, ownership and privilege boundaries
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/tests/20261128_0004_nexus_chat_rpc_smoke.sql
+      - name: Apply NEXUS conversation history RPCs
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/20261128_0003_nexus_chat_history_rpc_v1.sql
+      - name: Verify NEXUS conversation history owner isolation
+        run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < supabase/nexus-migrations/tests/20261128_0005_nexus_chat_history_smoke.sql
       - name: Apply market-data storage schema (disposable PostgreSQL only)
         run: docker exec -i ${{ job.services.postgres.id }} psql -v ON_ERROR_STOP=1 -U radar_test -d radar_test < db/migrations/003_market_data.sql
       - name: Verify market-data provenance, idempotency, RLS and OHLCV partitions

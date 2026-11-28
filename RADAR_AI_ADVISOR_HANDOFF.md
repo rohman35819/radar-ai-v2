@@ -268,3 +268,34 @@ Rp0 only. No paid provider, new database/vector service or infrastructure provis
 Do not report offline autonomy until scheduler, durable queue/state, worker runtime, least-privilege gateway, audit/observability, budgets, approval queue, kill switch and recovery are deployed and tested. Do not claim DeepSeek parity until frozen comparable benchmarks support it.
 
 **NEXT TASK:** execute N0 architecture artifacts and independent reviews; then implement only the smallest contract/schema test slice on an isolated branch.
+
+
+## 16. NEXUS Chat backend activation — 28 November 2026
+
+### Verified live state
+- Separate Supabase project `radar-nexus-core` (`zhvznjcsxrtybqcpbryu`) is ACTIVE_HEALTHY on Free plan.
+- NEXUS schema contains ten core tables; tables remain private with forced RLS and no direct table grants to anon/authenticated/service_role.
+- Edge Functions `nexus-chat` and `nexus-agent-runtime` are ACTIVE with `verify_jwt=true`. `nexus-chat` is now version 4.
+- Chat persistence uses `nexus_prepare_chat` and `nexus_complete_chat` security-definer RPCs, callable only by service_role. Conversation listing/history uses `nexus_list_conversations` and `nexus_list_messages`, also service_role-only and owner-scoped.
+- Live SQL smoke passed: private schema/RLS, knowledge proposal→approval→retrieval, queue idempotency/lease fencing/finish, chat persistence/history, wrong-owner rejection and role privilege denial. Write tests were transactional and rolled back; live conversations/messages remain zero.
+- Chat provider is pinned to OpenRouter `openrouter/free`; client model overrides are ignored for this provider. No provider request was sent; `OPENROUTER_API_KEY` presence is unknown. Missing key returns 503, with no paid provider fallback.
+
+### GitHub implementation
+- PR #169: https://github.com/rohman35819/radar-ai-v2/pull/169
+- Branch: `feat/nexus-chat-pilot-current-develop`, based on current `develop`.
+- Adds `public/nexus.html`, dashboard navigation, Supabase Auth login/signup, chat, conversation list, history restore, new-chat action, client regression tests, Edge Function source, canonical NEXUS migration sources, SQL smoke tests and CI steps.
+- PR #168 was closed as superseded because it was 49 commits behind develop. PR #169 remains open and is not merged/deployed to Hostless.
+- Latest CI run must be checked against the exact PR head before merge. Earlier failures were test assertion drift; update tests to match the final page contract, then re-run. Gitleaks/Trivy were green on one prior head; verify latest head again.
+
+### Explicitly not active
+- Public dashboard page is not deployed/verified on Hostless. Do not give BOS a public chat URL as if live.
+- Authenticated provider E2E is not verified; user signup/confirmation and provider secret configuration are not verified.
+- Agent runtime function exists but there is no continuous scheduler/worker. Do not enable worker_tick scheduling until queue lease/retry, audit, budget, kill switch, tool permissions and recovery are independently validated.
+- No model training/fine-tuning, paid provider, paid infrastructure, autonomous division execution, shell tools, live trading or withdrawals.
+
+### Next execution order
+1. Resolve latest PR #169 npm test + disposable PostgreSQL workflow and Gitleaks/Trivy checks; inspect exact-head logs, fix any failures, re-run.
+2. Merge to develop only after required checks and review are green; then create/review normal develop→main release and deploy dashboard through the existing Hostless release process.
+3. Verify browser signup/login, free-provider response, conversation list/history after reload, owner isolation and zero secret exposure. Confirm `OPENROUTER_API_KEY` exists without exposing its value; if absent, report configuration requirement rather than falling back to a paid model.
+4. Add a small NEXUS CLI using the same API contract.
+5. Continue Division 06/07 N0 artifacts and independent Division 01/04/05 reviews. Keep autonomous workers disabled until safety gates are tested.
