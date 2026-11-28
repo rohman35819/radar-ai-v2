@@ -3408,3 +3408,7 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 3. Verifikasi status provider key tanpa membaca/menampilkan nilainya; gunakan OpenRouter Free saja.
 4. Audit public.rls_auto_enable() dan indeks FK.
 5. Lanjutkan Divisi 06/07 Stage 0/1 bounded observe/propose worker, tidak merge/deploy/trading.
+
+
+## Security remediation — 28 November 2026
+- Revoked EXECUTE on public.rls_auto_enable() from PUBLIC, anon and authenticated. Verified both roles cannot execute it and event trigger ensure_rls remains intact. Security Advisor now reports only intentional RLS-enabled/default-deny private nexus tables; four missing FK indexes remain a performance follow-up.
