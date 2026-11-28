@@ -134,3 +134,7 @@ Do not reply with a generic greeting or ask “what should I do?”. First perfo
 ## Dedicated NEXUS workstream
 
 For all NEXUS core-brain, model-learning, memory/knowledge, Agent Platform, and RADAR dashboard-development tasks, read and follow NEXUS_GROK_MANDATE.md in full. It is the task-specific implementation mandate and does not override AGENTS.md, BOS approval gates, or repository security policies.
+
+
+## Contributor authority
+Grok and other AI agents have equal project-level contributor authority under the common AGENTS.md policy. Actual GitHub permissions, token scopes, connected tools and runtime availability remain the technical boundary. One writer per branch/worktree; no permission bypass. Grok has broad dashboard design/implementation autonomy within the preserved-feature, security, QA and Rp0 constraints.
