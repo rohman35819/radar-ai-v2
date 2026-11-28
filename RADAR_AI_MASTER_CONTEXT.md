@@ -3769,3 +3769,14 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 - NEXUS nexus-agent-runtime Edge Function v1 ACTIVE but no scheduler verified. Current NEXUS claim/finish RPC lacks a global runtime-control row; add pause/kill-switch/budget gate before any worker scheduling. Keep worker OFF, max concurrency 1, Rp0, stage 0/1 only.
 - Roadmap: P1 pure policy/contracts → P2 observation/provenance + schema adapter → P3 guarded queue/worker integration → P4 bounded periodic scheduler → P5 controlled division integrations. No continuous 24/7 claim.
 - No paid services, production financial execution, trading, withdrawal, unrestricted shell, autonomous merge/deploy or secret exposure.
+
+
+---
+
+## 158. P2 MARKET OBSERVATION CONTRACT — 28 NOVEMBER 2026
+
+- P2 candidate on branch feat/nexus-observation-contract-p2: market-observation.v1 producer contract, market-observation-input.v1 quant adapter, OBSERVE_ONLY shadow consumer and in-process read-only ExchangeGateway.
+- Venue policy follows BOS direction: Binance only. Bybit is excluded from this initial gateway and quant observation allowlist. Research symbols are BTCUSDT and ETHUSDT only; ticker data is explicitly not OHLCV and cannot create candles or trades.
+- Guards validate source, symbol, interval, completeness, spot/futures legs, timestamps, freshness, max age, recursive canonical SHA-256 provenance/checksum, payload shape and secret/private-field rejection. Shadow consumer emits OBSERVE_ONLY receipt with content-derived dedupe key; no order, ledger, reconciliation or profit result.
+- Code is pure/in-process and has no production caller, scheduler or credential path. Private account snapshot is read-only and risk-engine role only; no order/transfer/withdraw capability exists. Keep worker OFF.
+- PR #160 branch was 2 commits behind develop and contained Bybit source allowlists; P2 work is reconstructed on current develop with Binance-only admission. Exact-head CI/security pending for new branch.
