@@ -3774,3 +3774,13 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 - BOS memutuskan: hanya **NEXUS** yang menyapa pemilik sebagai **BOS Besar**; semua agen, divisi, dan asisten lain tetap memakai sapaan persis **BOS**.
 - Diimplementasikan pada branch `feat/nexus-cli`: greeting `src/nexus/cli.mjs` dan baris `Penerima: BOS Besar` pada `src/nexus/handoff.mjs`; dokumentasi `docs/nexus-cli-termux.md`.
 - `AGENTS.md` mencatat pengecualian ini sebagai owner-approved scoped exception dan menandanya sebagai supersession semi-batas atas aturan sapaan umum hanya untuk output yang dihasilkan NEXUS. Tidak ada perubahan kebijakan keamanan, izin, provider, worker, trading, atau withdrawal.
+
+---
+
+## 154. NEXUS CLI branch refresh — 28 November 2026
+- Melanjutkan NEXT TASK §152.5: branch `feat/nexus-cli` berada 7 commit di belakang `develop` `411e7b7`, sehingga wajib di-update sebelum PR. Merge develop dipilih (bukan force-push/rebase) agar histori aman.
+- Konflik hanya pada `RADAR_AI_MASTER_CONTEXT.md` dan `docs/radar-nexus-core-architecture.md`. Keduanya diselesaikan dengan mempertahankan **arsitektur target resmi #161** dan **catatan batas implementasi CLI**; tidak ada konten yang dibuang. Baris status lama ("dokumen belum ada") dikoreksi.
+- HEAD `904de6e3eabeeb7a6f16d1f567d7b53d6ac90786`, sudah di-push ke origin. CI push exact-head: job `test` **success** (termasuk strict TypeScript, Python, migrasi/smoke PostgreSQL sekali pakai); `Branch source policy` `skipped` sesuai desain workflow. Security CI hanya berjalan pada event PR; secret scan lokal bersih.
+- Verifikasi lokal: `npm test` **259/259 pass, 0 fail**, `npm run test:python` lulus, `git diff --check` bersih. `tsc` lokal tetap tidak tersedia; kebenaran tipe bergantung pada job CI.
+- State PR live via GitHub API: 6 non-draft menuju develop (#169, #165, #160, #159, #153, #115), masih > WIP 3. #169 (NEXUS authenticated dashboard chat pilot) sedang diperbarui sesi lain dan CI-nya belum selesai — tidak disentuh. #160 kini clean + CI hijau; #159/#153/#115/#165 masih dirty.
+- **NEXT TASK (unchanged):** tunggu antrean <=2, lalu buka PR `feat/nexus-cli` → `develop`; verifikasi exact-head test + security + branch policy; selaraskan kontrak `/api/ai/command` dengan NEXUS Chat (#162/#169). Tidak ada PR baru, merge, deploy, provider berbayar, worker, trading, atau withdrawal oleh sesi ini.
