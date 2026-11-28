@@ -1,5 +1,6 @@
 (() => {
 'use strict';
+// gitleaks:allow — Supabase publishable key is intentionally public; no service_role or model secret.
 const URL='https://zhvznjcsxrtybqcpbryu.supabase.co',KEY='sb_publishable_-5cPA89hiblo_l4M15-j5A_crDNuBXK',SESSION='radar-nexus-session-v1',CONV='radar-nexus-conversation-v1';
 const $=id=>document.getElementById(id);let session=null,conversationId=null,busy=false;
 class RequestError extends Error{constructor(message,status,payload={}){super(message);this.status=status;this.payload=payload;}}
