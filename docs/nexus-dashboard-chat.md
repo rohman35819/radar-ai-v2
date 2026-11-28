@@ -39,3 +39,10 @@ Status: implementation branch; not deployed or end-to-end verified.
 ## Cost guardrail — 28 November 2026
 - Dashboard and Edge Function default provider is now OpenRouter's `openrouter/free` route. Server forcibly pins that model for provider `openrouter`, ignoring any client-supplied model override; this prevents an ordinary dashboard request from silently selecting a paid OpenRouter model.
 - Provider secret `OPENROUTER_API_KEY` must exist in Supabase Function secrets for replies to work. Its presence was not inspected and no provider call was made. If absent, API returns `provider_not_configured` (503); it does not fall back to paid OpenAI/Grok/Claude.
+
+
+## 9. Provider and agent approval hardening — 28 November 2026
+- Chat provider is server-pinned to OpenRouter Free (model openrouter/free). Client provider/model fields are ignored. No OpenAI, Grok, Gemini or Claude keys/endpoints are supported in this runtime; no paid fallback.
+- Provider errors are normalized; provider response bodies/details are not returned to clients. Missing OPENROUTER_API_KEY returns 503 provider_not_configured.
+- nexus-agent-runtime may ingest proposals and retrieve approved knowledge, but it cannot approve knowledge. Worker allowlist is system.healthcheck and knowledge.ingest only; knowledge.approve is not an autonomous task.
+- This is a hardening deployment candidate; deployed version and exact E2E evidence must be recorded separately.
