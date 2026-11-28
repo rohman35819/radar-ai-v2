@@ -104,3 +104,10 @@ A capability is active only after exact-head tests and security scans pass, serv
 
 ## 11. Explicit exclusions
 No paid resource, arbitrary shell, secret extraction, repository permission change, autonomous merge/deploy, live trading, order placement, transfer or withdrawal is included in the initial mandate.
+
+
+## 9. Scheduled worker transport — P2 candidate
+- A dedicated `nexus-scheduled-worker` Edge Function is introduced as a private cron proxy. Supabase gateway JWT verification is disabled only for this function because the function performs its own authentication: a 256-bit random token in `x-nexus-worker-token` is validated through a service-role-only RPC against a SHA-256 hash stored in the private `nexus.worker_tokens` table.
+- The proxy forwards only the fixed `worker_tick` action to `nexus-agent-runtime` using the server-side service-role key. It does not accept arbitrary task actions or return secrets. The existing `nexus-agent-runtime` remains JWT-verified and service-role protected.
+- Post-merge activation plan: store plaintext token, project URL and publishable key in Supabase Vault; enable existing `pg_cron` and `pg_net` extensions; schedule a five-minute HTTP tick; enable only Stage 1 proposal-only task execution after verifying the kill switch and Rp0 controls.
+- Migration 0005 and proxy code are candidates only. No token, extension, cron job or worker schedule has been provisioned yet.

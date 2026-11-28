@@ -3814,3 +3814,13 @@ Divisi 06/07 deliver N0 contracts/taxonomy; Divisi 01 reviews threat/privacy mod
 - Grok has broad dashboard creative autonomy within preserved-feature, responsive/accessibility, provenance/freshness, security, QA and release controls.
 - Rp0 is a hard project-wide constraint until BOS explicitly approves a specific paid resource. No paid services, overage, payment method or paid fallback. Provider labelled free is not sufficient; verify billing/quota behavior.
 - AGENTS.md is the authoritative source for these policies; shared memory contains a compact pointer, not duplicate full policy text.
+
+
+---
+
+## 163. NEXUS SCHEDULED WORKER TRANSPORT — 28 NOVEMBER 2026
+
+- Branch feat/nexus-scheduled-worker-20261128 adds migration 0005: private hash-only worker token registry, forced RLS, no direct table grants, service-role-only set/validate RPCs and audit on token rotation.
+- New `nexus-scheduled-worker` Edge Function is a custom-token-authenticated proxy. Its `verify_jwt=false` is intentional and limited to this function; it validates the 64-character random token against a SHA-256 hash in private schema, then forwards only fixed `worker_tick` to JWT-verified `nexus-agent-runtime` using the server-side service-role key.
+- Planned free-tier scheduler: Supabase Vault stores the plaintext worker token, project URL and publishable key; pg_cron schedules pg_net POST every five minutes. Runtime controls still gate all claims and hard-enforce Rp0, concurrency 1, Stage 0/1 allowlist.
+- This is code-only pending exact-head CI, merge and post-merge provisioning. No worker token, pg_cron/pg_net extension, cron schedule or background worker has been activated yet.

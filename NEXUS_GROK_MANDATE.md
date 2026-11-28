@@ -157,3 +157,9 @@ This is a target-state instruction, not evidence of a connected exchange, active
 - Every memory proposal needs source_ref, source_revision and provenance. Reject secret-bearing content/provenance; never store API keys, tokens, passwords, private keys, seed phrases or credentials. Approval must record an operator and audit event; agents/workers cannot approve.
 - Current retrieval is PostgreSQL simple full-text token search with a partial GIN index, not vector/embedding semantic search. Do not claim embeddings or semantic memory are active.
 - Keep all services Rp0/free-tier. No live trading, order placement, transfer or withdrawal through NEXUS agents.
+
+
+## 13. Scheduled worker transport
+- The scheduled proxy may use `verify_jwt=false` only when its custom token validation is active. The plaintext token belongs only in Supabase Vault; the database stores only a SHA-256 hash in the private `nexus.worker_tokens` table.
+- The proxy must forward only the fixed `worker_tick` action to the existing JWT-verified `nexus-agent-runtime` using its server-side service-role key. Never accept caller-selected actions, worker IDs, task types or provider/model overrides.
+- pg_cron/pg_net schedule must be low-frequency (initially every five minutes), free-tier only, and gated by runtime_controls. Stage 1 may only create proposals; no agent self-approval.

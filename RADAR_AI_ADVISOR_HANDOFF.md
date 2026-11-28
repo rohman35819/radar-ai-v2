@@ -323,3 +323,10 @@ Do not report offline autonomy until scheduler, durable queue/state, worker runt
 - Exact-head CI and disposable PostgreSQL smoke pending. No migration applied to live Supabase, no worker/scheduler activated. Next: pass CI, merge, apply migration, seed source-backed project memory, verify retrieval, deploy chat v6.
 
 - Memory retrieval matching is intentionally keyword-based using PostgreSQL simple full-text token OR + partial GIN index; do not describe it as semantic/vector memory. Embeddings remain out of scope under Rp0.
+
+
+## 21. NEXUS Scheduled Worker Transport — 28 November 2026
+- Candidate branch feat/nexus-scheduled-worker-20261128 adds private worker token hash table and service-role-only validation/rotation RPCs, plus custom-auth `nexus-scheduled-worker` proxy.
+- The proxy is the only Edge Function with `verify_jwt=false`; it validates the custom Vault token, then forwards only fixed worker_tick to JWT-verified nexus-agent-runtime with server-side service-role key. No arbitrary action or secret is accepted/returned.
+- After merge: apply migration, generate 256-bit token, store token/project URL/publishable key in Vault, install pg_cron and pg_net, schedule 5-minute tick, enable Stage 1 only after end-to-end auth and kill-switch tests.
+- No worker token or cron schedule is active yet. Existing runtime_controls remains disabled/paused/kill-switched until explicit post-merge activation and verification.
