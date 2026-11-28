@@ -43,14 +43,16 @@ begin
   if n<>0 then raise exception 'kill switch failed to deny task claims'; end if;
 
   v_id := public.nexus_propose_memory('project:radar-ai-v2','project_policy',
-    'RADAR AI V2 uses free-tier services only with a hard Rp0 budget.','project','radar-ai-v2','internal',
+    'Divisi 06 policy: RADAR AI V2 uses free-tier services only with a hard Rp0 budget.','project','radar-ai-v2','internal',
     'https://github.com/rohman35819/radar-ai-v2/blob/main/AGENTS.md','smoke-r1',
     jsonb_build_object('test',true),now(),null,null,0.99);
-  select count(*) into n from public.nexus_retrieve_memory('project:radar-ai-v2','project','radar-ai-v2','Rp0',5,false);
+  select count(*) into n from public.nexus_retrieve_memory('project:radar-ai-v2','project','radar-ai-v2','what did we decide about Divisi 06',5,false);
   if n<>0 then raise exception 'proposed memory must not be retrievable'; end if;
   if not public.nexus_approve_memory(v_id,'chief-strategy-advisor') then raise exception 'memory approval failed'; end if;
   select count(*) into n from public.nexus_retrieve_memory('project:radar-ai-v2','project','radar-ai-v2','Rp0',5,false);
-  if n<>1 then raise exception 'approved project memory not retrievable'; end if;
+  if n<>1 then raise exception 'approved project memory not retrievable by natural-language keywords'; end if;
+  select count(*) into n from public.nexus_retrieve_memory('project:radar-ai-v2','project','radar-ai-v2','Mars colony',5,false);
+  if n<>0 then raise exception 'unrelated query returned project memory'; end if;
   select count(*) into n from public.nexus_retrieve_memory('other-project','project','radar-ai-v2','Rp0',5,false);
   if n<>0 then raise exception 'memory owner isolation failed'; end if;
 
@@ -75,6 +77,7 @@ begin
   if has_table_privilege('anon','nexus.runtime_controls','SELECT') or has_table_privilege('authenticated','nexus.runtime_controls','SELECT') then
     raise exception 'runtime controls table accessible to browser roles';
   end if;
+  if to_regclass('nexus.memory_content_fts_idx') is null then raise exception 'memory full-text index missing'; end if;
   if not (select relrowsecurity and relforcerowsecurity from pg_class where oid='nexus.runtime_controls'::regclass) then
     raise exception 'runtime controls RLS is not forced';
   end if;
