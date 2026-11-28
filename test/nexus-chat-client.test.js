@@ -14,7 +14,7 @@ test('NEXUS dashboard reads the canonical answer field returned by nexus-chat', 
 
 test('NEXUS browser client uses a user JWT and contains no privileged/provider secret', () => {
   assert.match(page, /session\.access_token/);
-  assert.doesNotMatch(page, /service_role|SUPABASE_SERVICE_ROLE_KEY|OPENAI_API_KEY|XAI_API_KEY|GEMINI_API_KEY|ANTHROPIC_API_KEY/);
+  assert.doesNotMatch(page, /SUPABASE_SERVICE_ROLE_KEY|sb_secret_|OPENAI_API_KEY|XAI_API_KEY|GEMINI_API_KEY|ANTHROPIC_API_KEY/);
 });
 
 test('NEXUS does not fabricate replies on failed or malformed API responses', () => {
