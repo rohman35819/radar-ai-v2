@@ -387,7 +387,11 @@ function createApp({ cfg = ingest.loadConfig(), src = sources, state, exchangeSe
       let rel = url.pathname === '/' ? '/index.html' : decodeURIComponent(url.pathname);
       const file = path.normalize(path.join(PUB, rel));
       if (!file.startsWith(PUB + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) return send(res, 404, 'Tidak ditemukan', 'text/plain');
-      send(res, 200, fs.readFileSync(file), MIME[path.extname(file)] || 'application/octet-stream', file.endsWith('sw.js') ? { 'cache-control': 'no-cache' } : {});
+      const staticHeaders = {
+        ...(file.endsWith('sw.js') ? { 'cache-control': 'no-cache' } : {}),
+        ...(rel === '/nexus.html' ? { 'content-security-policy': "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self' https://zhvznjcsxrtybqcpbryu.supabase.co; frame-ancestors 'none'" } : {})
+      };
+      send(res, 200, fs.readFileSync(file), MIME[path.extname(file)] || 'application/octet-stream', staticHeaders);
     } catch { send(res, 500, { status: 'error', message: 'Kesalahan server' }); }
   });
   let timer;

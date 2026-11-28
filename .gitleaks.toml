@@ -1,0 +1,8 @@
+# Exact, fingerprint-scoped exception for a Supabase publishable key.
+# This key is intentionally public for browser clients; it is not a service-role or model secret.
+# Do not broaden this allowlist to the whole file or generic API-key rules.
+[[allowlists]]
+description = "Known public Supabase publishable key in NEXUS browser client; exact fingerprint only."
+fingerprints = [
+  "1189e876b947fb01eedb6508af5f93074b7b303d:public/nexus.js:generic-api-key:3"
+]

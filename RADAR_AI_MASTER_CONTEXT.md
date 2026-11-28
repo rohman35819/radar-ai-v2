@@ -1,7 +1,7 @@
 # RADAR AI — MASTER PROJECT CONTEXT
 
 > Dokumen pegangan utama proyek. Baca dokumen ini sebelum menjawab atau mengubah kode.
-> Terakhir diperbarui: 22 November 2026 (Asia/Jakarta) — ditambah mandat Chief Strategy Advisor dan roadmap otonomi offline.
+> Terakhir diperbarui: 28 November 2026 (Asia/Jakarta) — integrasi rilis NEXUS Chat ke main.
 > Repository: https://github.com/rohman35819/radar-ai-v2
 > Aplikasi: https://radar-ai-v2.hostless.app/
 
@@ -3386,3 +3386,29 @@ BOS memberikan kewenangan tetap kepada AI untuk mengusulkan dan menetapkan tamba
 - Pengujian: `node --check public/app.js` lulus; `node --test test/top5-runtime.test.js` 3/3 pass; `npm test` **213 pass, 0 fail, 0 skipped**; `git diff --check` bersih.
 - Status: perbaikan pada branch `fix/top5-price-label` dari `develop` `8ac4642`; perlu PR ke `develop` lalu rilis ke `main`. Hostless LIVE untuk perbaikan ini belum diverifikasi.
 - NEXT TASK: setelah deploy, ulangi reproduksi terhadap aset LIVE dan pastikan `renderAction()` menghasilkan kartu; lanjutkan QA klik browser nyata.
+
+
+---
+
+## 138. NEXUS CHAT — MAIN RELEASE INTEGRATION — 28 NOVEMBER 2026
+
+- Proyek Supabase terpisah `radar-nexus-core` (`zhvznjcsxrtybqcpbryu`, ap-south-1) berstatus ACTIVE_HEALTHY.
+- Edge Function `nexus-chat` aktif v4 dan `nexus-agent-runtime` aktif v1; keduanya verify_jwt=true. Schema `nexus` memiliki conversations, messages, memory_records, knowledge_documents, skills, agents, tasks, task_dependencies, evaluations, audit_events; RLS enabled. Rows chat/memory/knowledge = 0 pada audit.
+- PR #169 merged ke develop sebagai `313dc358b39b2766340bad797961febee5acbad2`; main tetap `f38d25a6203ab486d7170369e86874f838af627a`. Jangan rilis seluruh develop karena banyak commit tak terkait.
+- Provider OPENROUTER_API_KEY belum dapat diverifikasi dari metadata secret; tidak ada request model nyata dilakukan. UI harus melaporkan provider_not_configured dengan jujur, tanpa fallback berbayar atau jawaban palsu.
+- Agent runtime Edge Function ACTIVE bukan bukti scheduler/worker berjalan. Worker otonom tetap OFF sampai lease/fencing, budget Rp0, audit, kill switch, recovery dan approval teruji.
+- Security Advisor: 10 tabel private schema RLS tanpa policy (default deny disengaja); warning terpisah public.rls_auto_enable() SECURITY DEFINER dapat dieksekusi anon/authenticated perlu audit/remediasi. Performance Advisor: 4 FK tanpa covering index, optimasi setelah pola query terukur.
+- Branch main-release `hotfix/nexus-chat-main-release-20261128` dibuat dari main. Menambahkan halaman chat same-origin, auth REST client, CSS/JS lokal, link navigasi dan CSP connect-src khusus /nexus.html. Client hanya memakai Supabase publishable key dan user JWT; tidak ada service_role/model key di browser. Riwayat percakapan tersimpan di DB, token sesi di sessionStorage.
+- Tes baru memeriksa same-origin assets, tanpa inline/CDN, public-key-only, JWT, answer field, provider failure, dan CSP. CI exact-head, Hostless deploy dan browser E2E belum terverifikasi.
+- Tidak ada paid resource, production worker activation, trading atau withdrawal.
+
+### NEXT TASK
+1. Exact-head CI/security PR main release; perbaiki seluruh kegagalan.
+2. Rilis terisolasi ke main setelah gate; verifikasi Hostless /nexus.html dan browser E2E signup/login/chat/reload/history/logout/owner isolation.
+3. Verifikasi status provider key tanpa membaca/menampilkan nilainya; gunakan OpenRouter Free saja.
+4. Audit public.rls_auto_enable() dan indeks FK.
+5. Lanjutkan Divisi 06/07 Stage 0/1 bounded observe/propose worker, tidak merge/deploy/trading.
+
+
+## Security remediation — 28 November 2026
+- Revoked EXECUTE on public.rls_auto_enable() from PUBLIC, anon and authenticated. Verified both roles cannot execute it and event trigger ensure_rls remains intact. Security Advisor now reports only intentional RLS-enabled/default-deny private nexus tables; four missing FK indexes remain a performance follow-up.

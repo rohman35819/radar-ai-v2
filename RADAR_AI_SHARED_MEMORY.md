@@ -52,3 +52,5 @@
 
 - Proven routing bug (26 Nov): Cloudflare edge served stale `/app.js` (cf-cache-status HIT, max-age 14400) alongside new index.html, so new menus fell through to System Health. Fix: version dashboard assets `?v=v2.3.1` in index.html and SW precache, shell v15, keeping QA's network-first SW. 211/211 tests pass. Needs release to main + LIVE recheck.
 - Second proven bug (26 Nov): `renderAction()` threw `ReferenceError: priceLabel is not defined`, leaving Top 5 page empty even after CDN fix. Added the helper in `public/app.js` and a runtime regression test (`test/top5-runtime.test.js`, 3 tests) that actually executes action/intel renderers. 213/213 tests pass. Needs release + LIVE re-verification.
+
+- 28 Nov: radar-nexus-core Supabase ACTIVE_HEALTHY; nexus-chat v4 + nexus-agent-runtime v1 ACTIVE/JWT. Ten private nexus tables RLS-enabled; zero chat/memory rows. PR #169 merged to develop only; main release isolated in hotfix/nexus-chat-main-release-20261128. Provider key and Hostless LIVE unverified. Edge Function active ≠ scheduled worker; offline autonomy OFF.

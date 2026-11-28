@@ -24,6 +24,7 @@ PWA menyimpan shell halaman agar dapat dibuka kembali saat offline. Respons API 
 | Dashboard/PWA di perangkat Android | **Belum diuji di perangkat**; sintaks dan file statis diperiksa |
 | Exchange Hub Binance/Bybit | Backend akun read-only dan ticker market publik tersedia; koneksi akun nyata menunggu verifikasi environment Hostless dan izin API |
 | Token unlock | **Butuh konfigurasi**: tidak ada sumber gratis terverifikasi. Isi `data/unlocks.json` atau `UNLOCKS_URL` (array `[{id (gecko id), symbol, date, amount_usd, pct_supply, source}]`) |
+| NEXUS AI Workspace | Pilot chat terintegrasi: Supabase Auth, OpenRouter Free, riwayat percakapan di database NEXUS. Provider tetap bergantung pada konfigurasi server; worker otonom terjadwal belum aktif. |
 | Telegram | **Butuh konfigurasi**: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 | CoinGecko Demo key | Disarankan (`COINGECKO_DEMO_KEY`); cek ToS jika komersial |
 | Makro/ekonomi global | **Belum ada** modul khusus; hanya lewat `NEWS_FEEDS` |
